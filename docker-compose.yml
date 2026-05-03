@@ -18,7 +18,12 @@ services:
       context: .
       dockerfile: ap-web/Dockerfile
     ports:
-      - "5001:5001"
+      # Flask is bound to localhost only - Caddy proxies it from the host.
+      # Without this, port 5001 would bind to 0.0.0.0 and let direct hits
+      # bypass Caddy's TLS, rate limits, and (when paired with arbitrary
+      # X-Forwarded-For headers) the per-IP submit cap. Audit-2026-05-04 #2.
+      - "127.0.0.1:5001:5001"
+      # AP-server game ports stay public - players connect from the internet.
       - "38281-38380:38281-38380"
     volumes:
       - ./data/output:/data/output

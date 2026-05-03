@@ -239,11 +239,33 @@ def fetch_index(dest_dir: Path, repo_url: str = DEFAULT_INDEX_REPO) -> Path:
     return dest_dir
 
 
-def download_apworld(url: str, dest: Path) -> Path:
-    """Download an APWorld file from a URL."""
+def download_apworld(
+    url: str, dest: Path, expected_sha: str | None = None
+) -> Path:
+    """Download an APWorld file from a URL with optional SHA-256 verification.
+
+    Audit-2026-05-04 #5: reject non-https URLs (mandate TLS) and verify the
+    downloaded bytes against `expected_sha` when provided. The index.lock
+    file ships SHA-256 per pinned version; passing it through here closes a
+    supply-chain class of bugs where the upstream URL is compromised
+    between index curation and runtime download. The AP generator loads
+    .apworld files as Python at generation time, so a swap-attack on a
+    .apworld URL is RCE under `apweb`.
+    """
+    if not url.lower().startswith("https://"):
+        raise ValueError(
+            f"APWorld URL must use https:// (got: {url[:64]}...)"
+        )
     req = Request(url, headers={"User-Agent": "archipelago-tools/1.0"})
     with urlopen(req, timeout=60) as resp:
         data = resp.read()
+    if expected_sha:
+        actual = hashlib.sha256(data).hexdigest()
+        if actual.lower() != expected_sha.lower():
+            raise ValueError(
+                f"APWorld SHA-256 mismatch: expected "
+                f"{expected_sha[:16]}..., got {actual[:16]}..."
+            )
     dest.write_bytes(data)
     return dest
 

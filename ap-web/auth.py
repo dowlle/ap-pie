@@ -168,8 +168,13 @@ def apply_auth_to_app(app):
 
         g.user = user
 
-        # Admin endpoints have their own check
+        # Audit-2026-05-04 #3: enforce is_admin in the middleware itself for
+        # /api/admin/* paths, on top of the per-route @requires_admin
+        # decorators. Defense-in-depth: a future contributor adding a new
+        # admin route without the decorator still gets blocked here.
         if request.path.startswith("/api/admin"):
+            if not user.get("is_admin"):
+                return jsonify({"error": "Admin access required"}), 403
             return None
 
         # Non-admin protected routes require approval

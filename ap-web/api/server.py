@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 
 import config
 
@@ -18,6 +18,28 @@ def _gate_on_generation():
             "enabled": False,
         }), 403
     return None
+
+
+def _can_manage_seed(seed: str) -> bool:
+    """Audit-2026-05-04 #17: only the room's host (or an admin) may launch,
+    command, or stop the AP server attached to a given seed. Without this
+    any approved user could grief any other host's running game.
+
+    Returns False on missing-user or missing-room (caller treats both as
+    403 to avoid distinguishing "not found" from "not yours" - the existing
+    404 paths in the route handlers cover the genuinely-missing case).
+    """
+    user = getattr(g, "user", None)
+    if user is None:
+        return True  # auth-disabled local-dev mode
+    if user.get("is_admin"):
+        return True
+    from db import get_room_by_seed
+    room = get_room_by_seed(seed)
+    if not room:
+        return False
+    host_id = room.get("host_user_id")
+    return host_id is not None and host_id == user.get("id")
 
 # Commands approved users may forward to the AP server's stdin.
 # Anything not on this list is rejected to prevent exploiting server console
@@ -75,6 +97,8 @@ def server_status(seed: str):
 
 @bp.route("/api/serve/<seed>", methods=["POST"])
 def serve(seed: str):
+    if not _can_manage_seed(seed):
+        return jsonify({"error": "Not your room"}), 403
     from app import get_records
 
     records = get_records()
@@ -101,6 +125,8 @@ def serve(seed: str):
 
 @bp.route("/api/servers/<seed>/command", methods=["POST"])
 def send_command(seed: str):
+    if not _can_manage_seed(seed):
+        return jsonify({"error": "Not your room"}), 403
     body = request.get_json(silent=True) or {}
     command = body.get("command", "").strip()
     if not command:
@@ -115,6 +141,8 @@ def send_command(seed: str):
 
 @bp.route("/api/serve/<seed>", methods=["DELETE"])
 def stop(seed: str):
+    if not _can_manage_seed(seed):
+        return jsonify({"error": "Not your room"}), 403
     if _manager().stop(seed):
         return jsonify({"status": "stopped", "seed": seed})
     return jsonify({"error": "No server for this seed"}), 404

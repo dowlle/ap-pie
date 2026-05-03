@@ -516,6 +516,7 @@ def apworld_download_proxy(name: str, version: str):
 
 @bp.route("/api/apworlds/install", methods=["POST"])
 @_requires_generation
+@requires_admin
 def install_apworld():
     data = request.get_json()
     if not data or "name" not in data:
@@ -540,13 +541,19 @@ def install_apworld():
     if not url:
         return jsonify({"error": f"No download URL for {name} v{version}"}), 400
 
+    # Audit-2026-05-04 #5: pass through the index-pinned SHA-256 so
+    # download_apworld can verify the bytes match. None when the index
+    # didn't ship a sha for this version (older entries pre-lockfile).
+    ver_obj = next((v for v in world.versions if v.version == version), None)
+    expected_sha = ver_obj.sha256 if ver_obj else None
+
     # Download
     worlds_dir = _get_worlds_dir()
     worlds_dir.mkdir(parents=True, exist_ok=True)
     dest = worlds_dir / f"{name}.apworld"
 
     try:
-        download_apworld(url, dest)
+        download_apworld(url, dest, expected_sha=expected_sha)
     except Exception as e:
         return jsonify({"error": f"Download failed: {e}"}), 500
 
@@ -563,6 +570,7 @@ def install_apworld():
 
 @bp.route("/api/apworlds/<name>", methods=["DELETE"])
 @_requires_generation
+@requires_admin
 def remove_apworld(name: str):
     worlds_dir = _get_worlds_dir()
     target = worlds_dir / f"{name}.apworld"

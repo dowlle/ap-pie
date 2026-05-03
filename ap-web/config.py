@@ -31,11 +31,11 @@ FEATURES: dict[str, bool] = {
 
 OUTPUT_DIR = os.environ.get("AP_OUTPUT_DIR", r"C:\ProgramData\Archipelago\output")
 SERVER_EXE = os.environ.get("AP_SERVER_EXE", r"C:\ProgramData\Archipelago\ArchipelagoServer.exe")
-DEBUG = os.environ.get("AP_DEBUG", "1") == "1"
+DEBUG = os.environ.get("AP_DEBUG", "0") == "1"
 HOST = os.environ.get("AP_HOST", "localhost")
 PORT_RANGE_START = int(os.environ.get("AP_PORT_RANGE_START", "38281"))
 PORT_RANGE_END = int(os.environ.get("AP_PORT_RANGE_END", "38380"))
-CORS_ORIGINS = os.environ.get("AP_CORS_ORIGINS", "*")
+CORS_ORIGINS = os.environ.get("AP_CORS_ORIGINS", "")
 MAX_UPLOAD_MB = int(os.environ.get("AP_MAX_UPLOAD_MB", "50"))
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://archipelago:archipelago@localhost:5432/archipelago")
 WORLDS_DIR = os.environ.get("AP_WORLDS_DIR", r"C:\ProgramData\Archipelago\custom_worlds")

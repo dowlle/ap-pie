@@ -48,23 +48,33 @@ def _refresh_records() -> list[GameRecord]:
 
 def create_app() -> Flask:
     app = Flask(__name__, static_folder=None)
-    # SEC-03: fail closed if SECRET_KEY is missing or still the default. The
-    # default short-circuits to a known, public value which makes session
-    # cookies forgeable by anyone who can read the source. Don't let the app
-    # boot in that state - clearer than letting it serve traffic with a
-    # broken trust model.
+    # Audit-2026-05-04 #1: fail closed on insecure defaults at startup.
+    # SECRET_KEY: a missing/placeholder value would make session cookies
+    # forgeable by anyone who can read the source.
+    # CORS_ORIGINS: empty or "*" combined with supports_credentials=True
+    # would let any site read authenticated responses. flask-cors reflects
+    # the request Origin under wildcard + credentials, which is exactly the
+    # CORS misconfig the spec warns against.
     if not config.SECRET_KEY or config.SECRET_KEY == "change-me-in-production":
         raise RuntimeError(
             "SECRET_KEY env var is missing or still the placeholder default. "
             "Generate one with `python3 -c 'import secrets; print(secrets.token_hex(32))'` "
             "and set it in the runtime environment before starting the app."
         )
+    cors_origins = [o.strip() for o in config.CORS_ORIGINS.split(",") if o.strip()]
+    if not cors_origins or "*" in cors_origins:
+        raise RuntimeError(
+            "AP_CORS_ORIGINS env var is missing or contains '*'. "
+            "supports_credentials is True, so a wildcard would expose "
+            "authenticated responses to any origin. Set AP_CORS_ORIGINS "
+            "to an explicit comma-separated list (e.g. https://ap-pie.com)."
+        )
     app.secret_key = config.SECRET_KEY
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     if config.DISCORD_REDIRECT_URI.startswith("https://"):
         app.config["SESSION_COOKIE_SECURE"] = True
-    CORS(app, origins=config.CORS_ORIGINS.split(","), supports_credentials=True)
+    CORS(app, origins=cors_origins, supports_credentials=True)
     app.config["MAX_CONTENT_LENGTH"] = config.MAX_UPLOAD_MB * 1024 * 1024
     app.config["AP_HOST"] = config.HOST
     app.config["AP_WORLDS_DIR"] = config.WORLDS_DIR
