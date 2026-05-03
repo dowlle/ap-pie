@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+ap_client_venv/
+*.egg-info/
+
+# Node
+node_modules/
+ap-web/frontend/dist/
+
+# State / runtime
+.state/
+*.db
+
+# IDE
+.idea/
+.vscode/
+
+# Claude Code (per-machine local settings + scratch context)
+.claude/
+CLAUDE.md
+
+# Editor swap / tmp
+*.swp
+
+# FEAT-17 spikes - exploratory scripts kept locally, not shipped
+spikes/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / secrets - never commit real values
+.env
+.env.*
+!.env.example
+
+# Archipelago output (large binary files)
+data/

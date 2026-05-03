@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: archipelago
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: archipelago
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archipelago"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  ap-web:
+    build:
+      context: .
+      dockerfile: ap-web/Dockerfile
+    ports:
+      - "5001:5001"
+      - "38281-38380:38281-38380"
+    volumes:
+      - ./data/output:/data/output
+      - ap-state:/app/.state
+      - ${AP_INSTALL_PATH:-~/archipelago-install/Archipelago}:/opt/archipelago:ro
+      - ap-worlds:/opt/archipelago-custom/worlds
+      - ap-worlds:/home/apweb/.local/share/Archipelago/worlds
+    environment:
+      - AP_OUTPUT_DIR=/data/output
+      - AP_HOST=${AP_HOST:-localhost}
+      - AP_SERVER_EXE=/opt/archipelago/ArchipelagoServer
+      - AP_GENERATOR_EXE=/opt/archipelago/ArchipelagoGenerate
+      - AP_WORLDS_DIR=/opt/archipelago-custom/worlds
+      - AP_DEBUG=0
+      - AP_CORS_ORIGINS=${AP_CORS_ORIGINS:-https://ap-pie.com}
+      - DATABASE_URL=postgresql://archipelago:${POSTGRES_PASSWORD}@postgres:5432/archipelago
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+      - AP_OWNER_DISCORD_ID=${AP_OWNER_DISCORD_ID}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - FEATURE_GENERATION=${FEATURE_GENERATION:-true}
+      # FEAT-17 V0: real-time WebSocket tracker. Off by default; flip to
+      # 1 in the server .env to enable. AP_TRACKER_WS_MAX caps connection
+      # count, AP_TRACKER_WS_IDLE_MINUTES controls auto-disconnect.
+      - AP_TRACKER_WS_ENABLED=${AP_TRACKER_WS_ENABLED:-0}
+      - AP_TRACKER_WS_MAX=${AP_TRACKER_WS_MAX:-200}
+      - AP_TRACKER_WS_IDLE_MINUTES=${AP_TRACKER_WS_IDLE_MINUTES:-60}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  ap-state:
+  ap-worlds:
