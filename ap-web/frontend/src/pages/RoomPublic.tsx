@@ -112,11 +112,12 @@ function PageBanner({ room }: { room: PublicRoom }) {
     );
   }
   if (room.status === "closed") {
-    return (
-      <div className="play-banner play-banner-info public-section">
-        <strong>Submissions closed.</strong> The host is preparing to generate.
-      </div>
-    );
+    // No banner for plain "closed" — the room status badge near the title
+    // already conveys "submissions closed" and a top-bar message implying
+    // the host is mid-generation can be misleading when generation is off
+    // on this deployment. Generated / playing / generating still get
+    // banners since those states carry actionable next steps.
+    return null;
   }
   return null;
 }
