@@ -149,6 +149,15 @@ def rooms_create():
     max_yamls_per_user = max(0, int(data.get("max_yamls_per_user", 0) or 0))
     tracker_url = (data.get("tracker_url") or "").strip() or None
 
+    # FEAT-21 + FEAT-28 v2: APWorld version policy is now picked at room
+    # creation alongside the rest of the form, instead of forcing the host
+    # back into Settings after the fact. The frontend always sends both
+    # display flags as a coherent pair (radio: strict / flexible / latest);
+    # auto_upgrade defaults to True per the existing column default.
+    allow_mixed = bool(data.get("allow_mixed_apworld_versions", False))
+    force_latest = bool(data.get("force_latest_apworld_versions", False))
+    auto_upgrade = bool(data.get("auto_upgrade_apworld_pins", True))
+
     room = create_room(
         name=data["name"],
         host_name=data["host_name"],
@@ -161,6 +170,9 @@ def rooms_create():
         submit_deadline=submit_deadline,
         max_yamls_per_user=max_yamls_per_user,
         tracker_url=tracker_url,
+        allow_mixed_apworld_versions=allow_mixed,
+        force_latest_apworld_versions=force_latest,
+        auto_upgrade_apworld_pins=auto_upgrade,
     )
     return jsonify(room), 201
 

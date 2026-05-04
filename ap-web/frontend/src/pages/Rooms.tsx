@@ -114,7 +114,7 @@ export default function Rooms() {
                 <th>Name</th>
                 <th>Host</th>
                 <th>Status</th>
-                <th>Players</th>
+                <th>Slots</th>
                 <th>Created</th>
               </tr>
             </thead>
@@ -124,7 +124,7 @@ export default function Rooms() {
                   <td>{r.name}</td>
                   <td>{r.host_name}</td>
                   <td>{statusBadge(r.status)}</td>
-                  <td>{r.yamls?.length ?? "-"}</td>
+                  <td>{r.yaml_count ?? r.yamls?.length ?? 0}</td>
                   <td>{new Date(r.created_at).toLocaleString()}</td>
                 </tr>
               ))}

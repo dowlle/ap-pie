@@ -39,6 +39,12 @@ export default function CreateRoomModal({
   const [description, setDescription] = useState("");
   const [requireDiscordLogin, setRequireDiscordLogin] = useState(false);
   const [deadlineLocal, setDeadlineLocal] = useState("");
+  // APWorld version policy mirrors the radio in RoomSettingsModal so hosts
+  // pick the right shape at create time instead of having to jump back into
+  // Settings afterwards. "strict" is the default and matches the column
+  // defaults (allow_mixed=false, force_latest=false).
+  const [policyMode, setPolicyMode] = useState<"strict" | "flexible" | "latest">("strict");
+  const [autoUpgrade, setAutoUpgrade] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -70,6 +76,8 @@ export default function CreateRoomModal({
       setDescription("");
       setRequireDiscordLogin(false);
       setDeadlineLocal("");
+      setPolicyMode("strict");
+      setAutoUpgrade(true);
       setError("");
       setSubmitting(false);
     }
@@ -91,6 +99,11 @@ export default function CreateRoomModal({
         description,
         require_discord_login: requireDiscordLogin,
         submit_deadline: localInputValueToIso(deadlineLocal),
+        // Send both display flags atomically so the radio's invariants
+        // (exactly one of strict / flexible / latest) hold server-side.
+        allow_mixed_apworld_versions: policyMode === "flexible",
+        force_latest_apworld_versions: policyMode === "latest",
+        auto_upgrade_apworld_pins: autoUpgrade,
       });
       onCreated();
       onClose();
@@ -193,6 +206,81 @@ export default function CreateRoomModal({
                 </button>
               )}
             </div>
+          </section>
+
+          <section className="settings-section">
+            <SectionHeader
+              title="APWorld version policy"
+              hint="Pick how strictly per-game APWorld version pins are presented to players. The radio options are mutually exclusive; auto-upgrade below is an orthogonal write-time setting. All three can be changed later in Room settings."
+            />
+
+            <div className="settings-controls" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.6rem" }}>
+              <label className="settings-toggle">
+                <input
+                  type="radio"
+                  name="create-apworld-policy"
+                  value="strict"
+                  checked={policyMode === "strict"}
+                  onChange={() => setPolicyMode("strict")}
+                />
+                <span>
+                  <strong>Pin specific versions</strong> (default): players see "install version X" for
+                  each pinned game.
+                </span>
+              </label>
+
+              <label className="settings-toggle">
+                <input
+                  type="radio"
+                  name="create-apworld-policy"
+                  value="flexible"
+                  checked={policyMode === "flexible"}
+                  onChange={() => setPolicyMode("flexible")}
+                />
+                <span>
+                  <strong>Pin specific versions, but flexible</strong>: same pins, framed as "suggested"
+                  so players know they can deviate. Use when your players might upload different apworld
+                  versions and still need to discuss which version to use.
+                </span>
+              </label>
+
+              <label className="settings-toggle">
+                <input
+                  type="radio"
+                  name="create-apworld-policy"
+                  value="latest"
+                  checked={policyMode === "latest"}
+                  onChange={() => setPolicyMode("latest")}
+                />
+                <span>
+                  <strong>Always use the newest version</strong>: ignores per-game pins, always tells
+                  players to install whatever's currently latest in the index.
+                </span>
+              </label>
+            </div>
+
+            <div className="settings-controls" style={{ marginTop: "0.6rem" }}>
+              <label className="settings-toggle" style={{ opacity: policyMode === "latest" ? 0.55 : 1 }}>
+                <input
+                  type="checkbox"
+                  checked={autoUpgrade}
+                  disabled={policyMode === "latest"}
+                  onChange={(e) => setAutoUpgrade(e.target.checked)}
+                />
+                <span>Auto-upgrade pins to newest YAML version</span>
+              </label>
+            </div>
+            <p className="settings-aux-note">
+              On by default. When a YAML uploads with a `requires.game.&lt;Name&gt;` version higher
+              than the current pin, the pin bumps up to match.
+              {policyMode === "latest" && (
+                <>
+                  {" "}
+                  <em>Greyed out while "Always use the newest version" is selected: there are no
+                  pins to upgrade.</em>
+                </>
+              )}
+            </p>
           </section>
 
           {error && (

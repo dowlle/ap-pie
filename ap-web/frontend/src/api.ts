@@ -511,6 +511,12 @@ export interface Room {
   updated_at: string;
   yamls?: RoomYaml[];
   activity?: RoomActivity[];
+  /** Server-side aggregate count of room_yamls for this room. Returned
+   *  by GET /api/rooms (the list view) as a cheap COUNT subquery so the
+   *  table can render slot counts without fetching the full yaml array
+   *  per row. Single-room reads (GET /api/rooms/<id>) return the full
+   *  `yamls` array instead and may omit this. */
+  yaml_count?: number;
 }
 
 export type ValidationStatus =
@@ -581,6 +587,14 @@ export async function createRoom(data: {
   max_yamls_per_user?: number;
   /** FEAT-08: Archipelago tracker URL. */
   tracker_url?: string | null;
+  /** FEAT-21 policy radio: strict (both false), flexible (allow_mixed
+   *  only), latest (force_latest only). Caller sends both display
+   *  flags atomically so the room never lands in a transient
+   *  (force=true, mixed=true) state. */
+  allow_mixed_apworld_versions?: boolean;
+  force_latest_apworld_versions?: boolean;
+  /** FEAT-28 v2: defaults to true server-side; pass false to lock pins. */
+  auto_upgrade_apworld_pins?: boolean;
 }): Promise<Room> {
   const res = await fetch(`${BASE}/rooms`, {
     method: "POST",

@@ -373,14 +373,17 @@ def create_room(name: str, host_name: str, description: str = "",
                 host_user_id: int | None = None,
                 submit_deadline: str | None = None,
                 max_yamls_per_user: int = 0,
-                tracker_url: str | None = None) -> dict:
+                tracker_url: str | None = None,
+                allow_mixed_apworld_versions: bool = False,
+                force_latest_apworld_versions: bool = False,
+                auto_upgrade_apworld_pins: bool = True) -> dict:
     conn = _get_conn()
     room_id = _gen_id()
     with conn.cursor() as cur:
         cur.execute(
-            """INSERT INTO rooms (id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
-            (room_id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url),
+            """INSERT INTO rooms (id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url, allow_mixed_apworld_versions, force_latest_apworld_versions, auto_upgrade_apworld_pins)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
+            (room_id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url, allow_mixed_apworld_versions, force_latest_apworld_versions, auto_upgrade_apworld_pins),
         )
         row = _dictrow(cur)[0]
     conn.commit()
@@ -425,10 +428,18 @@ def list_rooms(status: str | None = None, host_user_id: int | None = None) -> li
     if host_user_id is not None:
         where.append("host_user_id = %s")
         args.append(host_user_id)
-    sql = "SELECT * FROM rooms"
+    # Include a yaml_count subquery so the rooms list can render slot counts
+    # without an N+1 round-trip per row. Cheap because room_yamls.room_id
+    # is indexed (`idx_room_yamls_room`).
+    sql = (
+        "SELECT rooms.*, "
+        "  (SELECT COUNT(*) FROM room_yamls WHERE room_yamls.room_id = rooms.id) "
+        "    AS yaml_count "
+        "FROM rooms"
+    )
     if where:
-        sql += " WHERE " + " AND ".join(where)
-    sql += " ORDER BY created_at DESC"
+        sql += " WHERE " + " AND ".join(["rooms." + w if not w.startswith("rooms.") else w for w in where])
+    sql += " ORDER BY rooms.created_at DESC"
     with conn.cursor() as cur:
         cur.execute(sql, args)
         rows = _dictrow(cur)

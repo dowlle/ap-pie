@@ -755,7 +755,7 @@ function APWorldsPolicySection({ room, onUpdate }: { room: Room; onUpdate: () =>
             onChange={() => setMode("strict")}
           />
           <span>
-            <strong>Pin specific versions</strong> (default) — players see "install version X" for
+            <strong>Pin specific versions</strong> (default): players see "install version X" for
             each pinned game.
           </span>
         </label>
@@ -770,7 +770,7 @@ function APWorldsPolicySection({ room, onUpdate }: { room: Room; onUpdate: () =>
             onChange={() => setMode("flexible")}
           />
           <span>
-            <strong>Pin specific versions, but flexible</strong> — same pins, framed as "suggested"
+            <strong>Pin specific versions, but flexible</strong>: same pins, framed as "suggested"
             so players know they can deviate. Use when your players might upload different apworld
             versions and still need to discuss which version to use.
           </span>
@@ -786,7 +786,7 @@ function APWorldsPolicySection({ room, onUpdate }: { room: Room; onUpdate: () =>
             onChange={() => setMode("latest")}
           />
           <span>
-            <strong>Always use the newest version</strong> — ignores per-game pins, always tells
+            <strong>Always use the newest version</strong>: ignores per-game pins, always tells
             players to install whatever's currently latest in the index. Manual pinning below is
             disabled while this is on.
           </span>
@@ -809,13 +809,13 @@ function APWorldsPolicySection({ room, onUpdate }: { room: Room; onUpdate: () =>
       </div>
       <p className="settings-aux-note">
         On by default. When a YAML uploads with a `requires.game.&lt;Name&gt;` version higher than
-        the current pin, the pin bumps up to match. Includes manual picks — turn this off to lock
+        the current pin, the pin bumps up to match. Includes manual picks: turn this off to lock
         pins exactly where you set them. The Version column on the room overview still shows
         orange warnings for mismatched YAMLs either way.
         {mode === "latest" && (
           <>
             {" "}
-            <em>Greyed out while "Always use the newest version" is selected — there are no pins
+            <em>Greyed out while "Always use the newest version" is selected: there are no pins
             to upgrade.</em>
           </>
         )}
