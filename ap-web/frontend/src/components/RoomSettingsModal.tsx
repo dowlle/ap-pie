@@ -212,7 +212,7 @@ function ClaimModeSection({ room, onUpdate }: { room: Room; onUpdate: () => void
   return (
     <section className="settings-section">
       <SectionHeader
-        title="Claim mode (FEAT-20)"
+        title="Claim mode"
         hint={
           "When on, YAMLs you upload land as anonymous slots. Logged-in players visiting the room page can claim any slot they want " +
           "(host's choice of game, player's choice of which one). The per-player cap below still applies. Already-uploaded YAMLs aren't retroactively unclaimed - toggle this BEFORE bulk-uploading the pool."
@@ -451,7 +451,7 @@ function TrackerSlotOverrideSection({ room, onUpdate }: { room: Room; onUpdate: 
   return (
     <section className="settings-section">
       <SectionHeader
-        title="Tracker slot override (FEAT-17)"
+        title="Tracker slot override"
         hint={
           "Optional. Names the in-game slot the WebSocket tracker connection will authenticate as. " +
           "Leave blank to auto-pick (your first uploaded slot in this room, or the first slot scraped from the tracker page if none of your YAMLs match). " +
@@ -666,48 +666,54 @@ function APWorldsSection({ room }: { room: Room }) {
   );
 }
 
+type PolicyMode = "strict" | "flexible" | "latest";
+
+function deriveMode(room: Room): PolicyMode {
+  // force_latest dominates: if it's on, the other display flag is ignored
+  // by `apworlds_for_room` regardless of value, so we model "latest" as a
+  // single mode. allow_mixed alone (with force off) is "flexible". Neither
+  // is "strict" (the default).
+  if (room.force_latest_apworld_versions) return "latest";
+  if (room.allow_mixed_apworld_versions) return "flexible";
+  return "strict";
+}
+
 function APWorldsPolicySection({ room, onUpdate }: { room: Room; onUpdate: () => void }) {
-  // FEAT-21: two room-level toggles steering how strictly version pins
-  // are presented to players (and whether they're stored at all).
-  // Each saves independently. force_latest disables manual pinning in
-  // the section below; the parent re-renders pass the new room.flag in.
-  const [savingMixed, setSavingMixed] = useState(false);
-  const [savingForce, setSavingForce] = useState(false);
+  // The three storage flags (allow_mixed, force_latest, auto_upgrade) used
+  // to expose as three independent checkboxes, which produced incoherent
+  // combinations: force-latest + allow-mixed is redundant ("everyone install
+  // latest, but it's just a suggestion"); force-latest + auto-upgrade is
+  // wasted work (pins maintained but never displayed). The three coherent
+  // modes are rendered as a radio group; auto-upgrade stays as an
+  // orthogonal sub-toggle that's only meaningful in strict / flexible modes.
+  // Storage is unchanged; the UI just enforces the valid combinations on save.
+  const [savingMode, setSavingMode] = useState(false);
   const [savingUpgrade, setSavingUpgrade] = useState(false);
-  const [errMixed, setErrMixed] = useState("");
-  const [errForce, setErrForce] = useState("");
+  const [errMode, setErrMode] = useState("");
   const [errUpgrade, setErrUpgrade] = useState("");
-  const [savedHintMixed, setSavedHintMixed] = useState(false);
-  const [savedHintForce, setSavedHintForce] = useState(false);
+  const [savedHintMode, setSavedHintMode] = useState(false);
   const [savedHintUpgrade, setSavedHintUpgrade] = useState(false);
 
-  const toggleMixed = async (next: boolean) => {
-    setSavingMixed(true);
-    setErrMixed("");
-    setSavedHintMixed(false);
-    try {
-      await updateRoom(room.id, { allow_mixed_apworld_versions: next });
-      setSavedHintMixed(true);
-      onUpdate();
-    } catch (e) {
-      setErrMixed(e instanceof Error ? e.message : "Failed to save");
-    } finally {
-      setSavingMixed(false);
-    }
-  };
+  const mode = deriveMode(room);
 
-  const toggleForce = async (next: boolean) => {
-    setSavingForce(true);
-    setErrForce("");
-    setSavedHintForce(false);
+  const setMode = async (next: PolicyMode) => {
+    if (next === mode) return;
+    setSavingMode(true);
+    setErrMode("");
+    setSavedHintMode(false);
     try {
-      await updateRoom(room.id, { force_latest_apworld_versions: next });
-      setSavedHintForce(true);
+      // Send both flags atomically so the room never lands in a transient
+      // (force=true, mixed=true) state between two single-flag PUTs.
+      await updateRoom(room.id, {
+        allow_mixed_apworld_versions: next === "flexible",
+        force_latest_apworld_versions: next === "latest",
+      });
+      setSavedHintMode(true);
       onUpdate();
     } catch (e) {
-      setErrForce(e instanceof Error ? e.message : "Failed to save");
+      setErrMode(e instanceof Error ? e.message : "Failed to save");
     } finally {
-      setSavingForce(false);
+      setSavingMode(false);
     }
   };
 
@@ -726,59 +732,75 @@ function APWorldsPolicySection({ room, onUpdate }: { room: Room; onUpdate: () =>
     }
   };
 
+  // auto_upgrade is meaningless in "latest" mode (no pins to upgrade), so
+  // we grey out the toggle there. The stored value is preserved either way
+  // so flipping back to strict / flexible restores the host's preference.
+  const upgradeDisabled = mode === "latest" || savingUpgrade;
+
   return (
     <section className="settings-section">
       <SectionHeader
-        title="APWorld policy"
-        hint={
-          "How strictly version pins are presented to players. By default the public room page tells " +
-          "everyone to install the exact pinned version of each game. The toggles below relax that."
-        }
+        title="APWorld version policy"
+        hint="Pick how strictly per-game APWorld version pins are presented to players. The radio options are mutually exclusive; auto-upgrade below is an orthogonal write-time setting."
       />
 
-      <div className="settings-controls">
+      <div className="settings-controls" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.6rem" }}>
         <label className="settings-toggle">
           <input
-            type="checkbox"
-            checked={!!room.allow_mixed_apworld_versions}
-            disabled={savingMixed}
-            onChange={(e) => toggleMixed(e.target.checked)}
+            type="radio"
+            name={`apworld-policy-${room.id}`}
+            value="strict"
+            checked={mode === "strict"}
+            disabled={savingMode}
+            onChange={() => setMode("strict")}
           />
-          <span>Allow different versions of the same APWorld</span>
+          <span>
+            <strong>Pin specific versions</strong> (default) — players see "install version X" for
+            each pinned game.
+          </span>
         </label>
-        <SavedHint visible={savedHintMixed} />
-      </div>
-      <p className="settings-aux-note">
-        Softens "you need this version" to "suggested version" on the public install panel. Use
-        when your group is fine with players running slightly different APWorld releases.
-      </p>
-      {errMixed && <p className="settings-error">{errMixed}</p>}
 
-      <div className="settings-controls" style={{ marginTop: "0.4rem" }}>
         <label className="settings-toggle">
           <input
-            type="checkbox"
-            checked={!!room.force_latest_apworld_versions}
-            disabled={savingForce}
-            onChange={(e) => toggleForce(e.target.checked)}
+            type="radio"
+            name={`apworld-policy-${room.id}`}
+            value="flexible"
+            checked={mode === "flexible"}
+            disabled={savingMode}
+            onChange={() => setMode("flexible")}
           />
-          <span>Force the newest version of every APWorld</span>
+          <span>
+            <strong>Pin specific versions, but flexible</strong> — same pins, framed as "suggested"
+            so players know they can deviate. Use when your players might upload different apworld
+            versions and still need to discuss which version to use.
+          </span>
         </label>
-        <SavedHint visible={savedHintForce} />
-      </div>
-      <p className="settings-aux-note">
-        Ignores per-game pins and always tells players to install whatever's currently latest in
-        the index. Auto-bumps as the index updates. Manual pinning below is disabled while this
-        is on.
-      </p>
-      {errForce && <p className="settings-error">{errForce}</p>}
 
-      <div className="settings-controls" style={{ marginTop: "0.4rem" }}>
         <label className="settings-toggle">
+          <input
+            type="radio"
+            name={`apworld-policy-${room.id}`}
+            value="latest"
+            checked={mode === "latest"}
+            disabled={savingMode}
+            onChange={() => setMode("latest")}
+          />
+          <span>
+            <strong>Always use the newest version</strong> — ignores per-game pins, always tells
+            players to install whatever's currently latest in the index. Manual pinning below is
+            disabled while this is on.
+          </span>
+        </label>
+        <SavedHint visible={savedHintMode} />
+      </div>
+      {errMode && <p className="settings-error">{errMode}</p>}
+
+      <div className="settings-controls" style={{ marginTop: "0.6rem" }}>
+        <label className="settings-toggle" style={{ opacity: mode === "latest" ? 0.55 : 1 }}>
           <input
             type="checkbox"
             checked={room.auto_upgrade_apworld_pins ?? true}
-            disabled={savingUpgrade}
+            disabled={upgradeDisabled}
             onChange={(e) => toggleAutoUpgrade(e.target.checked)}
           />
           <span>Auto-upgrade pins to newest YAML version</span>
@@ -786,10 +808,17 @@ function APWorldsPolicySection({ room, onUpdate }: { room: Room; onUpdate: () =>
         <SavedHint visible={savedHintUpgrade} />
       </div>
       <p className="settings-aux-note">
-        On by default for new rooms. When a YAML uploads with a `requires.game.&lt;Name&gt;`
-        version higher than the current pin, the pin bumps up to match. Includes manual picks -
-        turn this off to lock pins exactly where you set them. The Version column on the room
-        overview will still show orange warnings for mismatched YAMLs either way.
+        On by default. When a YAML uploads with a `requires.game.&lt;Name&gt;` version higher than
+        the current pin, the pin bumps up to match. Includes manual picks — turn this off to lock
+        pins exactly where you set them. The Version column on the room overview still shows
+        orange warnings for mismatched YAMLs either way.
+        {mode === "latest" && (
+          <>
+            {" "}
+            <em>Greyed out while "Always use the newest version" is selected — there are no pins
+            to upgrade.</em>
+          </>
+        )}
       </p>
       {errUpgrade && <p className="settings-error">{errUpgrade}</p>}
     </section>
