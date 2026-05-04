@@ -4,15 +4,25 @@ import { useAuth } from "../context/AuthContext";
 import { localInputValueToIso } from "../lib/roomDeadline";
 
 /**
- * Native <dialog> create-room modal. Same lifecycle pattern as
- * RoomSettingsModal / YamlModal: showModal() once on mount, ESC-to-cancel
- * via the cancel event, backdrop click closes via the click-target check.
+ * Native <dialog> create-room modal. Same lifecycle and visual chrome as
+ * RoomSettingsModal: showModal once on mount, ESC-to-cancel via the cancel
+ * event, backdrop click closes via target check, sectioned cards in the
+ * body, primary action in the sticky footer.
  *
  * Race mode + spoiler level are intentionally omitted: they're generation-
  * feature concerns and Archipelago Pie ships as a YAML collector only on
  * ap-pie.com. New rooms get the backend defaults (spoiler_level=3,
  * race_mode=false) which existing room views still render unchanged.
  */
+function SectionHeader({ title, hint }: { title: string; hint: string }) {
+  return (
+    <>
+      <h3>{title}</h3>
+      <p className="settings-hint">{hint}</p>
+    </>
+  );
+}
+
 export default function CreateRoomModal({
   open,
   onClose,
@@ -91,76 +101,115 @@ export default function CreateRoomModal({
     }
   };
 
+  const canSubmit = !!hostName && !!name.trim() && !submitting;
+
   return (
     <dialog ref={dialogRef} onClick={onBackdropClick} className="settings-modal">
       <header className="settings-modal-header">
         <div className="settings-modal-title">
           <strong>Create room</strong>
+          {hostName && (
+            <span className="settings-modal-meta">Hosting as {hostName}</span>
+          )}
         </div>
         <button type="button" className="btn btn-sm" onClick={onClose} aria-label="Close">✕</button>
       </header>
 
-      <form onSubmit={handleSubmit} className="settings-modal-body create-room-form">
-        <input
-          placeholder="Room name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoFocus
-          required
-        />
-        {hostName && (
-          <p className="muted" style={{ margin: "0.25rem 0" }}>
-            Hosting as <strong>{hostName}</strong>
-          </p>
-        )}
-        <textarea
-          placeholder="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-        />
-        <div className="form-row">
-          <label title="Players must log in with Discord before they can submit a YAML to this room. Lets you see who uploaded what.">
-            <input
-              type="checkbox"
-              checked={requireDiscordLogin}
-              onChange={(e) => setRequireDiscordLogin(e.target.checked)}
+      <form onSubmit={handleSubmit} style={{ display: "contents" }}>
+        <div className="settings-modal-body">
+          <section className="settings-section">
+            <SectionHeader
+              title="Room basics"
+              hint="The name shows up in the rooms list and on the public room page. Description is optional and rendered above the YAML list for context."
             />
-            Require Discord login
-          </label>
-        </div>
-        <div className="form-row">
-          <label title="Optional. The room auto-closes at this date/time in your local timezone. You can still close it manually before then.">
-            Auto-close at:
-            <input
-              type="datetime-local"
-              value={deadlineLocal}
-              onChange={(e) => setDeadlineLocal(e.target.value)}
-              style={{ marginLeft: "0.5rem" }}
+            <div className="settings-controls">
+              <input
+                type="text"
+                placeholder="Room name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                required
+              />
+            </div>
+            <div className="settings-controls">
+              <textarea
+                placeholder="Description (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                style={{
+                  flex: 1,
+                  minWidth: "12rem",
+                  fontFamily: "inherit",
+                  fontSize: "0.85rem",
+                  padding: "0.4rem 0.6rem",
+                  border: "1px solid var(--border)",
+                  borderRadius: 6,
+                  background: "var(--bg)",
+                  color: "var(--text)",
+                  resize: "vertical",
+                }}
+              />
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <SectionHeader
+              title="Require Discord login to submit"
+              hint="When on, players must log in with Discord before submitting a YAML. You'll see their Discord identity next to every submission. Can be toggled later in Room settings."
             />
-          </label>
-          {deadlineLocal && (
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setDeadlineLocal("")}
-              title="Clear the auto-close deadline"
-            >
-              Clear
-            </button>
+            <div className="settings-controls">
+              <label className="settings-toggle">
+                <input
+                  type="checkbox"
+                  checked={requireDiscordLogin}
+                  onChange={(e) => setRequireDiscordLogin(e.target.checked)}
+                />
+                <span>Login required</span>
+              </label>
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <SectionHeader
+              title="Auto-close deadline"
+              hint="Optional. The room auto-closes at this date/time in your local timezone, and players see a countdown on the public page. You can still close manually before then, or clear the deadline later in Room settings."
+            />
+            <div className="settings-controls">
+              <input
+                type="datetime-local"
+                value={deadlineLocal}
+                onChange={(e) => setDeadlineLocal(e.target.value)}
+              />
+              {deadlineLocal && (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => setDeadlineLocal("")}
+                  title="Clear the auto-close deadline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </section>
+
+          {error && (
+            <p className="settings-error" style={{ margin: 0 }}>{error}</p>
           )}
         </div>
-        <div className="form-row">
+
+        <footer className="settings-modal-footer">
+          <button type="button" className="btn btn-sm" onClick={onClose}>Cancel</button>
           <button
             type="submit"
-            className="btn btn-primary"
-            disabled={!hostName || !name.trim() || submitting}
+            className="btn btn-sm btn-primary"
+            disabled={!canSubmit}
           >
             {submitting ? "Creating..." : "Create"}
           </button>
-          <button type="button" className="btn" onClick={onClose}>Cancel</button>
-        </div>
-        {error && <span className="upload-error">{error}</span>}
+        </footer>
       </form>
     </dialog>
   );
