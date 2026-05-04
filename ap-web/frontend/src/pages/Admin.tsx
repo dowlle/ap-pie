@@ -35,7 +35,7 @@ export default function Admin() {
             <th>Username</th>
             <th>Discord ID</th>
             <th>Admin</th>
-            <th>Approved</th>
+            <th>Host</th>
             <th>Joined</th>
             <th>Actions</th>
           </tr>
@@ -54,9 +54,9 @@ export default function Admin() {
                     className={`btn btn-sm ${u.is_approved ? "btn-danger" : "btn-primary"}`}
                     onClick={() => toggleApproval(u)}
                     disabled={u.is_admin}
-                    title={u.is_admin ? "Admins are always approved" : ""}
+                    title={u.is_admin ? "Admins are always hosts" : ""}
                   >
-                    {u.is_approved ? "Revoke" : "Approve"}
+                    {u.is_approved ? "Remove host" : "Make host"}
                   </button>
                   <Link
                     to={`/rooms?as_user=${u.id}`}

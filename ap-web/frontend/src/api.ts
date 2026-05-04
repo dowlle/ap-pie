@@ -303,6 +303,12 @@ export interface AuthUser {
   discord_username: string;
   is_admin: boolean;
   is_approved: boolean;
+  /** Derived server-side from Discord ID match against AP_OWNER_DISCORD_ID.
+   *  Used only to gate the owner-only "view as" toggle (DEVEX-02);
+   *  is_admin remains the canonical authorization flag for every
+   *  other gate. Older /api/auth/me responses (pre-2026-05-04) may
+   *  omit this; treat undefined as false. */
+  is_owner?: boolean;
   created_at: string;
 }
 

@@ -89,7 +89,15 @@ def callback():
 
 @bp.route("/api/auth/me")
 def me():
-    """Return the current authenticated user, or 401."""
+    """Return the current authenticated user, or 401.
+
+    Augments the stored user row with a derived `is_owner` flag so the
+    frontend can gate the owner-only "view as" toggle (DEVEX-02). Owner
+    is whoever's Discord ID matches `AP_OWNER_DISCORD_ID`; this is not
+    persisted as a column because `OWNER_DISCORD_ID` is env-driven and
+    could change without re-bootstrapping the row. is_admin is still the
+    canonical authorization flag everywhere else.
+    """
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
@@ -99,7 +107,12 @@ def me():
         session.clear()
         return jsonify({"error": "Not authenticated"}), 401
 
-    return jsonify(user)
+    import config
+    is_owner = bool(
+        config.OWNER_DISCORD_ID
+        and user.get("discord_id") == config.OWNER_DISCORD_ID
+    )
+    return jsonify({**user, "is_owner": is_owner})
 
 
 @bp.route("/api/auth/logout", methods=["POST"])

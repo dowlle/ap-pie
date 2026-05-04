@@ -22,7 +22,7 @@ import { FeaturesProvider, useFeature } from "./context/FeaturesContext";
 import AuthButton from "./components/AuthButton";
 
 function NavBar() {
-  const { user, authEnabled, loading } = useAuth();
+  const { user, authEnabled, loading, isOwner, viewAs, setViewAs } = useAuth();
   const generationOn = useFeature("generation");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -36,13 +36,17 @@ function NavBar() {
     }
   };
 
-  // MVP scope: Archipelago Pie ships as a YAML collector. Approved users see Rooms;
-  // everything else (Market, Tracker, Games, Servers, APWorlds, Summary, Refresh)
-  // is admin-only chrome. When auth is disabled (dev) or still resolving, treat
-  // it as full-access so the nav doesn't flash empty during boot.
-  // When the generation feature flag is OFF, the AP-server-related links
-  // (Tracker, Games, Servers, APWorlds, Summary, Refresh) are hidden even
-  // from admins - there's nothing on those pages without server-side gen.
+  // MVP scope: Archipelago Pie ships as a YAML collector. Hosts (approved
+  // users) see Rooms; everything else (Market, Tracker, Games, Servers,
+  // Summary, Refresh) is admin-only chrome. When auth is disabled (dev) or
+  // still resolving, treat it as full-access so the nav doesn't flash empty
+  // during boot. When the generation feature flag is OFF, the AP-server-
+  // related links are hidden even from admins - there's nothing on those
+  // pages without server-side gen.
+  //
+  // `user` here is the *effective* user from AuthContext - already accounts
+  // for the owner-only view-as override, so flipping the toggle to "host" or
+  // "user" hides the admin nav exactly as it would for a real host or user.
   const isAdmin = !!user?.is_admin;
   const isApproved = !!(user?.is_approved || user?.is_admin);
   const authBypassed = !authEnabled || loading;
@@ -73,9 +77,40 @@ function NavBar() {
           </>
         )}
         {user?.is_admin && <NavLink to="/admin">Admin</NavLink>}
+        {/* Owner-only role-preview toggle (DEVEX-02). Renders nothing for
+            non-owners. Frontend-only override; backend always trusts the
+            real session, so server-gated behaviour (FEAT-13 sanitisation,
+            /api/admin middleware) is unaffected. Public preview is served
+            by opening /r/<id> in an incognito tab. */}
+        {isOwner && <ViewAsToggle viewAs={viewAs} setViewAs={setViewAs} />}
         <AuthButton />
       </div>
     </nav>
+  );
+}
+
+function ViewAsToggle({
+  viewAs,
+  setViewAs,
+}: {
+  viewAs: "admin" | "host" | "user";
+  setViewAs: (role: "admin" | "host" | "user") => void;
+}) {
+  return (
+    <label
+      className="view-as-toggle"
+      title="Preview the UI as a different role. Frontend-only - backend permissions are unaffected. Open /r/<id> in an incognito tab to preview the public (logged-out) experience."
+    >
+      <span className="view-as-label">View as</span>
+      <select
+        value={viewAs}
+        onChange={(e) => setViewAs(e.target.value as "admin" | "host" | "user")}
+      >
+        <option value="admin">Admin</option>
+        <option value="host">Host</option>
+        <option value="user">User</option>
+      </select>
+    </label>
   );
 }
 
@@ -159,7 +194,7 @@ function ApprovalToast() {
   if (!justApproved) return null;
   return (
     <div className="approval-toast" role="status">
-      <span>Your account was just approved. You can now create rooms and start games.</span>
+      <span>You're now a host. You can create your own rooms and manage YAMLs.</span>
       <button type="button" className="btn btn-sm" onClick={dismissJustApproved}>Dismiss</button>
     </div>
   );

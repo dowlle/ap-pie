@@ -104,6 +104,37 @@ h3 { font-size: 1rem; margin-bottom: 0.5rem; }
   text-decoration: none;
 }
 
+/* Owner-only view-as toggle in the NavBar (DEVEX-02). Sits inline with the
+   other nav links / AuthButton; muted chrome so it doesn't compete with
+   the Admin nav link or the auth button visually. */
+.view-as-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  user-select: none;
+}
+.view-as-toggle .view-as-label {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+.view-as-toggle select {
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.view-as-toggle select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
 /* Container */
 .container {
   /* Wider than 1200px so the host RoomDetail's YAML table breathes
