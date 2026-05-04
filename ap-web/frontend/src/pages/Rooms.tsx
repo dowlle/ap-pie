@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getRooms, createRoom, type Room } from "../api";
+import { getRooms, type Room } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { localInputValueToIso } from "../lib/roomDeadline";
+import CreateRoomModal from "../components/CreateRoomModal";
 
 function statusBadge(status: string) {
   const cls =
@@ -15,106 +15,17 @@ function statusBadge(status: string) {
   return <span className={`badge ${cls}`}>{status}</span>;
 }
 
-function CreateRoomForm({ onCreated }: { onCreated: () => void }) {
-  const { user } = useAuth();
-  const [show, setShow] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [spoiler, setSpoiler] = useState(3);
-  const [race, setRace] = useState(false);
-  const [requireDiscordLogin, setRequireDiscordLogin] = useState(false);
-  const [deadlineLocal, setDeadlineLocal] = useState("");
-  const [error, setError] = useState("");
-
-  const hostName = user?.discord_username ?? "";
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !hostName.trim()) return;
-    setError("");
-    try {
-      await createRoom({
-        name: name.trim(),
-        host_name: hostName,
-        description,
-        spoiler_level: spoiler,
-        race_mode: race,
-        require_discord_login: requireDiscordLogin,
-        submit_deadline: localInputValueToIso(deadlineLocal),
-      });
-      setName("");
-      setDescription("");
-      setRequireDiscordLogin(false);
-      setDeadlineLocal("");
-      setShow(false);
-      onCreated();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    }
-  };
-
-  if (!show) {
-    return <button className="btn btn-primary" onClick={() => setShow(true)}>Create Room</button>;
-  }
-
+function CreateRoomButton({ onCreated }: { onCreated: () => void }) {
+  const [open, setOpen] = useState(false);
   return (
-    <form onSubmit={handleSubmit} className="create-room-form">
-      <input placeholder="Room name" value={name} onChange={(e) => setName(e.target.value)} required />
-      {hostName && (
-        <p className="muted" style={{ margin: "0.25rem 0" }}>
-          Hosting as <strong>{hostName}</strong>
-        </p>
-      )}
-      <textarea placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
-      <div className="form-row">
-        <label>Spoiler level:
-          <select value={spoiler} onChange={(e) => setSpoiler(Number(e.target.value))}>
-            <option value={0}>None</option>
-            <option value={1}>Basic</option>
-            <option value={2}>Playthrough</option>
-            <option value={3}>Full</option>
-          </select>
-        </label>
-        <label>
-          <input type="checkbox" checked={race} onChange={(e) => setRace(e.target.checked)} />
-          Race mode
-        </label>
-        <label title="Players must log in with Discord before they can submit a YAML to this room. Lets you see who uploaded what.">
-          <input
-            type="checkbox"
-            checked={requireDiscordLogin}
-            onChange={(e) => setRequireDiscordLogin(e.target.checked)}
-          />
-          Require Discord login
-        </label>
-      </div>
-      <div className="form-row">
-        <label title="Optional. The room auto-closes at this date/time in your local timezone. You can still close it manually before then.">
-          Auto-close at:
-          <input
-            type="datetime-local"
-            value={deadlineLocal}
-            onChange={(e) => setDeadlineLocal(e.target.value)}
-            style={{ marginLeft: "0.5rem" }}
-          />
-        </label>
-        {deadlineLocal && (
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setDeadlineLocal("")}
-            title="Clear the auto-close deadline"
-          >
-            Clear
-          </button>
-        )}
-      </div>
-      <div className="form-row">
-        <button type="submit" className="btn btn-primary" disabled={!hostName}>Create</button>
-        <button type="button" className="btn" onClick={() => setShow(false)}>Cancel</button>
-      </div>
-      {error && <span className="upload-error">{error}</span>}
-    </form>
+    <>
+      <button className="btn btn-primary" onClick={() => setOpen(true)}>Create Room</button>
+      <CreateRoomModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onCreated={onCreated}
+      />
+    </>
   );
 }
 
@@ -161,7 +72,7 @@ export default function Rooms() {
     <div>
       <div className="page-header">
         <h1>Rooms</h1>
-        {!isViewingAsOther && <CreateRoomForm onCreated={refresh} />}
+        {!isViewingAsOther && <CreateRoomButton onCreated={refresh} />}
       </div>
 
       {isViewingAsOther && (
