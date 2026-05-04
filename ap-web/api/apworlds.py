@@ -270,9 +270,13 @@ def iter_pinned_apworld_files(
     resolves to the index's latest downloadable version regardless of
     what was stored.
 
-    Filename format `<world.name>-<version>.apworld` matches the
-    proxy's download_name so users see the same name whether they
-    download one at a time or in bulk.
+    Filename format `<world.name>.apworld` (no version suffix) matches
+    how AP itself loads APWorlds and how upstream GitHub release assets
+    name them, so the zip's contents drop straight into a `worlds/`
+    directory without renames. The schema (`room_apworlds` PK on
+    `(room_id, apworld_name)`) plus `seen_apworlds` dedup guarantees
+    one yield per apworld name, so version collisions in the zip are
+    unreachable.
     """
     lookup = _get_game_lookup()
     pin_map = {p["apworld_name"]: p["version"] for p in pins}
@@ -304,7 +308,7 @@ def iter_pinned_apworld_files(
             if not ver:
                 continue
 
-            filename = f"{world.name}-{ver.version}.apworld"
+            filename = f"{world.name}.apworld"
             if ver.local:
                 local_path = resolve_local_path(index_dir, world, ver)
                 if local_path and local_path.is_file():
@@ -505,10 +509,13 @@ def apworld_download_proxy(name: str, version: str):
     local_path = resolve_local_path(_get_index_dir(), world, ver)
     if local_path:
         # name + version aren't user-controlled paths (they're matched
-        # against the index), so the filename here is safe.
+        # against the index), so the filename here is safe. Filename
+        # drops the version to match upstream URL-backed pins (whose
+        # GitHub release assets are named without version) and the
+        # bulk-zip filenames in `iter_pinned_apworld_files`.
         return send_file(
             local_path,
-            download_name=f"{world.name}-{version}.apworld",
+            download_name=f"{world.name}.apworld",
             as_attachment=True,
         )
     abort(404, description=f"No download source for '{name}' v{version}")
