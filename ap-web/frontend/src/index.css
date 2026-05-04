@@ -2935,6 +2935,63 @@ a.btn:hover { text-decoration: none; }
 .play-card + .play-card,
 .play-card + .public-section { margin-top: 1.25rem; }
 
+/* Native <details> styled as a card-shaped accordion. Used for the
+   Live progress and Submitted YAMLs sections on /r/<id> and the
+   matching pair on host RoomDetail. The summary acts as the title bar
+   with a rotating caret; the open/closed state stays in DOM by
+   default (no persistence yet — re-evaluate if hosts ask for it). */
+details.collapsible-section > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0;
+  user-select: none;
+}
+details.collapsible-section > summary::-webkit-details-marker { display: none; }
+details.collapsible-section > summary::before {
+  content: "▸";
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+  display: inline-block;
+  width: 0.85rem;
+}
+details.collapsible-section[open] > summary::before {
+  transform: rotate(90deg);
+}
+details.collapsible-section > summary > h2,
+details.collapsible-section > summary > h3 {
+  margin: 0;
+}
+details.collapsible-section > summary:hover > h2,
+details.collapsible-section > summary:hover > h3 {
+  color: var(--accent-light);
+}
+details.collapsible-section > .accordion-body {
+  margin-top: 1rem;
+}
+
+/* Activity feed: Archipelago-standard item flag colours. The class
+   on the wrapping span reflects item.flags bitmask:
+     0  = filler  (cyan)
+     1  = progression (plum)
+     2  = useful (slate blue)
+     4  = trap (salmon)
+   Higher-priority bits win (progression > useful > filler; trap is
+   independent). Location text is green; player names are yellow. */
+.activity-part-item.flags-progression { color: #af99ef; }
+.activity-part-item.flags-useful      { color: #6d8be8; }
+.activity-part-item.flags-filler      { color: #00eeee; }
+.activity-part-item.flags-trap        { color: #fa8072; }
+.activity-part-location               { color: #00ff7f; }
+.activity-part-player                 { color: #fafad2; }
+.activity-part-entrance               { color: #ee82ee; }
+.activity-part-text                   { /* inherit */ }
+
+
 /* ── Connection hero (host:port banner)
    The single most important piece of info on the page when the room has
    either an external server registered or a generated seed. Earns the

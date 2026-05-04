@@ -571,15 +571,19 @@ class TrackerConnection:
                         finder_slot, set()
                     ).add(location_id)
 
-        # V1.5: render a flat human-readable text and append to the
-        # activity buffer. Resolution uses the DataPackage cache; falls
-        # back to "Item #N" / "Location #N" / "Slot N" if unresolved
-        # (cache cold or unknown game).
-        text = self._render_print_json(msg.get("data") or [])
+        # V1.5: render both a flat human-readable text AND a typed-parts
+        # array, append to the activity buffer. Frontend uses `parts` for
+        # Archipelago-style colour coding (progression/useful/filler/trap
+        # for items, green for locations, yellow for players); `text`
+        # stays as a fallback / for filter substring matching. Resolution
+        # uses the DataPackage cache; falls back to "Item #N" / etc. if
+        # unresolved (cache cold or unknown game).
+        text, parts = self._render_print_json(msg.get("data") or [])
         event = {
             "ts": time.time(),
             "type": type_,
             "text": text,
+            "parts": parts,
             "tags": list(msg.get("tags") or []),
             "team": msg.get("team"),
             "slot": msg.get("slot"),
@@ -590,15 +594,38 @@ class TrackerConnection:
         with self.state.lock:
             self.state.activity.append(event)
 
-    def _render_print_json(self, parts: list) -> str:
-        """Walk JSONMessageParts, resolve typed parts via DataPackage cache,
-        return a flat string. Mirrors the AP source `JSONtoTextParser` shape
-        (NetUtils.py:248) but without colours/markup since we render to a
-        plain text feed."""
-        out: list[str] = []
+    def _render_print_json(self, parts: list) -> tuple[str, list[dict]]:
+        """Walk JSONMessageParts, resolve typed parts via DataPackage cache.
+
+        Returns `(flat_text, structured_parts)`:
+          - `flat_text`: concatenated resolved string. Used for substring
+            filter matching and as a fallback render.
+          - `structured_parts`: list of `{kind, text, ...}` dicts. The
+            frontend uses these to apply Archipelago-standard colours per
+            segment type (item flags, location, player, etc.). `kind` is
+            our normalised name, distinct from the wire `type` so future
+            renames don't break clients.
+
+        Part kinds emitted:
+          - {"kind": "text", "text": "..."}                    plain run
+          - {"kind": "item", "text": "...", "flags": int}      resolved item
+          - {"kind": "location", "text": "..."}                resolved location
+          - {"kind": "player", "text": "...", "slot": int}     resolved player
+          - {"kind": "entrance", "text": "..."}                entrance label
+        """
+        flat: list[str] = []
+        structured: list[dict] = []
+
+        def emit(kind: str, text: str, **extra) -> None:
+            text = str(text)
+            flat.append(text)
+            part = {"kind": kind, "text": text}
+            part.update(extra)
+            structured.append(part)
+
         for p in parts:
             if not isinstance(p, dict):
-                out.append(str(p))
+                emit("text", p)
                 continue
             ptype = p.get("type", "text")
             text = p.get("text", "")
@@ -609,40 +636,61 @@ class TrackerConnection:
                     item_id = int(text)
                     owner_slot = int(p.get("player", 0))
                 except (TypeError, ValueError):
-                    out.append(str(text))
+                    emit("text", text)
                     continue
                 game = self._slot_game(owner_slot)
                 checksum = self.state.datapackage_checksums.get(game, "")
-                out.append(datapackage_cache.resolve_item(game, checksum, item_id))
+                resolved = datapackage_cache.resolve_item(game, checksum, item_id)
+                # Flags arrive on the part itself (per JSONMessagePart spec)
+                # OR on the parent ItemSend's `item` field. Preserve here so
+                # the frontend can colour per-progression / useful / filler /
+                # trap classification.
+                try:
+                    flags = int(p.get("flags", 0) or 0)
+                except (TypeError, ValueError):
+                    flags = 0
+                emit("item", resolved, flags=flags)
+            elif ptype == "item_name":
+                # Already resolved item name. Flags may still be present.
+                try:
+                    flags = int(p.get("flags", 0) or 0)
+                except (TypeError, ValueError):
+                    flags = 0
+                emit("item", text, flags=flags)
             elif ptype == "location_id":
                 try:
                     loc_id = int(text)
                     owner_slot = int(p.get("player", 0))
                 except (TypeError, ValueError):
-                    out.append(str(text))
+                    emit("text", text)
                     continue
                 game = self._slot_game(owner_slot)
                 checksum = self.state.datapackage_checksums.get(game, "")
-                out.append(datapackage_cache.resolve_location(game, checksum, loc_id))
+                emit("location", datapackage_cache.resolve_location(game, checksum, loc_id))
+            elif ptype == "location_name":
+                emit("location", text)
             elif ptype == "player_id":
                 try:
                     slot_id = int(text)
                 except (TypeError, ValueError):
-                    out.append(str(text))
+                    emit("text", text)
                     continue
                 player = self.state.players.get(slot_id) or {}
-                out.append(
+                resolved = (
                     player.get("alias") or player.get("name") or f"Slot {slot_id}"
                 )
-            elif ptype in ("item_name", "location_name", "player_name", "entrance_name"):
-                # Already resolved by the server - pass through
-                out.append(str(text))
+                emit("player", resolved, slot=slot_id)
+            elif ptype == "player_name":
+                emit("player", text)
+            elif ptype == "entrance_name":
+                emit("entrance", text)
             elif ptype == "color":
-                # Drop the colour, keep the text content
-                out.append(str(text))
+                # Drop the colour wrapping, keep the text content
+                emit("text", text)
             else:
-                out.append(str(text))
-        return "".join(out)
+                emit("text", text)
+
+        return "".join(flat), structured
 
     def _slot_game(self, slot_id: int) -> str:
         info = self.state.slot_info.get(slot_id) or {}
@@ -1009,13 +1057,20 @@ def bootstrap_from_db() -> int:
 # scrape data so the frontend sees a consistent vocabulary regardless of
 # which source filled the field.
 def _ws_status_label(status: int, has_checks: bool) -> tuple[str, bool]:
+    """Map AP `client_status` ints to one of four labels matching the
+    archipelago.gg tracker page vocabulary: connected / playing /
+    disconnected / goal_completed. AP's CLIENT_READY (10) folds into
+    "playing" and CLIENT_UNKNOWN (0) renders as "connected" when we've
+    seen check activity, otherwise "disconnected"."""
     if status >= 30:
-        return "goal", True
+        return "goal_completed", True   # CLIENT_GOAL
+    if status >= 20:
+        return "playing", False         # CLIENT_PLAYING
     if status >= 10:
-        return "playing", False
+        return "playing", False         # CLIENT_READY folds into Playing
     if status >= 5:
-        return "ready", False
-    return ("connected", False) if has_checks else ("unknown", False)
+        return "connected", False       # CLIENT_CONNECTED
+    return ("connected", False) if has_checks else ("disconnected", False)
 
 
 def grid_overrides(room_id: str) -> Optional[dict[int, dict]]:

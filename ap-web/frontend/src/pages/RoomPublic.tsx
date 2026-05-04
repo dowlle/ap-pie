@@ -30,7 +30,6 @@ import DropOverlay from "../components/DropOverlay";
 import YamlModal from "../components/YamlModal";
 import CopyButton from "../components/CopyButton";
 import DropZone from "../components/DropZone";
-import ConnectionHero from "../components/ConnectionHero";
 import LiveTracker from "../components/LiveTracker";
 import GameCell from "../components/GameCell";
 import { useAPWorldLookup } from "../lib/apworldLookup";
@@ -85,19 +84,10 @@ interface SubmitState {
 const IDLE_SUBMIT_STATE: SubmitState = { busy: false, busyLabel: "", error: "", success: null };
 
 function PageBanner({ room }: { room: PublicRoom }) {
-  // External server gets the hero treatment - it's the most important info
-  // on the page when present.
-  if (room.external_host && room.external_port) {
-    return (
-      <div className="public-section">
-        <ConnectionHero
-          url={`${room.external_host}:${room.external_port}`}
-          status="external"
-          meta="Hosted on the room owner's machine - reach out to them if it's offline."
-        />
-      </div>
-    );
-  }
+  // External server connection details previously got a hero block here.
+  // The LiveTracker now surfaces the same `host:port` in its connection bar
+  // alongside live status, so duplicating it as a banner just adds noise.
+  // Keep this function for the seed / playing / generating flows below.
   if (room.seed && room.status === "playing") {
     return (
       <div className="play-banner play-banner-ok public-section">
@@ -512,10 +502,32 @@ function RoomPublic() {
       )}
 
       {room.tracker_url && (
-        <section className="play-card public-section">
-          <h2 style={{ marginTop: 0 }}>Live progress</h2>
-          <LiveTracker roomId={room.id} publicMode />
-        </section>
+        <details className="play-card public-section collapsible-section" open>
+          <summary>
+            <h2 style={{ marginTop: 0 }}>Live progress</h2>
+          </summary>
+          <div className="accordion-body">
+            <LiveTracker
+              roomId={room.id}
+              publicMode
+              /* "My slots" matches the tracker grid against the player_names
+                 of YAMLs the viewer submitted (FEAT-13 anonymous viewers
+                 don't get submitter ids back, so the filter just stays
+                 hidden for them — Set is empty). */
+              viewerSlotNames={
+                user
+                  ? yamls
+                      .filter(
+                        (y) =>
+                          (y.submitter_user_id != null && y.submitter_user_id === user.id) ||
+                          (!!y.submitter_username && y.submitter_username === user.discord_username),
+                      )
+                      .map((y) => y.player_name)
+                  : []
+              }
+            />
+          </div>
+        </details>
       )}
 
       {/* The full-width "APWorlds you need to install" panel was removed
@@ -527,10 +539,13 @@ function RoomPublic() {
           stays - we still need it to build `pinByApworld` for the
           inline pill rendering in the YAML table. */}
 
-      <section className="play-card public-section">
-        <div className="yaml-list-header">
-          <h2>Submitted YAMLs ({yamls.length})</h2>
-          {yamls.length > 0 && (
+      <details className="play-card public-section collapsible-section" open>
+        <summary>
+          <h2 style={{ marginTop: 0 }}>Submitted YAMLs ({yamls.length})</h2>
+        </summary>
+        <div className="accordion-body">
+        {yamls.length > 0 && (
+          <div className="yaml-list-header">
             <div className="yaml-toolbar">
               <input
                 type="search"
@@ -546,8 +561,8 @@ function RoomPublic() {
                 </span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
         {yamls.length === 0 ? (
           <div className="empty-state">
             <span className="empty-state-art" aria-hidden="true">🥧</span>
@@ -757,7 +772,8 @@ function RoomPublic() {
             </table>
           </div>
         )}
-      </section>
+        </div>
+      </details>
 
       {room.claim_mode ? (
         // FEAT-20: claim-mode rooms don't accept player uploads - players

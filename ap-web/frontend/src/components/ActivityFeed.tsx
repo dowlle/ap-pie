@@ -3,6 +3,7 @@ import {
   getRoomActivityStream,
   getPublicRoomActivityStream,
   type ActivityEvent,
+  type ActivityPart,
 } from "../api";
 
 /**
@@ -15,36 +16,68 @@ import {
  *
  * Renders nothing when the WS subsystem isn't connected for this room
  * (`status: "no_connection"`) - avoids planting an empty panel under the
- * grid when Archipelago Pie isn't actively tracking. Once a connection comes up,
- * the next poll makes the feed appear automatically.
+ * grid when Archipelago Pie isn't actively tracking. Once a connection
+ * comes up, the next poll makes the feed appear automatically.
+ *
+ * Each event renders its `parts` array (typed segments from the backend)
+ * with Archipelago-standard colours: items by flags
+ * (progression/useful/filler/trap), locations green, players yellow.
+ * Falls back to flat `text` when `parts` is missing (older API).
  */
 
-const POLL_MS = 10_000;
+const POLL_MS = 3_000;
 // Cap rendered events. Server sends up to 200 in the buffer; rendering
 // them all is fine for performance but visually noisy. Most-recent-first.
 const MAX_RENDERED = 100;
 
-const TYPE_ICONS: Record<string, string> = {
-  ItemSend: "\u{1F4E6}",   // 📦
-  Hint: "\u{1F4A1}",        // 💡
-  Goal: "\u{1F3C1}",        // 🏁
-  Chat: "\u{1F4AC}",        // 💬
-  Join: "\u{1F44B}",        // 👋
-  Part: "\u{1F6AA}",        // 🚪
-  Tutorial: "\u{1F4D6}",   // 📖
-  Release: "\u{1F4E4}",    // 📤
-  Collect: "\u{1F4E5}",    // 📥
-  Tags: "\u{1F3F7}",       // 🏷
-  CommandResult: "\u{27A1}", // ➡
-};
-
-function iconFor(type: string): string {
-  return TYPE_ICONS[type] ?? "\u{2022}"; // bullet
-}
-
 function formatTime(ts: number): string {
   const d = new Date(ts * 1000);
   return d.toLocaleTimeString();
+}
+
+/** Item flag classification → CSS class suffix. Progression takes
+ *  precedence over useful, then filler is the default for flags=0;
+ *  trap is independent and visually distinct enough to override. */
+function itemFlagClass(flags: number): "progression" | "useful" | "filler" | "trap" {
+  if (flags & 0b100) return "trap";
+  if (flags & 0b001) return "progression";
+  if (flags & 0b010) return "useful";
+  return "filler";
+}
+
+function PartSpan({ part }: { part: ActivityPart }) {
+  switch (part.kind) {
+    case "item":
+      return (
+        <span className={`activity-part-item flags-${itemFlagClass(part.flags)}`}>
+          {part.text}
+        </span>
+      );
+    case "location":
+      return <span className="activity-part-location">{part.text}</span>;
+    case "player":
+      return <span className="activity-part-player">{part.text}</span>;
+    case "entrance":
+      return <span className="activity-part-entrance">{part.text}</span>;
+    case "text":
+    default:
+      return <span className="activity-part-text">{part.text}</span>;
+  }
+}
+
+function EventBody({ event }: { event: ActivityEvent }) {
+  if (event.parts && event.parts.length > 0) {
+    return (
+      <>
+        {event.parts.map((p, i) => (
+          <PartSpan key={i} part={p} />
+        ))}
+      </>
+    );
+  }
+  // Fallback for legacy server responses that don't ship parts: render
+  // the flat text uncoloured.
+  return <span className="activity-part-text">{event.text || "(no text)"}</span>;
 }
 
 export default function ActivityFeed({
@@ -111,17 +144,19 @@ export default function ActivityFeed({
   if (status === null) return null; // still loading first response
   if (status === "no_connection") return null;
 
-  // Most-recent-first, optionally filtered by type or text substring.
+  // Most-recent-first, optionally filtered by substring against the flat
+  // text or one of the parts.
   const filterLower = filter.trim().toLowerCase();
   const visible = events
     .slice()
     .reverse()
     .filter((e) => {
       if (!filterLower) return true;
-      return (
-        e.type.toLowerCase().includes(filterLower) ||
-        (e.text || "").toLowerCase().includes(filterLower)
-      );
+      if ((e.text || "").toLowerCase().includes(filterLower)) return true;
+      if (e.parts) {
+        return e.parts.some((p) => p.text.toLowerCase().includes(filterLower));
+      }
+      return false;
     })
     .slice(0, MAX_RENDERED);
 
@@ -154,10 +189,10 @@ export default function ActivityFeed({
         <ul className="activity-feed-list">
           {visible.map((e, i) => (
             <li key={`${e.ts}-${i}`} className={`activity-feed-item activity-${e.type.toLowerCase()}`}>
-              <span className="activity-feed-icon" aria-hidden="true">{iconFor(e.type)}</span>
               <span className="activity-feed-time muted">{formatTime(e.ts)}</span>
-              <span className="activity-feed-type">{e.type}</span>
-              <span className="activity-feed-text">{e.text || <em className="muted">(no text)</em>}</span>
+              <span className="activity-feed-text">
+                <EventBody event={e} />
+              </span>
             </li>
           ))}
         </ul>

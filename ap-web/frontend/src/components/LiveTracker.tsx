@@ -13,10 +13,28 @@ import ActivityFeed from "./ActivityFeed";
 import { useAuth } from "../context/AuthContext";
 
 function statusIcon(label: string) {
-  if (label === "goal") return "\u{1F7E2}";
+  // Status labels match the archipelago.gg tracker page vocabulary now:
+  // goal_completed / playing / connected / disconnected. Old labels
+  // ("goal", "ready", "unknown") are kept for backwards compat with
+  // any cached API responses; they map to the same icons.
+  if (label === "goal_completed" || label === "goal") return "\u{1F7E2}";
   if (label === "playing") return "\u{1F7E2}";
   if (label === "connected" || label === "ready") return "\u{1F7E1}";
-  return "\u26AA";
+  return "\u26AA"; // disconnected / unknown
+}
+
+const STATUS_DISPLAY_LABEL: Record<string, string> = {
+  goal_completed: "Goal Completed",
+  goal: "Goal Completed",
+  playing: "Playing",
+  connected: "Connected",
+  ready: "Connected",
+  disconnected: "Disconnected",
+  unknown: "Disconnected",
+};
+
+function statusDisplay(label: string): string {
+  return STATUS_DISPLAY_LABEL[label] ?? label.replace(/_/g, " ");
 }
 
 function barColor(pct: number): string {
@@ -51,7 +69,7 @@ function PlayerCard({
         {player.checks_done} / {player.checks_total} checks
       </div>
       <div className="tracker-card-status">
-        {statusIcon(player.status_label)} {player.status_label}
+        {statusIcon(player.status_label)} {statusDisplay(player.status_label)}
       </div>
     </>
   );
@@ -95,11 +113,18 @@ function CopyButton({ text }: { text: string }) {
 export default function LiveTracker({
   roomId,
   publicMode = false,
+  viewerSlotNames,
 }: {
   roomId: string;
   /** FEAT-08: when true, calls the public tracker endpoint (no auth, returns
    *  external-only). RoomPublic uses this; RoomDetail (host) leaves it false. */
   publicMode?: boolean;
+  /** Player names that belong to the current viewer (matched against
+   *  tracker slot.name). When non-empty, enables the "My slots" filter
+   *  chip. Computed by the parent from `room.yamls` whose
+   *  `submitter_user_id` equals the viewer's id. Undefined / empty
+   *  hides the filter. */
+  viewerSlotNames?: string[];
 }) {
   const [data, setData] = useState<RoomTrackerData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,10 +133,13 @@ export default function LiveTracker({
   // ordering), which keeps existing behaviour for users who don't interact.
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<TrackerSort | null>(null);
+  const [onlyMine, setOnlyMine] = useState(false);
   const toggleSort = (key: TrackerSortKey) => setSort((cur) => nextTrackerSort(cur, key));
   // FEAT-14: which slot's detail modal is open, if any.
   const [openPlayer, setOpenPlayer] = useState<PlayerInfo | null>(null);
   const { user } = useAuth();
+  const hasMineFilter = !!viewerSlotNames && viewerSlotNames.length > 0;
+  const mineSet = hasMineFilter ? new Set(viewerSlotNames) : null;
 
   const fetchTracker = () => {
     const fetcher = publicMode ? getPublicRoomTracker(roomId) : getRoomTracker(roomId);
@@ -154,7 +182,12 @@ export default function LiveTracker({
 
   const serverStopped = data.server_status !== "running";
   // UX-09: derived after the data guard above so the helper sees a real array.
-  const displayedPlayers = filterAndSortPlayers(data.players, search, sort);
+  // "My slots" filter runs on top of search+sort so the chip stays composable
+  // with the existing filter chrome.
+  const baseFiltered = filterAndSortPlayers(data.players, search, sort);
+  const displayedPlayers = onlyMine && mineSet
+    ? baseFiltered.filter((p) => mineSet.has(p.name))
+    : baseFiltered;
   // FEAT-08: external trackers (archipelago.gg) only expose slot/name/game,
   // not per-slot checks or items. Surface a small note so the empty bars
   // aren't mistaken for "the game hasn't started yet".
@@ -227,6 +260,17 @@ export default function LiveTracker({
             aria-label="Search players"
             className="yaml-search tracker-search"
           />
+          {hasMineFilter && (
+            <button
+              type="button"
+              className={`tracker-sort-chip${onlyMine ? " is-active" : ""}`}
+              onClick={() => setOnlyMine((v) => !v)}
+              aria-pressed={onlyMine}
+              title="Show only the slots whose name matches a YAML you submitted to this room"
+            >
+              My slots ({viewerSlotNames!.length})
+            </button>
+          )}
           <div className="tracker-sort-row" role="group" aria-label="Sort players by">
             <span className="tracker-sort-label muted">Sort:</span>
             {(

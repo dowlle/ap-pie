@@ -28,6 +28,7 @@ import { useAPWorldLookup } from "../lib/apworldLookup";
 import { getRoomAPWorlds } from "../api";
 import { useFileDropZone } from "../lib/useFileDropZone";
 import { useFeature } from "../context/FeaturesContext";
+import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../lib/usePageTitle";
 import {
   formatDeadlineAbsolute,
@@ -231,6 +232,7 @@ export default function RoomDetail() {
   // on the same trigger as the room data so the warnings stay current
   // after auto-pin / manual pin changes.
   const [pinByApworld, setPinByApworld] = useState<Map<string, string>>(new Map());
+  const { user } = useAuth();
   const [room, setRoom] = useState<Room | null>(null);
   const [patches, setPatches] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -524,34 +526,39 @@ export default function RoomDetail() {
 
       {error && <p className="error">{error}</p>}
 
-      {/* YAML List */}
-      <div className="yaml-list-header">
-        <h2>
-          Players ({yamls.length})
+      {/* Submitted YAMLs (Players) - wrapped in <details> so hosts can
+          collapse the table when they want the live tracker / actions to
+          dominate. The drag-and-drop hint and search bar live inside the
+          accordion body so they only render when the section is open. */}
+      <details className="collapsible-section" open>
+        <summary>
+          <h2 style={{ marginTop: 0 }}>Submitted YAMLs ({yamls.length})</h2>
+        </summary>
+        <div className="accordion-body">
+        <div className="yaml-list-header">
           {room.status === "open" && (
-            <span className="muted" style={{ fontSize: "0.7em", fontWeight: "normal", marginLeft: "0.75em" }}>
+            <span className="muted" style={{ fontSize: "0.85em" }}>
               drop YAMLs anywhere on this page
             </span>
           )}
-        </h2>
-        {yamls.length > 0 && (
-          <div className="yaml-toolbar">
-            <input
-              type="search"
-              value={yamlSearch}
-              onChange={(e) => setYamlSearch(e.target.value)}
-              placeholder="Search player, game, or file…"
-              aria-label="Search YAMLs"
-              className="yaml-search"
-            />
-            {yamlSearch.trim() && (
-              <span className="muted yaml-count">
-                {displayedYamls.length} of {yamls.length}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+          {yamls.length > 0 && (
+            <div className="yaml-toolbar">
+              <input
+                type="search"
+                value={yamlSearch}
+                onChange={(e) => setYamlSearch(e.target.value)}
+                placeholder="Search player, game, or file…"
+                aria-label="Search YAMLs"
+                className="yaml-search"
+              />
+              {yamlSearch.trim() && (
+                <span className="muted yaml-count">
+                  {displayedYamls.length} of {yamls.length}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       {yamls.length === 0 ? (
         <p className="muted">
           {room.status === "open"
@@ -667,6 +674,8 @@ export default function RoomDetail() {
           </table>
         </div>
       )}
+        </div>
+      </details>
 
       {/* Actions */}
       <div className="room-actions">
@@ -823,25 +832,41 @@ export default function RoomDetail() {
 
       {/* Live Tracker - show when there's a local generated seed OR an
           external tracker URL (FEAT-08). Items tab is local-only since the
-          external tracker doesn't expose item-level data. */}
+          external tracker doesn't expose item-level data. Wrapped in a
+          <details> accordion so hosts can collapse the live grid when
+          they want the YAML list above to dominate the viewport. */}
       {id && (room.status === "playing" || (room.status === "generated" && room.seed) || room.tracker_url) && (
-        <>
-          <div className="market-tabs" style={{ marginTop: "1rem" }}>
-            <button
-              className={`btn btn-sm${trackerTab === "progress" ? " btn-primary" : ""}`}
-              onClick={() => setTrackerTab("progress")}
-            >Progress</button>
-            {room.seed && (
+        <details className="collapsible-section" style={{ marginTop: "1.5rem" }} open>
+          <summary>
+            <h2 style={{ marginTop: 0 }}>Live progress</h2>
+          </summary>
+          <div className="accordion-body">
+            <div className="market-tabs" style={{ marginTop: "0.25rem" }}>
               <button
-                className={`btn btn-sm${trackerTab === "items" ? " btn-primary" : ""}`}
-                onClick={() => setTrackerTab("items")}
-              >Items</button>
-            )}
+                className={`btn btn-sm${trackerTab === "progress" ? " btn-primary" : ""}`}
+                onClick={() => setTrackerTab("progress")}
+              >Progress</button>
+              {room.seed && (
+                <button
+                  className={`btn btn-sm${trackerTab === "items" ? " btn-primary" : ""}`}
+                  onClick={() => setTrackerTab("items")}
+                >Items</button>
+              )}
+            </div>
+            {(trackerTab === "items" && room.seed)
+              ? <ItemTracker roomId={id} />
+              : <LiveTracker
+                  roomId={id}
+                  viewerSlotNames={
+                    user
+                      ? yamls
+                          .filter((y) => y.submitter_user_id != null && y.submitter_user_id === user.id)
+                          .map((y) => y.player_name)
+                      : []
+                  }
+                />}
           </div>
-          {(trackerTab === "items" && room.seed)
-            ? <ItemTracker roomId={id} />
-            : <LiveTracker roomId={id} />}
-        </>
+        </details>
       )}
 
       {/* YAML Editor */}

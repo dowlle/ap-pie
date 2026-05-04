@@ -992,18 +992,24 @@ def room_stop(room_id: str):
 
 
 def _status_label_from_int(status: int, checks_done: int) -> tuple[str, bool]:
-    """Map an Archipelago client_status int to (label, goal_completed).
-
-    AP client_status values: 0 unknown, 5 ready, 10 playing, 20 connected,
-    30 goal. We collapse to the four labels LiveTracker already understands.
-    """
+    """Map archipelago.gg's HTML-tracker status text (mapped to ints by
+    `tracker.py:_AP_STATUS_TO_INT`) to one of four labels matching the
+    archipelago.gg tracker page vocabulary: connected / playing /
+    disconnected / goal_completed. The archipelago.gg HTML uses these text
+    values: disconnected (0), ready (5), playing (10), connected (20),
+    goal completed (30). "Ready" folds into "playing" since the user-
+    facing distinction isn't useful in our grid. Status 0 with prior check
+    activity reads as "connected" (the slot was online, its checks remain
+    on record); without activity it reads as "disconnected"."""
     if status >= 30:
-        return "goal", True
+        return "goal_completed", True
+    if status >= 20:
+        return "connected", False
     if status >= 10:
         return "playing", False
     if status >= 5:
-        return "ready", False
-    return ("connected", False) if checks_done > 0 else ("unknown", False)
+        return "playing", False  # "ready" folds into "playing"
+    return ("connected", False) if checks_done > 0 else ("disconnected", False)
 
 
 def _external_tracker_to_room_shape(room: dict, tracker_url: str) -> dict:

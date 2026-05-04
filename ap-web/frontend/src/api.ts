@@ -538,6 +538,10 @@ export interface RoomYaml {
   /** Set on host-side reads when the submitter was logged in. Public reads
    *  never include this - it's host-only by design. */
   submitter_username?: string | null;
+  /** Same trust model as submitter_username: only set on host-side reads.
+   *  Used by RoomDetail to compute LiveTracker's "My slots" filter without
+   *  falling back to the brittle username substring match. */
+  submitter_user_id?: number | null;
   /** FEAT-28 v2: cached `{game_name: version}` map from the YAML's
    *  `requires.game` block. Null when the YAML doesn't declare versions
    *  or hasn't been parsed yet (legacy rows - the auto-pin-all button
@@ -835,10 +839,26 @@ export async function getPublicRoomSlotTracker(
  *  human-readable rendering of the message (item / location / player IDs
  *  resolved via the DataPackage cache). Raw fields kept for clients that
  *  want to render their own structured view (icons per type, etc.). */
+/** One typed segment of a PrintJSON message. The frontend uses these to
+ *  apply Archipelago-standard colours per part: items get colour by
+ *  flags (progression / useful / filler / trap), locations are green,
+ *  players yellow, entrances violet, plain text inherits. May be
+ *  missing on older API responses; renderers should fall back to
+ *  ActivityEvent.text. */
+export type ActivityPart =
+  | { kind: "text"; text: string }
+  | { kind: "item"; text: string; flags: number }
+  | { kind: "location"; text: string }
+  | { kind: "player"; text: string; slot?: number }
+  | { kind: "entrance"; text: string };
+
 export interface ActivityEvent {
   ts: number;
   type: string;
   text: string;
+  /** Typed segments parallel to `text`. Present on responses from
+   *  servers that ship structured parts; absent on older clients. */
+  parts?: ActivityPart[];
   tags: string[];
   team: number | null;
   slot: number | null;
