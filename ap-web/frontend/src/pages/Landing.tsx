@@ -32,9 +32,10 @@ export default function Landing() {
           <div className="landing-pending">
             <strong>You're logged in as {user?.discord_username}.</strong>
             <span>
-              Archipelago Pie is in <em>closed beta</em>, so room creation is gated. Your account
-              is in the approval queue - this page checks every 30 seconds and will let
-              you in automatically once an admin waves you through.
+              Archipelago Pie is in <em>closed beta</em>, so room creation is gated. If you'd
+              like to host rooms, ping <strong>Appie</strong> on Discord and I'll add you
+              manually. You can already drop YAMLs in any room someone has shared with you
+              - that part doesn't need approval. This page auto-refreshes once you're added.
             </span>
           </div>
         ) : (
@@ -47,9 +48,9 @@ export default function Landing() {
               Sign in with Discord
             </button>
             <p className="landing-cta-hint">
-              Archipelago Pie is in <strong>closed beta</strong>. Sign in to request access - you'll
-              be able to browse and submit to existing rooms straight away, and create your
-              own once an admin approves you.
+              Archipelago Pie is in <strong>closed beta</strong>. Sign in to browse and submit
+              to existing rooms straight away. If you'd like to host your own, ping
+              <strong> Appie</strong> on Discord after signing in and I'll add you manually.
             </p>
           </div>
         )}
