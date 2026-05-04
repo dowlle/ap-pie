@@ -150,13 +150,16 @@ function EditableRoomHeader({
             <button className="btn btn-sm btn-danger" onClick={onDelete}>Delete</button>
           </div>
         </div>
-        <div className="detail-meta">
-          <span>Host: {room.host_name}</span>
-          <span>Spoiler: {room.spoiler_level}</span>
-          {room.race_mode && <span>Race mode</span>}
-          {room.seed && <span>Seed: {room.seed}</span>}
-          {deadlineLine}
-        </div>
+        <p className="play-hint detail-meta-line">
+          Hosted by <strong>{room.host_name}</strong>
+          {room.claim_mode && <> · <strong>claim mode</strong></>}
+          {" · "}
+          {(room.yamls?.length ?? 0)} {(room.yamls?.length ?? 0) === 1 ? "slot" : "slots"}
+          {room.max_players > 0 && <> / cap {room.max_players}</>}
+          {room.max_yamls_per_user > 0 && <> · {room.max_yamls_per_user} per Discord user</>}
+          {room.seed && <> · seed <code>{room.seed}</code></>}
+          {deadlineLine && <> · {deadlineLine}</>}
+        </p>
         {room.description && <p className="muted" style={{ marginTop: "0.5rem" }}>{room.description}</p>}
       </div>
     );
@@ -212,12 +215,11 @@ function EditableRoomHeader({
           {err && <span className="error">{err}</span>}
         </div>
       </div>
-      <div className="detail-meta" style={{ marginTop: "0.5rem" }}>
-        <span>Host: {room.host_name}</span>
-        <span>Spoiler: {room.spoiler_level}</span>
-        {room.race_mode && <span>Race mode</span>}
-        {room.seed && <span>Seed: {room.seed}</span>}
-      </div>
+      <p className="play-hint detail-meta-line" style={{ marginTop: "0.5rem" }}>
+        Hosted by <strong>{room.host_name}</strong>
+        {room.claim_mode && <> · <strong>claim mode</strong></>}
+        {room.seed && <> · seed <code>{room.seed}</code></>}
+      </p>
     </div>
   );
 }
@@ -526,6 +528,46 @@ export default function RoomDetail() {
 
       {error && <p className="error">{error}</p>}
 
+      {/* Live progress moved above Submitted YAMLs (2026-05-04) to match
+          the public room layout, which Stef preferred — the live grid is
+          the most engaging surface when there is anything to look at, and
+          the YAML list works fine collapsed underneath when the host is
+          watching a run. Items tab is local-only since the external
+          tracker doesn't expose item-level data. */}
+      {id && (room.status === "playing" || (room.status === "generated" && room.seed) || room.tracker_url) && (
+        <details className="collapsible-section" open>
+          <summary>
+            <h2 style={{ marginTop: 0 }}>Live progress</h2>
+          </summary>
+          <div className="accordion-body">
+            {room.seed && (
+              <div className="market-tabs" style={{ marginTop: "0.25rem" }}>
+                <button
+                  className={`btn btn-sm${trackerTab === "progress" ? " btn-primary" : ""}`}
+                  onClick={() => setTrackerTab("progress")}
+                >Progress</button>
+                <button
+                  className={`btn btn-sm${trackerTab === "items" ? " btn-primary" : ""}`}
+                  onClick={() => setTrackerTab("items")}
+                >Items</button>
+              </div>
+            )}
+            {(trackerTab === "items" && room.seed)
+              ? <ItemTracker roomId={id} />
+              : <LiveTracker
+                  roomId={id}
+                  viewerSlotNames={
+                    user
+                      ? yamls
+                          .filter((y) => y.submitter_user_id != null && y.submitter_user_id === user.id)
+                          .map((y) => y.player_name)
+                      : []
+                  }
+                />}
+          </div>
+        </details>
+      )}
+
       {/* Submitted YAMLs (Players) - wrapped in <details> so hosts can
           collapse the table when they want the live tracker / actions to
           dominate. The drag-and-drop hint and search bar live inside the
@@ -752,14 +794,10 @@ export default function RoomDetail() {
           );
         })()}
 
-        {/* Server-side generation disabled - host downloads the YAML bundle and
-            runs Archipelago themselves. The "Download all YAMLs" button below
-            is the natural next action. */}
-        {!generationOn && room.status === "closed" && (
-          <span className="muted" style={{ fontSize: "0.85rem", alignSelf: "center" }}>
-            Server-side generation is disabled - use <strong>Download all YAMLs</strong> below and generate locally.
-          </span>
-        )}
+        {/* Server-side generation disabled hint dropped — the absence of a
+            Generate button + the presence of "Download all YAMLs" already
+            tells hosts what to do, and a sentence in the action bar adds
+            noise. Restore behind a config flag if hosts get confused. */}
 
         {generationOn && room.status === "generated" && (
           <button
@@ -830,45 +868,6 @@ export default function RoomDetail() {
         )}
       </div>
 
-      {/* Live Tracker - show when there's a local generated seed OR an
-          external tracker URL (FEAT-08). Items tab is local-only since the
-          external tracker doesn't expose item-level data. Wrapped in a
-          <details> accordion so hosts can collapse the live grid when
-          they want the YAML list above to dominate the viewport. */}
-      {id && (room.status === "playing" || (room.status === "generated" && room.seed) || room.tracker_url) && (
-        <details className="collapsible-section" style={{ marginTop: "1.5rem" }} open>
-          <summary>
-            <h2 style={{ marginTop: 0 }}>Live progress</h2>
-          </summary>
-          <div className="accordion-body">
-            <div className="market-tabs" style={{ marginTop: "0.25rem" }}>
-              <button
-                className={`btn btn-sm${trackerTab === "progress" ? " btn-primary" : ""}`}
-                onClick={() => setTrackerTab("progress")}
-              >Progress</button>
-              {room.seed && (
-                <button
-                  className={`btn btn-sm${trackerTab === "items" ? " btn-primary" : ""}`}
-                  onClick={() => setTrackerTab("items")}
-                >Items</button>
-              )}
-            </div>
-            {(trackerTab === "items" && room.seed)
-              ? <ItemTracker roomId={id} />
-              : <LiveTracker
-                  roomId={id}
-                  viewerSlotNames={
-                    user
-                      ? yamls
-                          .filter((y) => y.submitter_user_id != null && y.submitter_user_id === user.id)
-                          .map((y) => y.player_name)
-                      : []
-                  }
-                />}
-          </div>
-        </details>
-      )}
-
       {/* YAML Editor */}
       {showEditor && id && (
         <YamlEditor
@@ -908,20 +907,29 @@ export default function RoomDetail() {
         </details>
       )}
 
-      {/* Activity Feed */}
+      {/* Room activity log: server-side audit trail of host-level events
+          (room created, YAMLs uploaded/claimed/released/deleted, settings
+          changed, etc.). Different from the Live activity panel inside
+          LiveTracker, which streams in-game PrintJSON events. Collapsed
+          by default — useful for forensics when something goes wrong but
+          rarely needed in daily ops. */}
       {room.activity && room.activity.length > 0 && (
-        <div className="detail-section">
-          <h3>Activity</h3>
-          <div className="activity-feed">
-            {room.activity.map((a) => (
-              <div key={a.id} className="activity-item">
-                <span className={`activity-dot activity-${a.event_type}`} />
-                <span className="activity-message">{a.message}</span>
-                <span className="activity-time">{new Date(a.created_at).toLocaleString()}</span>
-              </div>
-            ))}
+        <details className="collapsible-section detail-section">
+          <summary>
+            <h3 style={{ marginTop: 0 }}>Room activity log ({room.activity.length})</h3>
+          </summary>
+          <div className="accordion-body">
+            <div className="activity-feed">
+              {room.activity.map((a) => (
+                <div key={a.id} className="activity-item">
+                  <span className={`activity-dot activity-${a.event_type}`} />
+                  <span className="activity-message">{a.message}</span>
+                  <span className="activity-time">{new Date(a.created_at).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </details>
       )}
     </div>
   );
