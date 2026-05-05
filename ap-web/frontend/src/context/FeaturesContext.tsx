@@ -8,8 +8,8 @@ import { getFeatures, type Features } from "../api";
  * via GET /api/features.
  *
  * If the fetch fails (network error / endpoint missing on a legacy deploy),
- * defaults to ALL ON - backward compat for older Atlas-style deployments
- * that haven't picked up this commit yet.
+ * defaults to ALL ON - backward compat for older deployments that
+ * haven't picked up this commit yet.
  */
 
 const ALL_ON: Features = {

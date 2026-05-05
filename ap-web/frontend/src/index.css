@@ -3364,6 +3364,15 @@ details.collapsible-section > .accordion-body {
   border-top: 1px dashed var(--border);
 }
 
+/* Quick-pick chips for upstream-versions-not-in-index inside the
+   request modal. The chip cluster lives above the version + URL
+   inputs; clicking a chip prefills both. */
+.apworld-candidate-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
 /* ── Mobile pass (FEAT-27 hamburger nav + UX-15 readability) ───────────────
    Everything below the 768px breakpoint. Desktop styles stay untouched.
    The hamburger button is hidden by default and only surfaces on narrow

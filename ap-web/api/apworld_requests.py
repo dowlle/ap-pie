@@ -7,9 +7,9 @@ Two entry points funnel into a single queue:
 
 The Eijebong runtime fuzzer + Claude security audit gates are tracked as
 separate status fields on the request row so each can be ticked off
-independently. Phase 0a captures the workflow only; Phase 1 will add the
-Atlas worker that automates the audit + PR open. No GitHub credentials
-are used in this blueprint - everything is queue-only.
+independently. Phase 0a captures the workflow only; later phases automate the audit
++ PR open via an off-server worker. No GitHub credentials are used in
+this blueprint - everything is queue-only.
 
 Permission model:
   - Submit (room_host): user must be the host of the room AND the apworld
@@ -24,8 +24,15 @@ Permission model:
 
 from __future__ import annotations
 
-from flask import Blueprint, g, jsonify, request
+import json
+import re
+import urllib.error
+import urllib.request
+from pathlib import Path
 
+from flask import Blueprint, current_app, g, jsonify, request
+
+from ap_lib.apworld_index import parse_index_dir
 from auth import requires_admin
 from db import (
     _db_url,
@@ -188,6 +195,151 @@ def request_update_from_maintainer(apworld_name: str):
         source_room_id=None,
     )
     return jsonify(row), 201
+
+
+# ── Index-candidate detection (compare GitHub releases vs index) ─
+
+
+# Owner/repo segments are alnum + hyphen + dot + underscore per GitHub's
+# rules; capping length keeps a malicious / weird TOML from blowing up
+# the API URL.
+_GH_RELEASE_URL_RE = re.compile(
+    r"^https://github\.com/([A-Za-z0-9._-]{1,100})/([A-Za-z0-9._-]{1,100})/releases/download/"
+)
+_GH_API_TIMEOUT = 8.0
+_GH_USER_AGENT = "ap-pie-index-candidate-checker"
+
+
+def _resolve_index_dir() -> Path:
+    return Path(current_app.config.get("AP_INDEX_DIR", ".state/archipelago-index"))
+
+
+def _strip_v_prefix(s: str) -> str:
+    return s[1:] if s.startswith("v") and len(s) > 1 and s[1].isdigit() else s
+
+
+@bp.route("/api/apworlds/<path:apworld_name>/index-candidates")
+def index_candidates(apworld_name: str):
+    """Surface upstream releases that aren't yet in the index.
+
+    Reads the apworld's TOML for its `default_url` template, parses out
+    the GitHub `owner/repo`, fetches `/releases?per_page=20` (unauth GitHub
+    API; rate-limited 60/hr/IP), and diffs the release tags against the
+    versions already declared in the index. The modal uses this to
+    suggest "v3.6.0 is on GitHub but not yet in the index" quick-picks
+    so the host doesn't have to hand-paste version + URL.
+
+    Auth: requires a logged-in user (any session). Read-only, low blast
+    radius - the response only contains data the index TOML itself
+    points at. Bounded request body, bounded URL parsing, hardcoded
+    api.github.com (not a fetch of arbitrary user input).
+    """
+    err = _requires_db()
+    if err: return err
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Authentication required"}), 401
+
+    index_dir = _resolve_index_dir()
+    worlds = parse_index_dir(index_dir)
+    world = next((w for w in worlds if w.name == apworld_name), None)
+    if not world:
+        return jsonify({"error": f"APWorld {apworld_name} is not in the index"}), 404
+
+    indexed_versions = [v.version for v in world.versions]
+    response = {
+        "apworld_name": apworld_name,
+        "display_name": world.display_name,
+        "indexed_versions": indexed_versions,
+        "github_releases": [],
+        "candidates": [],
+        "error": None,
+    }
+
+    if not world.default_url:
+        response["error"] = "This APWorld has no default_url; manual entry only."
+        return jsonify(response)
+
+    repo_match = _GH_RELEASE_URL_RE.match(world.default_url)
+    if not repo_match:
+        response["error"] = "default_url is not a GitHub releases URL; manual entry only."
+        return jsonify(response)
+    owner, repo = repo_match.group(1), repo_match.group(2)
+
+    fn_match = re.search(r"/([^/]+\.apworld)$", world.default_url)
+    expected_filename_template = fn_match.group(1) if fn_match else None
+
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=20"
+    req = urllib.request.Request(api_url, headers={
+        "Accept": "application/vnd.github+json",
+        "User-Agent": _GH_USER_AGENT,
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=_GH_API_TIMEOUT) as resp:
+            payload = json.load(resp)
+    except urllib.error.HTTPError as e:
+        response["error"] = f"GitHub API returned {e.code}; try again later (rate limit is 60/hr per source IP)."
+        return jsonify(response)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+        response["error"] = f"GitHub API call failed: {type(e).__name__}"
+        return jsonify(response)
+
+    if not isinstance(payload, list):
+        response["error"] = "GitHub API returned an unexpected shape."
+        return jsonify(response)
+
+    indexed_set = set(indexed_versions)
+    seen_versions: set[str] = set()
+
+    for release in payload:
+        if not isinstance(release, dict):
+            continue
+        if release.get("draft") or release.get("prerelease"):
+            # We still surface prereleases - many APworlds use beta tags
+            # for actual usable releases. Skip pure drafts only.
+            if release.get("draft"):
+                continue
+        tag = (release.get("tag_name") or "").strip()
+        if not tag:
+            continue
+        version = _strip_v_prefix(tag)
+        if not version or version in seen_versions:
+            continue
+        seen_versions.add(version)
+
+        # Find the matching .apworld asset URL. Prefer an exact filename
+        # match against the default_url template if we extracted one;
+        # otherwise fall back to the first asset ending in .apworld.
+        asset_url = None
+        assets = release.get("assets") or []
+        if expected_filename_template:
+            wanted = expected_filename_template.replace("{{version}}", version)
+            for a in assets:
+                if isinstance(a, dict) and a.get("name") == wanted:
+                    asset_url = a.get("browser_download_url")
+                    break
+        if not asset_url:
+            for a in assets:
+                if isinstance(a, dict) and isinstance(a.get("name"), str) and a["name"].endswith(".apworld"):
+                    asset_url = a.get("browser_download_url")
+                    break
+        if not asset_url:
+            # Last-ditch: synthesise the URL from the default_url template.
+            # This is what the index resolver would do anyway, so it's
+            # consistent with what gets stored.
+            asset_url = world.default_url.replace("{{version}}", version)
+
+        entry = {
+            "tag": tag,
+            "version": version,
+            "asset_url": asset_url,
+            "published_at": release.get("published_at"),
+        }
+        response["github_releases"].append(entry)
+        if version not in indexed_set:
+            response["candidates"].append(entry)
+
+    return jsonify(response)
 
 
 # ── Maintainer-facing read endpoint ─────────────────────────────

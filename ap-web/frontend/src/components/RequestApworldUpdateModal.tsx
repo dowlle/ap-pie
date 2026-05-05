@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  getApworldIndexCandidates,
   requestApworldUpdateFromRoom,
+  type ApworldIndexCandidates,
   type Room,
   type APWorldInfo,
   type RoomAPWorldEntry,
@@ -23,14 +25,15 @@ import {
  *
  * Per FEAT-30 design: this writes a row to the apworld_index_requests
  * queue. No GitHub work happens here - Appie triages the request from
- * /admin/apworld-requests, runs the Eijebong fuzzer + FEAT-19 audit on
- * Atlas, and opens the PR by hand. Atlas-worker automation is Phase 1.
+ * /admin/apworld-requests, runs the Eijebong fuzzer + FEAT-19 audit
+ * off-server, and opens the PR by hand. Worker-side automation is Phase 1.
  */
 export default function RequestApworldUpdateModal({
   room,
   apworlds,
   pins,
   prefillApworldName,
+  prefillDisplayName: _prefillDisplayName,
   prefillVersion,
   onClose,
   onSubmitted,
@@ -39,6 +42,7 @@ export default function RequestApworldUpdateModal({
   apworlds: APWorldInfo[];
   pins: RoomAPWorldEntry[];
   prefillApworldName?: string;
+  prefillDisplayName?: string;
   prefillVersion?: string;
   onClose: () => void;
   onSubmitted: () => void;
@@ -89,6 +93,28 @@ export default function RequestApworldUpdateModal({
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Upstream-version detection: when the user picks an APworld (or it's
+  // prefilled), fetch the GitHub releases for that repo and surface
+  // versions that aren't yet in the index. Quick-pick chips below the
+  // version field prefill the version + URL on click.
+  const [candidatesData, setCandidatesData] = useState<ApworldIndexCandidates | null>(null);
+  const [candidatesLoading, setCandidatesLoading] = useState(false);
+
+  useEffect(() => {
+    if (!apworldName) {
+      setCandidatesData(null);
+      return;
+    }
+    let cancelled = false;
+    setCandidatesLoading(true);
+    setCandidatesData(null);
+    getApworldIndexCandidates(apworldName)
+      .then((data) => { if (!cancelled) setCandidatesData(data); })
+      .catch(() => { if (!cancelled) setCandidatesData(null); })
+      .finally(() => { if (!cancelled) setCandidatesLoading(false); });
+    return () => { cancelled = true; };
+  }, [apworldName]);
 
   useEffect(() => {
     const dlg = dialogRef.current;
@@ -192,6 +218,50 @@ export default function RequestApworldUpdateModal({
               </section>
 
               <section className="settings-section">
+                {candidatesLoading && (
+                  <p className="muted" style={{ fontSize: "0.8rem", margin: "0 0 0.4rem" }}>
+                    Checking the upstream repo for newer releases...
+                  </p>
+                )}
+                {candidatesData && (
+                  <div className="apworld-candidates" style={{ marginBottom: "0.6rem" }}>
+                    {candidatesData.error ? (
+                      <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>
+                        Upstream check skipped: {candidatesData.error}
+                      </p>
+                    ) : candidatesData.candidates.length === 0 ? (
+                      <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>
+                        Upstream check: every release on the source repo is already in the index
+                        ({candidatesData.indexed_versions.length} indexed,{" "}
+                        {candidatesData.github_releases.length} on GitHub).
+                      </p>
+                    ) : (
+                      <>
+                        <p className="muted" style={{ fontSize: "0.78rem", margin: "0 0 0.35rem" }}>
+                          Upstream releases not yet in the index - click one to prefill:
+                        </p>
+                        <div className="apworld-candidate-chips">
+                          {candidatesData.candidates.map((c) => (
+                            <button
+                              key={c.version}
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => {
+                                setRequestedVersion(c.version);
+                                setSourceUrl(c.asset_url);
+                              }}
+                              disabled={submitting}
+                              title={c.published_at ? `Released ${new Date(c.published_at).toLocaleDateString()}` : undefined}
+                            >
+                              v{c.version}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <label className="room-edit-row">
                   <span className="room-edit-label">New version</span>
                   <input
@@ -215,7 +285,7 @@ export default function RequestApworldUpdateModal({
                   />
                 </label>
                 <p className="muted" style={{ fontSize: "0.78rem" }}>
-                  HTTPS link to the .apworld file. The fuzzer + audit run against this URL on Atlas.
+                  HTTPS link to the .apworld file. The fuzzer + audit run against this URL before merge.
                 </p>
               </section>
 

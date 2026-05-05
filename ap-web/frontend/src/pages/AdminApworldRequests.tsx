@@ -12,14 +12,14 @@ import {
  * requests here. The page is intentionally task-shaped: each row carries
  * the two gates (Eijebong fuzzer + Claude/FEAT-19 audit) as separate
  * editable fields plus terminal buttons for Approve / Reject / Mark
- * merged. Phase 1 will fold the audit + PR-open steps into Atlas
- * automation, but the data model stays the same so this UI keeps
+ * merged. Phase 1 will fold the audit + PR-open steps into off-server
+ * worker automation, but the data model stays the same so this UI keeps
  * working as a fallback / observer.
  *
- * No Atlas-VPS plumbing in Phase 0a: the admin runs the fuzzer + audit
- * by hand on Atlas (`audit.py file <url>` for the Claude audit, the
- * apworld's CI workflow for Eijebong's fuzzer) and pastes the verdict
- * here. PR open + merge happen on github.com directly.
+ * Phase 0a is workflow-only: the admin runs the fuzzer + audit by hand
+ * (`audit.py file <url>` for the Claude audit, the apworld's CI workflow
+ * for Eijebong's fuzzer) and pastes the verdict here. PR open + merge
+ * happen on github.com directly.
  */
 export default function AdminApworldRequests() {
   const [requests, setRequests] = useState<ApworldIndexRequest[]>([]);
@@ -50,7 +50,7 @@ export default function AdminApworldRequests() {
         Hosts and maintainers propose new APWorld versions for{" "}
         <code>dowlle/Archipelago-index</code> here. Two gates must pass before merge:
         the Eijebong runtime fuzzer (~100% generation success) and the FEAT-19 Claude
-        security audit. Run both on Atlas, paste verdicts below, then approve and open the PR.
+        security audit. Run both off-server, paste verdicts below, then approve and open the PR.
       </p>
 
       <div className="filter-bar" style={{ marginTop: "1rem" }}>
@@ -108,7 +108,7 @@ function RequestCard({
   };
 
   const onAudit = async (verdict: ApworldGateVerdict) => {
-    const url = prompt("Audit report URL (paste the Atlas report path or pastebin URL, leave blank to skip):", req.audit_url ?? "") ?? req.audit_url ?? "";
+    const url = prompt("Audit report URL (paste a link or path, leave blank to skip):", req.audit_url ?? "") ?? req.audit_url ?? "";
     await patch({
       audit_status: verdict,
       audit_url: url || null,

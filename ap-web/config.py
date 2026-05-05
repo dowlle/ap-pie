@@ -11,9 +11,9 @@ def _bool_env(name: str, default: bool) -> bool:
 
 # ── Feature flags ────────────────────────────────────────────────
 # Each flag gates a coherent surface (UI + endpoints). Defaults are ON for
-# backward compat - Atlas (and any other deploy that doesn't set the env)
-# keeps the full feature set. New deploys can set FEATURE_<NAME>=false in
-# their .env to ship a scoped-down build (the YAML-collector MVP for ap-pie.com).
+# backward compat - older deploys that don't set the env keep the full
+# feature set. New deploys can set FEATURE_<NAME>=false in their .env to
+# ship a scoped-down build (the YAML-collector MVP for ap-pie.com).
 #
 # To add a new flag:
 #   1. Append to this dict with a default

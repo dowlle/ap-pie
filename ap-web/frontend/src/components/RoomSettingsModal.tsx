@@ -31,10 +31,21 @@ export default function RoomSettingsModal({
   room,
   onClose,
   onUpdate,
+  onRequestApworldUpdate,
 }: {
   room: Room;
   onClose: () => void;
   onUpdate: () => void;
+  // FEAT-30 Phase 0a: bubble per-row "Request update" clicks up to
+  // the parent so the parent can swap this modal for the request modal.
+  // Callback receives the row's apworld_name + display_name + the
+  // currently-pinned version (used as a "suggest a newer version than
+  // this" hint in the request modal).
+  onRequestApworldUpdate: (payload: {
+    apworldName: string;
+    displayName: string;
+    suggestedVersion?: string;
+  }) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [tab, setTab] = useState<TabKey>("general");
@@ -114,7 +125,7 @@ export default function RoomSettingsModal({
         {tab === "apworlds" && (
           <>
             <APWorldsPolicySection room={room} onUpdate={onUpdate} />
-            <APWorldsSection room={room} />
+            <APWorldsSection room={room} onRequestApworldUpdate={onRequestApworldUpdate} />
           </>
         )}
         {tab === "tracker" && (
@@ -488,7 +499,17 @@ function TrackerSlotOverrideSection({ room, onUpdate }: { room: Room; onUpdate: 
   );
 }
 
-function APWorldsSection({ room }: { room: Room }) {
+function APWorldsSection({
+  room,
+  onRequestApworldUpdate,
+}: {
+  room: Room;
+  onRequestApworldUpdate: (payload: {
+    apworldName: string;
+    displayName: string;
+    suggestedVersion?: string;
+  }) => void;
+}) {
   // FEAT-21: pin a specific APWorld version per game in the room. Auto-derived
   // from the YAMLs uploaded so far - one row per distinct game string. The
   // public room page shows pinned entries to players as install links.
@@ -650,6 +671,18 @@ function APWorldsSection({ room }: { room: Room }) {
                   )}
                   {e.home && (
                     <a className="btn btn-sm" href={e.home} target="_blank" rel="noreferrer">Source</a>
+                  )}
+                  {e.apworld_name && (
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => onRequestApworldUpdate({
+                        apworldName: e.apworld_name!,
+                        displayName: e.display_name,
+                        suggestedVersion: e.selected_version ?? undefined,
+                      })}
+                      title="Propose a new version of this APWorld for the index. Fuzzer + audit run before merge."
+                    >APWorld update</button>
                   )}
                   {savedFor === e.apworld_name && <span className="settings-saved">saved</span>}
                 </div>

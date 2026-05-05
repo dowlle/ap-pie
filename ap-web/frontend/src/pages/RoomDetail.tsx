@@ -71,14 +71,12 @@ function EditableRoomHeader({
   onUpdate,
   onDelete,
   onOpenSettings,
-  onRequestApworldUpdate,
   shareControl,
 }: {
   room: Room;
   onUpdate: () => void;
   onDelete: () => void;
   onOpenSettings: () => void;
-  onRequestApworldUpdate: () => void;
   shareControl: React.ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
@@ -152,11 +150,6 @@ function EditableRoomHeader({
             {shareControl}
             <button className="btn btn-sm" onClick={startEdit}>Edit</button>
             <button className="btn btn-sm" onClick={onOpenSettings}>Settings</button>
-            <button
-              className="btn btn-sm"
-              onClick={onRequestApworldUpdate}
-              title="Propose a new APWorld version to be added to dowlle/Archipelago-index. Requires a fuzzer + audit pass before merge."
-            >Request APWorld update</button>
             <button className="btn btn-sm btn-danger" onClick={onDelete}>Delete</button>
           </div>
         </div>
@@ -278,10 +271,16 @@ export default function RoomDetail() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  // FEAT-30 Phase 0a: room-host APWorld update request modal. Loaded
-  // lazily - the apworld index + room pins are fetched only when the
-  // host actually opens the modal (cheap fallback on later opens).
+  // FEAT-30 Phase 0a: room-host APWorld update request modal. Opened
+  // from RoomSettingsModal's "APWorlds for this room" section; the
+  // section passes up the row-specific prefill so the modal lands
+  // pre-pointed at the right APWorld.
   const [showApworldRequest, setShowApworldRequest] = useState(false);
+  const [apworldRequestPrefill, setApworldRequestPrefill] = useState<{
+    apworldName: string;
+    displayName: string;
+    suggestedVersion?: string;
+  } | null>(null);
   const [apworldList, setApworldList] = useState<APWorldInfo[] | null>(null);
   const [apworldPins, setApworldPins] = useState<RoomAPWorldEntry[] | null>(null);
   const [genLog, setGenLog] = useState("");
@@ -559,21 +558,17 @@ export default function RoomDetail() {
         onUpdate={refresh}
         onDelete={handleDelete}
         onOpenSettings={() => setShowSettings(true)}
-        onRequestApworldUpdate={() => {
-          // Lazy-load index + per-room pins on first open so the page
-          // doesn't pay for them when the host never uses this flow.
-          if (apworldList === null) getAPWorlds().then(setApworldList).catch(() => setApworldList([]));
-          if (apworldPins === null && id) getRoomAPWorlds(id).then(setApworldPins).catch(() => setApworldPins([]));
-          setShowApworldRequest(true);
-        }}
         shareControl={<SharePublicRoomButton roomId={room.id} />}
       />
 
-      {showApworldRequest && room && (
+      {showApworldRequest && room && apworldRequestPrefill && (
         <RequestApworldUpdateModal
           room={room}
           apworlds={apworldList ?? []}
           pins={apworldPins ?? []}
+          prefillApworldName={apworldRequestPrefill.apworldName}
+          prefillDisplayName={apworldRequestPrefill.displayName}
+          prefillVersion={apworldRequestPrefill.suggestedVersion}
           onClose={() => setShowApworldRequest(false)}
           onSubmitted={() => {
             setShowApworldRequest(false);
@@ -590,6 +585,16 @@ export default function RoomDetail() {
           room={room}
           onClose={() => setShowSettings(false)}
           onUpdate={refresh}
+          onRequestApworldUpdate={(payload) => {
+            // Lazy-load the global index list on first open so the page
+            // doesn't pay for it when the host never uses this flow. The
+            // per-room pins are already loaded in the Settings modal.
+            if (apworldList === null) getAPWorlds().then(setApworldList).catch(() => setApworldList([]));
+            if (apworldPins === null && id) getRoomAPWorlds(id).then(setApworldPins).catch(() => setApworldPins([]));
+            setApworldRequestPrefill(payload);
+            setShowSettings(false);
+            setShowApworldRequest(true);
+          }}
         />
       )}
 

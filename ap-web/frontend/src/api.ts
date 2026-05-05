@@ -1323,6 +1323,30 @@ export async function getMaintainedApworlds(): Promise<string[]> {
   return fetchJson(`${BASE}/apworlds/maintained`);
 }
 
+export interface ApworldGithubRelease {
+  tag: string;
+  version: string;
+  asset_url: string;
+  published_at: string | null;
+}
+
+export interface ApworldIndexCandidates {
+  apworld_name: string;
+  display_name: string;
+  indexed_versions: string[];
+  github_releases: ApworldGithubRelease[];
+  candidates: ApworldGithubRelease[];
+  error: string | null;
+}
+
+export async function getApworldIndexCandidates(
+  apworldName: string,
+): Promise<ApworldIndexCandidates> {
+  return fetchJson(
+    `${BASE}/apworlds/${encodeURIComponent(apworldName)}/index-candidates`,
+  );
+}
+
 export async function adminListApworldRequests(status?: string): Promise<ApworldIndexRequest[]> {
   const q = status ? `?status=${encodeURIComponent(status)}` : "";
   return fetchJson(`${BASE}/admin/apworld-requests${q}`);
