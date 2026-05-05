@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import secrets
 import threading
 
@@ -253,6 +254,14 @@ def init_db(db_url: str) -> None:
 
 
 def _get_conn():
+    global _db_url
+    # Self-heal if init_db() failed at boot (e.g., postgres not yet reachable
+    # after a host reboot raced ap-web ahead of the db container). Without this
+    # _db_url stays None and psycopg2.connect(None) silently falls back to a
+    # local Unix socket, producing a misleading "No such file or directory"
+    # error long after postgres recovers.
+    if _db_url is None:
+        _db_url = os.environ.get("DATABASE_URL")
     if not hasattr(_local, "conn") or _local.conn is None or _local.conn.closed:
         _local.conn = psycopg2.connect(_db_url)
     return _local.conn
