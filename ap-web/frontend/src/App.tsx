@@ -12,6 +12,7 @@ import RoomDetail from "./pages/RoomDetail";
 import RoomPublic from "./pages/RoomPublic";
 import TrackerPage from "./pages/Tracker";
 import Admin from "./pages/Admin";
+import AdminApworldRequests from "./pages/AdminApworldRequests";
 import Play from "./pages/Play";
 import Landing from "./pages/Landing";
 import PublicLayout from "./components/PublicLayout";
@@ -212,6 +213,7 @@ function AppRoutes() {
       <Route path="/market" element={<AdminShell><MarketLanding /></AdminShell>} />
       <Route path="/market/:trackerId" element={<AdminShell><MarketTracker /></AdminShell>} />
       <Route path="/admin" element={<AdminShell><RequireAdmin><Admin /></RequireAdmin></AdminShell>} />
+      <Route path="/admin/apworld-requests" element={<AdminShell><RequireAdmin><AdminApworldRequests /></RequireAdmin></AdminShell>} />
       <Route path="/" element={<AdminShell><HomeView /></AdminShell>} />
       <Route path="/rooms" element={<AdminShell><RequireApproval><Rooms /></RequireApproval></AdminShell>} />
       <Route path="/rooms/:id" element={<AdminShell><RequireApproval><RoomDetail /></RequireApproval></AdminShell>} />

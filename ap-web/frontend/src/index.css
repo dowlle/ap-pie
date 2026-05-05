@@ -3298,6 +3298,72 @@ details.collapsible-section > .accordion-body {
 }
 .markdown-edit-preview .markdown-body { color: var(--text); }
 
+/* ── FEAT-30 Phase 0a: APWorld request admin queue ────────────────────────
+   Card list on /admin/apworld-requests + the gate verdict pills. The
+   modal itself reuses the .settings-modal-* family so no new chrome
+   needed there. */
+.apworld-request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.apworld-request-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+}
+.apworld-request-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.apworld-request-body { font-size: 0.88rem; }
+.apworld-request-body p { margin: 0.3rem 0; }
+.apworld-request-body code { font-family: var(--font-mono); font-size: 0.85em; }
+.apworld-request-gates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0.5rem 0 0.4rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.apworld-request-gates > div { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+.apworld-request-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-left: 0.4rem;
+}
+.gate-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+}
+.gate-pass { background: rgba(80, 180, 100, 0.15); color: #6cd084; border-color: rgba(80, 180, 100, 0.4); }
+.gate-fail { background: rgba(220, 80, 80, 0.18); color: #f08080; border-color: rgba(220, 80, 80, 0.45); }
+.gate-needs_review { background: rgba(255, 155, 60, 0.18); color: #ff9b3d; border-color: rgba(255, 155, 60, 0.45); }
+.gate-none { font-style: italic; }
+.apworld-request-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--border);
+}
+
 /* ── Mobile pass (FEAT-27 hamburger nav + UX-15 readability) ───────────────
    Everything below the 768px breakpoint. Desktop styles stay untouched.
    The hamburger button is hidden by default and only surfaces on narrow

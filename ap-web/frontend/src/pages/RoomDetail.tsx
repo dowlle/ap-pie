@@ -24,9 +24,10 @@ import DropOverlay from "../components/DropOverlay";
 import YamlModal from "../components/YamlModal";
 import CopyButton from "../components/CopyButton";
 import RoomSettingsModal from "../components/RoomSettingsModal";
+import RequestApworldUpdateModal from "../components/RequestApworldUpdateModal";
 import GameCell from "../components/GameCell";
 import { useAPWorldLookup } from "../lib/apworldLookup";
-import { getRoomAPWorlds } from "../api";
+import { getAPWorlds, getRoomAPWorlds, type APWorldInfo, type RoomAPWorldEntry } from "../api";
 import { useFileDropZone } from "../lib/useFileDropZone";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
@@ -70,12 +71,14 @@ function EditableRoomHeader({
   onUpdate,
   onDelete,
   onOpenSettings,
+  onRequestApworldUpdate,
   shareControl,
 }: {
   room: Room;
   onUpdate: () => void;
   onDelete: () => void;
   onOpenSettings: () => void;
+  onRequestApworldUpdate: () => void;
   shareControl: React.ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
@@ -149,6 +152,11 @@ function EditableRoomHeader({
             {shareControl}
             <button className="btn btn-sm" onClick={startEdit}>Edit</button>
             <button className="btn btn-sm" onClick={onOpenSettings}>Settings</button>
+            <button
+              className="btn btn-sm"
+              onClick={onRequestApworldUpdate}
+              title="Propose a new APWorld version to be added to dowlle/Archipelago-index. Requires a fuzzer + audit pass before merge."
+            >Request APWorld update</button>
             <button className="btn btn-sm btn-danger" onClick={onDelete}>Delete</button>
           </div>
         </div>
@@ -270,6 +278,12 @@ export default function RoomDetail() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  // FEAT-30 Phase 0a: room-host APWorld update request modal. Loaded
+  // lazily - the apworld index + room pins are fetched only when the
+  // host actually opens the modal (cheap fallback on later opens).
+  const [showApworldRequest, setShowApworldRequest] = useState(false);
+  const [apworldList, setApworldList] = useState<APWorldInfo[] | null>(null);
+  const [apworldPins, setApworldPins] = useState<RoomAPWorldEntry[] | null>(null);
   const [genLog, setGenLog] = useState("");
   const [genJob, setGenJob] = useState<GenerationJob | null>(null);
   const [viewingYamlId, setViewingYamlId] = useState<number | null>(null);
@@ -545,8 +559,31 @@ export default function RoomDetail() {
         onUpdate={refresh}
         onDelete={handleDelete}
         onOpenSettings={() => setShowSettings(true)}
+        onRequestApworldUpdate={() => {
+          // Lazy-load index + per-room pins on first open so the page
+          // doesn't pay for them when the host never uses this flow.
+          if (apworldList === null) getAPWorlds().then(setApworldList).catch(() => setApworldList([]));
+          if (apworldPins === null && id) getRoomAPWorlds(id).then(setApworldPins).catch(() => setApworldPins([]));
+          setShowApworldRequest(true);
+        }}
         shareControl={<SharePublicRoomButton roomId={room.id} />}
       />
+
+      {showApworldRequest && room && (
+        <RequestApworldUpdateModal
+          room={room}
+          apworlds={apworldList ?? []}
+          pins={apworldPins ?? []}
+          onClose={() => setShowApworldRequest(false)}
+          onSubmitted={() => {
+            setShowApworldRequest(false);
+            // Soft toast via window.alert is fine for Phase 0a; the
+            // request lands in the admin queue and the host doesn't
+            // need an in-app notification surface yet.
+            alert("APWorld update request submitted. Appie will review on /admin/apworld-requests.");
+          }}
+        />
+      )}
 
       {showSettings && (
         <RoomSettingsModal

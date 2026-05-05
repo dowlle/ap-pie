@@ -177,6 +177,7 @@ def create_app() -> Flask:
     from api.server import bp as server_bp
     from api.upload import bp as upload_bp
     from api.apworlds import bp as apworlds_bp
+    from api.apworld_requests import bp as apworld_requests_bp
     from api.market import bp as market_bp
     from api.rooms import bp as rooms_bp
     from api.auth_routes import bp as auth_bp
@@ -193,6 +194,7 @@ def create_app() -> Flask:
     app.register_blueprint(server_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(apworlds_bp)
+    app.register_blueprint(apworld_requests_bp)
     app.register_blueprint(market_bp)
     app.register_blueprint(rooms_bp)
     app.register_blueprint(auth_bp)

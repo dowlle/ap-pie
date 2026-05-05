@@ -1234,3 +1234,131 @@ export function connectDownloadUrl(seed: string): string {
 export function connectPatchDownloadUrl(seed: string, filename: string): string {
   return `${BASE}/connect/${encodeURIComponent(seed)}/patches/${encodeURIComponent(filename)}`;
 }
+
+
+// ── FEAT-30 Phase 0a: APWorld index request flow ─────────────────
+
+export type ApworldRequestStatus =
+  | "pending" | "audited" | "approved" | "pr_opened" | "merged" | "rejected" | "failed";
+
+export type ApworldGateVerdict = "pass" | "needs_review" | "fail" | null;
+export type ApworldFuzzerVerdict = "pass" | "fail" | null;
+
+export interface ApworldIndexRequest {
+  id: number;
+  apworld_name: string;
+  display_name: string;
+  requested_version: string;
+  source_url: string;
+  notes: string | null;
+  requester_user_id: number;
+  requester_username?: string | null;
+  requester_role: "room_host" | "maintainer";
+  source_room_id: string | null;
+  status: ApworldRequestStatus;
+  fuzzer_status: ApworldFuzzerVerdict;
+  fuzzer_url: string | null;
+  audit_status: ApworldGateVerdict;
+  audit_url: string | null;
+  pr_url: string | null;
+  reject_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+}
+
+export interface ApworldMaintainer {
+  apworld_name: string;
+  discord_user_id: string;
+  discord_username?: string | null;
+  user_id?: number | null;
+  granted_by: number;
+  granted_at: string;
+  notes: string | null;
+}
+
+export interface RequestUpdatePayload {
+  display_name: string;
+  requested_version: string;
+  source_url: string;
+  notes?: string;
+}
+
+async function _send<T>(url: string, init: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    let msg = `${res.status} ${res.statusText}`;
+    try {
+      const body = await res.json();
+      if (body?.error) msg = body.error;
+    } catch { /* non-JSON error body, fall through */ }
+    throw new Error(msg);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+export async function requestApworldUpdateFromRoom(
+  roomId: string,
+  apworldName: string,
+  payload: RequestUpdatePayload,
+): Promise<ApworldIndexRequest> {
+  return _send(
+    `${BASE}/rooms/${encodeURIComponent(roomId)}/apworlds/${encodeURIComponent(apworldName)}/request-update`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+  );
+}
+
+export async function requestApworldUpdateAsMaintainer(
+  apworldName: string,
+  payload: RequestUpdatePayload,
+): Promise<ApworldIndexRequest> {
+  return _send(
+    `${BASE}/apworlds/${encodeURIComponent(apworldName)}/request-update`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+  );
+}
+
+export async function getMaintainedApworlds(): Promise<string[]> {
+  return fetchJson(`${BASE}/apworlds/maintained`);
+}
+
+export async function adminListApworldRequests(status?: string): Promise<ApworldIndexRequest[]> {
+  const q = status ? `?status=${encodeURIComponent(status)}` : "";
+  return fetchJson(`${BASE}/admin/apworld-requests${q}`);
+}
+
+export async function adminUpdateApworldRequest(
+  requestId: number,
+  patch: Partial<Pick<ApworldIndexRequest,
+    "status" | "fuzzer_status" | "fuzzer_url" | "audit_status" | "audit_url" | "pr_url" | "reject_reason">>,
+): Promise<ApworldIndexRequest> {
+  return _send(
+    `${BASE}/admin/apworld-requests/${requestId}`,
+    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) },
+  );
+}
+
+export async function adminListApworldMaintainers(apworldName?: string): Promise<ApworldMaintainer[]> {
+  const q = apworldName ? `?apworld_name=${encodeURIComponent(apworldName)}` : "";
+  return fetchJson(`${BASE}/admin/apworld-maintainers${q}`);
+}
+
+export async function adminAddApworldMaintainer(
+  apworldName: string, discordUserId: string, notes?: string,
+): Promise<ApworldMaintainer> {
+  return _send(`${BASE}/admin/apworld-maintainers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ apworld_name: apworldName, discord_user_id: discordUserId, notes }),
+  });
+}
+
+export async function adminRemoveApworldMaintainer(
+  apworldName: string, discordUserId: string,
+): Promise<void> {
+  await _send<void>(
+    `${BASE}/admin/apworld-maintainers/${encodeURIComponent(apworldName)}/${encodeURIComponent(discordUserId)}`,
+    { method: "DELETE" },
+  );
+}

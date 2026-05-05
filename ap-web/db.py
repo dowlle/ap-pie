@@ -108,6 +108,52 @@ CREATE TABLE IF NOT EXISTS room_yamls (
 
 CREATE INDEX IF NOT EXISTS idx_room_yamls_room ON room_yamls(room_id);
 
+-- FEAT-30 Phase 0a: structured request flow for proposing new APWorld
+-- versions to dowlle/Archipelago-index. Two entry points (room hosts +
+-- linked maintainers) funnel into a single queue that Stef triages.
+-- The Eijebong fuzzer + Claude security audit gates are tracked as
+-- separate status fields so each can be ticked off independently.
+CREATE TABLE IF NOT EXISTS apworld_maintainers (
+    apworld_name    TEXT NOT NULL,
+    discord_user_id TEXT NOT NULL,
+    granted_by      INTEGER NOT NULL REFERENCES users(id),
+    granted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    notes           TEXT,
+    PRIMARY KEY (apworld_name, discord_user_id)
+);
+
+CREATE TABLE IF NOT EXISTS apworld_index_requests (
+    id                SERIAL PRIMARY KEY,
+    apworld_name      TEXT NOT NULL,
+    display_name      TEXT NOT NULL,
+    requested_version TEXT NOT NULL,
+    source_url        TEXT NOT NULL,
+    notes             TEXT,
+    requester_user_id INTEGER NOT NULL REFERENCES users(id),
+    requester_role    TEXT NOT NULL CHECK (requester_role IN ('room_host', 'maintainer')),
+    source_room_id    TEXT REFERENCES rooms(id) ON DELETE SET NULL,
+    status            TEXT NOT NULL DEFAULT 'pending'
+                        CHECK (status IN ('pending', 'audited', 'approved', 'pr_opened', 'merged', 'rejected', 'failed')),
+    fuzzer_status     TEXT CHECK (fuzzer_status IN ('pass', 'fail') OR fuzzer_status IS NULL),
+    fuzzer_url        TEXT,
+    audit_status      TEXT CHECK (audit_status IN ('pass', 'needs_review', 'fail') OR audit_status IS NULL),
+    audit_url         TEXT,
+    pr_url            TEXT,
+    reject_reason     TEXT,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    resolved_at       TIMESTAMPTZ,
+    -- SEC-21-style length caps so a hostile submitter can't bloat the queue.
+    CONSTRAINT apworld_request_url_length CHECK (length(source_url) <= 1024),
+    CONSTRAINT apworld_request_version_length CHECK (length(requested_version) <= 64),
+    CONSTRAINT apworld_request_notes_length CHECK (length(COALESCE(notes, '')) <= 2000),
+    CONSTRAINT apworld_request_apworld_length CHECK (length(apworld_name) <= 128)
+);
+
+CREATE INDEX IF NOT EXISTS idx_apworld_requests_status ON apworld_index_requests(status);
+CREATE INDEX IF NOT EXISTS idx_apworld_requests_requester ON apworld_index_requests(requester_user_id);
+CREATE INDEX IF NOT EXISTS idx_apworld_maintainers_user ON apworld_maintainers(discord_user_id);
+
 CREATE TABLE IF NOT EXISTS room_activity (
     id SERIAL PRIMARY KEY,
     room_id TEXT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
@@ -897,6 +943,189 @@ def clear_room_apworld(room_id: str, apworld_name: str) -> bool:
         cur.execute(
             "DELETE FROM room_apworlds WHERE room_id = %s AND apworld_name = %s",
             (room_id, apworld_name),
+        )
+        deleted = cur.rowcount > 0
+    conn.commit()
+    return deleted
+
+
+# ── APWorld index requests + maintainers (FEAT-30 Phase 0a) ──────
+
+
+def create_apworld_index_request(
+    *,
+    apworld_name: str,
+    display_name: str,
+    requested_version: str,
+    source_url: str,
+    notes: str | None,
+    requester_user_id: int,
+    requester_role: str,
+    source_room_id: str | None,
+) -> dict:
+    """Insert a new request and return the row. Caller is responsible for
+    permission checks (room host vs maintainer). Status starts at 'pending'."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO apworld_index_requests (
+                 apworld_name, display_name, requested_version, source_url,
+                 notes, requester_user_id, requester_role, source_room_id
+               ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+               RETURNING *""",
+            (
+                apworld_name, display_name, requested_version, source_url,
+                notes, requester_user_id, requester_role, source_room_id,
+            ),
+        )
+        row = _dictrow(cur)[0]
+    conn.commit()
+    return _serialize(row)
+
+
+def list_apworld_index_requests(status: str | None = None) -> list[dict]:
+    """List all requests joined with the requester's discord username for
+    the admin queue UI. Newest first."""
+    conn = _get_conn()
+    where = ""
+    args: tuple = ()
+    if status:
+        where = "WHERE r.status = %s"
+        args = (status,)
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""SELECT r.*, u.discord_username AS requester_username
+                FROM apworld_index_requests r
+                LEFT JOIN users u ON u.id = r.requester_user_id
+                {where}
+                ORDER BY r.created_at DESC""",
+            args,
+        )
+        rows = _dictrow(cur)
+    return [_serialize(r) for r in rows]
+
+
+def get_apworld_index_request(request_id: int) -> dict:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT * FROM apworld_index_requests WHERE id = %s",
+            (request_id,),
+        )
+        rows = _dictrow(cur)
+    return _serialize(rows[0]) if rows else {}
+
+
+def update_apworld_index_request(request_id: int, **kwargs) -> dict:
+    """Update mutable fields on a request. Same allowlist pattern as
+    update_room (SEC-21): user-supplied keys filtered against a hardcoded
+    set before being interpolated into the SET clause; values still go
+    through %s. Touches updated_at unconditionally; sets resolved_at when
+    transitioning to a terminal status (merged/rejected/failed)."""
+    allowed = {
+        "status", "fuzzer_status", "fuzzer_url",
+        "audit_status", "audit_url", "pr_url", "reject_reason",
+    }
+    updates = {k: v for k, v in kwargs.items() if k in allowed}
+    if not updates:
+        return get_apworld_index_request(request_id)
+
+    set_parts = [f"{k} = %s" for k in updates]
+    set_parts.append("updated_at = NOW()")
+    if updates.get("status") in ("merged", "rejected", "failed"):
+        set_parts.append("resolved_at = NOW()")
+    set_clause = ", ".join(set_parts)
+    values = list(updates.values()) + [request_id]
+
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            f"UPDATE apworld_index_requests SET {set_clause} WHERE id = %s RETURNING *",
+            values,
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    return _serialize(rows[0]) if rows else {}
+
+
+def list_apworld_maintainers(apworld_name: str | None = None) -> list[dict]:
+    """List maintainer assignments. If apworld_name is given, scoped to one
+    APWorld; otherwise returns all (admin admin UI use)."""
+    conn = _get_conn()
+    where = ""
+    args: tuple = ()
+    if apworld_name:
+        where = "WHERE m.apworld_name = %s"
+        args = (apworld_name,)
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""SELECT m.*, u.discord_username, u.id AS user_id
+                FROM apworld_maintainers m
+                LEFT JOIN users u ON u.discord_id = m.discord_user_id
+                {where}
+                ORDER BY m.apworld_name, m.granted_at""",
+            args,
+        )
+        rows = _dictrow(cur)
+    return [_serialize(r) for r in rows]
+
+
+def list_maintained_apworlds(discord_user_id: str) -> list[str]:
+    """Return the list of apworld_name strings the given Discord user
+    maintains. Used to gate the maintainer-side submit endpoint and to
+    populate the 'My APWorlds' nav surface."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT apworld_name FROM apworld_maintainers WHERE discord_user_id = %s ORDER BY apworld_name",
+            (discord_user_id,),
+        )
+        return [r[0] for r in cur.fetchall()]
+
+
+def is_apworld_maintainer(discord_user_id: str, apworld_name: str) -> bool:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM apworld_maintainers WHERE discord_user_id = %s AND apworld_name = %s",
+            (discord_user_id, apworld_name),
+        )
+        return cur.fetchone() is not None
+
+
+def add_apworld_maintainer(apworld_name: str, discord_user_id: str,
+                           granted_by: int, notes: str | None = None) -> dict:
+    """Idempotent: if the (apworld, user) pair already exists, returns the
+    existing row instead of erroring (Postgres ON CONFLICT DO NOTHING)."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO apworld_maintainers (apworld_name, discord_user_id, granted_by, notes)
+               VALUES (%s, %s, %s, %s)
+               ON CONFLICT (apworld_name, discord_user_id) DO NOTHING
+               RETURNING *""",
+            (apworld_name, discord_user_id, granted_by, notes),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    if rows:
+        return _serialize(rows[0])
+    # Existed already - fetch + return current row
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT * FROM apworld_maintainers WHERE apworld_name = %s AND discord_user_id = %s",
+            (apworld_name, discord_user_id),
+        )
+        rows = _dictrow(cur)
+    return _serialize(rows[0]) if rows else {}
+
+
+def remove_apworld_maintainer(apworld_name: str, discord_user_id: str) -> bool:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM apworld_maintainers WHERE apworld_name = %s AND discord_user_id = %s",
+            (apworld_name, discord_user_id),
         )
         deleted = cur.rowcount > 0
     conn.commit()
