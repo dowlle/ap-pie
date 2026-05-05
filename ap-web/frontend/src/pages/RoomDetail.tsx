@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import MarkdownText from "../components/MarkdownText";
 import {
   getRoom, uploadYaml, removeYaml, closeRoom, reopenRoom, generateRoom, launchRoom, getRoomPatches, getRoomSpoiler, testGenerateRoom,
   stopRoom, deleteRoom, updateRoom, updateRoomYaml, setYamlValidation,
@@ -80,6 +81,7 @@ function EditableRoomHeader({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(room.name);
   const [description, setDescription] = useState(room.description ?? "");
+  const [descPreview, setDescPreview] = useState(false);
   const [deadlineLocal, setDeadlineLocal] = useState(isoToLocalInputValue(room.submit_deadline));
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -160,7 +162,11 @@ function EditableRoomHeader({
           {room.seed && <> · seed <code>{room.seed}</code></>}
           {deadlineLine && <> · {deadlineLine}</>}
         </p>
-        {room.description && <p className="muted" style={{ marginTop: "0.5rem" }}>{room.description}</p>}
+        {room.description && (
+          <div className="room-description-display" style={{ marginTop: "0.5rem" }}>
+            <MarkdownText source={room.description} />
+          </div>
+        )}
       </div>
     );
   }
@@ -177,13 +183,37 @@ function EditableRoomHeader({
           disabled={saving}
           autoFocus
         />
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description (optional)"
-          rows={2}
-          disabled={saving}
-        />
+        <div className="markdown-edit-shell">
+          <div className="markdown-edit-toolbar">
+            <button
+              type="button"
+              className={`markdown-edit-tab ${descPreview ? "" : "is-active"}`}
+              onClick={() => setDescPreview(false)}
+              disabled={saving}
+            >Edit</button>
+            <button
+              type="button"
+              className={`markdown-edit-tab ${descPreview ? "is-active" : ""}`}
+              onClick={() => setDescPreview(true)}
+              disabled={saving || !description.trim()}
+              title={!description.trim() ? "Nothing to preview yet" : "Preview rendered markdown"}
+            >Preview</button>
+            <span className="markdown-edit-hint">markdown supported</span>
+          </div>
+          {descPreview ? (
+            <div className="markdown-edit-preview">
+              <MarkdownText source={description} />
+            </div>
+          ) : (
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description (optional, markdown supported)"
+              rows={4}
+              disabled={saving}
+            />
+          )}
+        </div>
         <label
           className="room-edit-row"
           title="Optional. The room auto-closes at this date/time in your local timezone. You can still close it manually before then."

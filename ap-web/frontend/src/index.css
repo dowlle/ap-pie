@@ -3165,6 +3165,139 @@ details.collapsible-section > .accordion-body {
   animation: drop-overlay-pulse 1.6s ease-in-out infinite;
 }
 
+/* ── Markdown rendering for room descriptions (Wave 2) ─────────────────────
+   Used by <MarkdownText/> on RoomDetail (host view) + RoomPublic (player
+   view) and inside the Preview pane of the editor shell below. Scoped so
+   typography differs from page chrome (descriptions sit inside a card or
+   under a header, not in heading slots), and so list / code / link styles
+   stay visually consistent across the two surfaces. */
+.markdown-body {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body > :last-child  { margin-bottom: 0; }
+.markdown-body p { margin: 0.5rem 0; }
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  color: var(--text-h);
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  margin: 1rem 0 0.4rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.markdown-body h1 { font-size: 1.15rem; }
+.markdown-body h2 { font-size: 1.05rem; }
+.markdown-body h3 { font-size: 0.95rem; }
+.markdown-body h4 { font-size: 0.9rem; color: var(--text); }
+.markdown-body ul,
+.markdown-body ol { margin: 0.4rem 0; padding-left: 1.4rem; }
+.markdown-body li { margin: 0.15rem 0; }
+.markdown-body a { color: var(--accent-light); }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.05em 0.3em;
+}
+.markdown-body pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  overflow-x: auto;
+  margin: 0.6rem 0;
+}
+.markdown-body pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: 0.85em;
+}
+.markdown-body blockquote {
+  margin: 0.5rem 0;
+  padding: 0.2rem 0 0.2rem 0.8rem;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+.markdown-body table {
+  border-collapse: collapse;
+  margin: 0.6rem 0;
+  font-size: 0.85em;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.55rem;
+  text-align: left;
+}
+.markdown-body th { background: var(--bg-card); }
+.markdown-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0.8rem 0;
+}
+/* GFM task list checkbox: react-markdown emits <input type="checkbox" disabled />
+   wrapped in <li>. Pull the bullet out and tighten the gap. */
+.markdown-body li input[type="checkbox"] {
+  margin-right: 0.35rem;
+}
+.markdown-body ul:has(> li > input[type="checkbox"]) {
+  list-style: none;
+  padding-left: 0.4rem;
+}
+
+/* Edit / Preview toggle shell wrapping a markdown-capable textarea. Used
+   on RoomDetail's EditableRoomHeader description field + the create-room
+   modal's description field. Toolbar mimics the YAML modal's tab pattern
+   so the chrome reads consistent across the app. */
+.markdown-edit-shell { display: flex; flex-direction: column; gap: 0.35rem; }
+.markdown-edit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+}
+.markdown-edit-tab {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.markdown-edit-tab:hover:not(:disabled) { background: var(--bg-hover); color: var(--text); }
+.markdown-edit-tab.is-active {
+  background: var(--bg-card);
+  color: var(--text-h);
+  border-color: var(--accent);
+}
+.markdown-edit-tab:disabled { opacity: 0.5; cursor: not-allowed; }
+.markdown-edit-hint {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+}
+.markdown-edit-preview {
+  min-height: 4rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+.markdown-edit-preview .markdown-body { color: var(--text); }
+
 /* ── Mobile pass (FEAT-27 hamburger nav + UX-15 readability) ───────────────
    Everything below the 768px breakpoint. Desktop styles stay untouched.
    The hamburger button is hidden by default and only surfaces on narrow

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createRoom } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { localInputValueToIso } from "../lib/roomDeadline";
+import MarkdownText from "./MarkdownText";
 
 /**
  * Native <dialog> create-room modal. Same lifecycle and visual chrome as
@@ -37,6 +38,7 @@ export default function CreateRoomModal({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [descPreview, setDescPreview] = useState(false);
   const [requireDiscordLogin, setRequireDiscordLogin] = useState(false);
   const [deadlineLocal, setDeadlineLocal] = useState("");
   // APWorld version policy mirrors the radio in RoomSettingsModal so hosts
@@ -146,24 +148,46 @@ export default function CreateRoomModal({
               />
             </div>
             <div className="settings-controls">
-              <textarea
-                placeholder="Description (optional)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                style={{
-                  flex: 1,
-                  minWidth: "12rem",
-                  fontFamily: "inherit",
-                  fontSize: "0.85rem",
-                  padding: "0.4rem 0.6rem",
-                  border: "1px solid var(--border)",
-                  borderRadius: 6,
-                  background: "var(--bg)",
-                  color: "var(--text)",
-                  resize: "vertical",
-                }}
-              />
+              <div className="markdown-edit-shell" style={{ flex: 1, minWidth: "12rem" }}>
+                <div className="markdown-edit-toolbar">
+                  <button
+                    type="button"
+                    className={`markdown-edit-tab ${descPreview ? "" : "is-active"}`}
+                    onClick={() => setDescPreview(false)}
+                  >Edit</button>
+                  <button
+                    type="button"
+                    className={`markdown-edit-tab ${descPreview ? "is-active" : ""}`}
+                    onClick={() => setDescPreview(true)}
+                    disabled={!description.trim()}
+                    title={!description.trim() ? "Nothing to preview yet" : "Preview rendered markdown"}
+                  >Preview</button>
+                  <span className="markdown-edit-hint">markdown supported</span>
+                </div>
+                {descPreview ? (
+                  <div className="markdown-edit-preview">
+                    <MarkdownText source={description} />
+                  </div>
+                ) : (
+                  <textarea
+                    placeholder="Description (optional, markdown supported)"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      fontFamily: "inherit",
+                      fontSize: "0.85rem",
+                      padding: "0.4rem 0.6rem",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      background: "var(--bg)",
+                      color: "var(--text)",
+                      resize: "vertical",
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </section>
 

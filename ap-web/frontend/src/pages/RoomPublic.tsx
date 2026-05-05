@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import MarkdownText from "../components/MarkdownText";
 import {
   claimYaml,
   deletePublicYaml,
@@ -482,7 +483,9 @@ function RoomPublic() {
           </p>
         )}
         {room.description && (
-          <p className="muted" style={{ marginTop: "0.5rem" }}>{room.description}</p>
+          <div className="room-description-display" style={{ marginTop: "0.5rem" }}>
+            <MarkdownText source={room.description} />
+          </div>
         )}
       </header>
 
