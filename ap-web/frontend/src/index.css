@@ -3164,3 +3164,110 @@ details.collapsible-section > .accordion-body {
 .drop-overlay {
   animation: drop-overlay-pulse 1.6s ease-in-out infinite;
 }
+
+/* ── Mobile pass (FEAT-27 hamburger nav + UX-15 readability) ───────────────
+   Everything below the 768px breakpoint. Desktop styles stay untouched.
+   The hamburger button is hidden by default and only surfaces on narrow
+   viewports; the drawer expansion below mirrors the same condition. */
+
+.nav-hamburger {
+  /* Hidden on desktop. Mobile rule below flips it to inline-flex. */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-hamburger:hover { background: var(--bg-hover); }
+.nav-hamburger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nav-hamburger-bar {
+  display: block;
+  width: 1.1rem;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+  /* Navbar collapses: brand on the left, hamburger on the right, drawer
+     slides under the nav row when open. */
+  .navbar {
+    position: relative;
+    padding: 0.6rem 1rem;
+  }
+  .nav-hamburger { display: inline-flex; }
+
+  /* Drawer state. Hidden by default; data-open="true" reveals it. */
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  .nav-links[data-open="true"] { display: flex; }
+  .nav-links a,
+  .nav-links > .btn {
+    /* Touch-target sized rows. Block-level so the whole strip is tappable
+       instead of just the text bbox. */
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.95rem;
+    border-radius: 6px;
+  }
+  .nav-links .view-as-toggle {
+    /* Owner-only preview toggle reads like a labelled row in the drawer
+       rather than the inline desktop chrome. */
+    justify-content: space-between;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .nav-links .view-as-toggle select { font-size: 0.9rem; padding: 0.35rem 0.55rem; }
+
+  /* UX-15: container/main padding shrinks so phone widths actually use
+     the screen instead of leaving 24px gutters that pinch tables. */
+  .container { padding: 1rem; }
+
+  /* UX-15: button touch targets. Default .btn was ~30px tall; bump to
+     ~40px so finger taps don't miss. .btn-sm stays compact for inline
+     row clusters but its font and padding still grow slightly. */
+  .btn { min-height: 2.5rem; padding: 0.5rem 0.85rem; font-size: 0.9rem; }
+  .btn-sm { min-height: 2.1rem; padding: 0.35rem 0.6rem; font-size: 0.85rem; }
+
+  /* UX-15: form inputs (filter bar, search boxes, dropdowns) get a real
+     touch height too. The 0.85rem font was readable but the 28px height
+     was below WCAG. */
+  .filter-bar input,
+  .filter-bar select { min-height: 2.4rem; font-size: 0.9rem; }
+
+  /* UX-15: shrink h1/h2 a touch on mobile so a long room name doesn't
+     blow out the header above the fold. The .public-shell h1 rule at
+     line 71 already drops public hero copy; this catches the authed
+     side. */
+  h1 { font-size: 1.35rem; }
+  h2 { font-size: 1.15rem; }
+
+  /* UX-15: tag pills are functional but bumped slightly so they're
+     readable on a phone without zoom. */
+  .tag { font-size: 0.75rem; padding: 0.15rem 0.45rem; }
+}
+

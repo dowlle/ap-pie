@@ -16,7 +16,7 @@ import Play from "./pages/Play";
 import Landing from "./pages/Landing";
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { FeaturesProvider, useFeature } from "./context/FeaturesContext";
 import AuthButton from "./components/AuthButton";
@@ -25,6 +25,19 @@ function NavBar() {
   const { user, authEnabled, loading, isOwner, viewAs, setViewAs } = useAuth();
   const generationOn = useFeature("generation");
   const [refreshing, setRefreshing] = useState(false);
+  // FEAT-27: hamburger drawer for narrow viewports. CSS hides the toggle
+  // button above 768px and forces the drawer open, so this state is a no-op
+  // on desktop.
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -55,8 +68,31 @@ function NavBar() {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="nav-brand">Archipelago Pie</Link>
-      <div className="nav-links">
+      <Link to="/" className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
+      <button
+        type="button"
+        className="nav-hamburger"
+        aria-expanded={menuOpen}
+        aria-controls="nav-drawer"
+        aria-label={menuOpen ? "Close menu" : "Open menu"}
+        onClick={() => setMenuOpen(o => !o)}
+      >
+        <span className="nav-hamburger-bar" />
+        <span className="nav-hamburger-bar" />
+        <span className="nav-hamburger-bar" />
+      </button>
+      <div
+        id="nav-drawer"
+        className="nav-links"
+        data-open={menuOpen ? "true" : undefined}
+        onClick={(e) => {
+          // Close the drawer when a NavLink (or any anchor / button) inside
+          // it is clicked - keeps the route-change UX self-evident on
+          // mobile without wiring a router listener.
+          const target = e.target as HTMLElement;
+          if (target.closest("a, button")) closeMenu();
+        }}
+      >
         {showRoomsLink && <NavLink to="/rooms">Rooms</NavLink>}
         {/* APWorlds is now visible to any approved host (FEAT-21). Even with
             generation OFF in production, the index browser is useful: hosts
