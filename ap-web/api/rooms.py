@@ -35,6 +35,40 @@ from api.features import requires_feature
 bp = Blueprint("rooms", __name__)
 
 
+# SEC-21: server-side length caps on room string fields. Without these an
+# authed host could PUT a multi-MB `name` and bloat every row that
+# add_activity() writes (the room name is denormalised into the activity
+# stream), or saturate MAX_CONTENT_LENGTH headroom for other in-flight
+# requests. Description gets headroom for markdown formatting (Wave 2
+# enables markdown rendering in RoomDetail / RoomPublic). Values come from
+# the SEC-21 backlog row's recommended limits, with description bumped from
+# 4000 to 8000 for that markdown headroom.
+_ROOM_STRING_LIMITS = {
+    "name": 200,
+    "description": 8000,
+    "host_name": 64,
+    "tracker_url": 1024,
+    "tracker_slot_name": 64,
+    "external_host": 256,
+}
+
+
+def _validate_room_string_lengths(data: dict):
+    """Return (response, status) on a length violation, else None.
+
+    Only checks fields that are actually present and string-typed; non-string
+    values (None, ints, bools) are left to the underlying column type to
+    reject. Caller should `return early` on a non-None result.
+    """
+    for field, limit in _ROOM_STRING_LIMITS.items():
+        v = data.get(field)
+        if isinstance(v, str) and len(v) > limit:
+            return jsonify({
+                "error": f"{field} is too long (max {limit} characters, got {len(v)})",
+            }), 400
+    return None
+
+
 def requires_db(f):
     from functools import wraps
 
@@ -134,6 +168,10 @@ def rooms_create():
     if not data or "name" not in data or "host_name" not in data:
         return jsonify({"error": "name and host_name are required"}), 400
 
+    err = _validate_room_string_lengths(data)
+    if err:
+        return err
+
     user = _current_user()
     host_user_id = user["id"] if user else None
 
@@ -212,6 +250,9 @@ def rooms_update(room_id: str):
     if not _can_access_room(room, _current_user()):
         return jsonify({"error": "Not your room"}), 403
     data = request.get_json() or {}
+    err = _validate_room_string_lengths(data)
+    if err:
+        return err
     # Don't let a non-admin reassign room ownership via PUT.
     if not _is_admin(_current_user()):
         data.pop("host_user_id", None)

@@ -3,11 +3,31 @@
 from __future__ import annotations
 
 import os
+import re
 import secrets
 import threading
 
 import psycopg2
 import psycopg2.extras
+
+
+# SEC-22: scrub the password out of any string that may contain a Postgres
+# connection URL before it gets logged. psycopg2's OperationalError text
+# routinely echoes the DSN in the form "postgresql://user:password@host/db",
+# and Caddy/gunicorn access logs may pick it up on healthcheck failures.
+# Defensive against both URL forms ("postgres://" and "postgresql://") and
+# tolerant of empty / non-string input.
+_DB_URL_PASSWORD_RE = re.compile(r"(postgres(?:ql)?://[^:/\s@]+:)[^@/\s]+(@)")
+
+
+def scrub_db_url(text: object) -> str:
+    """Return `text` with any embedded Postgres-URL passwords replaced by ***.
+
+    Use anywhere an exception with a possible DSN gets logged. Idempotent
+    on already-scrubbed text. Stringifies non-str input so callers don't
+    need to wrap exceptions themselves.
+    """
+    return _DB_URL_PASSWORD_RE.sub(r"\1***\2", str(text))
 
 _db_url: str | None = None
 _local = threading.local()
@@ -248,6 +268,32 @@ def init_db(db_url: str) -> None:
         # "not yet extracted" (predates this column or save) and is
         # backfilled lazily by the room-wide auto-pin button.
         cur.execute("ALTER TABLE room_yamls ADD COLUMN IF NOT EXISTS apworld_versions JSONB DEFAULT NULL")
+        # SEC-21: schema-level CHECK constraints on the `rooms` string columns.
+        # Caps match the server-side validation in `api/rooms.py`
+        # (_ROOM_STRING_LIMITS). The validation rejects with a clean 400; this
+        # is a backstop so any path that bypasses the route layer (direct DB
+        # writes, future blueprints, migrations) still can't push a multi-MB
+        # value that would bloat the activity log (room name is denormalised
+        # into every event row) or saturate request memory. Idempotent via
+        # the pg_constraint pre-check pattern - PostgreSQL doesn't support
+        # `ADD CONSTRAINT IF NOT EXISTS` for CHECK constraints natively.
+        # Existing-data audit on 2026-05-05 confirmed the live max for each
+        # column is well under its cap (e.g. desc_max=410 vs cap 8000).
+        for cname, expr in (
+            ("rooms_name_length",              "length(name) <= 200"),
+            ("rooms_description_length",       "length(description) <= 8000"),
+            ("rooms_host_name_length",         "length(host_name) <= 64"),
+            ("rooms_tracker_url_length",       "length(tracker_url) <= 1024"),
+            ("rooms_tracker_slot_name_length", "length(tracker_slot_name) <= 64"),
+            ("rooms_external_host_length",     "length(external_host) <= 256"),
+        ):
+            cur.execute(f"""
+                DO $$ BEGIN
+                  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '{cname}') THEN
+                    ALTER TABLE rooms ADD CONSTRAINT {cname} CHECK ({expr});
+                  END IF;
+                END $$;
+            """)
     conn.autocommit = False
     conn.close()
     _db_url = db_url

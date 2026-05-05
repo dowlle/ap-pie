@@ -111,13 +111,16 @@ def create_app() -> Flask:
     atexit.register(manager.shutdown)
 
     # Database
-    from db import init_db
+    from db import init_db, scrub_db_url
     db_available = False
     try:
         init_db(config.DATABASE_URL)
         db_available = True
     except Exception as e:
-        app.logger.warning(f"Database not available: {e}. Market features will not work.")
+        # SEC-22: psycopg2's OperationalError text echoes the DSN with the
+        # password embedded; scrub before logging so credentials don't leak
+        # to gunicorn / Caddy access logs.
+        app.logger.warning(f"Database not available: {scrub_db_url(e)}. Market features will not work.")
 
     # FEAT-04: background sweeper that auto-closes rooms whose submit_deadline
     # has passed. Runs every DEADLINE_SWEEP_INTERVAL_SECONDS in a daemon

@@ -43,9 +43,18 @@ def _db_status() -> str:
 
 @bp.route("/api/health")
 def health():
-    return jsonify({
-        "status": "ok",
-        "db": _db_status(),
+    db = _db_status()
+    body = {
+        "status": "ok" if db != "error" else "degraded",
+        "db": db,
         "ap_version": _ap_binary_version(),
         "ap_host": config.HOST,
-    })
+    }
+    # DEVEX-06: return 503 when the DB check fails so the Dockerfile
+    # `curl -fsS` healthcheck actually marks the container unhealthy.
+    # Previously we returned 200 unconditionally, which is why the OPS-06
+    # outage stayed invisible to Docker for ~4 minutes after the reboot.
+    # "unconfigured" stays 200 because that's a valid dev mode (auth off,
+    # no DB needed); only an active connection failure trips 503.
+    code = 503 if db == "error" else 200
+    return jsonify(body), code
