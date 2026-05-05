@@ -575,7 +575,7 @@ export default function RoomDetail() {
             // Soft toast via window.alert is fine for Phase 0a; the
             // request lands in the admin queue and the host doesn't
             // need an in-app notification surface yet.
-            alert("APWorld update request submitted. Appie will review on /admin/apworld-requests.");
+            alert("APWorld update request submitted. Appie will check it.");
           }}
         />
       )}
