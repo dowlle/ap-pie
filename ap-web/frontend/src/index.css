@@ -34,6 +34,40 @@
   color: var(--text);
   background: var(--bg);
   font-feature-settings: "ss01", "cv11";
+
+  /* Tell the browser to render native form controls (datetime-local
+     calendar icon, <select> chrome, <input type=number> spin buttons,
+     scrollbars) using dark-mode defaults instead of the OS light
+     theme. Without this, those controls look like they were bolted on
+     from a different app. */
+  color-scheme: dark;
+}
+
+/* ── Native form-control polish ────────────────────────────────────
+   color-scheme: dark above gets us most of the way; these rules fix
+   the remaining rough edges on number inputs, where the browser's
+   spin buttons sit awkwardly against the dark input background. */
+input[type="number"] {
+  /* Firefox: hide the legacy spinner. The accent color handles the rest. */
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  /* WebKit: keep the spinner but tone it down so it doesn't hover as a
+     bright white block on a dark field. opacity 0.6 with a dim accent
+     hover-state matches the rest of the modal chrome. */
+  opacity: 0.6;
+}
+input[type="number"]:hover::-webkit-inner-spin-button,
+input[type="number"]:focus::-webkit-inner-spin-button {
+  opacity: 1;
+}
+
+/* Most native form controls inherit our accent for selection/focus on
+   recent browsers. accent-color makes radio/checkbox/range/progress
+   tints match the warm-amber palette instead of the OS default blue. */
+:root {
+  accent-color: var(--accent);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
