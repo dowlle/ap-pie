@@ -2886,6 +2886,22 @@ a.btn:hover { text-decoration: none; }
   border-color: var(--border);
   background: var(--bg);
 }
+.my-templates-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+/* Rooms-page action cluster: groups "My templates" + "Create Room" so
+   they sit together under the page heading without one drifting past
+   the other on narrow viewports. */
+.rooms-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
 /* ── OPS-07 deployment banner ──────────────────────────────────────
    High-contrast strip across the top of every page when

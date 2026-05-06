@@ -102,9 +102,6 @@ function NavBar() {
             generation OFF in production, the index browser is useful: hosts
             pin per-room versions, players follow links to install locally. */}
         {showRoomsLink && <NavLink to="/apworlds">APWorlds</NavLink>}
-        {/* FEAT-33: per-user room creation templates management. Approved
-            hosts only since templates only matter when you can create rooms. */}
-        {showRoomsLink && <NavLink to="/me/room-templates">My templates</NavLink>}
         {showAdminTools && (
           <>
             <NavLink to="/market">Market</NavLink>
@@ -229,7 +226,7 @@ function AppRoutes() {
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />
       <Route path="/servers" element={<AdminShell><RequireApproval><Servers /></RequireApproval></AdminShell>} />
       <Route path="/apworlds" element={<AdminShell><RequireApproval><APWorlds /></RequireApproval></AdminShell>} />
-      <Route path="/me/room-templates" element={<AdminShell><RequireApproval><MyRoomTemplates /></RequireApproval></AdminShell>} />
+      <Route path="/rooms/templates" element={<AdminShell><RequireApproval><MyRoomTemplates /></RequireApproval></AdminShell>} />
       <Route path="/summary" element={<AdminShell><RequireApproval><Summary /></RequireApproval></AdminShell>} />
     </Routes>
   );

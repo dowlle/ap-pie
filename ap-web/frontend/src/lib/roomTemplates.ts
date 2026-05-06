@@ -15,6 +15,9 @@
 export type ApworldPolicy = "strict" | "flexible" | "latest";
 
 export interface RoomTemplatePayload {
+  /** Pre-fill for the room-name field when this template is applied.
+   *  Empty string = no pre-fill (host types it themselves). */
+  room_name: string;
   description: string;
   require_discord_login: boolean;
   claim_mode: boolean;
@@ -33,8 +36,14 @@ export interface RoomTemplatePayload {
   auto_upgrade_apworld_pins: boolean;
 }
 
-/** What the modal keeps in state — what the template applies to. */
+/** What the modal keeps in state — what the template applies to. The same
+ *  shape backs CreateRoomModal AND EditTemplateModal so the field rendering
+ *  is shared via <RoomTemplateFields>. */
 export interface CreateRoomModalState {
+  /** Room name (required to actually create a room; optional to save as
+   *  template — empty pre-fill is fine). Backed by payload.room_name on
+   *  apply/capture. */
+  name: string;
   description: string;
   requireDiscordLogin: boolean;
   claimMode: boolean;
@@ -48,6 +57,7 @@ export interface CreateRoomModalState {
 /** A blank starting state — what CreateRoomModal opens with when no template
  *  applies and no host edits have happened yet. */
 export const BLANK_MODAL_STATE: CreateRoomModalState = {
+  name: "",
   description: "",
   requireDiscordLogin: false,
   claimMode: false,
@@ -150,6 +160,7 @@ export function applyTemplateToModal(
   now: Date,
 ): CreateRoomModalState {
   return {
+    name: payload.room_name ?? "",
     description: payload.description ?? "",
     requireDiscordLogin: !!payload.require_discord_login,
     claimMode: !!payload.claim_mode,
@@ -162,12 +173,15 @@ export function applyTemplateToModal(
 
 /** Capture the modal's current state as a template payload. The deadline
  *  is round-tripped via deriveTemplateDeadline so the relative intent
- *  survives across "today"s. */
+ *  survives across "today"s. The room-name field is captured verbatim;
+ *  hosts who don't want a per-template room name can just clear it
+ *  before clicking Save. */
 export function captureTemplateFromModal(
   state: CreateRoomModalState,
   now: Date,
 ): RoomTemplatePayload {
   return {
+    room_name: state.name,
     description: state.description,
     require_discord_login: state.requireDiscordLogin,
     claim_mode: state.claimMode,

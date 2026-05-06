@@ -46,6 +46,16 @@ def _validate_payload(raw: object) -> tuple[dict | None, str | None]:
 
     out: dict = {}
 
+    # room_name: optional pre-fill for the room-name field when applied.
+    # Empty string = no pre-fill; host types it themselves. Cap matches the
+    # SEC-21 rooms.name CHECK constraint (200).
+    room_name = raw.get("room_name", "")
+    if not isinstance(room_name, str):
+        return None, "room_name must be a string"
+    if len(room_name) > 200:
+        return None, "room_name exceeds 200 char cap"
+    out["room_name"] = room_name
+
     # description: string, max 8000 chars (matches SEC-21 rooms.description cap)
     desc = raw.get("description", "")
     if not isinstance(desc, str):

@@ -6,6 +6,7 @@ import {
   updateRoomTemplate,
   type RoomTemplate,
 } from "../api";
+import EditTemplateModal from "../components/EditTemplateModal";
 
 /**
  * FEAT-33: management page for the current user's room creation templates.
@@ -23,6 +24,7 @@ export default function MyRoomTemplates() {
   const [loadError, setLoadError] = useState("");
   const [actionError, setActionError] = useState("");
   const [renameDraft, setRenameDraft] = useState<Record<number, string>>({});
+  const [editing, setEditing] = useState<RoomTemplate | null>(null);
 
   useEffect(() => {
     listRoomTemplates()
@@ -109,7 +111,12 @@ export default function MyRoomTemplates() {
           Save and reuse room settings across your rooms. Capture a new template
           from the "Save as template" button in any room creation. The default
           template, if you set one, auto-applies whenever you open the create-
-          room dialog.
+          room dialog. Click <strong>Edit</strong> on a template to change every
+          field — including the room-name pre-fill, deadline, APWorld policy,
+          and the rest.
+        </p>
+        <p>
+          <Link to="/rooms" className="btn btn-sm">← Back to rooms</Link>
         </p>
       </header>
 
@@ -173,7 +180,15 @@ export default function MyRoomTemplates() {
                   )}
                 </td>
                 <td className="muted">{t.updated_at.slice(0, 10)}</td>
-                <td>
+                <td className="my-templates-row-actions">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => setEditing(t)}
+                    title="Edit every field on this template."
+                  >
+                    Edit
+                  </button>
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -188,6 +203,16 @@ export default function MyRoomTemplates() {
           </tbody>
         </table>
       )}
+
+      <EditTemplateModal
+        template={editing}
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        onSaved={(updated) => {
+          setTemplates(ts => ts.map(t => t.id === updated.id ? updated : t));
+          setRenameDraft(d => ({ ...d, [updated.id]: updated.name }));
+        }}
+      />
     </div>
   );
 }
