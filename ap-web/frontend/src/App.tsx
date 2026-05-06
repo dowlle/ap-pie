@@ -20,7 +20,9 @@ import { refreshData } from "./api";
 import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { FeaturesProvider, useFeature } from "./context/FeaturesContext";
+import { DeploymentProvider } from "./context/DeploymentContext";
 import AuthButton from "./components/AuthButton";
+import DeploymentBanner from "./components/DeploymentBanner";
 
 function NavBar() {
   const { user, authEnabled, loading, isOwner, viewAs, setViewAs } = useAuth();
@@ -193,6 +195,7 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <DeploymentBanner />
       <NavBar />
       <ApprovalToast />
       <main className="container">{children}</main>
@@ -242,9 +245,11 @@ function App() {
   return (
     <AuthProvider>
       <FeaturesProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <DeploymentProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </DeploymentProvider>
       </FeaturesProvider>
     </AuthProvider>
   );

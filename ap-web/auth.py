@@ -138,6 +138,7 @@ def apply_auth_to_app(app):
         "/api/submit",
         "/api/public",
         "/api/features",
+        "/api/deployment",
     )
 
     @app.before_request

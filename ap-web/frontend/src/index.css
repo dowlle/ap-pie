@@ -2843,6 +2843,51 @@ a.btn:hover { text-decoration: none; }
   padding: 0.65rem 1.25rem;
 }
 
+/* ── OPS-07 deployment banner ──────────────────────────────────────
+   High-contrast strip across the top of every page when
+   AP_DEPLOYMENT_LABEL is non-empty. Sits above NavBar (admin shell)
+   and above the public-shell header. Pure visual cue: testers should
+   never confuse beta with prod, and there is no dismiss because the
+   banner IS the cue. Diagonal stripe pattern picks the eye up even
+   when the page is scrolled and the rest is dark. */
+.deployment-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.18) 0,
+      rgba(0, 0, 0, 0.18) 12px,
+      transparent 12px,
+      transparent 24px
+    ),
+    var(--accent, #ff9b3d);
+  color: #1a1003;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+.deployment-banner strong {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.deployment-banner-copy {
+  opacity: 0.85;
+}
+@media (max-width: 540px) {
+  .deployment-banner {
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+  }
+}
+
 /* ── Public layout shell (used by /r/<id> and /play/<seed>) ──────
    Strips the admin nav so a first-time visitor doesn't land in what looks
    like a database backend. Minimal brand mark + plenty of breathing room. */

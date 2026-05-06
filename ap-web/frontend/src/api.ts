@@ -10,6 +10,18 @@ export async function getFeatures(): Promise<Features> {
   return fetchJson(`${BASE}/features`);
 }
 
+// ── Deployment metadata (OPS-07) ──────────────────────────────────
+
+export interface Deployment {
+  /** Empty string on prod / unlabelled. Non-empty (e.g. "beta") triggers the
+   * DeploymentBanner. Driven by AP_DEPLOYMENT_LABEL env on the server. */
+  label: string;
+}
+
+export async function getDeployment(): Promise<Deployment> {
+  return fetchJson(`${BASE}/deployment`);
+}
+
 export interface PlayerInfo {
   slot: number;
   name: string;
