@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useState } from "react";
+import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import type { CreateRoomModalState } from "../lib/roomTemplates";
 import MarkdownText from "./MarkdownText";
 
@@ -38,6 +38,11 @@ interface Props {
   /** Whether to autofocus the room-name input. Defaults to false; the
    *  Create modal sets this true so the host can type immediately. */
   autoFocusName?: boolean;
+  /** When provided, replaces the default absolute-datetime deadline
+   *  section. EditTemplateModal uses this to render a relative time +
+   *  day-offset form instead, so the template stores intent rather than
+   *  a specific calendar date. */
+  customDeadlineSection?: ReactNode;
 }
 
 export default function RoomTemplateFields({
@@ -47,6 +52,7 @@ export default function RoomTemplateFields({
   nameRequired = false,
   namePlaceholder = "Room name",
   autoFocusName = false,
+  customDeadlineSection,
 }: Props) {
   const [descPreview, setDescPreview] = useState(false);
 
@@ -171,29 +177,31 @@ export default function RoomTemplateFields({
         </div>
       </section>
 
-      <section className="settings-section">
-        <SectionHeader
-          title="Auto-close deadline"
-          hint="Optional. The room auto-closes at this date/time in your local timezone, and players see a countdown on the public page. You can still close manually before then, or clear the deadline later in Room settings."
-        />
-        <div className="settings-controls">
-          <input
-            type="datetime-local"
-            value={state.deadlineLocal}
-            onChange={(e) => setState(s => ({ ...s, deadlineLocal: e.target.value }))}
+      {customDeadlineSection ?? (
+        <section className="settings-section">
+          <SectionHeader
+            title="Auto-close deadline"
+            hint="Optional. The room auto-closes at this date/time in your local timezone, and players see a countdown on the public page. You can still close manually before then, or clear the deadline later in Room settings."
           />
-          {state.deadlineLocal && (
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setState(s => ({ ...s, deadlineLocal: "" }))}
-              title="Clear the auto-close deadline"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </section>
+          <div className="settings-controls">
+            <input
+              type="datetime-local"
+              value={state.deadlineLocal}
+              onChange={(e) => setState(s => ({ ...s, deadlineLocal: e.target.value }))}
+            />
+            {state.deadlineLocal && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => setState(s => ({ ...s, deadlineLocal: "" }))}
+                title="Clear the auto-close deadline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="settings-section">
         <SectionHeader

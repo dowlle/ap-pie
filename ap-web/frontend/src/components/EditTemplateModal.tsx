@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   updateRoomTemplate,
   type RoomTemplate,
+  type RoomTemplatePayload,
 } from "../api";
 import {
   applyTemplateToModal,
@@ -18,11 +19,20 @@ import RoomTemplateFields from "./RoomTemplateFields";
  * name" input at the top (the label, not the room-name pre-fill — that
  * lives inside the body's room-name field).
  *
- * Important: the body's room-name field here represents the PRE-FILL the
- * template will apply when used in CreateRoomModal, NOT the actual room
- * name. Hint copy in the field section reflects that. Empty pre-fill is
- * valid and means "let the host type it themselves at create time."
+ * Deadline UI here is intentionally different from CreateRoomModal: instead
+ * of an absolute datetime-local picker, we expose the template's intent
+ * directly — a time-of-day + day-offset pair. Templates store relative
+ * deadlines so they survive across "today"s; this UI lets the host edit
+ * the relative shape directly without a confusing datetime round-trip
+ * through "today".
  */
+
+const DEFAULT_DEADLINE: RoomTemplatePayload["deadline"] = {
+  enabled: false,
+  time_of_day: "19:00",
+  day_offset: 0,
+};
+
 export default function EditTemplateModal({
   template,
   open,
@@ -37,6 +47,10 @@ export default function EditTemplateModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [templateName, setTemplateName] = useState("");
   const [state, setState] = useState<CreateRoomModalState>(BLANK_MODAL_STATE);
+  // Deadline is held separately from `state.deadlineLocal` here because the
+  // edit-template flow stores it as relative (time + offset), not absolute.
+  // The state's deadlineLocal field is unused in this modal.
+  const [deadline, setDeadline] = useState<RoomTemplatePayload["deadline"]>(DEFAULT_DEADLINE);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -60,13 +74,12 @@ export default function EditTemplateModal({
   }, [open]);
 
   // Load the template into local state whenever the modal opens with a
-  // (different) template. We treat `now` as Date.now() so the deadline's
-  // time-of-day + day-offset round-trip lands on a sensible absolute
-  // datetime that the host can sanity-check before saving.
+  // (different) template.
   useEffect(() => {
     if (!open || !template) return;
     setTemplateName(template.name);
     setState(applyTemplateToModal(template.payload, new Date()));
+    setDeadline(template.payload.deadline ?? DEFAULT_DEADLINE);
     setError("");
     setSaving(false);
   }, [open, template]);
@@ -86,7 +99,10 @@ export default function EditTemplateModal({
     setError("");
     setSaving(true);
     try {
-      const payload = captureTemplateFromModal(state, new Date());
+      // Pass the relative deadline directly so captureTemplateFromModal
+      // doesn't try to derive an offset from state.deadlineLocal (which
+      // is unused in this modal).
+      const payload = captureTemplateFromModal(state, new Date(), deadline);
       const updated = await updateRoomTemplate(template.id, {
         name: trimmedName,
         payload,
@@ -99,6 +115,67 @@ export default function EditTemplateModal({
       setSaving(false);
     }
   };
+
+  const deadlineSection = (
+    <section className="settings-section">
+      <h3>Auto-close deadline</h3>
+      <p className="settings-hint">
+        Templates store the deadline as a time-of-day plus a day-offset
+        relative to when the room is created. <strong>+0 days</strong>
+        means today (rolling forward to tomorrow if the time has already
+        passed). <strong>+1 day</strong> means tomorrow at this time.
+        Hosts can still tweak the absolute datetime in the Create-room
+        modal before clicking Create.
+      </p>
+      <div className="settings-controls">
+        <label className="settings-toggle">
+          <input
+            type="checkbox"
+            checked={deadline.enabled}
+            onChange={(e) => setDeadline(d => ({ ...d, enabled: e.target.checked }))}
+          />
+          <span>Set an auto-close deadline</span>
+        </label>
+      </div>
+      <div
+        className="settings-controls"
+        style={{
+          opacity: deadline.enabled ? 1 : 0.55,
+          pointerEvents: deadline.enabled ? "auto" : "none",
+          marginTop: "0.4rem",
+        }}
+      >
+        <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <span>Time:</span>
+          <input
+            type="time"
+            value={deadline.time_of_day}
+            onChange={(e) => setDeadline(d => ({
+              ...d,
+              time_of_day: e.target.value || "19:00",
+            }))}
+            disabled={!deadline.enabled}
+          />
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <span>Days from now:</span>
+          <input
+            type="number"
+            min={0}
+            max={30}
+            step={1}
+            value={deadline.day_offset}
+            onChange={(e) => setDeadline(d => ({
+              ...d,
+              day_offset: Math.max(0, Math.min(30, parseInt(e.target.value || "0", 10) || 0)),
+            }))}
+            disabled={!deadline.enabled}
+            style={{ width: "5rem" }}
+          />
+        </label>
+      </div>
+    </section>
+  );
 
   return (
     <dialog ref={dialogRef} onClick={onBackdropClick} className="settings-modal">
@@ -143,6 +220,7 @@ export default function EditTemplateModal({
             }
             nameRequired={false}
             namePlaceholder="Default room name (optional)"
+            customDeadlineSection={deadlineSection}
           />
 
           {error && (

@@ -175,10 +175,14 @@ export function applyTemplateToModal(
  *  is round-tripped via deriveTemplateDeadline so the relative intent
  *  survives across "today"s. The room-name field is captured verbatim;
  *  hosts who don't want a per-template room name can just clear it
- *  before clicking Save. */
+ *  before clicking Save. Pass `deadlineOverride` to bypass the derivation
+ *  (used by EditTemplateModal which keeps deadline as time+offset
+ *  separately, and by CreateRoomModal's save-as flow which always sets
+ *  day_offset=0 — see deadlineFromTimeOnly). */
 export function captureTemplateFromModal(
   state: CreateRoomModalState,
   now: Date,
+  deadlineOverride?: RoomTemplatePayload["deadline"],
 ): RoomTemplatePayload {
   return {
     room_name: state.name,
@@ -186,8 +190,29 @@ export function captureTemplateFromModal(
     require_discord_login: state.requireDiscordLogin,
     claim_mode: state.claimMode,
     max_yamls_per_user: state.maxYamlsPerUser,
-    deadline: deriveTemplateDeadline(state.deadlineLocal, now),
+    deadline: deadlineOverride ?? deriveTemplateDeadline(state.deadlineLocal, now),
     apworld_policy: state.policyMode,
     auto_upgrade_apworld_pins: state.autoUpgrade,
+  };
+}
+
+/** Save-as-template flow from CreateRoomModal: take the time-of-day from
+ *  the absolute datetime the host picked, but force day_offset=0 so the
+ *  template's intent reads as "today (or tomorrow if past) at this time"
+ *  rather than locking to the specific date the modal happened to show.
+ *  Hosts who want a different offset bake it in via the template editor. */
+export function deadlineFromTimeOnly(local: string): RoomTemplatePayload["deadline"] {
+  const fallback: RoomTemplatePayload["deadline"] = {
+    enabled: false,
+    time_of_day: "19:00",
+    day_offset: 0,
+  };
+  if (!local) return fallback;
+  const dt = localInputValueToDate(local);
+  if (!dt) return fallback;
+  return {
+    enabled: true,
+    time_of_day: `${TWO(dt.getHours())}:${TWO(dt.getMinutes())}`,
+    day_offset: 0,
   };
 }

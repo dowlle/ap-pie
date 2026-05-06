@@ -11,6 +11,7 @@ import {
   applyTemplateToModal,
   BLANK_MODAL_STATE,
   captureTemplateFromModal,
+  deadlineFromTimeOnly,
   type CreateRoomModalState,
 } from "../lib/roomTemplates";
 import RoomTemplateFields from "./RoomTemplateFields";
@@ -139,7 +140,14 @@ export default function CreateRoomModal({
     }
     setSavingTemplate(true);
     try {
-      const payload = captureTemplateFromModal(state, new Date());
+      // Drop the absolute date at save-as time: templates capture only
+      // the time-of-day with day_offset=0. The host can change the offset
+      // later in the template editor if they want a recurring +N-days
+      // pattern. Without this, every template saved from the create
+      // modal would lock to whatever specific date the host happened to
+      // pick for THAT room.
+      const deadline = deadlineFromTimeOnly(state.deadlineLocal);
+      const payload = captureTemplateFromModal(state, new Date(), deadline);
       const created = await createRoomTemplate({ name: trimmed, payload });
       setTemplates(prev => [...prev, created]);
       setSelectedTemplateId(created.id);
