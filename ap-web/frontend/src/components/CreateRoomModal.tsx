@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { createRoom } from "../api";
+import {
+  createRoom,
+  createRoomTemplate,
+  listRoomTemplates,
+  type RoomTemplate,
+} from "../api";
 import { useAuth } from "../context/AuthContext";
 import { localInputValueToIso } from "../lib/roomDeadline";
+import {
+  applyTemplateToModal,
+  BLANK_MODAL_STATE,
+  captureTemplateFromModal,
+  type CreateRoomModalState,
+} from "../lib/roomTemplates";
 import MarkdownText from "./MarkdownText";
 
 /**
@@ -9,6 +20,13 @@ import MarkdownText from "./MarkdownText";
  * RoomSettingsModal: showModal once on mount, ESC-to-cancel via the cancel
  * event, backdrop click closes via target check, sectioned cards in the
  * body, primary action in the sticky footer.
+ *
+ * FEAT-33: room-shape settings (claim_mode, max_yamls_per_user) live here
+ * at create time too, not just in RoomSettingsModal post-create. The
+ * "Select template..." dropdown at the top applies a saved template to
+ * every field; "Save as template" in the footer captures current state as
+ * a new template (prompting for a name). The user's default template, if
+ * any, auto-applies on modal open.
  *
  * Race mode + spoiler level are intentionally omitted: they're generation-
  * feature concerns and Archipelago Pie ships as a YAML collector only on
@@ -36,25 +54,27 @@ export default function CreateRoomModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { user } = useAuth();
 
+  // Modal state mirrors lib/roomTemplates' CreateRoomModalState shape so
+  // applyTemplateToModal/captureTemplateFromModal can round-trip cleanly.
+  const [state, setState] = useState<CreateRoomModalState>(BLANK_MODAL_STATE);
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [descPreview, setDescPreview] = useState(false);
-  const [requireDiscordLogin, setRequireDiscordLogin] = useState(false);
-  const [deadlineLocal, setDeadlineLocal] = useState("");
-  // APWorld version policy mirrors the radio in RoomSettingsModal so hosts
-  // pick the right shape at create time instead of having to jump back into
-  // Settings afterwards. "strict" is the default and matches the column
-  // defaults (allow_mixed=false, force_latest=false).
-  const [policyMode, setPolicyMode] = useState<"strict" | "flexible" | "latest">("strict");
-  const [autoUpgrade, setAutoUpgrade] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Templates: list, current selection, and a save-status message for the
+  // "Save as template" button.
+  const [templates, setTemplates] = useState<RoomTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | "">("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateMessage, setTemplateMessage] = useState("");
 
   const hostName = user?.discord_username ?? "";
 
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
+  // Open / close the native <dialog>.
   useEffect(() => {
     const dlg = dialogRef.current;
     if (!dlg) return;
@@ -70,23 +90,75 @@ export default function CreateRoomModal({
     };
   }, [open]);
 
-  // Reset fields whenever the modal is reopened so a previous attempt's
-  // state never leaks into a fresh creation.
+  // Reset fields whenever the modal opens, then load templates and apply the
+  // user's default template (if any) so they don't have to pick from the
+  // dropdown every time.
   useEffect(() => {
-    if (open) {
-      setName("");
-      setDescription("");
-      setRequireDiscordLogin(false);
-      setDeadlineLocal("");
-      setPolicyMode("strict");
-      setAutoUpgrade(true);
-      setError("");
-      setSubmitting(false);
-    }
+    if (!open) return;
+    setName("");
+    setState(BLANK_MODAL_STATE);
+    setSelectedTemplateId("");
+    setError("");
+    setSubmitting(false);
+    setSavingTemplate(false);
+    setTemplateMessage("");
+
+    let cancelled = false;
+    listRoomTemplates()
+      .then(({ templates }) => {
+        if (cancelled) return;
+        setTemplates(templates);
+        const def = templates.find(t => t.is_default);
+        if (def) {
+          setSelectedTemplateId(def.id);
+          setState(applyTemplateToModal(def.payload, new Date()));
+        }
+      })
+      .catch(() => {
+        // Network or 401 (logged-out) — silently fall through to a blank modal.
+      });
+    return () => { cancelled = true; };
   }, [open]);
 
   const onBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) onClose();
+  };
+
+  // Apply a template's payload to the modal when the host picks one from
+  // the dropdown. The deadline pre-fills via the smart helper but the
+  // datetime-local field stays editable.
+  const handleTemplatePick = (id: number | "") => {
+    setSelectedTemplateId(id);
+    setTemplateMessage("");
+    if (id === "") return;
+    const tmpl = templates.find(t => t.id === id);
+    if (!tmpl) return;
+    setState(applyTemplateToModal(tmpl.payload, new Date()));
+  };
+
+  const handleSaveAsTemplate = async () => {
+    setError("");
+    setTemplateMessage("");
+    const proposed = name.trim() || "Untitled template";
+    const tplName = window.prompt("Name this template:", proposed);
+    if (tplName === null) return;  // host cancelled
+    const trimmed = tplName.trim();
+    if (!trimmed) {
+      setTemplateMessage("Template name is required.");
+      return;
+    }
+    setSavingTemplate(true);
+    try {
+      const payload = captureTemplateFromModal(state, new Date());
+      const created = await createRoomTemplate({ name: trimmed, payload });
+      setTemplates(prev => [...prev, created]);
+      setSelectedTemplateId(created.id);
+      setTemplateMessage(`Saved as "${created.name}".`);
+    } catch (err) {
+      setTemplateMessage(err instanceof Error ? err.message : "Couldn't save template.");
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,14 +170,16 @@ export default function CreateRoomModal({
       await createRoom({
         name: name.trim(),
         host_name: hostName,
-        description,
-        require_discord_login: requireDiscordLogin,
-        submit_deadline: localInputValueToIso(deadlineLocal),
+        description: state.description,
+        require_discord_login: state.requireDiscordLogin,
+        claim_mode: state.claimMode,
+        max_yamls_per_user: state.maxYamlsPerUser,
+        submit_deadline: localInputValueToIso(state.deadlineLocal),
         // Send both display flags atomically so the radio's invariants
         // (exactly one of strict / flexible / latest) hold server-side.
-        allow_mixed_apworld_versions: policyMode === "flexible",
-        force_latest_apworld_versions: policyMode === "latest",
-        auto_upgrade_apworld_pins: autoUpgrade,
+        allow_mixed_apworld_versions: state.policyMode === "flexible",
+        force_latest_apworld_versions: state.policyMode === "latest",
+        auto_upgrade_apworld_pins: state.autoUpgrade,
       });
       onCreated();
       onClose();
@@ -132,6 +206,29 @@ export default function CreateRoomModal({
 
       <form onSubmit={handleSubmit} style={{ display: "contents" }}>
         <div className="settings-modal-body">
+          {templates.length > 0 && (
+            <section className="settings-section">
+              <SectionHeader
+                title="Start from a template"
+                hint="Apply a saved template to pre-fill every field below. You can still tweak anything before clicking Create. Manage your templates from the My templates page."
+              />
+              <div className="settings-controls">
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => handleTemplatePick(e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+                  style={{ flex: 1, minWidth: "12rem" }}
+                >
+                  <option value="">Select template...</option>
+                  {templates.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}{t.is_default ? " (default)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
+          )}
+
           <section className="settings-section">
             <SectionHeader
               title="Room basics"
@@ -159,20 +256,20 @@ export default function CreateRoomModal({
                     type="button"
                     className={`markdown-edit-tab ${descPreview ? "is-active" : ""}`}
                     onClick={() => setDescPreview(true)}
-                    disabled={!description.trim()}
-                    title={!description.trim() ? "Nothing to preview yet" : "Preview rendered markdown"}
+                    disabled={!state.description.trim()}
+                    title={!state.description.trim() ? "Nothing to preview yet" : "Preview rendered markdown"}
                   >Preview</button>
                   <span className="markdown-edit-hint">markdown supported</span>
                 </div>
                 {descPreview ? (
                   <div className="markdown-edit-preview">
-                    <MarkdownText source={description} />
+                    <MarkdownText source={state.description} />
                   </div>
                 ) : (
                   <textarea
                     placeholder="Description (optional, markdown supported)"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    value={state.description}
+                    onChange={(e) => setState(s => ({ ...s, description: e.target.value }))}
                     rows={3}
                     style={{
                       width: "100%",
@@ -200,11 +297,52 @@ export default function CreateRoomModal({
               <label className="settings-toggle">
                 <input
                   type="checkbox"
-                  checked={requireDiscordLogin}
-                  onChange={(e) => setRequireDiscordLogin(e.target.checked)}
+                  checked={state.requireDiscordLogin}
+                  onChange={(e) => setState(s => ({ ...s, requireDiscordLogin: e.target.checked }))}
                 />
                 <span>Login required</span>
               </label>
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <SectionHeader
+              title="Claim mode"
+              hint="When on, you pre-load YAMLs anonymously and players claim slots from the public lobby. Useful for bulk pre-loading a game pool and letting your group pick. Can be toggled later in Room settings."
+            />
+            <div className="settings-controls">
+              <label className="settings-toggle">
+                <input
+                  type="checkbox"
+                  checked={state.claimMode}
+                  onChange={(e) => setState(s => ({ ...s, claimMode: e.target.checked }))}
+                />
+                <span>Players claim pre-loaded slots</span>
+              </label>
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <SectionHeader
+              title="Per-user submission cap"
+              hint="Maximum YAMLs each Discord user can submit. 0 = unlimited. Anonymous submits ignore this cap (no identity to count). Only meaningful when paired with login required."
+            />
+            <div className="settings-controls">
+              <input
+                type="number"
+                min={0}
+                max={9999}
+                step={1}
+                value={state.maxYamlsPerUser}
+                onChange={(e) => setState(s => ({
+                  ...s,
+                  maxYamlsPerUser: Math.max(0, parseInt(e.target.value || "0", 10) || 0),
+                }))}
+                style={{ width: "8rem" }}
+              />
+              <span className="settings-aux-note" style={{ margin: 0 }}>
+                {state.maxYamlsPerUser === 0 ? "Unlimited" : `${state.maxYamlsPerUser} per Discord user`}
+              </span>
             </div>
           </section>
 
@@ -216,14 +354,14 @@ export default function CreateRoomModal({
             <div className="settings-controls">
               <input
                 type="datetime-local"
-                value={deadlineLocal}
-                onChange={(e) => setDeadlineLocal(e.target.value)}
+                value={state.deadlineLocal}
+                onChange={(e) => setState(s => ({ ...s, deadlineLocal: e.target.value }))}
               />
-              {deadlineLocal && (
+              {state.deadlineLocal && (
                 <button
                   type="button"
                   className="btn btn-sm"
-                  onClick={() => setDeadlineLocal("")}
+                  onClick={() => setState(s => ({ ...s, deadlineLocal: "" }))}
                   title="Clear the auto-close deadline"
                 >
                   Clear
@@ -244,8 +382,8 @@ export default function CreateRoomModal({
                   type="radio"
                   name="create-apworld-policy"
                   value="strict"
-                  checked={policyMode === "strict"}
-                  onChange={() => setPolicyMode("strict")}
+                  checked={state.policyMode === "strict"}
+                  onChange={() => setState(s => ({ ...s, policyMode: "strict" }))}
                 />
                 <span>
                   <strong>Pin specific versions</strong> (default): players see "install version X" for
@@ -258,8 +396,8 @@ export default function CreateRoomModal({
                   type="radio"
                   name="create-apworld-policy"
                   value="flexible"
-                  checked={policyMode === "flexible"}
-                  onChange={() => setPolicyMode("flexible")}
+                  checked={state.policyMode === "flexible"}
+                  onChange={() => setState(s => ({ ...s, policyMode: "flexible" }))}
                 />
                 <span>
                   <strong>Pin specific versions, but flexible</strong>: same pins, framed as "suggested"
@@ -273,8 +411,8 @@ export default function CreateRoomModal({
                   type="radio"
                   name="create-apworld-policy"
                   value="latest"
-                  checked={policyMode === "latest"}
-                  onChange={() => setPolicyMode("latest")}
+                  checked={state.policyMode === "latest"}
+                  onChange={() => setState(s => ({ ...s, policyMode: "latest" }))}
                 />
                 <span>
                   <strong>Always use the newest version</strong>: ignores per-game pins, always tells
@@ -284,12 +422,12 @@ export default function CreateRoomModal({
             </div>
 
             <div className="settings-controls" style={{ marginTop: "0.6rem" }}>
-              <label className="settings-toggle" style={{ opacity: policyMode === "latest" ? 0.55 : 1 }}>
+              <label className="settings-toggle" style={{ opacity: state.policyMode === "latest" ? 0.55 : 1 }}>
                 <input
                   type="checkbox"
-                  checked={autoUpgrade}
-                  disabled={policyMode === "latest"}
-                  onChange={(e) => setAutoUpgrade(e.target.checked)}
+                  checked={state.autoUpgrade}
+                  disabled={state.policyMode === "latest"}
+                  onChange={(e) => setState(s => ({ ...s, autoUpgrade: e.target.checked }))}
                 />
                 <span>Auto-upgrade pins to newest YAML version</span>
               </label>
@@ -297,7 +435,7 @@ export default function CreateRoomModal({
             <p className="settings-aux-note">
               On by default. When a YAML uploads with a `requires.game.&lt;Name&gt;` version higher
               than the current pin, the pin bumps up to match.
-              {policyMode === "latest" && (
+              {state.policyMode === "latest" && (
                 <>
                   {" "}
                   <em>Greyed out while "Always use the newest version" is selected: there are no
@@ -310,10 +448,22 @@ export default function CreateRoomModal({
           {error && (
             <p className="settings-error" style={{ margin: 0 }}>{error}</p>
           )}
+          {templateMessage && (
+            <p className="settings-aux-note" style={{ margin: 0 }}>{templateMessage}</p>
+          )}
         </div>
 
         <footer className="settings-modal-footer">
           <button type="button" className="btn btn-sm" onClick={onClose}>Cancel</button>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={handleSaveAsTemplate}
+            disabled={savingTemplate}
+            title="Save the current modal settings (everything except the room name) as a reusable template."
+          >
+            {savingTemplate ? "Saving..." : "Save as template"}
+          </button>
           <button
             type="submit"
             className="btn btn-sm btn-primary"

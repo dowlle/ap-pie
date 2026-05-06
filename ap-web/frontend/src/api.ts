@@ -611,6 +611,9 @@ export async function createRoom(data: {
   force_latest_apworld_versions?: boolean;
   /** FEAT-28 v2: defaults to true server-side; pass false to lock pins. */
   auto_upgrade_apworld_pins?: boolean;
+  /** FEAT-33: settable at create time too; the Settings modal still owns
+   *  the post-create flip. Default false on the backend. */
+  claim_mode?: boolean;
 }): Promise<Room> {
   const res = await fetch(`${BASE}/rooms`, {
     method: "POST",
@@ -1397,4 +1400,50 @@ export async function adminRemoveApworldMaintainer(
     `${BASE}/admin/apworld-maintainers/${encodeURIComponent(apworldName)}/${encodeURIComponent(discordUserId)}`,
     { method: "DELETE" },
   );
+}
+
+// ── FEAT-33: per-user room creation templates ─────────────────────
+
+import type { RoomTemplatePayload } from "./lib/roomTemplates";
+export type { RoomTemplatePayload };
+
+export interface RoomTemplate {
+  id: number;
+  user_id: number;
+  name: string;
+  payload: RoomTemplatePayload;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listRoomTemplates(): Promise<{ templates: RoomTemplate[] }> {
+  return _send(`${BASE}/users/me/room-templates`, { method: "GET" });
+}
+
+export async function createRoomTemplate(input: {
+  name: string;
+  payload: RoomTemplatePayload;
+  is_default?: boolean;
+}): Promise<RoomTemplate> {
+  return _send(`${BASE}/users/me/room-templates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateRoomTemplate(
+  id: number,
+  input: Partial<{ name: string; payload: RoomTemplatePayload; is_default: boolean }>,
+): Promise<RoomTemplate> {
+  return _send(`${BASE}/users/me/room-templates/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteRoomTemplate(id: number): Promise<void> {
+  await _send<void>(`${BASE}/users/me/room-templates/${id}`, { method: "DELETE" });
 }
