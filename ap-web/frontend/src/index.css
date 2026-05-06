@@ -2935,11 +2935,16 @@ a.btn:hover { text-decoration: none; }
   border-color: var(--border);
   background: var(--bg);
 }
-.my-templates-row-actions {
-  display: flex;
-  gap: 0.4rem;
-  justify-content: flex-end;
+/* Actions cell stays a normal table-cell so its bottom border lines up
+   with the rest of the row. The flex layout for the buttons lives on
+   an inner wrapper. */
+.my-templates-actions-cell {
+  text-align: right;
   white-space: nowrap;
+}
+.my-templates-row-actions {
+  display: inline-flex;
+  gap: 0.4rem;
 }
 
 /* Rooms-page action cluster: groups "My templates" + "Create Room" so

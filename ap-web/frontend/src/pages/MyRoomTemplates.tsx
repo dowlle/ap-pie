@@ -180,23 +180,25 @@ export default function MyRoomTemplates() {
                   )}
                 </td>
                 <td className="muted">{t.updated_at.slice(0, 10)}</td>
-                <td className="my-templates-row-actions">
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={() => setEditing(t)}
-                    title="Edit every field on this template."
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={() => handleDelete(t.id, t.name)}
-                    title="Delete this template permanently."
-                  >
-                    Delete
-                  </button>
+                <td className="my-templates-actions-cell">
+                  <div className="my-templates-row-actions">
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => setEditing(t)}
+                      title="Edit every field on this template."
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => handleDelete(t.id, t.name)}
+                      title="Delete this template permanently."
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
