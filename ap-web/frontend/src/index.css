@@ -43,26 +43,6 @@
   color-scheme: dark;
 }
 
-/* ── Native form-control polish ────────────────────────────────────
-   color-scheme: dark above gets us most of the way; these rules fix
-   the remaining rough edges on number inputs, where the browser's
-   spin buttons sit awkwardly against the dark input background. */
-input[type="number"] {
-  /* Firefox: hide the legacy spinner. The accent color handles the rest. */
-  -moz-appearance: textfield;
-}
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  /* WebKit: keep the spinner but tone it down so it doesn't hover as a
-     bright white block on a dark field. opacity 0.6 with a dim accent
-     hover-state matches the rest of the modal chrome. */
-  opacity: 0.6;
-}
-input[type="number"]:hover::-webkit-inner-spin-button,
-input[type="number"]:focus::-webkit-inner-spin-button {
-  opacity: 1;
-}
-
 /* Most native form controls inherit our accent for selection/focus on
    recent browsers. accent-color makes radio/checkbox/range/progress
    tints match the warm-amber palette instead of the OS default blue. */
@@ -2106,9 +2086,18 @@ a.btn:hover { text-decoration: none; }
 .settings-section .settings-controls > input[type="number"] {
   width: 5.5rem;
 }
+/* Single source of truth for every interactive form control inside a
+   settings section: same border, same bg, same padding, same radius.
+   Native variants (datetime-local, time, select) inherit everything
+   except their browser-rendered chrome (calendar icon, dropdown arrow,
+   spinner buttons) which color-scheme: dark on :root takes care of. */
 .settings-section input[type="text"],
 .settings-section input[type="url"],
-.settings-section input[type="number"] {
+.settings-section input[type="number"],
+.settings-section input[type="datetime-local"],
+.settings-section input[type="date"],
+.settings-section input[type="time"],
+.settings-section select {
   font-family: inherit;
   font-size: 0.85rem;
   padding: 0.4rem 0.6rem;
@@ -2117,14 +2106,40 @@ a.btn:hover { text-decoration: none; }
   background: var(--bg);
   color: var(--text);
 }
-.settings-section input:focus {
+.settings-section select {
+  /* Native select chrome on WebKit/Chrome adds a non-themable inner
+     padding around the dropdown arrow. Bump right padding so the arrow
+     never overlaps the visible label, and match the input height by
+     constraining min-height. */
+  min-height: 2rem;
+  padding-right: 1.8rem;
+  cursor: pointer;
+}
+.settings-section input:focus,
+.settings-section select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
-.settings-section input:disabled {
+.settings-section input:disabled,
+.settings-section select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* Number-input spinner: keep it visible (clickable up/down arrows) but
+   themed to the dark surface. The accent-color on :root tints them
+   when interacted with; opacity carries the rest. Default 0.7 so the
+   spinner reads as part of the field instead of hovering above it;
+   1.0 on hover/focus invites the click. */
+.settings-section input[type="number"]::-webkit-inner-spin-button,
+.settings-section input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.7;
+  cursor: pointer;
+}
+.settings-section input[type="number"]:hover::-webkit-inner-spin-button,
+.settings-section input[type="number"]:focus::-webkit-inner-spin-button {
+  opacity: 1;
 }
 .settings-section .settings-toggle {
   display: inline-flex;
