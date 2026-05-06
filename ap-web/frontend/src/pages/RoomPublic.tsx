@@ -628,6 +628,10 @@ function RoomPublic() {
                   );
                   const unclaimed = room.claim_mode && y.submitter_user_id == null;
                   const claimedByOther = room.claim_mode && y.submitter_user_id != null && !isMine;
+                  // BUG-05: slots stay claimable / releasable while the room
+                  // is open or closed. Generation/playing freezes them
+                  // because the seed locks slot mappings.
+                  const slotsClaimable = room.status === "open" || room.status === "closed";
                   return (
                   <tr key={y.id}>
                     <td><strong>{y.player_name}</strong></td>
@@ -671,7 +675,7 @@ function RoomPublic() {
                         </a>
                         {/* FEAT-20: Claim / Release. Only relevant in claim_mode.
                             Login required - anonymous viewers see View+Download only. */}
-                        {unclaimed && room.status === "open" && user && (
+                        {unclaimed && slotsClaimable && user && (
                           <button
                             type="button"
                             className="btn btn-sm btn-primary"
@@ -693,12 +697,12 @@ function RoomPublic() {
                             {claimingYamlId === y.id ? "Claiming…" : "Claim"}
                           </button>
                         )}
-                        {unclaimed && room.status === "open" && !user && (
+                        {unclaimed && slotsClaimable && !user && (
                           <a className="btn btn-sm btn-primary" href={`/api/auth/login?next=/r/${room.id}`}>
                             Login to claim
                           </a>
                         )}
-                        {room.claim_mode && isMine && room.status === "open" && (
+                        {room.claim_mode && isMine && slotsClaimable && (
                           <button
                             type="button"
                             className="btn btn-sm"

@@ -545,9 +545,14 @@ def _gate_claim_action(room_id: str, yaml_id: int, user) -> tuple[dict, dict] | 
         return None, (jsonify({
             "error": "This room isn't in claim mode."
         }), 400)
-    if room["status"] != "open":
+    # BUG-05: claim/release stay open while the room is "open" OR "closed".
+    # Once status flips to generating/generated/playing, the seed locks slot
+    # mappings and changing them post-hoc would corrupt the game. Hosts
+    # explicitly close rooms (or auto-close fires) to freeze YAML uploads
+    # while still letting late joiners pick from the unclaimed pool.
+    if room["status"] not in ("open", "closed"):
         return None, (jsonify({
-            "error": "Room is no longer open - claims are frozen."
+            "error": "Room has already been generated - claims are frozen.",
         }), 400)
 
     target = get_yaml(yaml_id)
