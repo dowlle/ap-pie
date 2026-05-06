@@ -18,14 +18,15 @@ function statusBadge(status: string) {
 function CreateRoomButton({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <>
+    <div className="rooms-header-actions">
+      <Link to="/rooms/templates" className="btn">My templates</Link>
       <button className="btn btn-primary" onClick={() => setOpen(true)}>Create Room</button>
       <CreateRoomModal
         open={open}
         onClose={() => setOpen(false)}
         onCreated={onCreated}
       />
-    </>
+    </div>
   );
 }
 

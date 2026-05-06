@@ -47,6 +47,10 @@ services:
       - AP_OWNER_DISCORD_ID=${AP_OWNER_DISCORD_ID}
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
       - FEATURE_GENERATION=${FEATURE_GENERATION:-true}
+      # OPS-07: deployment label drives the DeploymentBanner. Empty = prod
+      # (no banner). Set to "beta" on the beta stack so testers see a
+      # persistent visual cue and never confuse the two.
+      - AP_DEPLOYMENT_LABEL=${AP_DEPLOYMENT_LABEL:-}
       # FEAT-17 V0: real-time WebSocket tracker. Off by default; flip to
       # 1 in the server .env to enable. AP_TRACKER_WS_MAX caps connection
       # count, AP_TRACKER_WS_IDLE_MINUTES controls auto-disconnect.

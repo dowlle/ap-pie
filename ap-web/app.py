@@ -188,6 +188,8 @@ def create_app() -> Flask:
     from api.submit import bp as submit_bp
     from api.public import bp as public_bp
     from api.features import bp as features_bp
+    from api.deployment import bp as deployment_bp
+    from api.room_templates import bp as room_templates_bp
 
     app.register_blueprint(games_bp)
     app.register_blueprint(summary_bp)
@@ -205,6 +207,8 @@ def create_app() -> Flask:
     app.register_blueprint(submit_bp)
     app.register_blueprint(public_bp)
     app.register_blueprint(features_bp)
+    app.register_blueprint(deployment_bp)
+    app.register_blueprint(room_templates_bp)
 
     # Apply auth middleware - protects all /api/* except /api/market, /api/auth, /api/trackers
     apply_auth_to_app(app)

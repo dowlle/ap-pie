@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import DeploymentBanner from "./DeploymentBanner";
 
 /**
  * Wrapper for the no-auth public surfaces (/r/<id> and /play/<seed>).
@@ -43,6 +44,7 @@ function PublicAuthControl() {
 export default function PublicLayout() {
   return (
     <div className="public-shell">
+      <DeploymentBanner />
       <header className="public-shell-header">
         <Link to="/" className="public-shell-brand" title="Archipelago Pie home">
           <span className="public-shell-brand-mark" aria-hidden="true" />

@@ -36,6 +36,12 @@ HOST = os.environ.get("AP_HOST", "localhost")
 PORT_RANGE_START = int(os.environ.get("AP_PORT_RANGE_START", "38281"))
 PORT_RANGE_END = int(os.environ.get("AP_PORT_RANGE_END", "38380"))
 CORS_ORIGINS = os.environ.get("AP_CORS_ORIGINS", "")
+
+# OPS-07 beta env: a non-empty label drives a visible banner above the
+# NavBar (and PublicLayout header) so testers can never confuse a beta
+# deployment with prod. Empty string = prod / unlabelled, no banner.
+# Value is exposed verbatim via /api/deployment for the frontend.
+DEPLOYMENT_LABEL = os.environ.get("AP_DEPLOYMENT_LABEL", "")
 MAX_UPLOAD_MB = int(os.environ.get("AP_MAX_UPLOAD_MB", "50"))
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://archipelago:archipelago@localhost:5432/archipelago")
 WORLDS_DIR = os.environ.get("AP_WORLDS_DIR", r"C:\ProgramData\Archipelago\custom_worlds")

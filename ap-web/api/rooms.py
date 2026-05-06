@@ -195,6 +195,10 @@ def rooms_create():
     allow_mixed = bool(data.get("allow_mixed_apworld_versions", False))
     force_latest = bool(data.get("force_latest_apworld_versions", False))
     auto_upgrade = bool(data.get("auto_upgrade_apworld_pins", True))
+    # FEAT-33: claim_mode is now settable at create time too. The Settings
+    # modal still owns the post-create flip; this just removes the surprise
+    # of having to dive into Settings for a fundamental room-shape choice.
+    claim_mode = bool(data.get("claim_mode", False))
 
     room = create_room(
         name=data["name"],
@@ -211,6 +215,7 @@ def rooms_create():
         allow_mixed_apworld_versions=allow_mixed,
         force_latest_apworld_versions=force_latest,
         auto_upgrade_apworld_pins=auto_upgrade,
+        claim_mode=claim_mode,
     )
     return jsonify(room), 201
 

@@ -340,6 +340,35 @@ def init_db(db_url: str) -> None:
                   END IF;
                 END $$;
             """)
+        # FEAT-33: per-user room creation templates. Logged-in hosts save
+        # reusable room shapes (description, login requirement, deadline-as-
+        # time+offset, claim mode, per-user cap, APWorld policy + auto-upgrade)
+        # and apply them via a "Select template..." dropdown at the top of
+        # CreateRoomModal. Payload is a JSONB blob owned by the API layer so
+        # the templatable field set can evolve without schema migrations.
+        # The partial unique index enforces "at most one default per user"
+        # without blocking multiple non-defaults.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_room_templates (
+                id         SERIAL PRIMARY KEY,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                name       TEXT NOT NULL,
+                payload    JSONB NOT NULL,
+                is_default BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT user_room_templates_name_length CHECK (length(name) <= 80),
+                CONSTRAINT user_room_templates_name_nonempty CHECK (length(name) > 0)
+            )
+        """)
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_user_room_templates_user "
+            "ON user_room_templates(user_id)"
+        )
+        cur.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_user_room_templates_default "
+            "ON user_room_templates(user_id) WHERE is_default = TRUE"
+        )
     conn.autocommit = False
     conn.close()
     _db_url = db_url
@@ -477,14 +506,15 @@ def create_room(name: str, host_name: str, description: str = "",
                 tracker_url: str | None = None,
                 allow_mixed_apworld_versions: bool = False,
                 force_latest_apworld_versions: bool = False,
-                auto_upgrade_apworld_pins: bool = True) -> dict:
+                auto_upgrade_apworld_pins: bool = True,
+                claim_mode: bool = False) -> dict:
     conn = _get_conn()
     room_id = _gen_id()
     with conn.cursor() as cur:
         cur.execute(
-            """INSERT INTO rooms (id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url, allow_mixed_apworld_versions, force_latest_apworld_versions, auto_upgrade_apworld_pins)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
-            (room_id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url, allow_mixed_apworld_versions, force_latest_apworld_versions, auto_upgrade_apworld_pins),
+            """INSERT INTO rooms (id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url, allow_mixed_apworld_versions, force_latest_apworld_versions, auto_upgrade_apworld_pins, claim_mode)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
+            (room_id, name, host_name, description, spoiler_level, race_mode, max_players, require_discord_login, host_user_id, submit_deadline, max_yamls_per_user, tracker_url, allow_mixed_apworld_versions, force_latest_apworld_versions, auto_upgrade_apworld_pins, claim_mode),
         )
         row = _dictrow(cur)[0]
     conn.commit()
@@ -1290,6 +1320,159 @@ def set_user_approved(user_id: int, approved: bool) -> dict:
         rows = _dictrow(cur)
     conn.commit()
     return _serialize(rows[0]) if rows else {}
+
+
+# ── Room creation templates (FEAT-33) ─────────────────────────────
+#
+# Per-user reusable room shapes applied via the "Select template..." dropdown
+# at the top of CreateRoomModal. Payload is an opaque JSONB blob owned by the
+# API layer (api/room_templates.py) so the templatable field set can evolve
+# without schema migrations. Default-template flip is mutually exclusive per
+# user via a partial unique index in init_db.
+
+
+def _serialize_template(row: dict) -> dict:
+    """Pull the JSONB payload out as a dict before json.dumps in jsonify."""
+    out = _serialize(row)
+    payload = out.get("payload")
+    # psycopg2 returns JSONB as a Python dict by default, but some drivers
+    # return raw text. Normalize to dict either way.
+    if isinstance(payload, str):
+        import json as _json
+        try:
+            out["payload"] = _json.loads(payload)
+        except Exception:
+            out["payload"] = {}
+    return out
+
+
+def list_room_templates(user_id: int) -> list[dict]:
+    """All templates owned by this user, default first then alphabetical."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT * FROM user_room_templates
+               WHERE user_id = %s
+               ORDER BY is_default DESC, lower(name) ASC, id ASC""",
+            (user_id,),
+        )
+        rows = _dictrow(cur)
+    return [_serialize_template(r) for r in rows]
+
+
+def count_room_templates(user_id: int) -> int:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM user_room_templates WHERE user_id = %s", (user_id,))
+        return cur.fetchone()[0]
+
+
+def get_room_template(user_id: int, template_id: int) -> dict | None:
+    """Scoped read: returns None for templates the user doesn't own (so the
+    route layer can return 404 without leaking existence to other users)."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT * FROM user_room_templates WHERE id = %s AND user_id = %s",
+            (template_id, user_id),
+        )
+        rows = _dictrow(cur)
+    return _serialize_template(rows[0]) if rows else None
+
+
+def create_room_template(user_id: int, name: str, payload: dict,
+                         is_default: bool = False) -> dict:
+    """Insert a new template. If is_default=True, atomically clears the flag
+    on any existing template owned by this user before setting it on the new
+    row, so the partial unique index never trips mid-statement."""
+    import json as _json
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        if is_default:
+            cur.execute(
+                "UPDATE user_room_templates SET is_default = FALSE, updated_at = NOW() "
+                "WHERE user_id = %s AND is_default = TRUE",
+                (user_id,),
+            )
+        cur.execute(
+            """INSERT INTO user_room_templates (user_id, name, payload, is_default)
+               VALUES (%s, %s, %s::jsonb, %s) RETURNING *""",
+            (user_id, name, _json.dumps(payload), is_default),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    return _serialize_template(rows[0])
+
+
+def update_room_template(user_id: int, template_id: int, *,
+                         name: str | None = None,
+                         payload: dict | None = None,
+                         is_default: bool | None = None) -> dict | None:
+    """Patch the named fields. Scoped by user_id so cross-user writes are
+    impossible. Returns None when the row doesn't exist or isn't owned by
+    this user. Default-flip semantics match create_room_template."""
+    import json as _json
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        # Pre-flight: confirm the row belongs to this user.
+        cur.execute(
+            "SELECT id FROM user_room_templates WHERE id = %s AND user_id = %s",
+            (template_id, user_id),
+        )
+        if not cur.fetchone():
+            return None
+
+        if is_default is True:
+            cur.execute(
+                "UPDATE user_room_templates SET is_default = FALSE, updated_at = NOW() "
+                "WHERE user_id = %s AND is_default = TRUE AND id != %s",
+                (user_id, template_id),
+            )
+
+        sets = []
+        params: list = []
+        if name is not None:
+            sets.append("name = %s")
+            params.append(name)
+        if payload is not None:
+            sets.append("payload = %s::jsonb")
+            params.append(_json.dumps(payload))
+        if is_default is not None:
+            sets.append("is_default = %s")
+            params.append(is_default)
+        if not sets:
+            # Nothing to change — return the current row unchanged.
+            cur.execute(
+                "SELECT * FROM user_room_templates WHERE id = %s AND user_id = %s",
+                (template_id, user_id),
+            )
+            rows = _dictrow(cur)
+            return _serialize_template(rows[0]) if rows else None
+
+        sets.append("updated_at = NOW()")
+        params.extend([template_id, user_id])
+        cur.execute(
+            f"UPDATE user_room_templates SET {', '.join(sets)} "
+            f"WHERE id = %s AND user_id = %s RETURNING *",
+            tuple(params),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    return _serialize_template(rows[0]) if rows else None
+
+
+def delete_room_template(user_id: int, template_id: int) -> bool:
+    """Returns True when the row existed and was deleted, False otherwise.
+    Scoped by user_id so users can't delete each other's templates."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM user_room_templates WHERE id = %s AND user_id = %s",
+            (template_id, user_id),
+        )
+        deleted = cur.rowcount > 0
+    conn.commit()
+    return deleted
 
 
 # ── Trackers ──────────────────────────────────────────────────────

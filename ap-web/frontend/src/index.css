@@ -34,6 +34,20 @@
   color: var(--text);
   background: var(--bg);
   font-feature-settings: "ss01", "cv11";
+
+  /* Tell the browser to render native form controls (datetime-local
+     calendar icon, <select> chrome, <input type=number> spin buttons,
+     scrollbars) using dark-mode defaults instead of the OS light
+     theme. Without this, those controls look like they were bolted on
+     from a different app. */
+  color-scheme: dark;
+}
+
+/* Most native form controls inherit our accent for selection/focus on
+   recent browsers. accent-color makes radio/checkbox/range/progress
+   tints match the warm-amber palette instead of the OS default blue. */
+:root {
+  accent-color: var(--accent);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2072,9 +2086,18 @@ a.btn:hover { text-decoration: none; }
 .settings-section .settings-controls > input[type="number"] {
   width: 5.5rem;
 }
+/* Single source of truth for every interactive form control inside a
+   settings section: same border, same bg, same padding, same radius.
+   Native variants (datetime-local, time, select) inherit everything
+   except their browser-rendered chrome (calendar icon, dropdown arrow,
+   spinner buttons) which color-scheme: dark on :root takes care of. */
 .settings-section input[type="text"],
 .settings-section input[type="url"],
-.settings-section input[type="number"] {
+.settings-section input[type="number"],
+.settings-section input[type="datetime-local"],
+.settings-section input[type="date"],
+.settings-section input[type="time"],
+.settings-section select {
   font-family: inherit;
   font-size: 0.85rem;
   padding: 0.4rem 0.6rem;
@@ -2083,14 +2106,40 @@ a.btn:hover { text-decoration: none; }
   background: var(--bg);
   color: var(--text);
 }
-.settings-section input:focus {
+.settings-section select {
+  /* Native select chrome on WebKit/Chrome adds a non-themable inner
+     padding around the dropdown arrow. Bump right padding so the arrow
+     never overlaps the visible label, and match the input height by
+     constraining min-height. */
+  min-height: 2rem;
+  padding-right: 1.8rem;
+  cursor: pointer;
+}
+.settings-section input:focus,
+.settings-section select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
-.settings-section input:disabled {
+.settings-section input:disabled,
+.settings-section select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* Number-input spinner: keep it visible (clickable up/down arrows) but
+   themed to the dark surface. The accent-color on :root tints them
+   when interacted with; opacity carries the rest. Default 0.7 so the
+   spinner reads as part of the field instead of hovering above it;
+   1.0 on hover/focus invites the click. */
+.settings-section input[type="number"]::-webkit-inner-spin-button,
+.settings-section input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.7;
+  cursor: pointer;
+}
+.settings-section input[type="number"]:hover::-webkit-inner-spin-button,
+.settings-section input[type="number"]:focus::-webkit-inner-spin-button {
+  opacity: 1;
 }
 .settings-section .settings-toggle {
   display: inline-flex;
@@ -2841,6 +2890,116 @@ a.btn:hover { text-decoration: none; }
   border-bottom: 1px solid var(--green);
   border-left: 4px solid var(--green);
   padding: 0.65rem 1.25rem;
+}
+
+/* ── FEAT-33 room template management page ────────────────────────
+   Reuses the existing card + table chrome; adds a small wrapper and
+   tightens the inline-rename input so it doesn't look like a bare form
+   field on a row that's mostly read-only. */
+.my-templates {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.my-templates-header h1 {
+  margin: 0 0 0.25rem 0;
+}
+.my-templates-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.my-templates-table th,
+.my-templates-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+.my-templates-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.my-templates-name {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+.my-templates-name:hover,
+.my-templates-name:focus {
+  border-color: var(--border);
+  background: var(--bg);
+}
+/* Actions cell stays a normal table-cell so its bottom border lines up
+   with the rest of the row. The flex layout for the buttons lives on
+   an inner wrapper. */
+.my-templates-actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+.my-templates-row-actions {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+/* Rooms-page action cluster: groups "My templates" + "Create Room" so
+   they sit together under the page heading without one drifting past
+   the other on narrow viewports. */
+.rooms-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── OPS-07 deployment banner ──────────────────────────────────────
+   High-contrast strip across the top of every page when
+   AP_DEPLOYMENT_LABEL is non-empty. Sits above NavBar (admin shell)
+   and above the public-shell header. Pure visual cue: testers should
+   never confuse beta with prod, and there is no dismiss because the
+   banner IS the cue. Diagonal stripe pattern picks the eye up even
+   when the page is scrolled and the rest is dark. */
+.deployment-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.18) 0,
+      rgba(0, 0, 0, 0.18) 12px,
+      transparent 12px,
+      transparent 24px
+    ),
+    var(--accent, #ff9b3d);
+  color: #1a1003;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+.deployment-banner strong {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.deployment-banner-copy {
+  opacity: 0.85;
+}
+@media (max-width: 540px) {
+  .deployment-banner {
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+  }
 }
 
 /* ── Public layout shell (used by /r/<id> and /play/<seed>) ──────
