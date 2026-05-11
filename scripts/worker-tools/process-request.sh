@@ -1,26 +1,34 @@
 #!/usr/bin/env bash
 # End-to-end APWorld index request: audit -> smoke fuzz -> production fuzz -> open PR.
 #
-# Usage: process-request.sh <url> <apworld_name> <version> [multiplier] [--dry-run]
-#   url           HTTPS URL to the .apworld
-#   apworld_name  TOML basename in the index (e.g. Schedule_I, x2wotc)
-#   version       Version string to add (e.g. 3.6.0)
-#   multiplier    Production fuzz multiplier (default 1.0). Use 0.01 for a manual smoke test.
-#   --dry-run     Run gates, skip PR open. Exit 0 if all gates pass.
+# Usage:
+#   process-request.sh <url> <apworld_name> <version> [multiplier] [--dry-run]
+#   process-request.sh --fuzz-via-gha <url> <apworld_name> <version> [--dry-run]
+#
+# Modes:
+#   default        : audit + smoke + production fuzz; gate on both verdicts; open
+#                    PR with both reports.
+#   --fuzz-via-gha : audit only on this host; PR opens with audit verdict and
+#                    triggers the GHA fuzz workflow on dowlle/Archipelago-index.
+#                    The matrix posts as a PR check.
 #
 # Environment:
-#   SMOKE_MULT    Smoke-pass multiplier (default 0.05). Runs BEFORE the production
-#                 fuzz; if it fails, we skip the expensive 1.0x run and exit early.
-#                 Set to "0" to disable the smoke pass entirely (matches pre-2026-05-11
-#                 behavior). Smoke is a pre-filter only; it never replaces the
-#                 production gate per the briefing rule.
+#   SMOKE_MULT    Smoke-pass multiplier (default 0.05) for the local-fuzz path.
+#                 Set to "0" to disable. Ignored in --fuzz-via-gha mode.
 #
 # All gates must pass before a PR is opened. Reports are kept under
 # ~/apworld-tools/runs/<TS>-<APWORLD>-<VERSION>/.
 set -o pipefail
 
+FUZZ_MODE="local"
+if [ "${1:-}" = "--fuzz-via-gha" ]; then
+  FUZZ_MODE="gha"
+  shift
+fi
+
 if [ $# -lt 3 ]; then
   echo "Usage: $0 <url> <apworld_name> <version> [multiplier] [--dry-run]" >&2
+  echo "       $0 --fuzz-via-gha <url> <apworld_name> <version> [--dry-run]" >&2
   exit 2
 fi
 
@@ -44,6 +52,7 @@ TS="$(date +%Y%m%d-%H%M%S)"
 RUN_DIR="$TOOLS_DIR/runs/${TS}-${APWORLD_NAME}-${VERSION}"
 mkdir -p "$RUN_DIR"
 echo "Run dir: $RUN_DIR"
+echo "Fuzz mode: $FUZZ_MODE"
 echo ""
 
 # Vault archive helper: writes a markdown-wrapped copy of an audit or fuzz
@@ -118,7 +127,7 @@ archive_to_vault() {
 }
 
 # ── Phase 1: Audit ──
-echo ">>> Phase 1/3: Security audit"
+echo ">>> Phase 1: Security audit"
 "$TOOLS_DIR/audit.sh" "$URL" "$RUN_DIR"
 AUDIT_VERDICT=$(grep -E '^AUDIT_VERDICT:' "$RUN_DIR/audit.log" 2>/dev/null | tail -1 | awk '{print $2}' || true)
 # Fallback: the audit report itself emits "### Verdict: PASS"
@@ -132,6 +141,55 @@ echo ""
 # Archive audit to vault regardless of verdict — NEEDS_REVIEW and FAIL
 # are exactly the cases worth eyeballing.
 archive_to_vault audit "$RUN_DIR/audit.log" "${AUDIT_VERDICT:-UNKNOWN}"
+
+if [ "$FUZZ_MODE" = "gha" ]; then
+  # ── GHA path: skip local fuzz; download once for SHA, then open PR ──
+  if [ "$AUDIT_VERDICT" != "PASS" ]; then
+    echo "=================================="
+    echo ">>> AUDIT GATE FAILED (--fuzz-via-gha)"
+    echo "  audit: ${AUDIT_VERDICT:-UNKNOWN}"
+    echo "Reports: $RUN_DIR"
+    echo "Will NOT open a PR. GHA fuzz never gets the chance to run."
+    echo "=================================="
+    exit 1
+  fi
+
+  echo ">>> Resolving SHA-256 (fuzz is deferred to GHA)"
+  APWORLD_FILE="$RUN_DIR/${APWORLD_NAME}.apworld"
+  curl -sSL --fail "$URL" -o "$APWORLD_FILE"
+  SHA=$(sha256sum "$APWORLD_FILE" | cut -d' ' -f1)
+  rm -f "$APWORLD_FILE"
+  echo "SHA-256: $SHA"
+  echo ""
+
+  if $DRY_RUN; then
+    echo "=================================="
+    echo ">>> Audit PASSED (--dry-run, skipping PR open)"
+    echo "  audit:    PASS"
+    echo "  fuzz:     deferred to GHA"
+    echo "  reports:  $RUN_DIR"
+    echo "=================================="
+    exit 0
+  fi
+
+  echo ">>> Phase 2: Opening PR on dowlle/Archipelago-index (fuzz via GHA)"
+  echo ""
+  "$TOOLS_DIR/open-pr.sh" --fuzz-via-gha "$APWORLD_NAME" "$VERSION" "$URL" "$SHA" \
+    "$RUN_DIR/audit.log" 2>&1 | tee "$RUN_DIR/pr.log"
+
+  PR_URL=$(grep -E '^PR_URL:' "$RUN_DIR/pr.log" | tail -1 | awk '{print $2}' || true)
+  echo "$PR_URL" > "$RUN_DIR/pr-url.txt"
+
+  echo ""
+  echo "=================================="
+  echo ">>> PR OPENED (fuzz running on GHA)"
+  echo "  audit:    PASS"
+  echo "  fuzz:     check the PR's Checks tab"
+  echo "  PR:       $PR_URL"
+  echo "  reports:  $RUN_DIR"
+  echo "=================================="
+  exit 0
+fi
 
 # ── Phase 2a: Smoke fuzz (pre-filter) ──
 # Cheap-but-real pass at SMOKE_MULT to catch obviously-broken APWorlds

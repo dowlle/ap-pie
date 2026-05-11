@@ -1,16 +1,38 @@
 #!/usr/bin/env bash
 # Edits dowlle/Archipelago-index to add a new APWorld version,
-# pushes a branch, and opens a PR with audit + fuzz reports in the body.
+# pushes a branch, and opens a PR with the audit verdict in the body.
 #
-# Usage: open-pr.sh <apworld_name> <version> <url> <sha256> <audit_log> <fuzz_log>
+# Usage:
+#   open-pr.sh <apworld_name> <version> <url> <sha256> <audit_log> <fuzz_log>
+#   open-pr.sh --fuzz-via-gha <apworld_name> <version> <url> <sha256> <audit_log>
+#
+# Modes:
+#   default        : audit + local fuzz; body has both verdicts.
+#   --fuzz-via-gha : audit only on this host; the PR triggers the GHA fuzz
+#                    workflow on dowlle/Archipelago-index. Body links to
+#                    the Checks tab for the live fuzz verdict.
 #
 # Idempotent: if version is already in the TOML/lock, no-ops the edit
 # (but still tries to open a PR; you'll get a no-diff error from gh).
 set -euo pipefail
 
-if [ $# -lt 6 ]; then
-  echo "Usage: $0 <apworld_name> <version> <url> <sha256> <audit_log> <fuzz_log>" >&2
-  exit 2
+FUZZ_MODE="local"
+if [ "${1:-}" = "--fuzz-via-gha" ]; then
+  FUZZ_MODE="gha"
+  shift
+fi
+
+if [ "$FUZZ_MODE" = "local" ]; then
+  if [ $# -lt 6 ]; then
+    echo "Usage: $0 <apworld_name> <version> <url> <sha256> <audit_log> <fuzz_log>" >&2
+    echo "       $0 --fuzz-via-gha <apworld_name> <version> <url> <sha256> <audit_log>" >&2
+    exit 2
+  fi
+else
+  if [ $# -lt 5 ]; then
+    echo "Usage: $0 --fuzz-via-gha <apworld_name> <version> <url> <sha256> <audit_log>" >&2
+    exit 2
+  fi
 fi
 
 APWORLD_NAME="$1"
@@ -18,7 +40,7 @@ VERSION="$2"
 URL="$3"
 SHA="$4"
 AUDIT_LOG="$5"
-FUZZ_LOG="$6"
+FUZZ_LOG="${6:-}"
 
 INDEX_DIR="$HOME/Archipelago-index"
 TOML_PATH="$INDEX_DIR/index/${APWORLD_NAME}.toml"
@@ -31,12 +53,14 @@ if [ ! -f "$TOML_PATH" ]; then
   echo "ERROR: $TOML_PATH not in index. This script handles add-version-to-existing-TOML; brand-new-game flow is separate." >&2
   exit 3
 fi
-for p in "$AUDIT_LOG" "$FUZZ_LOG"; do
-  if [ ! -f "$p" ]; then
-    echo "ERROR: log not found: $p" >&2
-    exit 3
-  fi
-done
+if [ ! -f "$AUDIT_LOG" ]; then
+  echo "ERROR: audit log not found: $AUDIT_LOG" >&2
+  exit 3
+fi
+if [ "$FUZZ_MODE" = "local" ] && [ ! -f "$FUZZ_LOG" ]; then
+  echo "ERROR: fuzz log not found: $FUZZ_LOG" >&2
+  exit 3
+fi
 
 cd "$INDEX_DIR"
 echo ">>> Syncing with origin"
@@ -126,12 +150,14 @@ AUDIT_VERDICT_LINE=$(grep -E '^### Verdict:' "$AUDIT_LOG" | head -1 | sed 's/###
 AUDIT_SUMMARY=$(awk '/^### Summary$/{flag=1;next} /^### /{flag=0} flag' "$AUDIT_LOG" | sed '/^[[:space:]]*$/d')
 AUDIT_RATIONALE=$(awk '/^### Verdict rationale$/{flag=1;next} /^### /{flag=0} flag' "$AUDIT_LOG" | sed '/^[[:space:]]*$/d' | head -10)
 
-# Extract slim fuzz verdict (just counts + multiplier — no paths, no per-check
-# breakdown, no worker-host details).
-FUZZ_VERDICT_LINE=$(grep -E '^RESULT:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
-FUZZ_PASSED=$(grep -E '^CHECKS_PASSED:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
-FUZZ_TOTAL=$(grep -E '^CHECKS_TOTAL:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
-FUZZ_MULT=$(grep -E '^MULTIPLIER:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+if [ "$FUZZ_MODE" = "local" ]; then
+  # Slim local-fuzz verdict (just counts + multiplier — no paths, no per-check
+  # breakdown, no worker-host details).
+  FUZZ_VERDICT_LINE=$(grep -E '^RESULT:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+  FUZZ_PASSED=$(grep -E '^CHECKS_PASSED:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+  FUZZ_TOTAL=$(grep -E '^CHECKS_TOTAL:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+  FUZZ_MULT=$(grep -E '^MULTIPLIER:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+fi
 
 # Build PR body
 PR_BODY_FILE="$(mktemp)"
@@ -155,10 +181,18 @@ PR_BODY_FILE="$(mktemp)"
   fi
   echo "### Runtime fuzz"
   echo ""
-  echo "**Verdict: ${FUZZ_VERDICT_LINE:-UNKNOWN}** -- ${FUZZ_PASSED:-?}/${FUZZ_TOTAL:-?} checks passed at ${FUZZ_MULT:-?}x multiplier."
+  if [ "$FUZZ_MODE" = "local" ]; then
+    echo "**Verdict: ${FUZZ_VERDICT_LINE:-UNKNOWN}** -- ${FUZZ_PASSED:-?}/${FUZZ_TOTAL:-?} checks passed at ${FUZZ_MULT:-?}x multiplier."
+  else
+    echo "Runs as a GitHub Actions matrix on this PR (10 checks at 1.0x multiplier). See the **Checks** tab for the live verdict; the workflow auto-fires when the PR opens."
+  fi
   echo ""
   echo "---"
-  echo "*Audit + fuzz logs are kept privately; this body intentionally omits the audit catalog and per-check breakdowns. Reach the maintainer for the full reports.*"
+  if [ "$FUZZ_MODE" = "local" ]; then
+    echo "*Audit + fuzz logs are kept privately; this body intentionally omits the audit catalog and per-check breakdowns. Reach the maintainer for the full reports.*"
+  else
+    echo "*Audit log is kept privately; this body intentionally omits the audit catalog. Fuzz output is visible in the GitHub Actions run. Reach the maintainer for the full audit report.*"
+  fi
 } > "$PR_BODY_FILE"
 
 PR_URL=$(gh pr create \
@@ -174,3 +208,4 @@ echo ""
 echo "=== PR OPENED ==="
 echo "PR_URL: $PR_URL"
 echo "BRANCH: $BRANCH"
+echo "FUZZ_MODE: $FUZZ_MODE"
