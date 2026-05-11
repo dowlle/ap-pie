@@ -4,6 +4,14 @@
 #   AUDIT_LOG: <path>
 # Exits non-zero only on auditor crash, not on FAIL verdict.
 set -o pipefail
+
+# audit.py shells out to the `claude` CLI which on the worker host lives at
+# ~/.local/bin/claude (Atlas convention). Under `ssh host '<cmd>'` (non-login
+# shell) ~/.local/bin is not on PATH and audit.py crashes with
+# FileNotFoundError('claude'). Explicitly extend PATH so audit.sh works in
+# both interactive and command-mode SSH without needing `bash -lc` wrapping.
+export PATH="$HOME/.local/bin:$PATH"
+
 if [ $# -lt 1 ]; then
   echo "Usage: $0 <url> [out_dir]" >&2
   exit 2
