@@ -118,6 +118,21 @@ git add "$TOML_PATH" index.lock
 git commit -m "Add ${APWORLD_NAME} ${VERSION}" --quiet
 git push -u origin "$BRANCH" --quiet --force-with-lease
 
+# Extract slim sections from audit log (NEVER embed the full report in the PR
+# body — it leaks both the auditor's catalog of patterns checked and any
+# absolute paths the log captured). Full report stays on the worker host for
+# private review. Public PR shows only Verdict + Summary + Verdict rationale.
+AUDIT_VERDICT_LINE=$(grep -E '^### Verdict:' "$AUDIT_LOG" | head -1 | sed 's/### Verdict: */**/' | sed 's/ *$/**/')
+AUDIT_SUMMARY=$(awk '/^### Summary$/{flag=1;next} /^### /{flag=0} flag' "$AUDIT_LOG" | sed '/^[[:space:]]*$/d')
+AUDIT_RATIONALE=$(awk '/^### Verdict rationale$/{flag=1;next} /^### /{flag=0} flag' "$AUDIT_LOG" | sed '/^[[:space:]]*$/d' | head -10)
+
+# Extract slim fuzz verdict (just counts + multiplier — no paths, no per-check
+# breakdown, no worker-host details).
+FUZZ_VERDICT_LINE=$(grep -E '^RESULT:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+FUZZ_PASSED=$(grep -E '^CHECKS_PASSED:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+FUZZ_TOTAL=$(grep -E '^CHECKS_TOTAL:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+FUZZ_MULT=$(grep -E '^MULTIPLIER:' "$FUZZ_LOG" | tail -1 | awk '{print $2}')
+
 # Build PR body
 PR_BODY_FILE="$(mktemp)"
 {
@@ -126,28 +141,24 @@ PR_BODY_FILE="$(mktemp)"
   echo "- **Source URL:** ${URL}"
   echo "- **SHA-256:** \`${SHA}\`"
   echo ""
-  echo "### Security audit (FEAT-19)"
+  echo "### Security audit"
   echo ""
-  echo "<details><summary>Full audit report</summary>"
+  echo "${AUDIT_VERDICT_LINE:-**Verdict: UNKNOWN**}"
   echo ""
-  echo '```'
-  cat "$AUDIT_LOG"
-  echo '```'
+  if [ -n "$AUDIT_SUMMARY" ]; then
+    echo "$AUDIT_SUMMARY"
+    echo ""
+  fi
+  if [ -n "$AUDIT_RATIONALE" ]; then
+    echo "$AUDIT_RATIONALE"
+    echo ""
+  fi
+  echo "### Runtime fuzz"
   echo ""
-  echo "</details>"
-  echo ""
-  echo "### Bananium-style fuzz suite (Eijebong fuzz.py 0.6.2 + 10 hooks)"
-  echo ""
-  echo "<details><summary>Full fuzz output</summary>"
-  echo ""
-  echo '```'
-  cat "$FUZZ_LOG"
-  echo '```'
-  echo ""
-  echo "</details>"
+  echo "**Verdict: ${FUZZ_VERDICT_LINE:-UNKNOWN}** -- ${FUZZ_PASSED:-?}/${FUZZ_TOTAL:-?} checks passed at ${FUZZ_MULT:-?}x multiplier."
   echo ""
   echo "---"
-  echo "*Submitted via the automated request flow on the upstream consumer.*"
+  echo "*Audit + fuzz logs are kept privately; this body intentionally omits the audit catalog and per-check breakdowns. Reach the maintainer for the full reports.*"
 } > "$PR_BODY_FILE"
 
 PR_URL=$(gh pr create \
