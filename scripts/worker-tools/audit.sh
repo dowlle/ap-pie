@@ -21,7 +21,16 @@ OUT_DIR="${2:-$HOME/apworld-tools/runs/audit-$(date +%Y%m%d-%H%M%S)}"
 mkdir -p "$OUT_DIR"
 LOG="$OUT_DIR/audit.log"
 cd ~/apworld-auditor
-python3 audit.py url "$URL" 2>&1 | tee "$LOG"
+
+# Important: DO NOT pipe audit.py through `| tee`. Empirically (Atlas
+# 2026-05-11, claude 2.1.129) the piped-stdout context propagates through
+# `subprocess.run(capture_output=True)` inside audit.py and trips Claude
+# Code to exit 1 with empty stderr, even though audit.py's internal pipes
+# look identical either way. `>` redirect avoids the issue. We lose the
+# live console mirror, but process-request.sh echoes the tail block below
+# and the full log is preserved at $LOG for the PR body.
+python3 audit.py url "$URL" > "$LOG" 2>&1
+
 VERDICT=$(grep -E '^### Verdict:' "$LOG" | head -1 | awk '{print $3}')
 echo ""
 echo "=== AUDIT TAIL ==="
