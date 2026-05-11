@@ -46,6 +46,63 @@ mkdir -p "$RUN_DIR"
 echo "Run dir: $RUN_DIR"
 echo ""
 
+# Vault archive helper: writes a markdown-wrapped copy of an audit or fuzz
+# log into the AP-Pie Audits dir of the local Obsidian vault, which
+# bidirectional `ob sync` (Obsidian Sync) then propagates to the maintainer's
+# workstation automatically. Silent no-op if the vault path doesn't exist
+# (e.g. running on a host without sync configured).
+VAULT_AUDITS_DIR="$HOME/vaults/stefappelhof/11-Dev/AP-Pie/Audits"
+
+archive_to_vault() {
+  # Usage: archive_to_vault <kind> <log_path> <verdict>
+  #   kind     - "audit" or "fuzz"
+  #   log_path - source log to embed
+  #   verdict  - PASS / FAIL / NEEDS_REVIEW / etc.
+  local kind="$1"
+  local log_path="$2"
+  local verdict="$3"
+
+  [ -d "$VAULT_AUDITS_DIR" ] || return 0
+  [ -f "$log_path" ] || return 0
+
+  local date_today
+  date_today=$(date +%Y-%m-%d)
+  local kind_cap
+  if [ "$kind" = "audit" ]; then
+    kind_cap="Audit"
+  else
+    kind_cap="Fuzz"
+  fi
+  local target="${VAULT_AUDITS_DIR}/${date_today} — ${kind_cap} — ${APWORLD_NAME}-${VERSION}.md"
+
+  {
+    echo "---"
+    echo "type: audit-report"
+    echo "kind: $kind"
+    echo "date: \"$date_today\""
+    echo "apworld: $APWORLD_NAME"
+    echo "version: \"$VERSION\""
+    echo "verdict: ${verdict:-UNKNOWN}"
+    echo "source_url: $URL"
+    echo "project: AP-Pie"
+    echo "tags: [ap-pie, audit-report, $kind]"
+    echo "---"
+    echo ""
+    echo "# ${kind_cap} — $APWORLD_NAME $VERSION"
+    echo ""
+    echo "- **Source URL:** $URL"
+    echo "- **Verdict:** **${verdict:-UNKNOWN}**"
+    echo "- **Generated:** $(date -u +%Y-%m-%dT%H:%M:%SZ) by automated worker chain"
+    echo ""
+    echo "## Full log"
+    echo ""
+    echo '```'
+    cat "$log_path"
+    echo '```'
+  } > "$target"
+  echo "Vault archive: $target"
+}
+
 # ── Phase 1: Audit ──
 echo ">>> Phase 1/3: Security audit"
 "$TOOLS_DIR/audit.sh" "$URL" "$RUN_DIR"
@@ -57,6 +114,10 @@ fi
 echo ""
 echo "Audit verdict: ${AUDIT_VERDICT:-UNKNOWN}"
 echo ""
+
+# Archive audit to vault regardless of verdict — NEEDS_REVIEW and FAIL
+# are exactly the cases worth eyeballing.
+archive_to_vault audit "$RUN_DIR/audit.log" "${AUDIT_VERDICT:-UNKNOWN}"
 
 # ── Phase 2a: Smoke fuzz (pre-filter) ──
 # Cheap-but-real pass at SMOKE_MULT to catch obviously-broken APWorlds
@@ -74,6 +135,9 @@ if [ "$SMOKE_MULT" != "0" ] && [ "$SMOKE_MULT" != "" ]; then
   echo "Smoke verdict: ${SMOKE_VERDICT:-UNKNOWN}"
   echo ""
   if [ "$SMOKE_VERDICT" != "PASS" ]; then
+    # Archive the smoke fuzz log to vault BEFORE exiting — failures are
+    # exactly what we want to see in the vault.
+    archive_to_vault fuzz "$SMOKE_LOG" "${SMOKE_VERDICT:-UNKNOWN}"
     echo "=================================="
     echo ">>> GATE FAILED (at smoke pre-filter)"
     echo "  audit: ${AUDIT_VERDICT:-UNKNOWN}"
@@ -98,6 +162,10 @@ echo ""
 echo "Fuzz verdict: ${FUZZ_VERDICT:-UNKNOWN}"
 echo "SHA-256: ${SHA:-UNKNOWN}"
 echo ""
+
+# Archive production fuzz to vault (overwrites the smoke archive — production
+# is the canonical reference).
+archive_to_vault fuzz "$FUZZ_LOG" "${FUZZ_VERDICT:-UNKNOWN}"
 
 # ── Gate ──
 if [ "$AUDIT_VERDICT" != "PASS" ] || [ "$FUZZ_VERDICT" != "PASS" ]; then
