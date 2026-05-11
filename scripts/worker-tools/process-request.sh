@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
-# End-to-end APWorld index request: audit -> fuzz -> open PR.
+# End-to-end APWorld index request: audit -> smoke fuzz -> production fuzz -> open PR.
 #
 # Usage: process-request.sh <url> <apworld_name> <version> [multiplier] [--dry-run]
 #   url           HTTPS URL to the .apworld
 #   apworld_name  TOML basename in the index (e.g. Schedule_I, x2wotc)
 #   version       Version string to add (e.g. 3.6.0)
-#   multiplier    Fuzz multiplier (default 1.0). Use 0.01 for a smoke test.
-#   --dry-run     Run audit + fuzz, skip PR open. Exit 0 on both passing.
+#   multiplier    Production fuzz multiplier (default 1.0). Use 0.01 for a manual smoke test.
+#   --dry-run     Run gates, skip PR open. Exit 0 if all gates pass.
 #
-# Both gates must pass before a PR is opened. If either fails, the
-# script exits non-zero with the failing verdict. Reports are kept under
+# Environment:
+#   SMOKE_MULT    Smoke-pass multiplier (default 0.05). Runs BEFORE the production
+#                 fuzz; if it fails, we skip the expensive 1.0x run and exit early.
+#                 Set to "0" to disable the smoke pass entirely (matches pre-2026-05-11
+#                 behavior). Smoke is a pre-filter only; it never replaces the
+#                 production gate per the briefing rule.
+#
+# All gates must pass before a PR is opened. Reports are kept under
 # ~/apworld-tools/runs/<TS>-<APWORLD>-<VERSION>/.
 set -o pipefail
 
@@ -23,6 +29,7 @@ APWORLD_NAME="$2"
 VERSION="$3"
 MULT="1.0"
 DRY_RUN=false
+SMOKE_MULT="${SMOKE_MULT:-0.05}"
 shift 3
 for arg in "$@"; do
   if [ "$arg" = "--dry-run" ]; then
@@ -51,8 +58,36 @@ echo ""
 echo "Audit verdict: ${AUDIT_VERDICT:-UNKNOWN}"
 echo ""
 
-# ── Phase 2: Fuzz ──
-echo ">>> Phase 2/3: Bananium fuzz suite (multiplier=$MULT)"
+# ── Phase 2a: Smoke fuzz (pre-filter) ──
+# Cheap-but-real pass at SMOKE_MULT to catch obviously-broken APWorlds
+# before we commit ~30-60 min of CPU to the 1.0x production run. NOT a
+# production gate per the briefing rule; the 1.0x run below still has to
+# pass before we open a PR.
+if [ "$SMOKE_MULT" != "0" ] && [ "$SMOKE_MULT" != "" ]; then
+  echo ">>> Phase 2a/4: Smoke fuzz at ${SMOKE_MULT}x (pre-filter)"
+  SMOKE_LOG="$RUN_DIR/fuzz-smoke.log"
+  set +e
+  "$HOME/apworld-fuzzer/run-fuzz.sh" "$URL" "$APWORLD_NAME" "$SMOKE_MULT" 2>&1 | tee "$SMOKE_LOG"
+  set -e
+  SMOKE_VERDICT=$(grep -E '^RESULT:' "$SMOKE_LOG" | tail -1 | awk '{print $2}' || true)
+  echo ""
+  echo "Smoke verdict: ${SMOKE_VERDICT:-UNKNOWN}"
+  echo ""
+  if [ "$SMOKE_VERDICT" != "PASS" ]; then
+    echo "=================================="
+    echo ">>> GATE FAILED (at smoke pre-filter)"
+    echo "  audit: ${AUDIT_VERDICT:-UNKNOWN}"
+    echo "  smoke: ${SMOKE_VERDICT:-UNKNOWN} (multiplier=$SMOKE_MULT)"
+    echo "Skipping the ${MULT}x production fuzz to save CPU."
+    echo "Reports: $RUN_DIR"
+    echo "Will NOT open a PR."
+    echo "=================================="
+    exit 1
+  fi
+fi
+
+# ── Phase 2b: Production fuzz ──
+echo ">>> Phase 2b/4: Bananium fuzz suite (multiplier=$MULT)"
 FUZZ_LOG="$RUN_DIR/fuzz.log"
 set +e
 "$HOME/apworld-fuzzer/run-fuzz.sh" "$URL" "$APWORLD_NAME" "$MULT" 2>&1 | tee "$FUZZ_LOG"
@@ -79,14 +114,14 @@ fi
 if $DRY_RUN; then
   echo ""
   echo "=================================="
-  echo ">>> Both gates PASSED (--dry-run, skipping PR open)"
+  echo ">>> All gates PASSED (--dry-run, skipping PR open)"
   echo "Reports: $RUN_DIR"
   echo "=================================="
   exit 0
 fi
 
 # ── Phase 3: Open PR ──
-echo ">>> Phase 3/3: Opening PR on dowlle/Archipelago-index"
+echo ">>> Phase 3/4: Opening PR on dowlle/Archipelago-index"
 echo ""
 "$TOOLS_DIR/open-pr.sh" "$APWORLD_NAME" "$VERSION" "$URL" "$SHA" \
   "$RUN_DIR/audit.log" "$FUZZ_LOG" 2>&1 | tee "$RUN_DIR/pr.log"
