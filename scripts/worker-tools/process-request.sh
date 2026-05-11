@@ -58,6 +58,10 @@ archive_to_vault() {
   #   kind     - "audit" or "fuzz"
   #   log_path - source log to embed
   #   verdict  - PASS / FAIL / NEEDS_REVIEW / etc.
+  #
+  # Layout:  <vault>/Audits/<apworld>/<version> — <Audit|Fuzz>.md
+  # One file per kind per version. Re-running the chain on the same
+  # version overwrites (git/obsidian history is the audit trail).
   local kind="$1"
   local log_path="$2"
   local verdict="$3"
@@ -67,13 +71,22 @@ archive_to_vault() {
 
   local date_today
   date_today=$(date +%Y-%m-%d)
-  local kind_cap
+  local kind_cap sibling_kind sibling_kind_cap
   if [ "$kind" = "audit" ]; then
     kind_cap="Audit"
+    sibling_kind="fuzz"
+    sibling_kind_cap="Fuzz"
   else
     kind_cap="Fuzz"
+    sibling_kind="audit"
+    sibling_kind_cap="Audit"
   fi
-  local target="${VAULT_AUDITS_DIR}/${date_today} — ${kind_cap} — ${APWORLD_NAME}-${VERSION}.md"
+  local apworld_dir="${VAULT_AUDITS_DIR}/${APWORLD_NAME}"
+  mkdir -p "$apworld_dir"
+  local target="${apworld_dir}/${VERSION} — ${kind_cap}.md"
+  # Vault-relative wikilink to the sibling report (Obsidian resolves the
+  # full path even when names alone would collide across apworlds).
+  local sibling_link="[[11-Dev/AP-Pie/Audits/${APWORLD_NAME}/${VERSION} — ${sibling_kind_cap}|${sibling_kind_cap} report]]"
 
   {
     echo "---"
@@ -92,6 +105,7 @@ archive_to_vault() {
     echo ""
     echo "- **Source URL:** $URL"
     echo "- **Verdict:** **${verdict:-UNKNOWN}**"
+    echo "- **Sibling:** $sibling_link"
     echo "- **Generated:** $(date -u +%Y-%m-%dT%H:%M:%SZ) by automated worker chain"
     echo ""
     echo "## Full log"
