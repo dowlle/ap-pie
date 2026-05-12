@@ -31,6 +31,24 @@ import { useAuth } from "../context/AuthContext";
 
 const VERSIONS_COLLAPSED_LIMIT = 3;
 
+function isDiscordUrl(url: string): boolean {
+  return /^https?:\/\/(www\.)?(discord\.com|discord\.gg|discordapp\.com)\//i.test(url);
+}
+
+function DiscordIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      className="apworld-card-home-svg"
+    >
+      <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09a.1.1 0 0 0-.07-.03C7.5 4.26 6.05 4.71 4.72 5.33a.07.07 0 0 0-.03.03C2.04 9.46 1.32 13.5 1.68 17.48a.08.08 0 0 0 .03.06c1.8 1.33 3.55 2.13 5.26 2.64a.08.08 0 0 0 .08-.04c.4-.55.76-1.13 1.07-1.74a.08.08 0 0 0-.04-.11c-.57-.22-1.12-.49-1.65-.79a.08.08 0 0 1-.01-.13l.33-.26a.08.08 0 0 1 .08-.01c3.46 1.58 7.21 1.58 10.63 0a.08.08 0 0 1 .09.01l.33.26a.08.08 0 0 1-.01.13c-.53.31-1.08.57-1.65.79a.08.08 0 0 0-.04.11c.32.61.68 1.19 1.07 1.74a.08.08 0 0 0 .08.04c1.72-.51 3.46-1.31 5.27-2.64a.08.08 0 0 0 .03-.06c.43-4.6-.72-8.6-3.07-12.12a.06.06 0 0 0-.03-.03ZM8.52 15.06c-1.03 0-1.88-.95-1.88-2.11s.83-2.11 1.88-2.11c1.05 0 1.89.96 1.88 2.11 0 1.16-.84 2.11-1.88 2.11Zm6.97 0c-1.03 0-1.88-.95-1.88-2.11s.83-2.11 1.88-2.11c1.05 0 1.89.96 1.88 2.11 0 1.16-.83 2.11-1.88 2.11Z" />
+    </svg>
+  );
+}
+
 function compareVersions(a: string, b: string): number {
   const partsA = a.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
   const partsB = b.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
@@ -199,9 +217,22 @@ function WorldCard({
       </header>
 
       {world.home && (
-        <a href={world.home} target="_blank" rel="noreferrer" className="apworld-card-home">
-          {world.home}
-        </a>
+        isDiscordUrl(world.home) ? (
+          <a
+            href={world.home}
+            target="_blank"
+            rel="noreferrer"
+            className="apworld-card-home-icon"
+            title={`Discord: ${world.home}`}
+            aria-label="Open Discord channel"
+          >
+            <DiscordIcon />
+          </a>
+        ) : (
+          <a href={world.home} target="_blank" rel="noreferrer" className="apworld-card-home">
+            {world.home}
+          </a>
+        )
       )}
 
       {(world.setup_guide || world.tracker) && (
