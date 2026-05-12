@@ -38,7 +38,7 @@ class APWorldInfo:
     game_name: str = ""
     home: str = ""
     tags: list[str] = field(default_factory=list)
-    supported: bool = True
+    supported: bool = False
     disabled: bool = False
     default_url: str | None = None
     versions: list[APWorldVersion] = field(default_factory=list)
@@ -156,7 +156,7 @@ def parse_world_toml(key: str, data: dict) -> APWorldInfo:
         game_name=game_name,
         home=data.get("home", ""),
         tags=data.get("tags", []),
-        supported=data.get("supported", True),
+        supported=data.get("supported", False),
         disabled=data.get("disabled", False),
         default_url=default_url,
         versions=versions,
