@@ -458,9 +458,11 @@ function WorldCard({
 
       {builtinOnly ? (
         <p className="apworld-card-note muted">
-          {world.is_builtin
-            ? "No external versions in the index - this APWorld ships with Archipelago itself."
-            : "No versions of this APWorld have passed the security audit or fuzzer at the moment."}
+          {world.disabled
+            ? "This APWorld is intentionally disabled in the index and won't be installed via auto-pin. See the upstream TOML for the maintainer's reason."
+            : world.is_builtin
+              ? "No external versions in the index - this APWorld ships with Archipelago itself."
+              : "No versions of this APWorld have passed the security audit or fuzzer at the moment."}
         </p>
       ) : (
         <>
