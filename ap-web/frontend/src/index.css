@@ -29,7 +29,10 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   font-family: var(--font-body);
-  font-size: 14px;
+  /* Bumped 14 → 15 (2026-05-12) — multiple readers flagged the prior
+     base as too small. Cascades through every `rem`-based size in the
+     stylesheet; per-element overrides retain their existing ratios. */
+  font-size: 15px;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -752,18 +755,22 @@ a.btn:hover { text-decoration: none; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.1em;
-  height: 1.1em;
-  font-size: 0.85em;
+  width: 1.25em;
+  height: 1.25em;
   line-height: 1;
-  opacity: 0.7;
+  color: var(--text-muted);
   text-decoration: none;
   border-radius: 4px;
 }
 .game-aux-link:hover,
 .game-aux-link:focus-visible {
-  opacity: 1;
+  color: var(--accent-light);
   background: var(--bg);
+}
+.game-aux-icon {
+  width: 0.95em;
+  height: 0.95em;
+  display: block;
 }
 
 /* UX-16: linked game name in room tables. Inherits color so it doesn't
