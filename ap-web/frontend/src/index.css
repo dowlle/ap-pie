@@ -29,10 +29,11 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   font-family: var(--font-body);
-  /* Bumped 14 → 15 (2026-05-12) — multiple readers flagged the prior
-     base as too small. Cascades through every `rem`-based size in the
-     stylesheet; per-element overrides retain their existing ratios. */
-  font-size: 15px;
+  /* Bumped 14 → 16 (2026-05-12) — multiple readers flagged the prior
+     base as too small on both ap-pie.com and Pokepelago. Cascades
+     through every `rem`-based size; per-element overrides retain their
+     existing ratios. */
+  font-size: 16px;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -711,7 +712,9 @@ a.btn:hover { text-decoration: none; }
   background: var(--bg-hover);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.72em;
+  /* 2026-05-12: bumped 0.72em → 0.85em alongside the root font bump so
+     version pills read at parity with adjacent icons + text. */
+  font-size: 0.85em;
   line-height: 1.4;
   white-space: nowrap;
   cursor: help;
@@ -724,7 +727,7 @@ a.btn:hover { text-decoration: none; }
 .game-pill-core {
   font-family: var(--font-sans);
   font-style: italic;
-  font-size: 0.7em;
+  font-size: 0.82em;
   background: transparent;
   border: 1px solid var(--border);
   padding: 0 0.35rem;
@@ -739,7 +742,7 @@ a.btn:hover { text-decoration: none; }
   background: rgba(255, 169, 64, 0.12);
   border: 1px solid rgba(255, 169, 64, 0.3);
   font-weight: 600;
-  font-size: 0.7em;
+  font-size: 0.82em;
   padding: 0 0.4rem;
 }
 
@@ -755,8 +758,9 @@ a.btn:hover { text-decoration: none; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.25em;
-  height: 1.25em;
+  /* 2026-05-12: bumped to track the bigger root + pill scale. */
+  width: 1.4em;
+  height: 1.4em;
   line-height: 1;
   color: var(--text-muted);
   text-decoration: none;
@@ -768,8 +772,8 @@ a.btn:hover { text-decoration: none; }
   background: var(--bg);
 }
 .game-aux-icon {
-  width: 0.95em;
-  height: 0.95em;
+  width: 1.1em;
+  height: 1.1em;
   display: block;
 }
 
