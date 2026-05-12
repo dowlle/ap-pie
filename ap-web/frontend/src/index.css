@@ -2489,6 +2489,27 @@ a.btn:hover { text-decoration: none; }
   color: var(--accent);
   word-break: break-all;
 }
+.apworld-card-home-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  color: var(--text-muted);
+  border-radius: 4px;
+  text-decoration: none;
+  align-self: flex-start;
+}
+.apworld-card-home-icon:hover,
+.apworld-card-home-icon:focus-visible {
+  color: var(--accent-light);
+  background: var(--bg);
+}
+.apworld-card-home-svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+}
 /* FEAT-34: setup-guide + tracker link row under the home URL on each
    APWorld card. Sibling to .apworld-card-home, sits above the version
    list. */
