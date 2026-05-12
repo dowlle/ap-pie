@@ -2515,6 +2515,24 @@ a.btn:hover { text-decoration: none; }
   height: 1.15rem;
   display: block;
 }
+/* Raster brand glyphs (e.g. archipelago.gg favicon) get a greyscale
+   filter so they sit alongside the stroke-based SVG icons without
+   clashing. Brightness lifts on hover/focus to mirror the
+   var(--text-muted) → var(--accent-light) tone shift the SVG icons
+   get via currentColor. */
+.apworld-card-icon-img {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+  filter: grayscale(1) brightness(0.85);
+  opacity: 0.75;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+.apworld-card-icon:hover .apworld-card-icon-img,
+.apworld-card-icon:focus-visible .apworld-card-icon-img {
+  filter: grayscale(1) brightness(1.25);
+  opacity: 1;
+}
 /* FEAT-34: setup-guide + tracker link row under the home URL on each
    APWorld card. Sibling to .apworld-card-home, sits above the version
    list. */
