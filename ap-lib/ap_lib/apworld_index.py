@@ -42,6 +42,12 @@ class APWorldInfo:
     disabled: bool = False
     default_url: str | None = None
     versions: list[APWorldVersion] = field(default_factory=list)
+    # OPS-16 fields backfilled from the unofficial AP APWorld sheet, all
+    # optional. `stability` is stable/unstable/alpha/beta; `setup_guide`
+    # and `tracker` are URLs.
+    stability: str | None = None
+    setup_guide: str | None = None
+    tracker: str | None = None
 
     @property
     def latest_version(self) -> APWorldVersion | None:
@@ -100,6 +106,9 @@ class APWorldInfo:
             "downloadable_versions": [
                 {"version": v.version} for v in downloadable
             ],
+            "stability": self.stability,
+            "setup_guide": self.setup_guide,
+            "tracker": self.tracker,
         }
 
 
@@ -151,6 +160,9 @@ def parse_world_toml(key: str, data: dict) -> APWorldInfo:
         disabled=data.get("disabled", False),
         default_url=default_url,
         versions=versions,
+        stability=data.get("stability"),
+        setup_guide=data.get("setup_guide"),
+        tracker=data.get("tracker"),
     )
 
 

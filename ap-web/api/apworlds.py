@@ -409,6 +409,13 @@ def apworlds_for_room(
             "display_name": world.display_name if world else game,
             "home": world.home if world else "",
             "tags": world.tags if world else [],
+            # OPS-16 metadata: surfaced to both host and public so the UI
+            # can render a stability chip + setup-guide / tracker link.
+            # All three are optional; absent means the index TOML didn't
+            # carry the field (silent absence is the correct render).
+            "stability": world.stability if world else None,
+            "setup_guide": world.setup_guide if world else None,
+            "tracker": world.tracker if world else None,
             "selected_version": None,
             "download_url": None,
             "available_versions": [],

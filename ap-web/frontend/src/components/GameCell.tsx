@@ -172,6 +172,102 @@ function GameLink({
   );
 }
 
+/**
+ * FEAT-34: tiny inline icon links to the APWorld's setup guide and
+ * tracker (when the index TOML has those fields populated). Players see
+ * these next to the version pill in YAML rows — the "APWorlds you need
+ * to install" panel was removed 2026-05-03 in favour of inline pills,
+ * so this is the player-facing home for those URLs.
+ *
+ * Stroke-based SVG icons (Feather-style) so they inherit `currentColor`
+ * and scale with the parent font-size; gives a much cleaner read than
+ * emoji at small sizes.
+ *
+ * Render nothing when neither field is set, so cells stay tight for
+ * the common case.
+ */
+function SetupGuideIcon() {
+  // Open book outline.
+  return (
+    <svg
+      className="game-aux-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z" />
+      <path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z" />
+    </svg>
+  );
+}
+
+function TrackerIcon() {
+  // Concentric crosshair — reads as "live tracker / target" cleanly at
+  // 1em.
+  return (
+    <svg
+      className="game-aux-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function GameAuxLinks({
+  game,
+  lookup,
+}: {
+  game: string;
+  lookup: Map<string, APWorldInfo> | null;
+}) {
+  const world = lookup?.get(game);
+  if (!world) return null;
+  if (!world.setup_guide && !world.tracker) return null;
+  return (
+    <span className="game-aux-links">
+      {world.setup_guide && (
+        <a
+          href={world.setup_guide}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="game-aux-link"
+          title={`${game}: author's setup / install guide`}
+          aria-label={`Setup guide for ${game}`}
+        >
+          <SetupGuideIcon />
+        </a>
+      )}
+      {world.tracker && (
+        <a
+          href={world.tracker}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="game-aux-link"
+          title={`${game}: live tracker / PopTracker pack`}
+          aria-label={`Tracker for ${game}`}
+        >
+          <TrackerIcon />
+        </a>
+      )}
+    </span>
+  );
+}
+
 function SingleGameRow({
   game,
   lookup,
@@ -192,6 +288,7 @@ function SingleGameRow({
         apworldVersions={apworldVersions}
         pinByApworld={pinByApworld}
       />
+      <GameAuxLinks game={game} lookup={lookup} />
     </span>
   );
 }
@@ -234,6 +331,7 @@ function MultiGameCell({
                   apworldVersions={apworldVersions}
                   pinByApworld={pinByApworld}
                 />
+                <GameAuxLinks game={g} lookup={lookup} />
               </span>
             </li>
           ))}

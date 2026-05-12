@@ -66,6 +66,32 @@ const TAG_DESCRIPTIONS: Record<string, string> = {
   ad: "After-dark / adult-content APWorld",
 };
 
+/**
+ * FEAT-34: stability comes from the OPS-16 sheet backfill. We render
+ * known values as a coloured chip; anything else (or absence) renders
+ * nothing — silent absence is the correct default per the design note.
+ */
+function StabilityChip({ stability }: { stability: string | null }) {
+  if (!stability) return null;
+  const known = ["stable", "unstable", "alpha", "beta"];
+  const value = stability.toLowerCase();
+  if (!known.includes(value)) return null;
+  const titleMap: Record<string, string> = {
+    stable: "Marked stable by the APWorld author",
+    unstable: "Marked unstable — expect occasional issues",
+    alpha: "Marked alpha — early development, expect bugs",
+    beta: "Marked beta — feature-complete but still hardening",
+  };
+  return (
+    <span
+      className={`apworld-stability apworld-stability-${value}`}
+      title={titleMap[value]}
+    >
+      {value}
+    </span>
+  );
+}
+
 function VersionRow({
   world,
   v,
@@ -157,6 +183,7 @@ function WorldCard({
           {!world.is_builtin && world.supported && (
             <span className="badge badge-save">Community</span>
           )}
+          <StabilityChip stability={world.stability} />
           {world.tags.map((t) => (
             <span key={t} className="tag" title={TAG_DESCRIPTIONS[t]}>{t}</span>
           ))}
@@ -167,6 +194,33 @@ function WorldCard({
         <a href={world.home} target="_blank" rel="noreferrer" className="apworld-card-home">
           {world.home}
         </a>
+      )}
+
+      {(world.setup_guide || world.tracker) && (
+        <div className="apworld-card-links">
+          {world.setup_guide && (
+            <a
+              className="btn btn-sm"
+              href={world.setup_guide}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Author's setup / install guide"
+            >
+              Setup guide ↗
+            </a>
+          )}
+          {world.tracker && (
+            <a
+              className="btn btn-sm"
+              href={world.tracker}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Live tracker / PopTracker pack"
+            >
+              Tracker ↗
+            </a>
+          )}
+        </div>
       )}
 
       {builtinOnly ? (

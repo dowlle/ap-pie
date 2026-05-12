@@ -29,7 +29,11 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   font-family: var(--font-body);
-  font-size: 14px;
+  /* Bumped 14 → 16 (2026-05-12) — multiple readers flagged the prior
+     base as too small on both ap-pie.com and Pokepelago. Cascades
+     through every `rem`-based size; per-element overrides retain their
+     existing ratios. */
+  font-size: 16px;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -708,7 +712,9 @@ a.btn:hover { text-decoration: none; }
   background: var(--bg-hover);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.72em;
+  /* 2026-05-12: bumped 0.72em → 0.85em alongside the root font bump so
+     version pills read at parity with adjacent icons + text. */
+  font-size: 0.85em;
   line-height: 1.4;
   white-space: nowrap;
   cursor: help;
@@ -721,7 +727,7 @@ a.btn:hover { text-decoration: none; }
 .game-pill-core {
   font-family: var(--font-sans);
   font-style: italic;
-  font-size: 0.7em;
+  font-size: 0.82em;
   background: transparent;
   border: 1px solid var(--border);
   padding: 0 0.35rem;
@@ -736,8 +742,39 @@ a.btn:hover { text-decoration: none; }
   background: rgba(255, 169, 64, 0.12);
   border: 1px solid rgba(255, 169, 64, 0.3);
   font-weight: 600;
-  font-size: 0.7em;
+  font-size: 0.82em;
   padding: 0 0.4rem;
+}
+
+/* FEAT-34: inline setup-guide + tracker icons in YAML rows. Tiny, no
+   border, soft on hover. Renders only when the index TOML carries the
+   field, so the common case (no extras) leaves the cell untouched. */
+.game-aux-links {
+  display: inline-flex;
+  gap: 0.15rem;
+  margin-left: 0.15rem;
+}
+.game-aux-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 2026-05-12: bumped to track the bigger root + pill scale. */
+  width: 1.4em;
+  height: 1.4em;
+  line-height: 1;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: 4px;
+}
+.game-aux-link:hover,
+.game-aux-link:focus-visible {
+  color: var(--accent-light);
+  background: var(--bg);
+}
+.game-aux-icon {
+  width: 1.1em;
+  height: 1.1em;
+  display: block;
 }
 
 /* UX-16: linked game name in room tables. Inherits color so it doesn't
@@ -2451,6 +2488,46 @@ a.btn:hover { text-decoration: none; }
   font-size: 0.78rem;
   color: var(--accent);
   word-break: break-all;
+}
+/* FEAT-34: setup-guide + tracker link row under the home URL on each
+   APWorld card. Sibling to .apworld-card-home, sits above the version
+   list. */
+.apworld-card-links {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.1rem;
+}
+/* FEAT-34: stability chip family — small pill rendered in the card-badges
+   row. Colour maps to perceived release health; the chip itself stays
+   small because the existing badges + tags already eat that horizontal
+   real estate. */
+.apworld-stability {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+.apworld-stability-stable {
+  background: rgba(74, 174, 116, 0.15);
+  color: #74d39a;
+  border-color: rgba(74, 174, 116, 0.4);
+}
+.apworld-stability-unstable {
+  background: rgba(214, 158, 46, 0.15);
+  color: #ecc46d;
+  border-color: rgba(214, 158, 46, 0.4);
+}
+.apworld-stability-alpha,
+.apworld-stability-beta {
+  background: rgba(207, 88, 88, 0.15);
+  color: #f1908d;
+  border-color: rgba(207, 88, 88, 0.4);
 }
 .apworld-card-note {
   margin: 0;
