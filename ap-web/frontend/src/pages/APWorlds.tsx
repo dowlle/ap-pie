@@ -104,6 +104,29 @@ function ArchipelagoIcon() {
   );
 }
 
+/** Generic globe — used when `home` is set but not a host we have a
+ * brand glyph for (itch pages, dev blogs, self-hosted Gitea / GitLab,
+ * etc.). Reads as "some external homepage" without committing to a
+ * specific brand. */
+function GlobeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="apworld-card-icon-svg"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18Z" />
+    </svg>
+  );
+}
+
 function SetupGuideIcon() {
   return (
     <svg
@@ -274,7 +297,9 @@ function VersionRow({
  * (the TOML didn't carry a verifiable source).
  */
 function HomeAndIconRow({ world }: { world: APWorldInfo }) {
-  let homeIcon: { node: ReactElement; href: string; title: string; label: string; kind: "discord" | "github" | "archipelago" } | null = null;
+  let homeIcon:
+    | { node: ReactElement; href: string; title: string; label: string; kind: "discord" | "github" | "archipelago" | "other" }
+    | null = null;
   if (world.home) {
     if (isDiscordUrl(world.home)) {
       homeIcon = {
@@ -300,10 +325,16 @@ function HomeAndIconRow({ world }: { world: APWorldInfo }) {
         label: "Open Archipelago.gg page",
         kind: "archipelago",
       };
+    } else {
+      homeIcon = {
+        node: <GlobeIcon />,
+        href: world.home,
+        title: `Project page: ${world.home}`,
+        label: "Open project homepage",
+        kind: "other",
+      };
     }
   }
-
-  const textHome = world.home && !homeIcon ? world.home : null;
 
   // Derive a GitHub repo from version URLs when we don't already have
   // a GitHub icon from `home`. This is the trust anchor — it points at
@@ -315,11 +346,6 @@ function HomeAndIconRow({ world }: { world: APWorldInfo }) {
 
   return (
     <>
-      {textHome && (
-        <a href={textHome} target="_blank" rel="noreferrer" className="apworld-card-home">
-          {textHome}
-        </a>
-      )}
       {hasIcons && (
         <div className="apworld-card-icons">
           {homeIcon && (
