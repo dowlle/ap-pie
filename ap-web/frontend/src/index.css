@@ -2542,6 +2542,21 @@ a.btn:hover { text-decoration: none; }
   flex-direction: column;
   gap: 0.25rem;
 }
+.apworld-version-toggle {
+  align-self: flex-start;
+  margin-top: 0.4rem;
+  background: transparent;
+  border: none;
+  padding: 0.2rem 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.apworld-version-toggle:hover,
+.apworld-version-toggle:focus-visible {
+  color: var(--accent-light);
+  text-decoration: underline;
+}
 .apworld-version-row {
   display: flex;
   align-items: center;

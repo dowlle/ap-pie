@@ -29,6 +29,8 @@ import { useAuth } from "../context/AuthContext";
  *     to install locally instead).
  */
 
+const VERSIONS_COLLAPSED_LIMIT = 3;
+
 function compareVersions(a: string, b: string): number {
   const partsA = a.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
   const partsB = b.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
@@ -169,6 +171,12 @@ function WorldCard({
   );
   const downloadable = versions.filter((v) => v.source === "url" || v.source === "local");
   const builtinOnly = downloadable.length === 0;
+  const [showAllVersions, setShowAllVersions] = useState(false);
+  const hasMoreVersions = versions.length > VERSIONS_COLLAPSED_LIMIT;
+  const visibleVersions =
+    showAllVersions || !hasMoreVersions
+      ? versions
+      : versions.slice(0, VERSIONS_COLLAPSED_LIMIT);
 
   return (
     <article className="apworld-card">
@@ -230,19 +238,34 @@ function WorldCard({
             : "No versions of this APWorld have passed the security audit or fuzzer at the moment."}
         </p>
       ) : (
-        <ul className="apworld-version-list">
-          {versions.map((v) => (
-            <VersionRow
-              key={v.version}
-              world={world}
-              v={v}
-              installed={installed}
-              installing={installingVersion === v.version}
-              generationOn={generationOn}
-              onInstall={onInstall}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className="apworld-version-list">
+            {visibleVersions.map((v) => (
+              <VersionRow
+                key={v.version}
+                world={world}
+                v={v}
+                installed={installed}
+                installing={installingVersion === v.version}
+                generationOn={generationOn}
+                onInstall={onInstall}
+              />
+            ))}
+          </ul>
+          {hasMoreVersions && (
+            <button
+              type="button"
+              className="apworld-version-toggle"
+              onClick={() => setShowAllVersions((s) => !s)}
+            >
+              {showAllVersions
+                ? "Show fewer versions"
+                : `Show ${versions.length - VERSIONS_COLLAPSED_LIMIT} more version${
+                    versions.length - VERSIONS_COLLAPSED_LIMIT === 1 ? "" : "s"
+                  }`}
+            </button>
+          )}
+        </>
       )}
 
       {generationOn && installed && (
