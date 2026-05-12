@@ -44,12 +44,17 @@ function isArchipelagoUrl(url: string): boolean {
 }
 
 /** Derive the canonical `https://github.com/<owner>/<repo>` URL from any
- * version's download URL when the index points at GitHub releases.
- * Returns null if no version has a GitHub URL we can parse. */
+ * version's download URL when the index points at GitHub releases OR
+ * a raw blob (raw.githubusercontent.com/<owner>/<repo>/<sha>/...). Some
+ * TOMLs (e.g. manual_umamusumeprettyderby_quindo) point at raw blobs
+ * instead of release assets — same canonical repo, different host.
+ * Returns null if no version has a parseable GitHub-family URL. */
 function deriveGitHubRepoUrl(versions: APWorldVersion[]): string | null {
   for (const v of versions) {
     if (!v.url) continue;
-    const m = v.url.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\//i);
+    const m = v.url.match(
+      /^https?:\/\/(?:github\.com|raw\.githubusercontent\.com)\/([^/]+)\/([^/]+)\//i,
+    );
     if (m) return `https://github.com/${m[1]}/${m[2]}`;
   }
   return null;
