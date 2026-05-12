@@ -180,7 +180,7 @@ function WorldCard({
         <div className="apworld-card-badges">
           {world.disabled && <span className="badge badge-stopped">Disabled</span>}
           {world.is_builtin && <span className="badge badge-builtin">Built-in</span>}
-          {!world.is_builtin && world.supported && (
+          {!world.is_builtin && !world.disabled && (
             <span className="badge badge-save">Community</span>
           )}
           <StabilityChip stability={world.stability} />
