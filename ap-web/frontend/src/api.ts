@@ -183,6 +183,12 @@ export interface APWorldInfo {
   has_update: boolean;
   versions: APWorldVersion[];
   downloadable_versions: { version: string }[];
+  // FEAT-34: optional metadata backfilled from the unofficial AP sheet
+  // (OPS-16). `stability` is stable/unstable/alpha/beta; the other two
+  // are URLs. Render `null` as silent absence.
+  stability: string | null;
+  setup_guide: string | null;
+  tracker: string | null;
 }
 
 export interface InstalledAPWorld {
@@ -220,6 +226,11 @@ export interface RoomAPWorldEntry {
    *  case `selected_version` is the index's latest (computed each request)
    *  and the host picker disables manual pinning. */
   auto_latest: boolean;
+  /** FEAT-34: OPS-16 metadata mirrored from the index TOML. All optional;
+   *  null means the index entry didn't carry the field. */
+  stability: string | null;
+  setup_guide: string | null;
+  tracker: string | null;
 }
 
 export async function getAPWorlds(search?: string): Promise<APWorldInfo[]> {

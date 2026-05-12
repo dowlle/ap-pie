@@ -672,6 +672,15 @@ function APWorldsSection({
                   {e.home && (
                     <a className="btn btn-sm" href={e.home} target="_blank" rel="noreferrer">Source</a>
                   )}
+                  {e.setup_guide && (
+                    <a
+                      className="btn btn-sm"
+                      href={e.setup_guide}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Author's setup / install guide"
+                    >Setup guide</a>
+                  )}
                   {e.apworld_name && (
                     <button
                       type="button"
