@@ -2489,7 +2489,13 @@ a.btn:hover { text-decoration: none; }
   color: var(--accent);
   word-break: break-all;
 }
-.apworld-card-home-icon {
+.apworld-card-icons {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.apworld-card-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2498,14 +2504,13 @@ a.btn:hover { text-decoration: none; }
   color: var(--text-muted);
   border-radius: 4px;
   text-decoration: none;
-  align-self: flex-start;
 }
-.apworld-card-home-icon:hover,
-.apworld-card-home-icon:focus-visible {
+.apworld-card-icon:hover,
+.apworld-card-icon:focus-visible {
   color: var(--accent-light);
   background: var(--bg);
 }
-.apworld-card-home-svg {
+.apworld-card-icon-svg {
   width: 1.15rem;
   height: 1.15rem;
   display: block;
