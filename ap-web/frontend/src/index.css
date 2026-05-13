@@ -2574,50 +2574,38 @@ a.btn:hover { text-decoration: none; }
   border-color: rgba(207, 88, 88, 0.4);
 }
 
-/* FEAT-35: per-version fuzz verdict pill. Three variants: clean is a
-   small green dot (no text -- least intrusive, since most fuzz_results
-   are clean); flaky is an amber "flaky N%" pill; broken is a red
-   "broken N%" pill. Each carries a tooltip with worst_hook + rate +
-   fuzzed_at + seeds so hosts can drill in without leaving the row. */
+/* FEAT-35: per-version fuzz verdict pill. All three variants render as
+   a small coloured dot -- green for clean, amber for flaky, red for
+   broken. The hover tooltip carries the full breakdown (verdict +
+   default + worst_hook + rate + fuzzed_at + seeds) so the visible
+   footprint never competes with the version label or the aux icons.
+   2026-05-13 redesign collapsed flaky / broken from text pills to dots
+   for visual parity with clean. */
 .fuzz-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.05rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
-  border: 1px solid transparent;
-  white-space: nowrap;
-  cursor: help;
-  line-height: 1.4;
-}
-.fuzz-pill-clean {
-  /* Dot-only render -- collapse the chip chrome so it reads as a status
-     indicator next to the version label rather than competing with it. */
   padding: 0;
   border: none;
   background: transparent;
+  cursor: help;
+  line-height: 1;
 }
 .fuzz-pill-dot {
   display: inline-block;
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;
-  background: #74d39a;
-  box-shadow: 0 0 0 1px rgba(74, 174, 116, 0.35);
+  background: currentColor;
+  box-shadow: 0 0 0 1px currentColor;
+}
+.fuzz-pill-clean {
+  color: #74d39a;
 }
 .fuzz-pill-flaky {
-  background: rgba(214, 158, 46, 0.15);
   color: #ecc46d;
-  border-color: rgba(214, 158, 46, 0.4);
 }
 .fuzz-pill-broken {
-  background: rgba(207, 88, 88, 0.18);
   color: #f1908d;
-  border-color: rgba(207, 88, 88, 0.45);
 }
 
 .apworld-card-note {
