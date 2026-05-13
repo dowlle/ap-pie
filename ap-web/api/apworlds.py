@@ -456,6 +456,11 @@ def apworlds_for_room(
                     "source": "url" if v.url else ("local" if v.local else "builtin"),
                     "sha256": v.sha256,
                     "url": v.url,  # raw upstream URL (host-only - public uses /download proxy)
+                    # FEAT-35: per-version fuzz verdict so the picker can render
+                    # a colored pill next to the selected version and annotate
+                    # option labels so hosts can pick a clean older version
+                    # over a flaky latest.
+                    "fuzz_result": v.fuzz_result.to_dict() if v.fuzz_result else None,
                 }
                 for v in world.versions
             ]

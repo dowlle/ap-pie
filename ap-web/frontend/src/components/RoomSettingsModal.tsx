@@ -8,6 +8,7 @@ import {
   type Room,
   type RoomAPWorldEntry,
 } from "../api";
+import FuzzResultPill from "./FuzzResultPill";
 
 /**
  * Consolidates the host-only "knobs" on a room into one modal:
@@ -655,12 +656,39 @@ function APWorldsSection({
                     }}
                   >
                     <option value="">- no pin -</option>
-                    {e.available_versions.map((v) => (
-                      <option key={v.version} value={v.version}>
-                        v{v.version} ({v.source})
-                      </option>
-                    ))}
+                    {e.available_versions.map((v) => {
+                      // FEAT-35: annotate option labels with the per-version
+                      // fuzz verdict so hosts can pick a clean older version
+                      // over a flaky/broken latest without opening tooltips.
+                      // <option> elements can't render rich content so this
+                      // is text-only; the coloured pill renders next to the
+                      // select for the currently-selected version.
+                      let fuzzLabel = "";
+                      if (v.fuzz_result) {
+                        const pct = (v.fuzz_result.default_rate * 100).toFixed(2);
+                        fuzzLabel = ` - ${v.fuzz_result.verdict} ${pct}%`;
+                      }
+                      return (
+                        <option key={v.version} value={v.version}>
+                          v{v.version} ({v.source}){fuzzLabel}
+                        </option>
+                      );
+                    })}
                   </select>
+                  {(() => {
+                    // Render the FuzzResultPill for the currently selected
+                    // version so hosts see the verdict at a glance without
+                    // opening the dropdown.
+                    const selected = e.available_versions.find(
+                      (v) => v.version === e.selected_version,
+                    );
+                    return selected ? (
+                      <FuzzResultPill
+                        fuzz_result={selected.fuzz_result}
+                        version={selected.version}
+                      />
+                    ) : null;
+                  })()}
                   {e.auto_latest && (
                     <span className="settings-aux-note" style={{ margin: 0 }}>
                       auto: latest
