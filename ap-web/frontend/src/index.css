@@ -2573,6 +2573,41 @@ a.btn:hover { text-decoration: none; }
   color: #f1908d;
   border-color: rgba(207, 88, 88, 0.4);
 }
+
+/* FEAT-35: per-version fuzz verdict pill. All three variants render as
+   a small coloured dot -- green for clean, amber for flaky, red for
+   broken. The hover tooltip carries the full breakdown (verdict +
+   default + worst_hook + rate + fuzzed_at + seeds) so the visible
+   footprint never competes with the version label or the aux icons.
+   2026-05-13 redesign collapsed flaky / broken from text pills to dots
+   for visual parity with clean. */
+.fuzz-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: help;
+  line-height: 1;
+}
+.fuzz-pill-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 1px currentColor;
+}
+.fuzz-pill-clean {
+  color: #74d39a;
+}
+.fuzz-pill-flaky {
+  color: #ecc46d;
+}
+.fuzz-pill-broken {
+  color: #f1908d;
+}
+
 .apworld-card-note {
   margin: 0;
   font-size: 0.8rem;

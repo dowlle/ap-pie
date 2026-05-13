@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 import subprocess
@@ -10,6 +11,8 @@ import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.request import urlopen, Request
+
+logger = logging.getLogger(__name__)
 
 try:
     import tomllib
@@ -20,11 +23,44 @@ DEFAULT_INDEX_REPO = "https://github.com/dowlle/Archipelago-index.git"
 
 
 @dataclass
+class FuzzResult:
+    """Per-version empirical fuzz verdict from dowlle/Archipelago-index.
+
+    FEAT-35: each world TOML may carry a top-level `[[fuzz_results]]`
+    array-of-tables with one record per (version, fuzz-run). The reader
+    groups records by `version`, sorts by `fuzzed_at` descending, and picks
+    `[0]` as the active result per version (OPS-18 schema take-2, Option B).
+    Absent records for a version mean "no data yet" -- treat as unknown in
+    the UI; never render as clean. `*_rate` fields are decimals
+    (0.004 = 0.4%); the UI multiplies by 100 for display. Verdict is one of
+    "clean" | "flaky" | "broken" per thresholds locked in PR #113 of the
+    index repo.
+    """
+    verdict: str
+    default_rate: float
+    worst_hook: str
+    worst_hook_rate: float
+    seeds: int
+    fuzzed_at: str  # ISO date
+
+    def to_dict(self) -> dict:
+        return {
+            "verdict": self.verdict,
+            "default_rate": self.default_rate,
+            "worst_hook": self.worst_hook,
+            "worst_hook_rate": self.worst_hook_rate,
+            "seeds": self.seeds,
+            "fuzzed_at": self.fuzzed_at,
+        }
+
+
+@dataclass
 class APWorldVersion:
     version: str
     url: str | None = None
     local: str | None = None
     sha256: str | None = None
+    fuzz_result: FuzzResult | None = None
 
 
 @dataclass
@@ -100,6 +136,10 @@ class APWorldInfo:
                     "local": v.local,
                     "sha256": v.sha256,
                     "source": "url" if v.url else ("local" if v.local else "builtin"),
+                    # FEAT-35: per-version fuzz verdict. None when the index has
+                    # no data for this (apworld, version) pair; the UI must
+                    # render that as nothing (not "clean").
+                    "fuzz_result": v.fuzz_result.to_dict() if v.fuzz_result else None,
                 }
                 for v in self.versions
             ],
@@ -131,6 +171,42 @@ def parse_world_toml(key: str, data: dict) -> APWorldInfo:
     default_url = data.get("default_url")
     versions_raw = data.get("versions", {})
 
+    # FEAT-35 / OPS-18: build {version: FuzzResult} from the top-level
+    # `[[fuzz_results]]` array-of-tables. The schema (Option B) places
+    # fuzz records OUTSIDE the [versions] table so [versions] stays
+    # byte-for-byte upstream-compatible with mooinglemur/ionium-ap and so
+    # multiple records per version (re-fuzz, different AP versions, hook
+    # suite changes) are natively expressible. The reader collapses to one
+    # active record per version by latest-`fuzzed_at`-wins. Records missing
+    # `version` or any required field are dropped silently -- CI lints the
+    # schema, so a real corruption surfaces there, not here.
+    fuzz_by_version: dict[str, FuzzResult] = {}
+    fuzz_results_raw = data.get("fuzz_results", [])
+    if isinstance(fuzz_results_raw, list):
+        groups: dict[str, list[dict]] = {}
+        for entry in fuzz_results_raw:
+            if not isinstance(entry, dict):
+                continue
+            ver = entry.get("version")
+            if not isinstance(ver, str):
+                continue
+            groups.setdefault(ver, []).append(entry)
+        for ver, entries in groups.items():
+            entries.sort(key=lambda e: str(e.get("fuzzed_at", "")), reverse=True)
+            for entry in entries:
+                try:
+                    fuzz_by_version[ver] = FuzzResult(
+                        verdict=entry["verdict"],
+                        default_rate=float(entry["default_rate"]),
+                        worst_hook=entry["worst_hook"],
+                        worst_hook_rate=float(entry["worst_hook_rate"]),
+                        seeds=int(entry["seeds"]),
+                        fuzzed_at=str(entry["fuzzed_at"]),
+                    )
+                    break
+                except (KeyError, TypeError, ValueError):
+                    continue
+
     versions = []
     for ver_str, ver_data in versions_raw.items():
         if isinstance(ver_data, dict):
@@ -144,7 +220,14 @@ def parse_world_toml(key: str, data: dict) -> APWorldInfo:
         if not url and default_url:
             url = default_url.replace("{{version}}", ver_str)
 
-        versions.append(APWorldVersion(version=ver_str, url=url, local=local))
+        versions.append(
+            APWorldVersion(
+                version=ver_str,
+                url=url,
+                local=local,
+                fuzz_result=fuzz_by_version.get(ver_str),
+            )
+        )
 
     # Sort versions descending so versions[0] is the latest
     versions.sort(key=lambda v: _version_sort_key(v.version), reverse=True)
@@ -192,7 +275,16 @@ def parse_index_dir(index_dir: Path) -> list[APWorldInfo]:
             for v in world.versions:
                 v.sha256 = ver_shas.get(v.version)
             worlds.append(world)
-        except Exception:
+        except Exception as exc:
+            # OPS-18 hid behind a bare `continue` here for hours -- 99 TOMLs
+            # silently dropped from /api/apworlds after PR #113's nested
+            # fuzz_result shape failed `tomllib.loads`. Surface the parse
+            # failure so the next class of outage is visible in `docker
+            # logs` and any aggregator.
+            logger.warning(
+                "apworld_index: failed to parse %s: %s: %s",
+                f.name, exc.__class__.__name__, exc,
+            )
             continue
 
     return worlds

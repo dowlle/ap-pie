@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { APWorldInfo } from "../api";
+import type { APWorldInfo, FuzzResult } from "../api";
+import FuzzResultPill from "./FuzzResultPill";
 
 /**
  * Renders a YAML's `game:` field for the room tables (host + public).
@@ -152,6 +153,36 @@ function VersionPill({
   return null;
 }
 
+/**
+ * FEAT-35: pick the effective fuzz_result for this YAML row.
+ *
+ * The "effective" version is whichever version's verdict applies to the
+ * row as rendered:
+ *   1. YAML's declared version, when present in the index
+ *   2. Otherwise the room's pin for this game's apworld
+ *
+ * Returns null when the game has no APWorld match in the lookup, when the
+ * matched APWorld is built-in (no fuzz data on AP core games), when
+ * neither declared nor pinned is set, or when the resolved version
+ * carries no fuzz_result.
+ */
+function effectiveFuzzResult(
+  game: string,
+  lookup: Map<string, APWorldInfo> | null,
+  apworldVersions: Record<string, string> | null | undefined,
+  pinByApworld: Map<string, string> | undefined,
+): FuzzResult | null {
+  if (!lookup) return null;
+  const world = lookup.get(game);
+  if (!world || world.is_builtin) return null;
+  const declared = apworldVersions?.[game];
+  const pinned = pinByApworld?.get(world.name);
+  const ver = declared ?? pinned;
+  if (!ver) return null;
+  const match = world.versions.find((v) => v.version === ver);
+  return match?.fuzz_result ?? null;
+}
+
 function GameLink({
   game,
   lookup,
@@ -279,6 +310,7 @@ function SingleGameRow({
   apworldVersions?: Record<string, string> | null;
   pinByApworld?: Map<string, string>;
 }) {
+  const fuzz = effectiveFuzzResult(game, lookup, apworldVersions, pinByApworld);
   return (
     <span className="game-cell-inline">
       <GameLink game={game} lookup={lookup} />
@@ -288,6 +320,10 @@ function SingleGameRow({
         apworldVersions={apworldVersions}
         pinByApworld={pinByApworld}
       />
+      {/* FEAT-35: compact fuzz verdict pill next to the version. Renders
+          nothing for clean-or-absent core games; flaky/broken surface as
+          coloured pills with a worst_hook tooltip. */}
+      <FuzzResultPill fuzz_result={fuzz} />
       <GameAuxLinks game={game} lookup={lookup} />
     </span>
   );
@@ -321,20 +357,24 @@ function MultiGameCell({
       </button>
       {open && (
         <ul className="multi-game-list">
-          {games.map((g, i) => (
-            <li key={`${g}-${i}`}>
-              <span className="game-cell-inline">
-                <GameLink game={g} lookup={lookup} />
-                <VersionPill
-                  game={g}
-                  lookup={lookup}
-                  apworldVersions={apworldVersions}
-                  pinByApworld={pinByApworld}
-                />
-                <GameAuxLinks game={g} lookup={lookup} />
-              </span>
-            </li>
-          ))}
+          {games.map((g, i) => {
+            const fuzz = effectiveFuzzResult(g, lookup, apworldVersions, pinByApworld);
+            return (
+              <li key={`${g}-${i}`}>
+                <span className="game-cell-inline">
+                  <GameLink game={g} lookup={lookup} />
+                  <VersionPill
+                    game={g}
+                    lookup={lookup}
+                    apworldVersions={apworldVersions}
+                    pinByApworld={pinByApworld}
+                  />
+                  <FuzzResultPill fuzz_result={fuzz} />
+                  <GameAuxLinks game={g} lookup={lookup} />
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </span>

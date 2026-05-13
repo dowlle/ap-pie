@@ -163,12 +163,29 @@ export async function uploadGame(file: File): Promise<{ status: string; filename
 }
 
 // APWorlds
+/** FEAT-35: per-version empirical fuzz verdict from dowlle/Archipelago-index.
+ *  Mirrors `ap_lib.apworld_index.FuzzResult`. The reader picks the most
+ *  recent record per version (by `fuzzed_at`) from the TOML's top-level
+ *  `[[fuzz_results]]` array (OPS-18 schema take-2, Option B). Absent =>
+ *  null; the UI renders nothing (NEVER as "clean"). `*_rate` fields are
+ *  decimals (0.004 = 0.4%); multiply by 100 for display. */
+export interface FuzzResult {
+  verdict: "clean" | "flaky" | "broken";
+  default_rate: number;
+  worst_hook: string;
+  worst_hook_rate: number;
+  seeds: number;
+  fuzzed_at: string;  // ISO date
+}
+
 export interface APWorldVersion {
   version: string;
   url: string | null;
   local: string | null;
   sha256: string | null;
   source: "url" | "local" | "builtin";
+  /** FEAT-35: per-version fuzz verdict, null when the index has no data. */
+  fuzz_result: FuzzResult | null;
 }
 
 export interface APWorldInfo {
@@ -216,6 +233,8 @@ export interface RoomAPWorldEntry {
     source: "url" | "local" | "builtin";
     sha256: string | null;
     url: string | null;
+    /** FEAT-35: per-version fuzz verdict, null when the index has no data. */
+    fuzz_result: FuzzResult | null;
   }[];
   /** FEAT-21: room-level policy steering the public copy.
    *   "required"  -> "you need to install this version"

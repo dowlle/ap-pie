@@ -11,6 +11,7 @@ import {
 } from "../api";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
+import FuzzResultPill from "../components/FuzzResultPill";
 
 /**
  * /apworlds - browser for the Archipelago-index (now sourced from
@@ -260,6 +261,10 @@ function VersionRow({
             {shortSha(v.sha256)}
           </span>
         )}
+        {/* FEAT-35: per-version fuzz verdict. Null fuzz_result renders
+            nothing; clean is a tiny green dot; flaky/broken are coloured
+            pills with worst_hook tooltip. */}
+        <FuzzResultPill fuzz_result={v.fuzz_result} version={v.version} />
         {isCurrent && <span className="badge badge-done apworld-version-current">installed</span>}
       </span>
       <span className="apworld-version-actions">
