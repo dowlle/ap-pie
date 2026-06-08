@@ -46,6 +46,12 @@ services:
       - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
       - AP_OWNER_DISCORD_ID=${AP_OWNER_DISCORD_ID}
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      # APIE-1 ap-pie-wide SSO. Both empty by default = host-only "session"
+      # cookie (unchanged). Prod sets DOMAIN=.ap-pie.com + NAME=apie_session
+      # with the shared ecosystem SECRET_KEY; beta sets a distinct NAME (no
+      # domain) to stay isolated. digipelago/pokepelago reuse the prod values.
+      - SESSION_COOKIE_DOMAIN=${SESSION_COOKIE_DOMAIN:-}
+      - SESSION_COOKIE_NAME=${SESSION_COOKIE_NAME:-}
       - FEATURE_GENERATION=${FEATURE_GENERATION:-true}
       # OPS-07: deployment label drives the DeploymentBanner. Empty = prod
       # (no banner). Set to "beta" on the beta stack so testers see a

@@ -56,6 +56,26 @@ DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "")
 OWNER_DISCORD_ID = os.environ.get("AP_OWNER_DISCORD_ID", "")
 SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
 
+# APIE-1 (ap-pie-wide SSO): the session cookie defaults to host-only with
+# Flask's default name "session". To make one Discord login work across all
+# ap-pie.com subdomains (ap-pie.com, digipelago.ap-pie.com, future
+# pokepelago.*), an ecosystem deploy sets:
+#   - SESSION_COOKIE_DOMAIN=.ap-pie.com  -> the cookie is shared across subdomains
+#   - SESSION_COOKIE_NAME=apie_session   -> a distinct ecosystem cookie name
+# Every ecosystem product also shares the SAME SECRET_KEY so a session minted
+# on any subdomain validates on all of them (Flask sessions are signed cookies,
+# not server state). Each product keeps its OWN database keyed by discord_id;
+# the cookie only carries identity.
+#
+# Both default to empty/unset so existing single-host deploys are unchanged.
+# The distinct NAME matters for the beta stack: beta.ap-pie.com has its own
+# SECRET_KEY and its own users table, so it must NOT share the prod cookie.
+# Beta sets a different SESSION_COOKIE_NAME (and no domain) to stay isolated;
+# without the name split, a beta login would clobber the shared prod cookie
+# (same name + Domain=.ap-pie.com) and vice versa.
+SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", "")
+SESSION_COOKIE_NAME = os.environ.get("SESSION_COOKIE_NAME", "")
+
 # Tracker
 TRACKER_CACHE_TTL = int(os.environ.get("AP_TRACKER_CACHE_TTL", "30"))
 # FEAT-14 follow-up 2026-05-02: per-slot detail (items / locations / hints)

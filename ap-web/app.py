@@ -74,6 +74,14 @@ def create_app() -> Flask:
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     if config.DISCORD_REDIRECT_URI.startswith("https://"):
         app.config["SESSION_COOKIE_SECURE"] = True
+    # APIE-1: opt-in ap-pie-wide SSO. Both default to empty -> Flask keeps the
+    # host-only cookie named "session" (unchanged for single-host deploys).
+    # Ecosystem deploys set Domain=.ap-pie.com + Name=apie_session; beta sets
+    # a distinct name + no domain so it stays isolated. See config.py.
+    if config.SESSION_COOKIE_DOMAIN:
+        app.config["SESSION_COOKIE_DOMAIN"] = config.SESSION_COOKIE_DOMAIN
+    if config.SESSION_COOKIE_NAME:
+        app.config["SESSION_COOKIE_NAME"] = config.SESSION_COOKIE_NAME
     CORS(app, origins=cors_origins, supports_credentials=True)
     app.config["MAX_CONTENT_LENGTH"] = config.MAX_UPLOAD_MB * 1024 * 1024
     app.config["AP_HOST"] = config.HOST
