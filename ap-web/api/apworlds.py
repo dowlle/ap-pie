@@ -649,6 +649,41 @@ def installed_apworlds():
     return jsonify(list_installed(worlds_dir))
 
 
+@bp.route("/api/apworlds/<name>/builder-schema")
+def apworld_builder_schema(name: str):
+    """FEAT-38: Tier-1 builder schema for one indexed apworld at an
+    arbitrary version (default: latest downloadable).
+
+    Powers the index-page "Create YAML" entry point - the room-less flow
+    where a logged-in user searches a game on /apworlds, builds a YAML for
+    it, then attaches it to one of their rooms (or a fresh one). Unlike the
+    room endpoint there's no pin to resolve; the caller picks the version
+    via ?version=, or gets the newest downloadable one.
+
+    Session-gated by the global auth middleware like the rest of
+    /api/apworlds - anonymous players go through the room flow instead.
+    """
+    worlds = _get_index_worlds()
+    world = next((w for w in worlds if w.name == name), None)
+    if not world:
+        abort(404, description=f"APWorld '{name}' not in index")
+
+    version = request.args.get("version")
+    if version:
+        if not any(v.version == version for v in world.versions):
+            abort(404, description=f"Version '{version}' not in index for '{name}'")
+    else:
+        ver = next((v for v in world.versions if v.url or v.local), None)
+        if not ver:
+            abort(404, description=f"No downloadable version for '{name}'")
+        version = ver.version
+
+    rows = builder_schemas_for_pins([{"apworld_name": name, "version": version}])
+    if not rows:
+        abort(404, description=f"APWorld '{name}' not in index")
+    return jsonify(rows[0])
+
+
 @bp.route("/api/apworlds/<name>/<version>/download")
 def apworld_download_proxy(name: str, version: str):
     """Single download URL the public room page can hand to players,
