@@ -45,9 +45,9 @@ def parse_apworld_options_bytes(data: bytes, stem_hint: str | None = None) -> di
     if not stem:
         return None
 
-    # Find __init__.py to get the game name
+    # Find the game name (usually in __init__.py, sometimes in world.py)
     init_src = _read_member(zf, f"{stem}/__init__.py")
-    game_name = _extract_game_name(init_src, zf, stem)
+    game_name = _extract_game_name(zf, stem)
     if not game_name:
         return None
 
@@ -104,33 +104,51 @@ def _read_member(zf: zipfile.ZipFile, name: str) -> str | None:
         return None
 
 
-def _extract_game_name(init_src: str | None, zf: zipfile.ZipFile, stem: str) -> str | None:
-    """Extract the game name from the world's __init__.py source."""
-    if not init_src:
-        return None
-    # Look for: game = "Name" or game: str = "Name"
-    m = re.search(r'^\s+game\s*(?::\s*str\s*)?=\s*["\'](.+?)["\']', init_src, re.MULTILINE)
-    if m:
-        return m.group(1)
-    # Some worlds assign a module-level constant instead (e.g. stardew's
-    # `game: str = STARDEW_VALLEY`, autopelago's `game = GAME_NAME`).
-    # Resolve the identifier against constant assignments anywhere in the
-    # module's own (non-test) sources.
-    m = re.search(r'^\s+game\s*(?::\s*str\s*)?=\s*([A-Za-z_]\w*)\s*$', init_src, re.MULTILINE)
-    if not m:
-        return None
-    ident = m.group(1)
-    const_re = re.compile(
-        rf'^{re.escape(ident)}\s*(?::\s*[\w.\[\]]+\s*)?=\s*["\'](.+?)["\']',
-        re.MULTILINE,
-    )
-    for name in _module_py_files(zf, stem):
+def _extract_game_name(zf: zipfile.ZipFile, stem: str) -> str | None:
+    """Extract the game name (the World class's `game` attribute).
+
+    Usually declared in __init__.py, but some worlds keep the World class in
+    a sibling module (e.g. Schedule_I's world.py), and some assign a
+    module-level constant instead of a literal (stardew's `game: str =
+    STARDEW_VALLEY`, autopelago's `game = GAME_NAME`). Scan the module's own
+    (non-test) sources, __init__.py first, literals before constant
+    resolution.
+    """
+    files = _module_py_files(zf, stem)
+    init_name = f"{stem}/__init__.py"
+    if init_name in files:
+        files = [init_name] + [f for f in files if f != init_name]
+
+    literal_re = re.compile(r'^\s+game\s*(?::\s*str\s*)?=\s*["\'](.+?)["\']', re.MULTILINE)
+    ident_re = re.compile(r'^\s+game\s*(?::\s*str\s*)?=\s*([A-Za-z_]\w*)\s*$', re.MULTILINE)
+
+    sources: dict[str, str] = {}
+    ident = None
+    for name in files:
         src = _read_member(zf, name)
         if not src:
             continue
-        cm = const_re.search(src)
-        if cm:
-            return cm.group(1)
+        sources[name] = src
+        m = literal_re.search(src)
+        if m:
+            return m.group(1)
+        if ident is None:
+            im = ident_re.search(src)
+            if im:
+                ident = im.group(1)
+
+    if ident:
+        const_re = re.compile(
+            rf'^{re.escape(ident)}\s*(?::\s*[\w.\[\]]+\s*)?=\s*["\'](.+?)["\']',
+            re.MULTILINE,
+        )
+        for name in files:
+            src = sources.get(name)
+            if not src:
+                continue
+            cm = const_re.search(src)
+            if cm:
+                return cm.group(1)
     return None
 
 
