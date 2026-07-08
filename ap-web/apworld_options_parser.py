@@ -3,36 +3,65 @@
 from __future__ import annotations
 
 import ast
+import io
 import re
 import zipfile
 from pathlib import Path
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
-    """Parse an .apworld zip and extract game options as template-compatible data.
+    """Parse an .apworld zip on disk and extract game options.
 
-    Returns a dict matching the format of template_parser.parse_template(),
-    or None if the apworld cannot be parsed.
+    Thin wrapper over `parse_apworld_options_bytes` for callers that have a
+    file path (the legacy /api/templates local-worlds scan).
     """
     try:
-        zf = zipfile.ZipFile(apworld_path)
+        data = Path(apworld_path).read_bytes()
+    except OSError:
+        return None
+    return parse_apworld_options_bytes(data, stem_hint=Path(apworld_path).stem)
+
+
+def parse_apworld_options_bytes(data: bytes, stem_hint: str | None = None) -> dict | None:
+    """Parse .apworld zip bytes and extract game options as template data.
+
+    FEAT-38: byte-level entry point so Tier-1 builder schemas can be derived
+    from apworlds fetched over the wire (a room's pinned version) without
+    touching disk. Returns a dict matching template_parser.parse_template()
+    ({game, ap_version, world_version, categories, options}), or None if the
+    apworld cannot be parsed.
+
+    `stem_hint` is the expected inner module directory name (usually the
+    index key / filename stem). When it doesn't match the zip layout the
+    module directory is auto-detected from the archive instead, so index
+    keys that differ from the packaged module name still parse.
+    """
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(data))
     except (zipfile.BadZipFile, OSError):
         return None
 
-    stem = apworld_path.stem  # e.g. "timberborn"
+    stem = _detect_module_dir(zf, stem_hint)
+    if not stem:
+        return None
 
     # Find __init__.py to get the game name
-    game_name = _extract_game_name(zf, stem)
+    init_src = _read_member(zf, f"{stem}/__init__.py")
+    game_name = _extract_game_name(init_src, zf, stem)
     if not game_name:
         return None
 
-    # Find Options.py
+    # Find Options.py; some small worlds define options inline in __init__.py
     options_src = _find_options_source(zf, stem)
+    if not options_src:
+        options_src = init_src
     if not options_src:
         return None
 
-    # Parse option classes
-    options = _parse_options_source(options_src)
+    # Option groups may live in either file; scan both for the class->group map
+    group_map = _parse_option_groups([s for s in (options_src, init_src) if s])
+
+    options = _parse_options_source(options_src, group_map)
     if not options:
         return None
 
@@ -50,103 +79,285 @@ def parse_apworld_options(apworld_path: Path) -> dict | None:
     }
 
 
-def _extract_game_name(zf: zipfile.ZipFile, stem: str) -> str | None:
-    """Extract the game name from the world's __init__.py."""
-    init_candidates = [f"{stem}/__init__.py", f"{stem.lower()}/__init__.py"]
-    for candidate in init_candidates:
-        if candidate in zf.namelist():
-            try:
-                src = zf.read(candidate).decode("utf-8", errors="replace")
-                # Look for: game = "Name" or game: str = "Name"
-                m = re.search(r'^\s+game\s*(?::\s*str\s*)?=\s*["\'](.+?)["\']', src, re.MULTILINE)
-                if m:
-                    return m.group(1)
-            except Exception:
-                pass
+def _detect_module_dir(zf: zipfile.ZipFile, stem_hint: str | None) -> str | None:
+    """Pick the inner module directory (the one holding __init__.py)."""
+    names = set(zf.namelist())
+    if stem_hint:
+        for candidate in (stem_hint, stem_hint.lower()):
+            if f"{candidate}/__init__.py" in names:
+                return candidate
+    # Fall back: any top-level directory with an __init__.py. Sorted so the
+    # pick is deterministic when an archive carries more than one (rare).
+    tops = sorted({n.split("/", 1)[0] for n in names if "/" in n})
+    for top in tops:
+        if f"{top}/__init__.py" in names:
+            return top
     return None
+
+
+def _read_member(zf: zipfile.ZipFile, name: str) -> str | None:
+    if name not in zf.namelist():
+        return None
+    try:
+        return zf.read(name).decode("utf-8", errors="replace")
+    except Exception:
+        return None
+
+
+def _extract_game_name(init_src: str | None, zf: zipfile.ZipFile, stem: str) -> str | None:
+    """Extract the game name from the world's __init__.py source."""
+    if not init_src:
+        return None
+    # Look for: game = "Name" or game: str = "Name"
+    m = re.search(r'^\s+game\s*(?::\s*str\s*)?=\s*["\'](.+?)["\']', init_src, re.MULTILINE)
+    if m:
+        return m.group(1)
+    # Some worlds assign a module-level constant instead (e.g. stardew's
+    # `game: str = STARDEW_VALLEY`, autopelago's `game = GAME_NAME`).
+    # Resolve the identifier against constant assignments anywhere in the
+    # module's own (non-test) sources.
+    m = re.search(r'^\s+game\s*(?::\s*str\s*)?=\s*([A-Za-z_]\w*)\s*$', init_src, re.MULTILINE)
+    if not m:
+        return None
+    ident = m.group(1)
+    const_re = re.compile(
+        rf'^{re.escape(ident)}\s*(?::\s*[\w.\[\]]+\s*)?=\s*["\'](.+?)["\']',
+        re.MULTILINE,
+    )
+    for name in _module_py_files(zf, stem):
+        src = _read_member(zf, name)
+        if not src:
+            continue
+        cm = const_re.search(src)
+        if cm:
+            return cm.group(1)
+    return None
+
+
+def _module_py_files(zf: zipfile.ZipFile, stem: str) -> list[str]:
+    """The module's own .py files, test dirs excluded, shallow paths first."""
+    prefix = stem.lower() + "/"
+    out = [
+        n for n in zf.namelist()
+        if n.lower().startswith(prefix) and n.endswith(".py")
+        and "/test" not in n.lower()
+    ]
+    out.sort(key=lambda n: (n.count("/"), n.lower()))
+    return out
 
 
 def _find_options_source(zf: zipfile.ZipFile, stem: str) -> str | None:
     """Find and read the Options.py file from the apworld."""
-    # Common patterns: stem/Options.py, stem/options.py, stem/StemOptions.py
-    for name in zf.namelist():
-        lower = name.lower()
-        if lower.startswith(stem.lower() + "/") and lower.endswith("options.py"):
-            try:
-                return zf.read(name).decode("utf-8", errors="replace")
-            except Exception:
-                pass
+    # Common patterns: stem/Options.py, stem/options.py, stem/StemOptions.py,
+    # options/options.py in a subpackage. Prefer an exact `options.py`
+    # basename over suffix matches (stardew ships forced_options.py etc.),
+    # then shallower paths.
+    candidates = [
+        n for n in _module_py_files(zf, stem)
+        if n.lower().endswith("options.py")
+    ]
+    candidates.sort(
+        key=lambda n: (
+            0 if n.rsplit("/", 1)[-1].lower() == "options.py" else 1,
+            n.count("/"),
+        )
+    )
+    for name in candidates:
+        src = _read_member(zf, name)
+        if src:
+            return src
     return None
 
 
-def _parse_options_source(src: str) -> list[dict]:
+# Map of AP option base classes to our template types. Values match what
+# template_parser.parse_template() emits so both schema sources render
+# through the same form controls.
+_AP_TYPE_MAP = {
+    "Choice": "choice",
+    "TextChoice": "choice",
+    "Range": "range",
+    "NamedRange": "range",
+    "Toggle": "toggle",
+    "DefaultOnToggle": "toggle",
+    "OptionSet": "list",
+    "OptionList": "list",
+    "ItemSet": "list",
+    "LocationSet": "list",
+    "OptionDict": "dict",
+    "OptionCounter": "dict",
+    "ItemDict": "dict",
+    "FreeText": "text",
+}
+
+# Aggregate dataclasses and tombstones - never form fields.
+_SKIP_BASES = {"PerGameCommonOptions", "CommonOptions", "Removed"}
+
+
+def _parse_option_groups(sources: list[str]) -> dict[str, str]:
+    """Extract the apworld's own option_groups as a class-name -> group-name
+    map. AP convention: a module-level list of OptionGroup("Name", [Cls, ...])
+    calls (the variable is usually `<game>_option_groups` or `option_groups`).
+    """
+    groups: dict[str, str] = {}
+    for src in sources:
+        try:
+            tree = ast.parse(src)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            value = getattr(node, "value", None)
+            if not isinstance(node, (ast.Assign, ast.AnnAssign)) or not isinstance(value, ast.List):
+                continue
+            for el in value.elts:
+                if not (isinstance(el, ast.Call) and _get_name(el.func) == "OptionGroup"):
+                    continue
+                if not el.args or not isinstance(el.args[0], ast.Constant):
+                    continue
+                group_name = el.args[0].value
+                if not isinstance(group_name, str):
+                    continue
+                if len(el.args) >= 2 and isinstance(el.args[1], ast.List):
+                    for member in el.args[1].elts:
+                        cls_name = _get_name(member)
+                        if cls_name:
+                            groups[cls_name] = group_name
+    return groups
+
+
+def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> list[dict]:
     """Parse option class definitions from Python source code using AST."""
+    group_map = group_map or {}
     try:
         tree = ast.parse(src)
     except SyntaxError:
         return []
 
-    # Map of AP option base classes to our types
-    ap_type_map = {
-        "Choice": "choice",
-        "Range": "range",
-        "Toggle": "toggle",
-        "OptionSet": "list",
-        "TextChoice": "choice",
-        "DefaultOnToggle": "toggle",
-    }
-
-    options = []
+    class_defs: dict[str, ast.ClassDef] = {}
+    order: list[str] = []
     for node in ast.walk(tree):
-        if not isinstance(node, ast.ClassDef):
-            continue
+        if isinstance(node, ast.ClassDef) and node.name not in class_defs:
+            class_defs[node.name] = node
+            order.append(node.name)
 
-        # Determine the AP option type from base classes
-        opt_type = None
+    # The PerGameCommonOptions dataclass is the source of truth for option
+    # names: its annotated field names are the YAML keys AP actually reads,
+    # and they routinely diverge from the class names (e.g. pokepelago's
+    # `type_locks: EnableTypeLocks`, `route_locks_enabled: RouteLocks`).
+    # Snake-casing the class name emits keys the generator silently ignores,
+    # so when the dataclass is present it also decides membership + order.
+    field_map: list[tuple[str, str]] = []  # (yaml_key, class_name), dataclass order
+    for cls_name in order:
+        node = class_defs[cls_name]
+        if not any(_get_name(b) in ("PerGameCommonOptions", "CommonOptions") for b in node.bases):
+            continue
+        for item in node.body:
+            if isinstance(item, ast.AnnAssign):
+                key = _get_name(item.target)
+                ann = _get_name(item.annotation)
+                if key and ann:
+                    field_map.append((key, ann))
+        if field_map:
+            break
+
+    def resolve_type(name: str, seen: set[str]) -> str | None:
+        """Resolve a class's template type, following in-file base classes so
+        `class RouteLocks(BaseLockToggle)` picks up BaseLockToggle's kind."""
+        node = class_defs.get(name)
+        if node is None or name in seen:
+            return None
+        seen.add(name)
         for base in node.bases:
             base_name = _get_name(base)
-            if base_name in ap_type_map:
-                opt_type = ap_type_map[base_name]
-                break
+            if base_name is None:
+                continue
+            if base_name in _SKIP_BASES:
+                return None
+            if base_name in _AP_TYPE_MAP:
+                return _AP_TYPE_MAP[base_name]
+            inherited = resolve_type(base_name, seen)
+            if inherited:
+                return inherited
+        return None
+
+    def collect_fields(name: str, seen: set[str]) -> dict:
+        """Collect class-body assignments, letting subclasses override the
+        fields their in-file parents declared (defaults often live on a
+        shared base)."""
+        node = class_defs.get(name)
+        if node is None or name in seen:
+            return {}
+        seen.add(name)
+        fields: dict = {}
+        for base in node.bases:
+            base_name = _get_name(base)
+            if base_name and base_name in class_defs:
+                fields.update(collect_fields(base_name, seen))
+        for item in node.body:
+            targets: list[ast.AST] = []
+            value = None
+            if isinstance(item, ast.Assign):
+                targets = item.targets
+                value = item.value
+            elif isinstance(item, ast.AnnAssign) and item.value is not None:
+                targets = [item.target]
+                value = item.value
+            for target in targets:
+                tname = _get_name(target)
+                if tname:
+                    fields[tname] = value
+        return fields
+
+    if field_map:
+        candidates = [(key, cls) for key, cls in field_map if cls in class_defs]
+    else:
+        # No aggregate dataclass in this source (older worlds, or options
+        # defined via the legacy dict) - fall back to every option-typed
+        # class in file order, named by snake_cased class name.
+        candidates = [(_camel_to_snake(c), c) for c in order]
+
+    options = []
+    for opt_name, cls_name in candidates:
+        node = class_defs[cls_name]
+        if cls_name.startswith("_"):
+            continue
+        if any(_get_name(b) in _SKIP_BASES for b in node.bases):
+            continue
+        opt_type = resolve_type(cls_name, set())
         if opt_type is None:
             continue
 
-        # Skip the aggregate dataclass (e.g. TimberbornOptions)
-        if any(_get_name(b) in ("PerGameCommonOptions", "CommonOptions") for b in node.bases):
-            continue
+        raw = collect_fields(cls_name, set())
 
-        # Extract info from class body
-        display_name = None
-        description = ast.get_docstring(node) or ""
-        default = None
-        option_values = {}  # option_xxx = N
-        range_start = None
-        range_end = None
-        valid_keys = None
+        # `Visibility.none` marks hidden/deprecated options (e.g. superseded
+        # legacy toggles). Emitting them would fight the option that replaced
+        # them, so they never reach the form.
+        vis = raw.get("visibility")
+        if vis is not None:
+            if isinstance(vis, ast.Attribute) and vis.attr == "none":
+                continue
+            if isinstance(vis, ast.Constant) and vis.value == 0:
+                continue
 
-        for item in node.body:
-            if isinstance(item, ast.Assign):
-                for target in item.targets:
-                    name = _get_name(target)
-                    if name is None:
-                        continue
-                    value = _get_literal(item.value)
+        display_name = _get_literal(raw.get("display_name"))
+        description = (ast.get_docstring(node) or "").strip()
+        default = _get_literal(raw.get("default"))
+        range_start = _get_literal(raw.get("range_start"))
+        range_end = _get_literal(raw.get("range_end"))
+        valid_keys = _get_literal(raw.get("valid_keys"))
+        special_range_names = _get_literal(raw.get("special_range_names"))
+        option_values = {}
+        for fname, fvalue in raw.items():
+            if fname.startswith("option_"):
+                option_values[fname[7:]] = _get_literal(fvalue)
 
-                    if name == "display_name":
-                        display_name = value
-                    elif name == "default":
-                        default = value
-                    elif name == "range_start":
-                        range_start = value
-                    elif name == "range_end":
-                        range_end = value
-                    elif name == "valid_keys":
-                        valid_keys = value
-                    elif name.startswith("option_"):
-                        option_values[name[7:]] = value
-
-        opt_name = _camel_to_snake(node.name)
-        clean_desc = description.strip()
+        category = group_map.get(cls_name, "Game Options")
+        base = {
+            "name": opt_name,
+            "description": description,
+            "category": category,
+        }
+        if isinstance(display_name, str) and display_name:
+            base["display_name"] = display_name
 
         if opt_type == "choice" and option_values:
             # Sort choices by their numeric value
@@ -158,52 +369,82 @@ def _parse_options_source(src: str) -> list[dict]:
                     if v == default:
                         default_val = k
                         break
+            elif isinstance(default, str) and default in option_values:
+                default_val = default
             options.append({
-                "name": opt_name,
+                **base,
                 "type": "choice",
-                "description": clean_desc,
-                "category": "Game Options",
                 "default": default_val,
                 "choices": choices,
             })
 
         elif opt_type == "range" and range_start is not None and range_end is not None:
+            named_values = None
+            if isinstance(special_range_names, dict) and special_range_names:
+                named_values = {
+                    str(k): v for k, v in special_range_names.items()
+                    if isinstance(v, int)
+                }
             options.append({
-                "name": opt_name,
+                **base,
                 "type": "range",
-                "description": clean_desc,
-                "category": "Game Options",
                 "default": default if isinstance(default, int) else range_start,
                 "min": range_start,
                 "max": range_end,
-                "named_values": None,
+                "named_values": named_values or None,
             })
 
         elif opt_type == "toggle":
             default_bool = bool(default) if default is not None else False
             options.append({
-                "name": opt_name,
+                **base,
                 "type": "toggle",
-                "description": clean_desc,
-                "category": "Game Options",
                 "default": default_bool,
             })
 
-        elif opt_type == "list" and valid_keys is not None:
-            default_list = list(default) if isinstance(default, (set, list)) else []
-            options.append({
-                "name": opt_name,
+        elif opt_type == "list":
+            default_list = sorted(default) if isinstance(default, (set, frozenset)) else (
+                list(default) if isinstance(default, (list, tuple)) else []
+            )
+            entry = {
+                **base,
                 "type": "list",
-                "description": clean_desc,
-                "category": "Game Options",
                 "default": default_list,
-                "choices": sorted(valid_keys) if isinstance(valid_keys, set) else list(valid_keys),
+            }
+            if isinstance(valid_keys, (set, frozenset)):
+                entry["choices"] = sorted(valid_keys)
+            elif isinstance(valid_keys, (list, tuple)):
+                entry["choices"] = list(valid_keys)
+            if "choices" not in entry and not default_list:
+                # Free-form list with no key hints renders as nothing useful;
+                # still emit so curated overlays (Tier 2) can supply the keys.
+                entry["choices"] = None
+            options.append(entry)
+
+        elif opt_type == "dict":
+            default_dict = dict(default) if isinstance(default, dict) else {}
+            entry = {
+                **base,
+                "type": "dict",
+                "default": default_dict,
+            }
+            if isinstance(valid_keys, (set, frozenset)):
+                entry["valid_keys"] = sorted(valid_keys)
+            elif isinstance(valid_keys, (list, tuple)):
+                entry["valid_keys"] = list(valid_keys)
+            options.append(entry)
+
+        elif opt_type == "text":
+            options.append({
+                **base,
+                "type": "text",
+                "default": default if isinstance(default, str) else "",
             })
 
     return options
 
 
-def _get_name(node: ast.AST) -> str | None:
+def _get_name(node: ast.AST | None) -> str | None:
     """Get a simple name from an AST node."""
     if isinstance(node, ast.Name):
         return node.id
@@ -212,11 +453,13 @@ def _get_name(node: ast.AST) -> str | None:
     return None
 
 
-def _get_literal(node: ast.AST):
+def _get_literal(node: ast.AST | None):
     """Safely evaluate a constant/literal AST node."""
+    if node is None:
+        return None
     try:
         return ast.literal_eval(node)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, SyntaxError):
         return None
 
 

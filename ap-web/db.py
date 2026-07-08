@@ -369,6 +369,27 @@ def init_db(db_url: str) -> None:
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_user_room_templates_default "
             "ON user_room_templates(user_id) WHERE is_default = TRUE"
         )
+        # FEAT-38: Tier-1 builder schema cache. One row per distinct .apworld
+        # artifact, keyed on the sha256 of the zip bytes (matches index.lock's
+        # per-version sha when present) so a re-tagged upstream release can't
+        # serve a stale schema. `schema` is the parse_apworld_options_bytes()
+        # output; NULL means "parse attempted, nothing derivable" - a cached
+        # negative so Tier-0 worlds don't get re-downloaded on every
+        # builder-schemas request. (apworld_name, version) is a secondary
+        # lookup path for index entries that have no lock sha.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS apworld_builder_schemas (
+                sha256       TEXT PRIMARY KEY,
+                apworld_name TEXT NOT NULL,
+                version      TEXT NOT NULL,
+                schema       JSONB,
+                parsed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_apworld_builder_schemas_name_version "
+            "ON apworld_builder_schemas(apworld_name, version)"
+        )
     conn.autocommit = False
     conn.close()
     _db_url = db_url
@@ -977,6 +998,83 @@ def clear_room_apworld(room_id: str, apworld_name: str) -> bool:
         deleted = cur.rowcount > 0
     conn.commit()
     return deleted
+
+
+# ── Builder schema cache (FEAT-38) ────────────────────────────────
+
+
+def _serialize_builder_schema(row: dict) -> dict:
+    """Normalize the JSONB `schema` column to a dict (or None). Same
+    driver-variance guard as _serialize_template."""
+    out = _serialize(row)
+    schema = out.get("schema")
+    if isinstance(schema, str):
+        import json as _json
+        try:
+            out["schema"] = _json.loads(schema)
+        except Exception:
+            out["schema"] = None
+    return out
+
+
+def get_builder_schema(sha256: str) -> dict | None:
+    """Look up a cached Tier-1 builder schema by artifact sha256.
+
+    Returns the full row ({sha256, apworld_name, version, schema, parsed_at})
+    or None on cache miss. A returned row with schema=None is a cached
+    NEGATIVE (parse attempted, nothing derivable) - callers must distinguish
+    "no row" (fetch + parse needed) from "row with null schema" (Tier 0,
+    don't re-fetch).
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT sha256, apworld_name, version, schema, parsed_at "
+            "FROM apworld_builder_schemas WHERE sha256 = %s",
+            (sha256,),
+        )
+        rows = _dictrow(cur)
+    return _serialize_builder_schema(rows[0]) if rows else None
+
+
+def get_builder_schema_by_version(apworld_name: str, version: str) -> dict | None:
+    """Fallback lookup for index entries without a lock sha. Newest row wins
+    if multiple artifacts ever claimed the same (name, version)."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT sha256, apworld_name, version, schema, parsed_at "
+            "FROM apworld_builder_schemas "
+            "WHERE apworld_name = %s AND version = %s "
+            "ORDER BY parsed_at DESC LIMIT 1",
+            (apworld_name, version),
+        )
+        rows = _dictrow(cur)
+    return _serialize_builder_schema(rows[0]) if rows else None
+
+
+def set_builder_schema(
+    sha256: str, apworld_name: str, version: str, schema: dict | None
+) -> None:
+    """Upsert a parsed schema (or a null negative) for an artifact.
+    Idempotent - re-parsing the same bytes refreshes parsed_at."""
+    import json
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO apworld_builder_schemas (sha256, apworld_name, version, schema)
+               VALUES (%s, %s, %s, %s)
+               ON CONFLICT (sha256) DO UPDATE
+                 SET apworld_name = EXCLUDED.apworld_name,
+                     version = EXCLUDED.version,
+                     schema = EXCLUDED.schema,
+                     parsed_at = NOW()""",
+            (
+                sha256, apworld_name, version,
+                json.dumps(schema) if schema is not None else None,
+            ),
+        )
+    conn.commit()
 
 
 # ── APWorld index requests + maintainers (FEAT-30 Phase 0a) ──────
