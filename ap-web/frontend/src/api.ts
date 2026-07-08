@@ -980,14 +980,19 @@ export interface TemplateListItem {
 
 export interface TemplateOption {
   name: string;
-  type: "choice" | "toggle" | "range" | "list" | "dict";
+  type: "choice" | "toggle" | "range" | "list" | "dict" | "text";
   description: string;
   category: string;
   default: any;
-  choices?: string[];
+  choices?: string[] | null;
   min?: number;
   max?: number;
   named_values?: Record<string, number> | null;
+  /** FEAT-38: the apworld's display_name for the option, when declared.
+   *  Falls back to the snake_case `name` in the UI. */
+  display_name?: string;
+  /** FEAT-38: allowed keys for dict-type options (OptionCounter). */
+  valid_keys?: string[];
 }
 
 export interface ParsedTemplate {
@@ -996,6 +1001,38 @@ export interface ParsedTemplate {
   world_version: string;
   categories: string[];
   options: TemplateOption[];
+}
+
+// ── FEAT-38: guided YAML builder schemas ──────────────────────────
+
+export interface BuilderSchemaEntry {
+  /** YAML `game:` string (index game_name). */
+  game: string;
+  apworld_name: string;
+  display_name: string;
+  /** The version the schema was derived from - the room's resolved pin
+   *  (room endpoint) or the caller-picked version (index endpoint). */
+  version: string;
+  /** Null = no derivable option form for this artifact (Tier 0). */
+  schema: ParsedTemplate | null;
+  /** True when the server ran out of fetch budget (or hit a transient
+   *  upstream failure) before deriving this entry - retry later. */
+  pending?: boolean;
+}
+
+/** Per-pinned-game builder schemas for a room. Anonymous-accessible. */
+export async function getRoomBuilderSchemas(roomId: string): Promise<BuilderSchemaEntry[]> {
+  return fetchJson(`${BASE}/public/rooms/${roomId}/builder-schemas`);
+}
+
+/** Room-less builder schema for one indexed apworld (session-gated, powers
+ *  the /apworlds "Create YAML" flow). Omit version for latest downloadable. */
+export async function getApworldBuilderSchema(
+  name: string,
+  version?: string,
+): Promise<BuilderSchemaEntry> {
+  const qs = version ? `?version=${encodeURIComponent(version)}` : "";
+  return fetchJson(`${BASE}/apworlds/${encodeURIComponent(name)}/builder-schema${qs}`);
 }
 
 export async function getTemplateList(): Promise<TemplateListItem[]> {
