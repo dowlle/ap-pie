@@ -139,6 +139,14 @@ def apply_auth_to_app(app):
         "/api/public",
         "/api/features",
         "/api/deployment",
+        # FEAT-39: the APWorld index browser is public. Safe under this
+        # prefix because every non-read route keeps its own gate: install/
+        # remove/refresh are @requires_admin, /installed is behind the
+        # generation flag, and index-candidates checks the session in-body.
+        # If a future /api/apworlds/* route relies on THIS middleware for
+        # auth (e.g. FEAT-38's builder-schema when it merges), give it an
+        # explicit per-route guard instead.
+        "/api/apworlds",
     )
 
     @app.before_request
