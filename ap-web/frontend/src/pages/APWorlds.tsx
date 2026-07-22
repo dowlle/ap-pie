@@ -1,17 +1,25 @@
 import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   getAPWorlds,
+  getApworldBuilderSchema,
   getInstalledAPWorlds,
+  getRooms,
   installAPWorld,
   removeAPWorld,
   refreshAPWorldIndex,
+  submitYamlContentToRoom,
   type APWorldInfo,
   type APWorldVersion,
+  type BuilderSchemaEntry,
   type InstalledAPWorld,
+  type Room,
 } from "../api";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
+import CreateRoomModal from "../components/CreateRoomModal";
 import FuzzResultPill from "../components/FuzzResultPill";
+import YamlBuilder from "../components/YamlBuilder";
 
 /**
  * /apworlds - browser for the Archipelago-index (now sourced from
@@ -235,6 +243,8 @@ function VersionRow({
   installing,
   generationOn,
   onInstall,
+  onBuild,
+  building,
 }: {
   world: APWorldInfo;
   v: APWorldVersion;
@@ -242,6 +252,9 @@ function VersionRow({
   installing: boolean;
   generationOn: boolean;
   onInstall: (name: string, version: string) => void;
+  /** FEAT-38: open the guided YAML builder for this exact version. */
+  onBuild: (name: string, version: string) => void;
+  building: boolean;
 }) {
   const downloadHref = `/api/apworlds/${world.name}/${encodeURIComponent(v.version)}/download`;
   const isCurrent = installed?.version === v.version;
@@ -268,6 +281,16 @@ function VersionRow({
         {isCurrent && <span className="badge badge-done apworld-version-current">installed</span>}
       </span>
       <span className="apworld-version-actions">
+        {(v.source === "url" || v.source === "local") && (
+          <button
+            className="btn btn-sm"
+            onClick={() => onBuild(world.name, v.version)}
+            disabled={building}
+            title={`Build a ${world.display_name} YAML for this version with the guided form`}
+          >
+            {building ? "Loading…" : "Create YAML"}
+          </button>
+        )}
         {(v.source === "url" || v.source === "local") && (
           <a className="btn btn-sm" href={downloadHref} download>Download</a>
         )}
@@ -414,6 +437,8 @@ function WorldCard({
   generationOn,
   onInstall,
   onRemove,
+  onBuild,
+  buildingVersion,
 }: {
   world: APWorldInfo;
   installed: InstalledAPWorld | undefined;
@@ -421,6 +446,8 @@ function WorldCard({
   generationOn: boolean;
   onInstall: (name: string, version: string) => void;
   onRemove: (name: string) => void;
+  onBuild: (name: string, version: string) => void;
+  buildingVersion: string | null;
 }) {
   // Always show all versions sorted descending (latest first). If the index
   // only contained one version and that's the latest, the list is just one
@@ -479,6 +506,8 @@ function WorldCard({
                 installing={installingVersion === v.version}
                 generationOn={generationOn}
                 onInstall={onInstall}
+                onBuild={onBuild}
+                building={buildingVersion === v.version}
               />
             ))}
           </ul>
@@ -510,6 +539,101 @@ function WorldCard({
   );
 }
 
+/**
+ * FEAT-38 (§2.5a): review-step room actions for the index "Create YAML"
+ * flow. The built YAML can be attached to one of the user's own open rooms
+ * (via the same public submit endpoint players use) or carried into a
+ * fresh room via CreateRoomModal.
+ */
+function RoomAttach({
+  yamlContent,
+  onCreateRoom,
+}: {
+  yamlContent: string;
+  onCreateRoom: (yamlContent: string) => void;
+}) {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [selected, setSelected] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [added, setAdded] = useState<{ roomId: string; msg: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getRooms("open")
+      .then((r) => { if (!cancelled) setRooms(r); })
+      .catch(() => { /* room list unavailable - create-room path still works */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleAdd = async () => {
+    if (!selected) return;
+    setBusy(true);
+    setError("");
+    try {
+      const r = await submitYamlContentToRoom(selected, yamlContent);
+      setAdded({
+        roomId: selected,
+        msg: `Added ${r.player_name} (${r.game}) - ${r.validation_status}`,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to add YAML to the room");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="settings-section">
+      <h3>Use this YAML</h3>
+      {added ? (
+        <p className="settings-aux-note" style={{ margin: 0, color: "var(--green)" }}>
+          ✓ {added.msg} — <Link to={`/rooms/${added.roomId}`}>open the room</Link>
+        </p>
+      ) : (
+        <>
+          <div className="settings-controls">
+            <select
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              style={{ flex: 1, minWidth: "12rem" }}
+            >
+              <option value="">
+                {rooms.length ? "Select one of your open rooms…" : "No open rooms"}
+              </option>
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={handleAdd}
+              disabled={!selected || busy}
+            >
+              {busy ? "Adding…" : "Add to room"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => onCreateRoom(yamlContent)}
+              disabled={busy}
+            >
+              Create room with this YAML
+            </button>
+          </div>
+          <p className="settings-hint">
+            Adding goes through the room's normal submission flow, so its
+            claim/login rules still apply. Or just download the file and use
+            it anywhere.
+          </p>
+          {error && <p className="settings-error" style={{ margin: 0 }}>{error}</p>}
+        </>
+      )}
+    </section>
+  );
+}
+
 export default function APWorlds() {
   const generationOn = useFeature("generation");
   // Refresh button is admin-only (matches the @requires_admin gate on
@@ -534,6 +658,55 @@ export default function APWorlds() {
   const [installing, setInstalling] = useState<string | null>(null);
   const [error, setError] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // FEAT-38: the index "Create YAML" flow. `builder` holds the fetched
+  // schema entry while the builder modal is open; `building` is the
+  // name@version whose schema fetch is in flight (per-row spinner);
+  // `pendingYaml` carries the built YAML into the create-room flow.
+  const navigate = useNavigate();
+  const [builder, setBuilder] = useState<BuilderSchemaEntry | null>(null);
+  const [building, setBuilding] = useState<string | null>(null);
+  const [createRoomOpen, setCreateRoomOpen] = useState(false);
+  const [pendingYaml, setPendingYaml] = useState<string | null>(null);
+
+  const handleBuild = async (name: string, version: string) => {
+    setBuilding(`${name}@${version}`);
+    setError("");
+    try {
+      const entry = await getApworldBuilderSchema(name, version);
+      if (entry.pending) {
+        setError(`Still deriving the option form for ${entry.display_name} v${version} - try again in a few seconds.`);
+      } else if (!entry.schema) {
+        setError(`No option form could be derived for ${entry.display_name} v${version} - grab the template from the game's setup guide instead.`);
+      } else {
+        setBuilder(entry);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load the builder");
+    } finally {
+      setBuilding(null);
+    }
+  };
+
+  const handleRoomCreated = async (room: Room) => {
+    setCreateRoomOpen(false);
+    const yaml = pendingYaml;
+    setPendingYaml(null);
+    setBuilder(null);
+    if (yaml) {
+      try {
+        await submitYamlContentToRoom(room.id, yaml);
+      } catch (e) {
+        // The room exists either way - land the user on it and surface why
+        // the YAML didn't attach so they can paste/upload it there.
+        window.alert(
+          `Room created, but the YAML couldn't be added automatically: ` +
+          `${e instanceof Error ? e.message : "submission failed"}. ` +
+          `You can paste it on the room page.`,
+        );
+      }
+    }
+    navigate(`/rooms/${room.id}`);
+  };
 
   const installedMap = useMemo(
     () => new Map(installed.map((w) => [w.name, w])),
@@ -650,11 +823,41 @@ export default function APWorlds() {
                 generationOn={generationOn}
                 onInstall={handleInstall}
                 onRemove={handleRemove}
+                onBuild={handleBuild}
+                buildingVersion={
+                  building && building.startsWith(`${w.name}@`)
+                    ? building.slice(w.name.length + 1)
+                    : null
+                }
               />
             ))}
           </div>
         </>
       )}
+
+      {/* FEAT-38 (§2.5a): guided builder for the version the user picked.
+          No direct submit action here - the review step offers Download plus
+          the RoomAttach actions (add to an open room / create a room). */}
+      <YamlBuilder
+        open={builder !== null}
+        games={builder ? [builder] : []}
+        initialGame={builder?.apworld_name}
+        reviewExtra={(yamlContent) => (
+          <RoomAttach
+            yamlContent={yamlContent}
+            onCreateRoom={(yaml) => {
+              setPendingYaml(yaml);
+              setCreateRoomOpen(true);
+            }}
+          />
+        )}
+        onClose={() => setBuilder(null)}
+      />
+      <CreateRoomModal
+        open={createRoomOpen}
+        onClose={() => { setCreateRoomOpen(false); setPendingYaml(null); }}
+        onCreated={handleRoomCreated}
+      />
     </div>
   );
 }

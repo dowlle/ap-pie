@@ -341,6 +341,158 @@ def iter_pinned_apworld_files(
                     continue
 
 
+def _fetch_apworld_bytes(world: APWorldInfo, ver) -> bytes | None:
+    """FEAT-38: fetch one pinned .apworld's bytes for schema derivation.
+
+    Mirrors the per-version source resolution in `iter_pinned_apworld_files`
+    (local index file first, then the upstream URL behind the SEC-03
+    outbound-host gate). Returns None on any failure - a missing artifact
+    just means no builder for that game, never an error surface.
+    """
+    index_dir = _get_index_dir()
+    if ver.local:
+        local_path = resolve_local_path(index_dir, world, ver)
+        if local_path and local_path.is_file():
+            try:
+                return local_path.read_bytes()
+            except Exception:
+                return None
+        return None
+    if ver.url:
+        from tracker import is_safe_tracker_url
+        if not is_safe_tracker_url(ver.url):
+            current_app.logger.warning(
+                f"builder-schemas: rejected unsafe ver.url for "
+                f"{world.name} {ver.version}: {ver.url[:80]!r}"
+            )
+            return None
+        try:
+            from urllib.request import Request, urlopen
+            req = Request(ver.url, headers={"User-Agent": "archipelago-pie/1.0"})
+            with urlopen(req, timeout=20) as resp:
+                return resp.read()
+        except Exception:
+            return None
+    return None
+
+
+def builder_schemas_for_pins(
+    pins: list[dict],
+    *,
+    force_latest: bool = False,
+    fetch_budget_seconds: float = 18.0,
+) -> list[dict]:
+    """FEAT-38 Wave 1: resolve a room's APWorld pins into Tier-1 builder
+    schemas (per-game option forms auto-derived from the pinned .apworld).
+
+    One entry per pin that still resolves against the index:
+
+        [{
+            game,           # YAML `game:` string (index game_name)
+            apworld_name,   # index key
+            display_name,
+            version,        # the resolved pin (or latest under force_latest)
+            schema,         # parse_apworld_options_bytes() output, or null
+            pending,        # true only when the fetch budget ran out before
+                            # this row - retry later; absent otherwise
+        }]
+
+    schema=null without `pending` is final for this artifact: the apworld
+    yields no derivable option form (Tier 0 - upload/paste only).
+
+    Cache contract: rows are keyed on the artifact sha256 in the
+    `apworld_builder_schemas` table (negative results included), so each
+    distinct .apworld is downloaded + AST-parsed at most once across all
+    rooms. index.lock shas let cache hits skip the download entirely; when
+    the lock carries a sha and the downloaded bytes mismatch, the artifact
+    is rejected un-cached (same supply-chain posture as download_apworld).
+
+    fetch_budget_seconds bounds the cold path: gunicorn's sync workers kill
+    requests at 30s, and a fresh room can hold many un-cached pins. Rows
+    past the budget come back schema=null + pending=true and warm up on
+    subsequent requests.
+    """
+    import hashlib
+    import time
+
+    from db import (
+        get_builder_schema,
+        get_builder_schema_by_version,
+        set_builder_schema,
+    )
+    from apworld_options_parser import parse_apworld_options_bytes
+
+    name_map = {w.name: w for w in _get_index_worlds()}
+    deadline = time.monotonic() + fetch_budget_seconds
+
+    out = []
+    for pin in pins:
+        world = name_map.get(pin["apworld_name"])
+        if not world:
+            continue
+
+        if force_latest:
+            ver = next((v for v in world.versions if v.url or v.local), None)
+        else:
+            ver = next(
+                (v for v in world.versions if v.version == pin["version"]),
+                None,
+            )
+
+        entry: dict = {
+            "game": world.game_name,
+            "apworld_name": world.name,
+            "display_name": world.display_name,
+            "version": ver.version if ver else pin["version"],
+            "schema": None,
+        }
+        out.append(entry)
+        if not ver:
+            continue
+
+        # Cache first: by lock sha when the index pins one, else by
+        # (name, version).
+        cached = None
+        try:
+            if ver.sha256:
+                cached = get_builder_schema(ver.sha256)
+            else:
+                cached = get_builder_schema_by_version(world.name, ver.version)
+        except Exception:
+            cached = None
+        if cached is not None:
+            entry["schema"] = cached.get("schema")
+            continue
+
+        if time.monotonic() > deadline:
+            entry["pending"] = True
+            continue
+
+        data = _fetch_apworld_bytes(world, ver)
+        if data is None:
+            # Fetch failure is transient (upstream hiccup) - mark retryable
+            # and don't cache a negative for bytes we never saw.
+            entry["pending"] = True
+            continue
+
+        actual_sha = hashlib.sha256(data).hexdigest()
+        if ver.sha256 and actual_sha.lower() != ver.sha256.lower():
+            current_app.logger.warning(
+                f"builder-schemas: sha256 mismatch for {world.name} "
+                f"{ver.version}: lock {ver.sha256[:16]}..., got {actual_sha[:16]}..."
+            )
+            continue
+
+        schema = parse_apworld_options_bytes(data, stem_hint=world.name)
+        try:
+            set_builder_schema(actual_sha, world.name, ver.version, schema)
+        except Exception:
+            pass
+        entry["schema"] = schema
+
+    return out
+
+
 def apworlds_for_room(
     yamls: list[dict],
     pins: list[dict],
@@ -495,6 +647,41 @@ def list_apworlds():
 def installed_apworlds():
     worlds_dir = _get_worlds_dir()
     return jsonify(list_installed(worlds_dir))
+
+
+@bp.route("/api/apworlds/<name>/builder-schema")
+def apworld_builder_schema(name: str):
+    """FEAT-38: Tier-1 builder schema for one indexed apworld at an
+    arbitrary version (default: latest downloadable).
+
+    Powers the index-page "Create YAML" entry point - the room-less flow
+    where a logged-in user searches a game on /apworlds, builds a YAML for
+    it, then attaches it to one of their rooms (or a fresh one). Unlike the
+    room endpoint there's no pin to resolve; the caller picks the version
+    via ?version=, or gets the newest downloadable one.
+
+    Session-gated by the global auth middleware like the rest of
+    /api/apworlds - anonymous players go through the room flow instead.
+    """
+    worlds = _get_index_worlds()
+    world = next((w for w in worlds if w.name == name), None)
+    if not world:
+        abort(404, description=f"APWorld '{name}' not in index")
+
+    version = request.args.get("version")
+    if version:
+        if not any(v.version == version for v in world.versions):
+            abort(404, description=f"Version '{version}' not in index for '{name}'")
+    else:
+        ver = next((v for v in world.versions if v.url or v.local), None)
+        if not ver:
+            abort(404, description=f"No downloadable version for '{name}'")
+        version = ver.version
+
+    rows = builder_schemas_for_pins([{"apworld_name": name, "version": version}])
+    if not rows:
+        abort(404, description=f"APWorld '{name}' not in index")
+    return jsonify(rows[0])
 
 
 @bp.route("/api/apworlds/<name>/<version>/download")

@@ -6,9 +6,11 @@ import {
   deletePublicYaml,
   getPublicRoom,
   getPublicRoomAPWorlds,
+  getRoomBuilderSchemas,
   releaseYaml,
   submitYamlToRoom,
   submitYamlContentToRoom,
+  type BuilderSchemaEntry,
   type PublicRoom,
   type PublicRoomYaml,
   type RoomAPWorldEntry,
@@ -28,6 +30,7 @@ import {
   type YamlSortKey,
 } from "../lib/yamlTable";
 import DropOverlay from "../components/DropOverlay";
+import YamlBuilder from "../components/YamlBuilder";
 import YamlModal from "../components/YamlModal";
 import CopyButton from "../components/CopyButton";
 import DropZone from "../components/DropZone";
@@ -129,12 +132,17 @@ function SubmissionForm({
   state,
   setState,
   onSubmitted,
+  builderGames,
+  onBuild,
 }: {
   room: PublicRoom;
   uploadFiles: (files: File[]) => Promise<void>;
   state: SubmitState;
   setState: React.Dispatch<React.SetStateAction<SubmitState>>;
   onSubmitted: () => void;
+  /** FEAT-38: tier >= 1 games (schema derived) offered by the builder. */
+  builderGames: BuilderSchemaEntry[];
+  onBuild: (apworldName: string) => void;
 }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasted, setPasted] = useState("");
@@ -172,6 +180,28 @@ function SubmissionForm({
         Drop <code>.yaml</code> files anywhere on this page, click below to browse,
         or paste the contents directly.
       </p>
+
+      {builderGames.length > 0 && (
+        <div style={{ marginBottom: "0.85rem" }}>
+          <p className="play-hint" style={{ marginBottom: "0.4rem" }}>
+            No YAML yet? Build one right here - guided form, no editing required:
+          </p>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            {builderGames.map((g) => (
+              <button
+                key={g.apworld_name}
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={() => onBuild(g.apworld_name)}
+                disabled={state.busy}
+                title={`Build a ${g.display_name} YAML for this room (v${g.version})`}
+              >
+                Build {g.display_name} YAML
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <DropZone
         onFiles={uploadFiles}
@@ -290,6 +320,10 @@ function RoomPublic() {
   const [updateToast, setUpdateToast] = useState<string | null>(null);
   const [yamlSearch, setYamlSearch] = useState("");
   const [yamlSort, setYamlSort] = useState<YamlSort | null>(null);
+  // FEAT-38: per-pinned-game builder schemas + which game's builder is open
+  // (apworld_name, or null when closed).
+  const [builderSchemas, setBuilderSchemas] = useState<BuilderSchemaEntry[]>([]);
+  const [builderGame, setBuilderGame] = useState<string | null>(null);
   const toggleSort = (key: YamlSortKey) => setYamlSort((cur) => nextSort(cur, key));
 
   usePageTitle(room?.name);
@@ -378,13 +412,42 @@ function RoomPublic() {
   // visual flickering across Opera/Firefox/Chrome). The user is actively
   // interacting with the modal, so passive background updates aren't worth
   // the disruption - onUpdated resyncs after a save anyway.
-  const modalOpen = openYaml !== null;
+  const modalOpen = openYaml !== null || builderGame !== null;
   useEffect(() => {
     let cancelled = false;
     refresh();
     return () => { cancelled = true; void cancelled; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // FEAT-38: builder schemas are static per pin-set, so they load once per
+  // room (not in the 5s poll). Entries can come back `pending` when the
+  // server's fetch budget ran out on a cold cache - one delayed retry
+  // picks those up (the server caches progressively across requests).
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = async (retry: boolean) => {
+      try {
+        const entries = await getRoomBuilderSchemas(id);
+        if (cancelled) return;
+        setBuilderSchemas(entries);
+        if (retry && entries.some((e) => e.pending)) {
+          timer = setTimeout(() => load(false), 5000);
+        }
+      } catch {
+        // Builder unavailable - the upload/paste flow still works fine.
+      }
+    };
+    load(true);
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [id]);
+
+  const builderGames = useMemo(
+    () => builderSchemas.filter((e) => e.schema !== null),
+    [builderSchemas],
+  );
   useEffect(() => {
     if (modalOpen) return;
     let cancelled = false;
@@ -800,8 +863,28 @@ function RoomPublic() {
           state={submitState}
           setState={setSubmitState}
           onSubmitted={refresh}
+          builderGames={builderGames}
+          onBuild={setBuilderGame}
         />
       )}
+
+      {/* FEAT-38: guided YAML builder. Anonymous build + download always
+          works; the submit action goes through the same public submit
+          endpoint as paste, so claim/login gates hold server-side. */}
+      <YamlBuilder
+        open={builderGame !== null}
+        games={builderGames}
+        initialGame={builderGame ?? undefined}
+        submit={{
+          label: "Submit to this room",
+          run: async (yamlContent) => {
+            const r = await submitYamlContentToRoom(room.id, yamlContent);
+            await refresh();
+            return `Submitted ${r.player_name} (${r.game}) - ${r.validation_status}`;
+          },
+        }}
+        onClose={() => setBuilderGame(null)}
+      />
 
       {room.seed && (room.status === "generated" || room.status === "playing") && (
         <p className="public-section" style={{ textAlign: "center" }}>

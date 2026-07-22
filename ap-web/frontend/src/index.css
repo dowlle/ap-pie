@@ -3918,3 +3918,107 @@ a.lp-pj:hover { border-color: var(--c, var(--accent)); transform: translateY(-3p
   font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.66rem;
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--c, var(--accent));
 }
+
+/* ── FEAT-38: guided YAML builder ─────────────────────────────────── */
+.yaml-builder-modal { width: min(760px, calc(100vw - 2rem)); }
+
+.yaml-builder-toprow { align-items: stretch; }
+.yaml-builder-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 11rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Collapsible option group: .settings-section is flex, so the summary
+   behaves as a flex child; restyle it as the group header. */
+details.yaml-builder-group > summary {
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-h);
+  font-family: var(--font-display);
+  user-select: none;
+}
+details.yaml-builder-group > summary .muted {
+  font-weight: 400;
+  font-size: 0.78rem;
+}
+.yaml-builder-group-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.yaml-builder-option {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.yaml-builder-option:last-child { border-bottom: none; padding-bottom: 0.15rem; }
+.yaml-builder-option-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.yaml-builder-option-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-h);
+}
+.yaml-builder-option-key {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.yaml-builder-option-desc {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  white-space: pre-line;
+}
+
+.yaml-builder-checkgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.3rem 0.75rem;
+}
+.yaml-builder-check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.83rem;
+  cursor: pointer;
+}
+
+.yaml-builder-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.yaml-builder-counter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.yaml-builder-counter-row code { min-width: 8rem; font-size: 0.78rem; }
+.yaml-builder-counter-row input { width: 6rem; }
+
+.yaml-builder-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  max-height: 24rem;
+  overflow: auto;
+  white-space: pre;
+  margin: 0;
+}

@@ -185,6 +185,34 @@ def public_room_apworlds(room_id: str):
     ))
 
 
+@bp.route("/api/public/rooms/<room_id>/builder-schemas")
+def public_room_builder_schemas(room_id: str):
+    """FEAT-38: per-game option schemas for the guided YAML builder.
+
+    One entry per APWorld the host pinned, carrying the Tier-1 option form
+    derived from that exact pinned artifact (so the builder's `requires`
+    version and option set always match what the room will run). Anonymous
+    access is deliberate - anyone with the room URL can build + download a
+    YAML; SUBMITTING it still goes through the room's existing claim/login
+    gates on the submit endpoint. The schema data is game metadata (option
+    names, defaults, ranges), nothing sensitive.
+    """
+    db_err = _requires_db()
+    if db_err:
+        return db_err
+
+    from api.apworlds import builder_schemas_for_pins
+
+    room = get_room(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    pins = get_room_apworlds(room_id)
+    return jsonify(builder_schemas_for_pins(
+        pins,
+        force_latest=bool(room.get("force_latest_apworld_versions")),
+    ))
+
+
 @bp.route("/api/public/rooms/<room_id>/yamls/<int:yaml_id>")
 def public_yaml_read(room_id: str, yaml_id: int):
     """Return a single YAML's contents for in-browser viewing.

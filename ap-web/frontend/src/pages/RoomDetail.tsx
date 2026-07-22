@@ -5,7 +5,8 @@ import {
   getRoom, uploadYaml, removeYaml, closeRoom, reopenRoom, generateRoom, launchRoom, getRoomPatches, getRoomSpoiler, testGenerateRoom,
   stopRoom, deleteRoom, updateRoom, updateRoomYaml, setYamlValidation,
   getGenerationJob, getLatestGenerationJob,
-  type Room, type GenerationJob, type ValidationStatus,
+  createYamlFromEditor, getRoomBuilderSchemas,
+  type Room, type GenerationJob, type ValidationStatus, type BuilderSchemaEntry,
 } from "../api";
 import {
   cleanYamlFilename,
@@ -16,7 +17,7 @@ import {
   type YamlSort,
   type YamlSortKey,
 } from "../lib/yamlTable";
-import YamlEditor from "../components/YamlEditor";
+import YamlBuilder from "../components/YamlBuilder";
 import LiveTracker from "../components/LiveTracker";
 import ItemTracker from "../components/ItemTracker";
 import ShareGame from "../components/ShareGame";
@@ -291,6 +292,29 @@ export default function RoomDetail() {
 
   usePageTitle(room?.name);
   const [showEditor, setShowEditor] = useState(false);
+  // FEAT-38: builder schemas for this room's pins (replaces the old
+  // /api/templates source, which is empty on YAML-collector deployments).
+  const [builderSchemas, setBuilderSchemas] = useState<BuilderSchemaEntry[]>([]);
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = async (retry: boolean) => {
+      try {
+        const entries = await getRoomBuilderSchemas(id);
+        if (cancelled) return;
+        setBuilderSchemas(entries);
+        if (retry && entries.some((e) => e.pending)) {
+          timer = setTimeout(() => load(false), 5000);
+        }
+      } catch {
+        // Builder unavailable - upload flow still works.
+      }
+    };
+    load(true);
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [id]);
+  const builderGames = builderSchemas.filter((e) => e.schema !== null);
   const [trackerTab, setTrackerTab] = useState<"progress" | "items">("progress");
   const [spoilerLog, setSpoilerLog] = useState<string | null>(null);
   const [spoilerLoading, setSpoilerLoading] = useState(false);
@@ -809,7 +833,14 @@ export default function RoomDetail() {
                 style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
               />
             </label>
-            <button className="btn btn-primary" onClick={() => setShowEditor(true)}>
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowEditor(true)}
+              disabled={builderGames.length === 0}
+              title={builderGames.length === 0
+                ? "No buildable games yet - pin APWorlds in Settings, or wait a moment for schemas to derive"
+                : undefined}
+            >
               Create YAML
             </button>
             {generationOn && yamls.length > 0 && (
@@ -940,12 +971,25 @@ export default function RoomDetail() {
         )}
       </div>
 
-      {/* YAML Editor */}
-      {showEditor && id && (
-        <YamlEditor
-          roomId={id}
-          onComplete={() => { setShowEditor(false); refresh(); }}
-          onCancel={() => setShowEditor(false)}
+      {/* FEAT-38: guided YAML builder (host flow - creates the YAML via the
+          host endpoint so it works regardless of public submit gates). */}
+      {id && (
+        <YamlBuilder
+          open={showEditor}
+          games={builderGames}
+          submit={{
+            label: "Add to this room",
+            run: async (yamlContent, playerName, game) => {
+              const r = await createYamlFromEditor(id, {
+                player_name: playerName,
+                game,
+                yaml_content: yamlContent,
+              });
+              refresh();
+              return `Created ${r.player_name} (${r.game}) - ${r.validation_status}`;
+            },
+          }}
+          onClose={() => setShowEditor(false)}
         />
       )}
 

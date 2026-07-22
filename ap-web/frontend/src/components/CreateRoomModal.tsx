@@ -3,6 +3,7 @@ import {
   createRoom,
   createRoomTemplate,
   listRoomTemplates,
+  type Room,
   type RoomTemplate,
 } from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -41,7 +42,10 @@ export default function CreateRoomModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  /** FEAT-38: receives the created room so flows like "create room with
+   *  this YAML" can act on it. Existing callers that just refresh a list
+   *  can keep ignoring the argument. */
+  onCreated: (room: Room) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { user } = useAuth();
@@ -165,7 +169,7 @@ export default function CreateRoomModal({
     setError("");
     setSubmitting(true);
     try {
-      await createRoom({
+      const room = await createRoom({
         name: state.name.trim(),
         host_name: hostName,
         description: state.description,
@@ -179,7 +183,7 @@ export default function CreateRoomModal({
         force_latest_apworld_versions: state.policyMode === "latest",
         auto_upgrade_apworld_pins: state.autoUpgrade,
       });
-      onCreated();
+      onCreated(room);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
