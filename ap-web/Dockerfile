@@ -22,6 +22,13 @@ RUN pip install --no-cache-dir -r requirements.txt /tmp/ap-lib/ && rm -rf /tmp/a
 # Copy backend code
 COPY ap-web/*.py ap-web/api/ ./
 COPY ap-web/api/ ./api/
+
+# FEAT-39: server-rendered guide pages need their Jinja templates and the
+# repo-controlled guide markdown at runtime. Without these the blueprint
+# would 500 on /guides in the built image.
+COPY ap-web/templates/ ./templates/
+COPY ap-web/guides/ ./guides/
+
 COPY ap-web/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

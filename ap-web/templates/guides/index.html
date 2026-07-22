@@ -1,0 +1,17 @@
+{% extends "guides/base.html" %}
+{% block main %}
+  <h1>Guides</h1>
+  <p class="guide-lede">
+    Archipelago is a multiworld randomizer: it shuffles the items and unlocks of many
+    different games into one shared pool and spreads them across every player's world.
+    These guides take you from never having touched it to connected and playing.
+  </p>
+  <div class="guide-cards">
+    {% for g in guides %}
+    <a class="guide-card" href="{{ g.path }}">
+      <h2>{{ g.card_title }}</h2>
+      <p>{{ g.card_blurb }}</p>
+    </a>
+    {% endfor %}
+  </div>
+{% endblock %}

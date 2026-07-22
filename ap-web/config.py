@@ -42,6 +42,13 @@ CORS_ORIGINS = os.environ.get("AP_CORS_ORIGINS", "")
 # deployment with prod. Empty string = prod / unlabelled, no banner.
 # Value is exposed verbatim via /api/deployment for the frontend.
 DEPLOYMENT_LABEL = os.environ.get("AP_DEPLOYMENT_LABEL", "")
+
+# FEAT-39: public origin used to build absolute canonical/OG URLs and the
+# sitemap for the server-rendered guide pages. Always the production origin,
+# even on beta: beta is served with X-Robots-Tag: noindex at the proxy, so
+# its canonical links should still point at prod to avoid duplicate-content
+# signals. Override with AP_PUBLIC_BASE_URL only if the prod origin changes.
+PUBLIC_BASE_URL = os.environ.get("AP_PUBLIC_BASE_URL", "https://ap-pie.com").rstrip("/")
 MAX_UPLOAD_MB = int(os.environ.get("AP_MAX_UPLOAD_MB", "50"))
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://archipelago:archipelago@localhost:5432/archipelago")
 WORLDS_DIR = os.environ.get("AP_WORLDS_DIR", r"C:\ProgramData\Archipelago\custom_worlds")

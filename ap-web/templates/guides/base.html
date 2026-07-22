@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ page_title }}</title>
+    <meta name="description" content="{{ meta_description }}" />
+    <link rel="canonical" href="{{ canonical_url }}" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <meta property="og:type" content="{{ og_type|default('article') }}" />
+    <meta property="og:title" content="{{ og_title|default(page_title) }}" />
+    <meta property="og:description" content="{{ og_description|default(meta_description) }}" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    <meta property="og:site_name" content="Archipelago Pie" />
+    <meta name="theme-color" content="#15131a" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <style>
+      :root {
+        --bg: #15131a;
+        --bg-card: #1f1c25;
+        --bg-hover: #2a2630;
+        --text: #d8d4cc;
+        --text-h: #f4ecdc;
+        --text-muted: #8a8378;
+        --accent: #e8a857;
+        --accent-light: #f5c987;
+        --accent-dim: rgba(232, 168, 87, 0.15);
+        --border: #2e2935;
+        --border-strong: #3a3340;
+        --font-display: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
+        --font-body: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.6;
+        color: var(--text);
+        background: var(--bg);
+        font-feature-settings: "ss01", "cv11";
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      a { color: var(--accent-light); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border);
+      }
+      .site-brand {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--accent-light);
+      }
+      .site-brand:hover { text-decoration: none; }
+      .site-nav { display: flex; align-items: center; gap: 1rem; }
+      .site-nav a { color: var(--text); padding: 0.25rem 0.5rem; border-radius: 4px; }
+      .site-nav a:hover { color: var(--text-h); background: var(--bg-hover); text-decoration: none; }
+
+      main {
+        flex: 1;
+        width: 100%;
+        max-width: 46rem;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 4rem;
+      }
+
+      h1 {
+        font-family: var(--font-display);
+        font-weight: 500;
+        color: var(--text-h);
+        font-size: 2.2rem;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        margin-bottom: 1.5rem;
+      }
+      @media (max-width: 640px) {
+        h1 { font-size: 1.8rem; }
+        main { padding: 2rem 1.25rem 3rem; }
+      }
+
+      .guide-body h2 {
+        font-family: var(--font-display);
+        font-weight: 500;
+        color: var(--text-h);
+        font-size: 1.4rem;
+        letter-spacing: -0.01em;
+        margin: 2.25rem 0 0.85rem;
+      }
+      .guide-body h3 {
+        font-family: var(--font-display);
+        font-weight: 500;
+        color: var(--text-h);
+        font-size: 1.1rem;
+        margin: 1.75rem 0 0.6rem;
+      }
+      .guide-body p { margin: 0 0 1rem; }
+      .guide-body ul, .guide-body ol { margin: 0 0 1rem 1.5rem; }
+      .guide-body li { margin: 0 0 0.5rem; }
+      .guide-body li > ul, .guide-body li > ol { margin-top: 0.5rem; }
+      .guide-body strong { color: var(--text-h); font-weight: 600; }
+      .guide-body code {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.1em 0.35em;
+      }
+      .guide-body a { color: var(--accent-light); }
+
+      .guide-lede {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+      }
+
+      .guide-cards {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 560px) {
+        .guide-cards { grid-template-columns: 1fr 1fr; }
+      }
+      .guide-card {
+        display: block;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.25rem 1.4rem;
+        color: var(--text);
+        transition: border-color 120ms ease, background 120ms ease;
+      }
+      .guide-card:hover {
+        text-decoration: none;
+        border-color: var(--accent);
+        background: var(--bg-hover);
+      }
+      .guide-card h2 {
+        font-family: var(--font-display);
+        font-weight: 500;
+        color: var(--text-h);
+        font-size: 1.2rem;
+        margin-bottom: 0.4rem;
+      }
+      .guide-card p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
+
+      .site-footer {
+        border-top: 1px solid var(--border);
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="site-brand" href="/">Archipelago Pie</a>
+      <nav class="site-nav">
+        <a href="/guides">Guides</a>
+        <a href="/">Open the app</a>
+      </nav>
+    </header>
+
+    <main>
+      {% block main %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <p>Archipelago Pie, a project home for Archipelago multiworlds. Open source on
+        <a href="https://github.com/dowlle/ap-pie" rel="noopener noreferrer">GitHub</a>.</p>
+    </footer>
+  </body>
+</html>
