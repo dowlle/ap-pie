@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import threading
 from functools import wraps
 from pathlib import Path
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, send_file
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, send_file, session
 
 from typing import Iterator
 
@@ -349,7 +350,20 @@ def iter_pinned_apworld_files(
                     from urllib.request import Request, urlopen
                     req = Request(ver.url, headers={"User-Agent": "archipelago-pie/1.0"})
                     with urlopen(req, timeout=30) as resp:
-                        yield filename, resp.read()
+                        data = resp.read(_MAX_APWORLD_BYTES + 1)
+                    if len(data) > _MAX_APWORLD_BYTES:
+                        continue
+                    # SEC-37: verify fetched bytes against the index.lock sha
+                    # when one is pinned, matching the builder-schema and
+                    # admin-install paths. A mismatched artifact is dropped
+                    # from the zip rather than shipped to the host.
+                    if ver.sha256 and hashlib.sha256(data).hexdigest().lower() != ver.sha256.lower():
+                        current_app.logger.warning(
+                            f"bulk-zip: sha256 mismatch for {world.name} "
+                            f"{ver.version}, dropping from archive"
+                        )
+                        continue
+                    yield filename, data
                 except Exception:
                     continue
 
@@ -686,6 +700,18 @@ def list_apworlds():
 @bp.route("/api/apworlds/installed")
 @_requires_generation
 def installed_apworlds():
+    # Branch audit 2026-07-22 (low finding): the public /api/apworlds prefix
+    # skips the auth middleware, and this route used to inherit its
+    # approved-session gate from there. Re-check in-body so a
+    # generation-enabled host never lists its install dir to anonymous
+    # visitors.
+    user = None
+    user_id = session.get("user_id")
+    if user_id:
+        from db import get_user
+        user = get_user(user_id)
+    if not user or not (user.get("is_approved") or user.get("is_admin")):
+        return jsonify({"error": "Authentication required"}), 401
     worlds_dir = _get_worlds_dir()
     return jsonify(list_installed(worlds_dir))
 

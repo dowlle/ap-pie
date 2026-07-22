@@ -41,6 +41,17 @@ def parse_apworld_options_bytes(data: bytes, stem_hint: str | None = None) -> di
     except (zipfile.BadZipFile, OSError):
         return None
 
+    # Hardening (branch audit 2026-07-22): pathological source (deep AST
+    # nesting, huge literals) can raise RecursionError/MemoryError out of
+    # ast.parse. Fail to None instead of killing the worker; callers
+    # negative-cache the result.
+    try:
+        return _parse_zip(zf, stem_hint)
+    except (RecursionError, MemoryError):
+        return None
+
+
+def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
     stem = _detect_module_dir(zf, stem_hint)
     if not stem:
         return None
@@ -95,11 +106,22 @@ def _detect_module_dir(zf: zipfile.ZipFile, stem_hint: str | None) -> str | None
     return None
 
 
+# Hardening (branch audit 2026-07-22, low finding): a hostile zip can lie
+# about member sizes and decompress far past its header claim. Bound the
+# actual decompressed bytes read per source member; real Options.py files
+# are tens of KB, so 5 MB is generous.
+_MAX_MEMBER_BYTES = 5 * 1024 * 1024
+
+
 def _read_member(zf: zipfile.ZipFile, name: str) -> str | None:
     if name not in zf.namelist():
         return None
     try:
-        return zf.read(name).decode("utf-8", errors="replace")
+        with zf.open(name) as fh:
+            raw = fh.read(_MAX_MEMBER_BYTES + 1)
+        if len(raw) > _MAX_MEMBER_BYTES:
+            return None
+        return raw.decode("utf-8", errors="replace")
     except Exception:
         return None
 
