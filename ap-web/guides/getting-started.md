@@ -16,7 +16,7 @@ Archipelago supports hundreds of games, from Zelda and Metroid classics to moder
 
 Stuck at any step? The [Archipelago Discord](https://discord.gg/8Z65BR2) is active and friendly, and most games have their own channel there.
 
-## The pieces you will meet
+## YAMLs, rooms, and clients
 
 **A YAML file.** Your settings file. It says which game you are playing, what your player name (slot name) is, and how you want your game randomized. Every player brings one YAML per game they play.
 
@@ -30,13 +30,15 @@ Stuck at any step? The [Archipelago Discord](https://discord.gg/8Z65BR2) is acti
 2. The host generates the game. This produces one seed containing every player's world.
 3. The host starts the server, usually on [archipelago.gg](https://archipelago.gg) itself, and shares the address.
 4. Each player starts their own game with its client and connects with the address and their slot name.
-5. Play. Items you find get sent automatically. Items sent to you show up in your game.
+5. Play. Items you find are sent automatically, and items sent to you show up in your game.
 
-## Writing your first YAML
+You do not have to bring your own group either, because open multiworlds are announced all the time. Hosts post them in the [official Archipelago Discord](https://discord.gg/8Z65BR2), and several streamer communities run big regular ones, with [360Chrism](https://www.twitch.tv/360chrism)'s community among the largest, hosting events that have crossed seven hundred players in one multiworld.
+
+## Setting up your first YAML
 
 Every apworld ships a template YAML with all its options explained in comments. Open it in any text editor, set your name, adjust the options you care about, and leave the rest alone. Defaults are sensible everywhere. You can also generate a template for many games on [archipelago.gg/games](https://archipelago.gg/games) under the game's options page, and fine-tune it from there.
 
-Two rules save the most headaches. Your slot name must match exactly between the YAML and what you type in your client when connecting. And when your host pins specific apworld versions for a room, use the same version they pinned.
+Two rules save the most headaches. Your slot name must match exactly between the YAML and what you type in your client when connecting. And when your host pins specific apworld versions for a room, use the same version they pinned. When you are ready to go deeper, [Setting up your YAML](/guides/setting-up-your-yaml) is the complete guide, covering weights, progression balancing, and every option all games share.
 
 ## Where this site fits
 
