@@ -277,9 +277,13 @@ def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> 
         if field_map:
             break
 
-    def resolve_type(name: str, seen: set[str]) -> str | None:
-        """Resolve a class's template type, following in-file base classes so
-        `class RouteLocks(BaseLockToggle)` picks up BaseLockToggle's kind."""
+    def resolve_ap_base(name: str, seen: set[str]) -> str | None:
+        """Resolve which AP option base a class ultimately derives from,
+        following in-file base classes so `class RouteLocks(BaseLockToggle)`
+        picks up BaseLockToggle's kind. Returns the _AP_TYPE_MAP key (the AP
+        class name) rather than the mapped template type, because some bases
+        carry semantics beyond their type: DefaultOnToggle implies default
+        True even when the option class body never assigns `default`."""
         node = class_defs.get(name)
         if node is None or name in seen:
             return None
@@ -291,8 +295,8 @@ def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> 
             if base_name in _SKIP_BASES:
                 return None
             if base_name in _AP_TYPE_MAP:
-                return _AP_TYPE_MAP[base_name]
-            inherited = resolve_type(base_name, seen)
+                return base_name
+            inherited = resolve_ap_base(base_name, seen)
             if inherited:
                 return inherited
         return None
@@ -340,7 +344,8 @@ def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> 
             continue
         if any(_get_name(b) in _SKIP_BASES for b in node.bases):
             continue
-        opt_type = resolve_type(cls_name, set())
+        ap_base = resolve_ap_base(cls_name, set())
+        opt_type = _AP_TYPE_MAP.get(ap_base) if ap_base else None
         if opt_type is None:
             continue
 
@@ -413,7 +418,12 @@ def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> 
             })
 
         elif opt_type == "toggle":
-            default_bool = bool(default) if default is not None else False
+            # DefaultOnToggle's default=1 lives on the AP library class, not
+            # in the apworld source, so a class body without an explicit
+            # `default` must inherit True from the base (bit CTR: 8 options
+            # rendered default-off in the builder, 2026-07-22).
+            inherited_on = ap_base == "DefaultOnToggle"
+            default_bool = bool(default) if default is not None else inherited_on
             options.append({
                 **base,
                 "type": "toggle",
@@ -471,14 +481,43 @@ def _get_name(node: ast.AST | None) -> str | None:
     return None
 
 
+_LITERAL_CONSTRUCTORS = {
+    "frozenset": frozenset,
+    "set": set,
+    "tuple": tuple,
+    "list": list,
+    "dict": dict,
+    "sorted": sorted,
+}
+
+
 def _get_literal(node: ast.AST | None):
-    """Safely evaluate a constant/literal AST node."""
+    """Safely evaluate a constant/literal AST node.
+
+    Also evaluates single-argument calls to the builtin container
+    constructors (`frozenset({...})`, `set([...])`, ...), which
+    ast.literal_eval rejects — apworlds routinely write OptionSet defaults
+    as `default = frozenset({...})` (bit CTR's warp_pad_shuffle_categories,
+    2026-07-22)."""
     if node is None:
         return None
     try:
         return ast.literal_eval(node)
     except (ValueError, TypeError, SyntaxError):
-        return None
+        pass
+    if isinstance(node, ast.Call) and not node.keywords and len(node.args) <= 1:
+        fn = _get_name(node.func)
+        ctor = _LITERAL_CONSTRUCTORS.get(fn or "")
+        if ctor is not None:
+            if not node.args:
+                return ctor()
+            inner = _get_literal(node.args[0])
+            if inner is not None:
+                try:
+                    return ctor(inner)
+                except (ValueError, TypeError):
+                    return None
+    return None
 
 
 def _camel_to_snake(name: str) -> str:
