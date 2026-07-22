@@ -38,11 +38,21 @@
   </script>
 {% endblock %}
 {% block main %}
-  <article>
-    <h1>{{ h1 }}</h1>
-    <p class="guide-byline">By Appie · Updated {{ date_modified }}</p>
-    <div class="guide-body">
-      {{ body_html|safe }}
-    </div>
-  </article>
+  <div class="guide-layout">
+    {% if sections|length > 1 %}
+    <nav class="guide-toc" aria-label="On this page">
+      <div class="guide-toc-label">On this page</div>
+      {% for s in sections %}
+      <a href="#{{ s.id }}">{{ s.name }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+    <article>
+      <h1>{{ h1 }}</h1>
+      <p class="guide-byline">By Appie · Updated {{ date_modified }}</p>
+      <div class="guide-body">
+        {{ body_html|safe }}
+      </div>
+    </article>
+  </div>
 {% endblock %}

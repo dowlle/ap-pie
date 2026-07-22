@@ -209,6 +209,28 @@
       /* Guides index: project shelves + rail nav (design ruling 2026-07-22,
          mockup variant B). --c is set per shelf from the project registry. */
       main:has(.guides-layout) { max-width: 72rem; }
+
+      /* Guide pages: "On this page" rail (2026-07-22, Stef's ask; same
+         pattern as a key-takeaways side panel). Sticky next to the article
+         on wide screens, a plain link row above it on mobile. */
+      main:has(.guide-layout) { max-width: 66rem; }
+      .guide-layout { display: grid; grid-template-columns: 13rem minmax(0, 46rem); gap: 3rem; justify-content: center; }
+      .guide-toc { position: sticky; top: 2rem; align-self: start; font-size: 0.88rem; }
+      .guide-toc-label {
+        font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);
+        letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.9rem;
+      }
+      .guide-toc a {
+        display: block; color: var(--text); padding: 0.32rem 0.6rem; border-radius: 8px;
+        border-left: 2px solid var(--border-strong);
+      }
+      .guide-toc a:hover { background: var(--bg-hover); color: var(--text-h); border-left-color: var(--accent); text-decoration: none; }
+      .guide-body h2, .guide-body h3 { scroll-margin-top: 2rem; }
+      @media (max-width: 860px) {
+        .guide-layout { grid-template-columns: 1fr; gap: 1.25rem; }
+        .guide-toc { position: static; }
+        .guide-toc a { display: inline-block; border-left: none; border: 1px solid var(--border-strong); border-radius: 999px; padding: 0.25rem 0.8rem; margin: 0 0.3rem 0.4rem 0; font-size: 0.82rem; }
+      }
       .guides-layout { display: grid; grid-template-columns: 13rem 1fr; gap: 3rem; }
       .guides-rail { position: sticky; top: 2rem; align-self: start; font-size: 0.92rem; }
       .guides-rail-label {

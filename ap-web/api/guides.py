@@ -192,15 +192,24 @@ def _canonical(path: str) -> str:
     return f"{config.PUBLIC_BASE_URL}{path}"
 
 
-def _render_markdown(md_path: Path) -> str:
-    """Render a repo-controlled markdown file to HTML.
+def _render_markdown(md_path: Path) -> tuple[str, list[dict]]:
+    """Render a repo-controlled markdown file to HTML plus a section list.
 
-    Core Markdown only: it handles the headings, lists, inline code, bold,
-    italics, and links the guides use, preserves HTML comments (the VERIFY
-    markers) as invisible-but-findable source, and leaves "--" untouched.
+    Core Markdown plus the `toc` extension only: toc adds ids to headings
+    (deep links + the on-page rail) without enabling raw-HTML passthrough
+    or smart punctuation, so HTML comments (the VERIFY markers) stay
+    invisible-but-findable and "--" is never rewritten. Returns the HTML
+    and the h2 sections as [{"id": ..., "name": ...}].
     """
     text = md_path.read_text(encoding="utf-8")
-    return markdown.markdown(text, extensions=[], output_format="html")
+    md = markdown.Markdown(extensions=["toc"], output_format="html")
+    html = md.convert(text)
+    sections = [
+        {"id": t["id"], "name": t["name"]}
+        for t in md.toc_tokens
+        if t["level"] == 2
+    ]
+    return html, sections
 
 
 @bp.route("/guides")
@@ -249,11 +258,12 @@ def guide_page(slug: str) -> str:
     md_path = _GUIDES_DIR / guide["file"]
     if not md_path.is_file():
         abort(404)
-    body_html = _render_markdown(md_path)
+    body_html, sections = _render_markdown(md_path)
     return render_template(
         "guides/guide.html",
         h1=guide["h1"],
         body_html=body_html,
+        sections=sections,
         page_title=guide["page_title"],
         meta_description=guide["meta_description"],
         canonical_url=_canonical(f"/guides/{slug}"),
