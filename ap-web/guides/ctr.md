@@ -8,10 +8,9 @@ New to Archipelago itself? Read [Getting started with Archipelago](/guides/getti
 
 ## What you need
 
-1. **The game client.** Free, from the [releases page](https://github.com/dowlle/ctr-native-ap/releases). Download the latest release and unzip it into a folder of its own.
-2. **A disc image of your own North American (NTSC-U) Crash Team Racing disc.** Usually a `.bin` file. The European and Japanese releases are detected and refused, so it really has to be the North American disc.
+**The game client**, from the [releases page](https://github.com/dowlle/ctr-native-ap/releases). Download the latest release and unzip it into a folder of its own. No Python, no installer, nothing to extract.
 
-No Python, no installer, nothing to extract.
+> **Bring your own disc.** No game data is included. You need a disc image of your own North American (NTSC-U) Crash Team Racing disc, usually a `.bin` file. The European and Japanese releases are detected and refused, so it really has to be the North American disc.
 
 ## Step 1: first launch
 
@@ -35,12 +34,16 @@ Hit **Connect** and watch the status line on the same screen. Once it says conne
 
 ## Playing on Steam Deck
 
-The Deck build works without a keyboard. Add the game to Steam, launch it from Gaming Mode, and focusing any connection field brings up the on-screen keyboard. The setup guide on GitHub has the details.
+The Deck build works without a keyboard. Add the game to Steam, launch it from Gaming Mode, and focusing any connection field brings up the on-screen keyboard. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) has the details.
 
 ## Your YAML
 
-The release bundle includes a template YAML with every option documented. Set your name, pick your goal, and submit it to your host. <!-- video embed slot: YAML explainer, when published -->
+The release bundle includes a template YAML with every option documented. Set your name, pick your goal, and submit it to your host. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the details, and [Getting started with Archipelago](/guides/getting-started) explains YAML basics if the format is new to you. <!-- video embed slot: YAML explainer, when published -->
 
 ## When something goes wrong
 
-The game tells you what is missing and why, and the [setup guide's troubleshooting section](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the common cases. For crashes or a seed that looks impossible, run `support-bundle.bat` next to the executable and bring the archive it makes to the Discord or a GitHub issue. It contains your logs with the password stripped out, and no game data.
+The game tells you what is missing and why, and the [setup guide's troubleshooting section](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the common cases. For crashes or a seed that looks impossible, run `support-bundle.bat` next to the executable and bring the archive it makes to Discord or a [GitHub issue](https://github.com/dowlle/ctr-native-ap/issues). It contains your logs with the password stripped out, and no game data.
+
+## Come say hi
+
+Questions, feedback, or just want to show off a seed? Join the [Archipelago Discord](https://discord.gg/8Z65BR2) and find us in the [Crash Team Racing channel](https://discord.com/channels/731205301247803413/1222304293751750777).

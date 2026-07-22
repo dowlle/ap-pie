@@ -102,10 +102,13 @@ function NavBar() {
             everyone and rides the hamburger drawer on mobile. */}
         <a href="/guides">Guides</a>
         {showRoomsLink && <NavLink to="/rooms">Rooms</NavLink>}
-        {/* APWorlds is now visible to any approved host (FEAT-21). Even with
-            generation OFF in production, the index browser is useful: hosts
-            pin per-room versions, players follow links to install locally. */}
-        {showRoomsLink && <NavLink to="/apworlds">APWorlds</NavLink>}
+        {/* FEAT-39 (Stef 2026-07-22): the APWorld index browser is public.
+            The backing list + download APIs never required a session; the
+            community index is part of the site's public catalog and the
+            guides link to it. Note for FEAT-38: when the /apworlds Create
+            YAML buttons land, they must handle anonymous users (their
+            backend is session-gated). */}
+        <NavLink to="/apworlds">APWorlds</NavLink>
         {showAdminTools && (
           <>
             <NavLink to="/market">Market</NavLink>
@@ -229,7 +232,7 @@ function AppRoutes() {
       <Route path="/games/:seed" element={<AdminShell><RequireApproval><GameDetail /></RequireApproval></AdminShell>} />
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />
       <Route path="/servers" element={<AdminShell><RequireApproval><Servers /></RequireApproval></AdminShell>} />
-      <Route path="/apworlds" element={<AdminShell><RequireApproval><APWorlds /></RequireApproval></AdminShell>} />
+      <Route path="/apworlds" element={<AdminShell><APWorlds /></AdminShell>} />
       <Route path="/rooms/templates" element={<AdminShell><RequireApproval><MyRoomTemplates /></RequireApproval></AdminShell>} />
       <Route path="/summary" element={<AdminShell><RequireApproval><Summary /></RequireApproval></AdminShell>} />
     </Routes>

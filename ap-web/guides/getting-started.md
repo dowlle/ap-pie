@@ -4,11 +4,11 @@ Archipelago is a multiworld randomizer. It takes a group of games, shuffles thei
 
 You can also play solo. One game, one world, everything shuffled within it. That is a classic randomizer, and it works exactly the same way.
 
-Archipelago supports hundreds of games, from Zelda and Metroid classics to modern indies. The full list lives at [archipelago.gg/games](https://archipelago.gg/games). Each supported game has its own "apworld": a small add-on that teaches Archipelago how that game works.
+Archipelago supports hundreds of games, from Zelda and Metroid classics to modern indies. The officially supported list lives at [archipelago.gg/games](https://archipelago.gg/games), and that is only part of the picture: the community maintains many more integrations, browsable in [our APWorld index](/apworlds), including this site's own games like Crash Team Racing. Each supported game has its own "apworld": a small add-on that teaches Archipelago how that game works.
 
 ## Start here: your first game in five steps
 
-1. **Pick a game you own** from the [supported games list](https://archipelago.gg/games). Good first picks are games you know well; the randomizer is more fun when the base game is familiar.
+1. **Pick a game you own** from the [official games list](https://archipelago.gg/games) or [the community APWorld index](/apworlds). Good first picks are games you know well; the randomizer is more fun when the base game is familiar.
 2. **Install Archipelago.** Download the latest installer from the [official releases page](https://github.com/ArchipelagoMW/Archipelago/releases). It bundles the generator, the server, and the clients most games need.
 3. **Follow your game's setup guide.** Every game on [archipelago.gg/games](https://archipelago.gg/games) links its own guide, and the general tutorials live at [archipelago.gg/tutorial](https://archipelago.gg/tutorial). Playing Crash Team Racing? Use [our CTR guide](/guides/ctr) instead, it covers everything in one place.
 4. **Make your YAML** (your settings file, explained below) and generate a game, or hand the YAML to whoever is hosting.
@@ -45,5 +45,5 @@ Archipelago Pie is a YAML collector and lobby manager. Hosts create a room, set 
 ## Ready for a specific game?
 
 - **Crash Team Racing:** [our full setup guide](/guides/ctr) takes you from zero to racing in about five minutes.
-- **Any other game:** find it on [archipelago.gg/games](https://archipelago.gg/games) and follow its linked setup guide; the general tutorials are at [archipelago.gg/tutorial](https://archipelago.gg/tutorial).
+- **Any other game:** find it on [archipelago.gg/games](https://archipelago.gg/games) or in [the community APWorld index](/apworlds) and follow its linked setup guide; the general tutorials are at [archipelago.gg/tutorial](https://archipelago.gg/tutorial).
 - **Questions along the way:** the [Archipelago Discord](https://discord.gg/8Z65BR2) is the fastest place to get help.
