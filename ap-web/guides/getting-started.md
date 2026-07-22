@@ -11,7 +11,7 @@ Archipelago supports hundreds of games, from Zelda and Metroid classics to moder
 1. **Pick a game you own** from the [official games list](https://archipelago.gg/games) or [the community APWorld index](/apworlds). Good first picks are games you know well; the randomizer is more fun when the base game is familiar.
 2. **Install Archipelago.** Download the latest installer from the [official releases page](https://github.com/ArchipelagoMW/Archipelago/releases). It bundles the generator, the server, and the clients most games need.
 3. **Follow your game's setup guide.** Every game on [archipelago.gg/games](https://archipelago.gg/games) links its own guide, and the general tutorials live at [archipelago.gg/tutorial](https://archipelago.gg/tutorial). Playing Crash Team Racing? Use [our CTR guide](/guides/ctr) instead, it covers everything in one place.
-4. **Make your YAML** (your settings file, explained below) and generate a game, or hand the YAML to whoever is hosting.
+4. **Make your YAML** (your settings file, explained below), either from a template or with [the builder on this site](/apworlds), and hand it to whoever is hosting, or generate the game yourself.
 5. **Connect and play.** Your game's client connects to the room address, and from there items flow automatically.
 
 Stuck at any step? The [Archipelago Discord](https://discord.gg/8Z65BR2) is active and friendly, and most games have their own channel there.

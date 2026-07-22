@@ -38,7 +38,7 @@ The Deck build works without a keyboard. Add the game to Steam, launch it from G
 
 ## Your YAML
 
-The release bundle includes a template YAML with every option documented. Set your name, pick your goal, and submit it to your host. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the details, and [Getting started with Archipelago](/guides/getting-started) explains YAML basics if the format is new to you. <!-- video embed slot: YAML explainer, when published -->
+The release bundle includes a template YAML with every option documented, and you can also build one in the browser from [the APWorld index](/apworlds) with the Create YAML button on the CTR entry. Set your name, pick your goal, and submit it to your host. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the details, and [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth if it is new to you. <!-- video embed slot: YAML explainer, when published -->
 
 ## When something goes wrong
 
