@@ -3,13 +3,18 @@ import { useAuth } from "../context/AuthContext";
 /**
  * Anonymous / pending-approval landing for the root route.
  *
- * - Unauthenticated visitors: see what Archipelago Pie does + a Discord login CTA.
+ * - Unauthenticated visitors: see what Archipelago Pie is + a Discord login CTA.
  * - Logged-in but unapproved (closed-beta queue): same page, but the CTA
  *   becomes a "waiting for approval" notice that auto-flips when AuthContext
  *   polls and detects approval (then the parent route redirects to /rooms).
  *
  * Approved hosts and admins never see this - App.tsx routes them onward
  * before they hit Landing.
+ *
+ * FEAT-39: repositioned as a project home for Archipelago. The guides are the
+ * front door for newcomers; the YAML room collector is presented as one of the
+ * tools rather than the whole identity. The "ping Appie on Discord" host-access
+ * flow copy is unchanged.
  */
 export default function Landing() {
   const { user, login } = useAuth();
@@ -21,11 +26,16 @@ export default function Landing() {
         <div className="landing-hero-emoji" aria-hidden>🥧</div>
         <h1 className="landing-hero-title">Archipelago Pie</h1>
         <p className="landing-hero-tagline">
-          A YAML collector and tracker for Archipelago multiworlds.
+          A home base for Archipelago multiworlds.
         </p>
         <p className="landing-hero-sub">
-          Drop a link in your Discord, let everyone hand in their YAMLs in one place,
-          and watch the run unfold from a single dashboard.
+          New here? The guides take you from never having heard of Archipelago to connected
+          and playing. Running a session? Collect everyone's YAMLs in one place and watch the
+          run from a single dashboard.
+        </p>
+
+        <p className="landing-hero-sub">
+          <a href="/guides" className="btn btn-primary landing-cta-btn">Read the guides</a>
         </p>
 
         {pending ? (
@@ -56,7 +66,20 @@ export default function Landing() {
         )}
       </section>
 
+      <section className="landing-guides-cta">
+        <h2>Start with the guides</h2>
+        <p>
+          Never played a multiworld? The getting-started guide explains what Archipelago is,
+          how YAML files and rooms fit together, and how a session gets going. Per-game guides
+          take you from a fresh download to connected.
+        </p>
+        <p>
+          <a href="/guides">Browse the guides</a>
+        </p>
+      </section>
+
       <section className="landing-features">
+        <h2 className="landing-features-heading">Hosting a room</h2>
         <FeatureCard
           title="Collect YAMLs in one place"
           body="Spin up a room, share a single link with your group, and let players upload via drag-and-drop. No more chasing files in DMs."

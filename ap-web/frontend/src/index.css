@@ -2408,6 +2408,41 @@ a.btn:hover { text-decoration: none; }
 }
 .landing-foot a { color: var(--accent); }
 
+/* FEAT-39: guides callout + a heading that spans the full features grid so
+   the room-collector cards read as one titled group. */
+.landing-guides-cta {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem 1.6rem;
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.landing-guides-cta h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--text-h);
+  letter-spacing: -0.01em;
+}
+.landing-guides-cta p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+  max-width: 46rem;
+}
+.landing-guides-cta a { color: var(--accent-light); }
+.landing-features-heading {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+  color: var(--text-h);
+}
+
 /* == APWorlds page (FEAT-21 redesign) ============================
    The /apworlds browser. One card per APWorld; each card stacks all
    versions vertically with per-version source/sha/Download/Install. */
