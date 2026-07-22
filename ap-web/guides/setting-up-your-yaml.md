@@ -16,7 +16,7 @@ Everything below this point is the deep dive for your second seed and onward.
 
 ## Reading the options
 
-Open the file in any text editor and you will see the same few shapes repeated. A toggle takes `true` or `false`. A choice option lists its allowed values in the comment above it, and you pick one of them. A range takes a number between the bounds the comment gives you. The comments are the real documentation, and they sit right next to the thing they explain.
+Open the file in a text editor, where a code editor like VS Code gives you nicer coloring, and plain Notepad works completely fine too. You will see the same few shapes repeated. A toggle takes `true` or `false`. A choice option lists its allowed values in the comment above it, and you pick one of them. A range takes a number between the bounds the comment gives you. The comments are the real documentation, and they sit right next to the thing they explain.
 
 Two fields deserve extra care before anything else. Your `name` is your slot name, and it has to match exactly what you type when your game client connects. And if your host pinned specific apworld versions for the room, generate your template from that same version so the options line up.
 
