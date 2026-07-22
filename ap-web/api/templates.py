@@ -77,10 +77,21 @@ def get_template(game: str):
     game = unquote(game)
     templates_dir = _get_templates_dir()
 
+    # SEC-36: this is a public anonymous endpoint and <path:game> accepts
+    # slashes, so an unquoted "../" could walk out of the templates dir.
+    # Strip to the basename and verify the resolved path stays inside,
+    # mirroring the upload-route pattern from SEC-06.
+    game = Path(game).name
+
     # Try exact filename match in templates directory
     filepath = templates_dir / f"{game}.yaml"
     if not filepath.is_file():
         filepath = templates_dir / f"{game}.yml"
+
+    try:
+        filepath.resolve().relative_to(templates_dir.resolve())
+    except ValueError:
+        return jsonify({"error": f"Template not found for '{game}'"}), 404
 
     if filepath.is_file():
         cache_key = str(filepath)
