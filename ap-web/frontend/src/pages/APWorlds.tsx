@@ -588,7 +588,7 @@ function RoomAttach({
       <h3>Use this YAML</h3>
       {added ? (
         <p className="settings-aux-note" style={{ margin: 0, color: "var(--green)" }}>
-          ✓ {added.msg} — <Link to={`/rooms/${added.roomId}`}>open the room</Link>
+          ✓ {added.msg}. <Link to={`/rooms/${added.roomId}`}>Open the room</Link>
         </p>
       ) : (
         <>
