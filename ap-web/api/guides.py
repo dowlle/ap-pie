@@ -48,6 +48,22 @@ GUIDES: list[dict[str, str]] = [
         ),
     },
     {
+        "slug": "crash-team-racing-pc",
+        "file": "crash-team-racing-pc.md",
+        "h1": "Play Crash Team Racing on PC",
+        "page_title": "Play Crash Team Racing on PC | Archipelago Pie",
+        "meta_description": (
+            "Crash Team Racing runs natively on PC through a community "
+            "decompilation. No emulator needed: download the ctr-native port, "
+            "add your own disc image, and play."
+        ),
+        "card_title": "Play Crash Team Racing on PC",
+        "card_blurb": (
+            "The 1999 classic as a native PC port, no emulator needed, thanks "
+            "to the community decompilation. Setup in minutes."
+        ),
+    },
+    {
         "slug": "ctr",
         "file": "ctr.md",
         "h1": "Crash Team Racing setup guide",

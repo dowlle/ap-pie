@@ -2,7 +2,7 @@
 
 CTR Archipelago turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own. No emulator, no ROM patching, no extra client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
 
-New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. It explains rooms, YAML files, and slots. This page gets the game itself running.
+New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. It explains rooms, YAML files, and slots. This page gets the game itself running. And if you only want plain Crash Team Racing on PC without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc) instead.
 
 <!-- video embed slot: setup walkthrough, when published -->
 
