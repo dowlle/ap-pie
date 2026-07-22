@@ -4,7 +4,7 @@ CTR Archipelago turns the 1999 PlayStation classic into a native PC randomizer t
 
 New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. It explains rooms, YAML files, and slots. This page gets the game itself running.
 
-*(video embed slot: setup walkthrough, when published)*
+<!-- video embed slot: setup walkthrough, when published -->
 
 ## What you need
 
@@ -39,7 +39,7 @@ The Deck build works without a keyboard. Add the game to Steam, launch it from G
 
 ## Your YAML
 
-The release bundle includes a template YAML with every option documented. Set your name, pick your goal, and submit it to your host. *(video embed slot: YAML explainer, when published)*
+The release bundle includes a template YAML with every option documented. Set your name, pick your goal, and submit it to your host. <!-- video embed slot: YAML explainer, when published -->
 
 ## When something goes wrong
 
