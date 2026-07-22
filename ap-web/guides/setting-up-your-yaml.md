@@ -1,12 +1,18 @@
 ## Your YAML is just your settings
 
-Every player brings one YAML file per game they play. It tells the generator which game you are on, what your player name is, and how you want your game randomized. You do not write it from scratch, because every game ships a template with every option already filled in with sensible defaults and explained in comments. Setting up a YAML mostly means changing the handful of options you care about, and this guide walks through everything you will meet along the way, from the basic option shapes to the settings that every Archipelago game shares.
+Every player brings one YAML file per game they play. It tells the generator which game you are on, what your player name is, and how you want your game randomized. You do not write it from scratch, because every game ships a template with every option already filled in and explained in comments. This guide serves both kinds of reader, so the quick path comes first and everything after it is the deep dive for when you want to actually understand the file.
 
 ## Getting a template
 
-There are two easy ways to get one. On the website, open the [supported games list](https://archipelago.gg/games), pick your game, click its **Options Page**, set everything with normal form controls, and click **Export Options** to download a ready YAML. If you would rather work locally, open the Archipelago Launcher and click **Generate Template Options**, which writes a template for every installed game into your `Players/Templates` folder.
+For officially supported games, the website is the easiest route. Open the [supported games list](https://archipelago.gg/games), pick your game, click its **Options Page**, set everything with normal form controls, and click **Export Options** to download a ready YAML.
 
-For games that live outside the official list, the template comes with the apworld. Community games like the ones in [this site's APWorld index](/apworlds) usually ship it in their release download, and their setup guides say where to look.
+Community games are not on those options pages, so their route goes through your own Archipelago install. Add the game's apworld to Archipelago, open the Launcher, and click **Generate Template Options**, which writes a fresh template for every installed game into your `Players/Templates` folder. Some community games also ship the template right in their release download, and Crash Team Racing does, but not every maintainer does, so the Launcher route is the one that always works. The games in [this site's APWorld index](/apworlds) each link their releases if you need the apworld itself.
+
+## The quick version
+
+Template defaults are not random, because the apworld's maintainer set them up as a sensible way to play. Most of the time you can open the template, put in your `name`, leave everything else alone, run the file through [the validator](https://archipelago.gg/check), and hand it to your host. That is a complete, correct YAML setup, and playing your first run on settings close to the defaults is genuinely the recommended path, because you learn what the options mean by seeing the game before you start bending it.
+
+Everything below this point is the deep dive for your second seed and onward.
 
 ## Reading the options
 
