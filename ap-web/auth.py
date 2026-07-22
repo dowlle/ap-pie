@@ -143,9 +143,13 @@ def apply_auth_to_app(app):
         # prefix because every non-read route keeps its own gate: install/
         # remove/refresh are @requires_admin, /installed is behind the
         # generation flag, and index-candidates checks the session in-body.
-        # If a future /api/apworlds/* route relies on THIS middleware for
-        # auth (e.g. FEAT-38's builder-schema when it merges), give it an
-        # explicit per-route guard instead.
+        # FEAT-38 merge (ruling 2026-07-22): the room-less builder-schema
+        # route (GET /api/apworlds/<name>/builder-schema) is intentionally
+        # public too - anonymous visitors build + download a YAML from the
+        # index. It reads only sha256-cached game metadata and keeps the
+        # shared fetch budget, so it needs no per-route guard. Any FUTURE
+        # /api/apworlds/* route that IS sensitive must add its own in-body
+        # session/admin check; do not assume this prefix gates reads.
         "/api/apworlds",
     )
 

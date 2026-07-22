@@ -660,8 +660,15 @@ def apworld_builder_schema(name: str):
     room endpoint there's no pin to resolve; the caller picks the version
     via ?version=, or gets the newest downloadable one.
 
-    Session-gated by the global auth middleware like the rest of
-    /api/apworlds - anonymous players go through the room flow instead.
+    Public by design (ruling 2026-07-22): the /apworlds index is public, and
+    anonymous visitors build + download a YAML here without an account. This
+    route reads only game metadata (option names, defaults, ranges) derived
+    from index-pinned apworld bytes, sha256-cached, and inherits the
+    builder_schemas_for_pins fetch budget, so anonymous reads stay bounded.
+    The room-attach / create-room actions that follow the build are gated
+    client-side to signed-in users; submitting always re-checks on the
+    server. No per-route auth guard here - it is intentionally reachable
+    without a session (see the note in auth.py public_prefixes).
     """
     worlds = _get_index_worlds()
     world = next((w for w in worlds if w.name == name), None)

@@ -836,21 +836,35 @@ export default function APWorlds() {
       )}
 
       {/* FEAT-38 (§2.5a): guided builder for the version the user picked.
-          No direct submit action here - the review step offers Download plus
-          the RoomAttach actions (add to an open room / create a room). */}
+          No direct submit action here - the review step offers Download
+          (always, for everyone via YamlBuilder) plus, for signed-in users
+          only, the RoomAttach actions (add to an open room / create a room).
+          Anonymous visitors (the index is public) build + download freely and
+          see a sign-in hint in place of the room actions. */}
       <YamlBuilder
         open={builder !== null}
         games={builder ? [builder] : []}
         initialGame={builder?.apworld_name}
-        reviewExtra={(yamlContent) => (
-          <RoomAttach
-            yamlContent={yamlContent}
-            onCreateRoom={(yaml) => {
-              setPendingYaml(yaml);
-              setCreateRoomOpen(true);
-            }}
-          />
-        )}
+        reviewExtra={(yamlContent) =>
+          user ? (
+            <RoomAttach
+              yamlContent={yamlContent}
+              onCreateRoom={(yaml) => {
+                setPendingYaml(yaml);
+                setCreateRoomOpen(true);
+              }}
+            />
+          ) : (
+            <section className="settings-section">
+              <h3>Use this YAML</h3>
+              <p className="settings-hint" style={{ margin: 0 }}>
+                Download the file above and use it in any room.{" "}
+                <a href="/api/auth/login?next=/apworlds">Sign in with Discord</a>{" "}
+                to add it straight to one of your rooms or start a new room with it.
+              </p>
+            </section>
+          )
+        }
         onClose={() => setBuilder(null)}
       />
       <CreateRoomModal
