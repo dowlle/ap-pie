@@ -4,7 +4,17 @@ Archipelago is a multiworld randomizer. It takes a group of games, shuffles thei
 
 You can also play solo. One game, one world, everything shuffled within it. That is a classic randomizer, and it works exactly the same way.
 
-Archipelago supports hundreds of games, from Zelda and Metroid classics to modern indies. Each supported game has its own "apworld": a small add-on that teaches Archipelago how that game works.
+Archipelago supports hundreds of games, from Zelda and Metroid classics to modern indies. The full list lives at [archipelago.gg/games](https://archipelago.gg/games). Each supported game has its own "apworld": a small add-on that teaches Archipelago how that game works.
+
+## Start here: your first game in five steps
+
+1. **Pick a game you own** from the [supported games list](https://archipelago.gg/games). Good first picks are games you know well; the randomizer is more fun when the base game is familiar.
+2. **Install Archipelago.** Download the latest installer from the [official releases page](https://github.com/ArchipelagoMW/Archipelago/releases). It bundles the generator, the server, and the clients most games need.
+3. **Follow your game's setup guide.** Every game on [archipelago.gg/games](https://archipelago.gg/games) links its own guide, and the general tutorials live at [archipelago.gg/tutorial](https://archipelago.gg/tutorial). Playing Crash Team Racing? Use [our CTR guide](/guides/ctr) instead, it covers everything in one place.
+4. **Make your YAML** (your settings file, explained below) and generate a game, or hand the YAML to whoever is hosting.
+5. **Connect and play.** Your game's client connects to the room address, and from there items flow automatically.
+
+Stuck at any step? The [Archipelago Discord](https://discord.gg/8Z65BR2) is active and friendly, and most games have their own channel there.
 
 ## The pieces you will meet
 
@@ -18,13 +28,13 @@ Archipelago supports hundreds of games, from Zelda and Metroid classics to moder
 
 1. One person volunteers as host and collects YAML files from all players. This site exists to make that step painless: a host creates a room here and players submit their YAML through their browser.
 2. The host generates the game. This produces one seed containing every player's world.
-3. The host starts the server, usually on archipelago.gg, and shares the address.
+3. The host starts the server, usually on [archipelago.gg](https://archipelago.gg) itself, and shares the address.
 4. Each player starts their own game with its client and connects with the address and their slot name.
 5. Play. Items you find get sent automatically. Items sent to you show up in your game.
 
 ## Writing your first YAML
 
-Every apworld ships a template YAML with all its options explained in comments. Open it in any text editor, set your name, adjust the options you care about, and leave the rest alone. Defaults are sensible everywhere.
+Every apworld ships a template YAML with all its options explained in comments. Open it in any text editor, set your name, adjust the options you care about, and leave the rest alone. Defaults are sensible everywhere. You can also generate a template for many games on [archipelago.gg/games](https://archipelago.gg/games) under the game's options page, and fine-tune it from there.
 
 Two rules save the most headaches. Your slot name must match exactly between the YAML and what you type in your client when connecting. And when your host pins specific apworld versions for a room, use the same version they pinned.
 
@@ -34,4 +44,6 @@ Archipelago Pie is a YAML collector and lobby manager. Hosts create a room, set 
 
 ## Ready for a specific game?
 
-Game guides live on the guides page, and each one takes you from nothing to connected. If your game is not listed here yet, its apworld page links the official setup guide.
+- **Crash Team Racing:** [our full setup guide](/guides/ctr) takes you from zero to racing in about five minutes.
+- **Any other game:** find it on [archipelago.gg/games](https://archipelago.gg/games) and follow its linked setup guide; the general tutorials are at [archipelago.gg/tutorial](https://archipelago.gg/tutorial).
+- **Questions along the way:** the [Archipelago Discord](https://discord.gg/8Z65BR2) is the fastest place to get help.
