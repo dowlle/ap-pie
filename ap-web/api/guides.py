@@ -34,6 +34,30 @@ bp = Blueprint("guides", __name__, template_folder=str(_TEMPLATES_DIR))
 # `published`/`updated` feed the byline + TechArticle structured data: bump
 # `updated` whenever a guide's content materially changes (part of the same
 # release-sweep discipline that keeps guide content current).
+# Project shelves for the guides index (design ruling 2026-07-22: variant B,
+# grouped sections with a rail nav, Archipelago basics first). `soon` renders
+# a ghosted placeholder card until that project's guide ships.
+PROJECTS: list[dict] = [
+    {"key": "ap", "name": "Archipelago basics", "sub": "start here if multiworld is new", "color": "#6da8c9"},
+    {"key": "ctr", "name": "Crash Team Racing", "sub": "native PC port + randomizer", "color": "#e8a857"},
+    {
+        "key": "poke", "name": "Pokepelago", "sub": "catch across worlds", "color": "#e05d5d",
+        "soon": {
+            "kicker": "Setup",
+            "title": "Pokepelago setup",
+            "blurb": "Catching across worlds: the browser client and how your dex feeds the multiworld. Coming soon.",
+        },
+    },
+    {
+        "key": "timber", "name": "Timberborn", "sub": "beavers meet the item pool", "color": "#7fa65a",
+        "soon": {
+            "kicker": "Setup",
+            "title": "Timberborn Archipelago setup",
+            "blurb": "Mod install, faction picks, and your first shuffled colony. Coming soon.",
+        },
+    },
+]
+
 GUIDES: list[dict[str, str]] = [
     {
         "slug": "getting-started",
@@ -51,6 +75,9 @@ GUIDES: list[dict[str, str]] = [
         ),
         "published": "2026-07-22",
         "updated": "2026-07-22",
+        "project": "ap",
+        "kicker": "Start here",
+        "featured": True,
     },
     {
         "slug": "crash-team-racing-pc",
@@ -69,6 +96,9 @@ GUIDES: list[dict[str, str]] = [
         ),
         "published": "2026-07-22",
         "updated": "2026-07-22",
+        "project": "ctr",
+        "kicker": "Vanilla on PC",
+        "featured": False,
     },
     {
         "slug": "ctr",
@@ -86,6 +116,9 @@ GUIDES: list[dict[str, str]] = [
         ),
         "published": "2026-07-22",
         "updated": "2026-07-22",
+        "project": "ctr",
+        "kicker": "Randomizer",
+        "featured": True,
     },
 ]
 
@@ -110,17 +143,32 @@ def _render_markdown(md_path: Path) -> str:
 
 @bp.route("/guides")
 def guides_index() -> str:
-    cards = [
-        {
-            "path": f"/guides/{g['slug']}",
-            "card_title": g["card_title"],
-            "card_blurb": g["card_blurb"],
-        }
-        for g in GUIDES
-    ]
+    shelves = []
+    for p in PROJECTS:
+        cards = [
+            {
+                "path": f"/guides/{g['slug']}",
+                "kicker": g.get("kicker", "Guide"),
+                "title": g["card_title"],
+                "blurb": g["card_blurb"],
+                "featured": bool(g.get("featured")),
+            }
+            for g in GUIDES
+            if g.get("project") == p["key"]
+        ]
+        cards.sort(key=lambda c: not c["featured"])
+        shelves.append({
+            "key": p["key"],
+            "name": p["name"],
+            "sub": p["sub"],
+            "color": p["color"],
+            "cards": cards,
+            "soon": p.get("soon"),
+            "count": len(cards) + (1 if p.get("soon") else 0),
+        })
     return render_template(
         "guides/index.html",
-        guides=cards,
+        shelves=shelves,
         page_title="Guides | Archipelago Pie",
         meta_description=(
             "Setup guides for Archipelago multiworld randomizers: start with the "

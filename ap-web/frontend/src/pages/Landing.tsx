@@ -11,9 +11,11 @@ import { useAuth } from "../context/AuthContext";
  * Approved hosts and admins never see this - App.tsx routes them onward
  * before they hit Landing.
  *
- * FEAT-39: repositioned as a project home for Archipelago. The guides are the
- * front door for newcomers; the YAML room collector is presented as one of the
- * tools rather than the whole identity. The "ping Appie on Discord" host-access
+ * FEAT-39 design pass (ruled 2026-07-22): project-showcase layout from the
+ * approved homepage mockup. Hero with the connected-islands motif, "Host a
+ * room" as the primary CTA (the room collector remains the core utility),
+ * Tools band above Projects. Digipelago stays off the page until it has
+ * something releasable to show. The "ping Appie on Discord" host-access
  * flow copy is unchanged.
  */
 export default function Landing() {
@@ -21,24 +23,29 @@ export default function Landing() {
   const pending = !!user && !user.is_approved && !user.is_admin;
 
   return (
-    <div className="landing">
-      <section className="landing-hero">
-        <div className="landing-hero-emoji" aria-hidden>🥧</div>
-        <h1 className="landing-hero-title">Archipelago Pie</h1>
-        <p className="landing-hero-tagline">
-          A home base for Archipelago multiworlds.
+    <div className="lp">
+      <section className="lp-hero">
+        <svg className="lp-islands" viewBox="0 0 1200 420" fill="none" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <path d="M80 330 Q 300 240 520 300 T 900 260 T 1180 310" stroke="#3a3340" strokeDasharray="4 9" strokeWidth="1.5" />
+          <path d="M150 120 Q 420 190 700 110 T 1120 160" stroke="#3a3340" strokeDasharray="4 9" strokeWidth="1.5" />
+          <circle cx="80" cy="330" r="5" fill="#6da8c9" /><circle cx="520" cy="300" r="6" fill="#e8a857" />
+          <circle cx="900" cy="260" r="5" fill="#7fa65a" /><circle cx="150" cy="120" r="5" fill="#e05d5d" />
+          <circle cx="700" cy="110" r="6" fill="#6da8c9" /><circle cx="1120" cy="160" r="4" fill="#e8a857" />
+        </svg>
+        <span className="lp-kicker">Appie's Archipelago projects</span>
+        <h1 className="lp-title">One item pool. <em>Many worlds.</em> Your games.</h1>
+        <p className="lp-sub">
+          Randomizers, tools, and guides for Archipelago multiworlds: race it in Crash Team
+          Racing, catch it in Pokepelago, build it in Timberborn.
         </p>
-        <p className="landing-hero-sub">
-          New here? The guides take you from never having heard of Archipelago to connected
-          and playing. Running a session? Collect everyone's YAMLs in one place and watch the
-          run from a single dashboard.
-        </p>
+        <div className="lp-cta">
+          <button type="button" className="btn btn-primary lp-btn" onClick={() => login("/")}>
+            Host a room
+          </button>
+          <a href="/guides" className="btn lp-btn lp-btn-ghost">Start with the guides</a>
+        </div>
 
-        <p className="landing-hero-sub">
-          <a href="/guides" className="btn btn-primary landing-cta-btn">Read the guides</a>
-        </p>
-
-        {pending ? (
+        {pending && (
           <div className="landing-pending">
             <strong>You're logged in as {user?.discord_username}.</strong>
             <span>
@@ -48,67 +55,58 @@ export default function Landing() {
               - that part doesn't need approval. This page auto-refreshes once you're added.
             </span>
           </div>
-        ) : (
-          <div className="landing-cta">
-            <button
-              type="button"
-              className="btn btn-primary landing-cta-btn"
-              onClick={() => login("/")}
-            >
-              Sign in with Discord
-            </button>
-            <p className="landing-cta-hint">
-              Archipelago Pie is in <strong>closed beta</strong>. Sign in to browse and submit
-              to existing rooms straight away. If you'd like to host your own, ping
-              <strong> Appie</strong> on Discord after signing in and I'll add you manually.
-            </p>
-          </div>
+        )}
+        {!user && (
+          <p className="lp-hint">
+            Archipelago Pie is in <strong>closed beta</strong>. Sign in with Discord to browse
+            and submit to existing rooms straight away. To host your own, ping
+            <strong> Appie</strong> on Discord after signing in.
+          </p>
         )}
       </section>
 
-      <section className="landing-guides-cta">
-        <h2>Start with the guides</h2>
-        <p>
-          Never played a multiworld? The getting-started guide explains what Archipelago is,
-          how YAML files and rooms fit together, and how a session gets going. Per-game guides
-          take you from a fresh download to connected.
-        </p>
-        <p>
-          <a href="/guides">Browse the guides</a>
-        </p>
-      </section>
+      <div className="lp-wrap">
+        <div className="lp-sect">Tools for every multiworld</div>
+        <div className="lp-tools">
+          <button type="button" className="lp-tool" onClick={() => login("/rooms")}>
+            <span className="lp-k">Hosting</span>
+            <h3>Room collector</h3>
+            <p>Create a room, set a deadline, and let players submit YAMLs in the browser. No file juggling.</p>
+          </button>
+          <a className="lp-tool" href="/guides">
+            <span className="lp-k">Learn</span>
+            <h3>Guides</h3>
+            <p>From multiworld basics to per-game setup, written to get you playing fast.</p>
+          </a>
+          <a className="lp-tool" href="/apworlds">
+            <span className="lp-k">Browse</span>
+            <h3>APWorld index</h3>
+            <p>The community catalog of game integrations, with per-version downloads.</p>
+          </a>
+        </div>
 
-      <section className="landing-features">
-        <h2 className="landing-features-heading">Hosting a room</h2>
-        <FeatureCard
-          title="Collect YAMLs in one place"
-          body="Spin up a room, share a single link with your group, and let players upload via drag-and-drop. No more chasing files in DMs."
-        />
-        <FeatureCard
-          title="Validator that matches Archipelago"
-          body="Every upload is checked against AP 0.6.7's actual generator rules - duplicate names, weighted game dicts, name-template tokens, the lot. Bad YAMLs surface before you hit Generate."
-        />
-        <FeatureCard
-          title="Live progress tracker"
-          body="Paste an archipelago.gg tracker URL and Archipelago Pie reads the WebSocket directly. Per-player checks, completion %, hints, and item flow on one dashboard."
-        />
-        <FeatureCard
-          title="Claim mode for curated pools"
-          body="Pre-load a stack of anonymous YAMLs and let logged-in players claim a slot of their choice. Per-player caps still apply, so nobody hoards."
-        />
-        <FeatureCard
-          title="Resubmit with diffs"
-          body="Players can re-upload the same YAML to fix it - Archipelago Pie shows a side-by-side diff so the host can see exactly what changed."
-        />
-        <FeatureCard
-          title="Audited APWorld index"
-          body="Pin per-game APWorld versions from a curated index. Every new entry runs through a sandboxed security audit before it lands, so what your players install isn't running unreviewed code."
-        />
-        <FeatureCard
-          title="Generate locally"
-          body="Download every YAML in the room as a single zip and run Archipelago on your own machine. Archipelago Pie stays out of your generation pipeline."
-        />
-      </section>
+        <div className="lp-sect">Projects</div>
+        <div className="lp-projects">
+          <a className="lp-pj" style={{ "--c": "#e8a857" } as React.CSSProperties} href="/guides/ctr">
+            <span className="lp-st">Released</span>
+            <div className="lp-glyph">CT</div>
+            <h3>CTR Archipelago</h3>
+            <p>The 1999 kart racer as a native PC randomizer. Warp pads, trophies, and relics join the pool.</p>
+          </a>
+          <article className="lp-pj" style={{ "--c": "#e05d5d" } as React.CSSProperties}>
+            <span className="lp-st">Released</span>
+            <div className="lp-glyph">PK</div>
+            <h3>Pokepelago</h3>
+            <p>A catching game in your browser where every Pokemon can carry someone's progression.</p>
+          </article>
+          <article className="lp-pj" style={{ "--c": "#7fa65a" } as React.CSSProperties}>
+            <span className="lp-st">Alpha</span>
+            <div className="lp-glyph">TB</div>
+            <h3>Timberborn AP</h3>
+            <p>Beaver colonies with a shuffled tech tree and faction-flavored progression.</p>
+          </article>
+        </div>
+      </div>
 
       <section className="landing-foot">
         <p>
@@ -118,14 +116,5 @@ export default function Landing() {
         </p>
       </section>
     </div>
-  );
-}
-
-function FeatureCard({ title, body }: { title: string; body: string }) {
-  return (
-    <article className="landing-feature">
-      <h3>{title}</h3>
-      <p>{body}</p>
-    </article>
   );
 }

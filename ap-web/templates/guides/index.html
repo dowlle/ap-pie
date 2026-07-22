@@ -1,17 +1,42 @@
 {% extends "guides/base.html" %}
 {% block main %}
-  <h1>Guides</h1>
-  <p class="guide-lede">
-    Archipelago is a multiworld randomizer: it shuffles the items and unlocks of many
-    different games into one shared pool and spreads them across every player's world.
-    These guides take you from never having touched it to connected and playing.
-  </p>
-  <div class="guide-cards">
-    {% for g in guides %}
-    <a class="guide-card" href="{{ g.path }}">
-      <h2>{{ g.card_title }}</h2>
-      <p>{{ g.card_blurb }}</p>
-    </a>
-    {% endfor %}
+  <div class="guides-layout">
+    <nav class="guides-rail" aria-label="Guide sections">
+      <div class="guides-rail-label">Guides</div>
+      {% for s in shelves %}
+      <a href="#{{ s.key }}"><span class="rail-dot" style="background: {{ s.color }}"></span>{{ s.name }}<span class="rail-count">{{ s.count }}</span></a>
+      {% endfor %}
+    </nav>
+    <div>
+      <h1>Guides</h1>
+      <p class="guide-lede">
+        Every project, from first concepts to connected and playing. Basics first, then your game.
+      </p>
+      {% for s in shelves %}
+      <section class="shelf" id="{{ s.key }}" style="--c: {{ s.color }}">
+        <div class="shelf-head">
+          <span class="shelf-swatch"></span>
+          <h2>{{ s.name }}</h2>
+          <span class="shelf-sub">{{ s.sub }}</span>
+        </div>
+        <div class="shelf-row{% if s.cards|length + (1 if s.soon else 0) == 1 %} single{% endif %}">
+          {% for c in s.cards %}
+          <a class="shelf-card{% if c.featured %} featured{% endif %}" href="{{ c.path }}">
+            <span class="shelf-kicker">{{ c.kicker }}</span>
+            <h3>{{ c.title }}</h3>
+            <p>{{ c.blurb }}</p>
+          </a>
+          {% endfor %}
+          {% if s.soon %}
+          <div class="shelf-card soon">
+            <span class="shelf-kicker">{{ s.soon.kicker }}</span>
+            <h3>{{ s.soon.title }}</h3>
+            <p>{{ s.soon.blurb }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+      {% endfor %}
+    </div>
   </div>
 {% endblock %}

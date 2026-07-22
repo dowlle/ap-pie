@@ -3844,3 +3844,77 @@ details.collapsible-section > .accordion-body {
   .tag { font-size: 0.75rem; padding: 0.15rem 0.45rem; }
 }
 
+
+/* ============================================================
+   FEAT-39 design pass: landing v3 (project showcase, ruled
+   2026-07-22). New `lp-` namespace; the old `.landing-*` block
+   above is dead except .landing-pending/.landing-foot which are
+   reused. Cleanup of the dead block is a design-pass follow-up.
+   ============================================================ */
+.lp { --lp-display: "Bricolage Grotesque", "Inter Tight", sans-serif; }
+.lp-hero {
+  position: relative; overflow: hidden; text-align: center;
+  padding: 5rem 1.5rem 4rem;
+  background: radial-gradient(ellipse 70% 60% at 50% -20%, rgba(232, 168, 87, 0.12), transparent);
+}
+.lp-islands { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.5; pointer-events: none; }
+.lp-kicker {
+  font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.78rem;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+  position: relative;
+}
+.lp-title {
+  font-family: var(--lp-display); font-weight: 800;
+  font-size: clamp(2.4rem, 6vw, 4.2rem); color: var(--text-h);
+  line-height: 1.02; letter-spacing: -0.025em;
+  margin: 0.7rem auto 1.1rem; max-width: 20ch; position: relative;
+}
+.lp-title em { font-style: normal; color: var(--accent); }
+.lp-sub { color: var(--text-muted); font-size: 1.12rem; max-width: 34rem; margin: 0 auto 2rem; position: relative; }
+.lp-cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; position: relative; }
+.lp-btn { padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; }
+.lp-btn-ghost { background: transparent; color: var(--accent-light); border: 1px solid var(--border-strong); }
+.lp-btn-ghost:hover { border-color: var(--accent); }
+.lp-hint { position: relative; color: var(--text-muted); font-size: 0.9rem; max-width: 30rem; margin: 1.5rem auto 0; }
+.lp-hint strong { color: var(--text-h); }
+.lp .landing-pending { position: relative; margin: 1.5rem auto 0; max-width: 32rem; text-align: left; }
+.lp-wrap { max-width: 64rem; margin: 0 auto; padding: 0 1.5rem 3rem; }
+.lp-sect {
+  font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.75rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);
+  margin: 2.75rem 0 1rem;
+}
+.lp-tools, .lp-projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); gap: 1rem; }
+.lp-tool {
+  display: block; text-align: left; cursor: pointer; font: inherit; color: var(--text);
+  background: linear-gradient(180deg, var(--bg-card), color-mix(in srgb, var(--bg-card) 70%, var(--bg)));
+  border: 1px dashed var(--border-strong); border-radius: 14px; padding: 1.4rem;
+  transition: border-color 180ms ease;
+}
+.lp-tool:hover { border-style: solid; border-color: var(--accent); text-decoration: none; }
+.lp-tool h3 { font-family: var(--lp-display); font-weight: 500; font-size: 1.15rem; color: var(--text-h); margin: 0 0 0.3rem; }
+.lp-tool p { color: var(--text-muted); font-size: 0.92rem; margin: 0; }
+.lp-k {
+  font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.68rem;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+  display: block; margin-bottom: 0.4rem;
+}
+.lp-pj {
+  position: relative; display: block; color: var(--text);
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 1.5rem; overflow: hidden; transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.lp-pj::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--c, var(--accent)); }
+a.lp-pj:hover { border-color: var(--c, var(--accent)); transform: translateY(-3px); background: var(--bg-hover); text-decoration: none; }
+.lp-pj h3 { font-family: var(--lp-display); font-weight: 500; font-size: 1.25rem; color: var(--text-h); margin: 0 0 0.35rem; }
+.lp-pj p { color: var(--text-muted); font-size: 0.93rem; margin: 0; }
+.lp-glyph {
+  width: 2.4rem; height: 2.4rem; border-radius: 10px; display: grid; place-items: center;
+  margin-bottom: 0.9rem; background: color-mix(in srgb, var(--c, var(--accent)) 18%, transparent);
+  color: var(--c, var(--accent)); font-family: var(--lp-display); font-weight: 800; font-size: 1.1rem;
+}
+.lp-st {
+  position: absolute; top: 1.1rem; right: 1.2rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.66rem;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--c, var(--accent));
+}

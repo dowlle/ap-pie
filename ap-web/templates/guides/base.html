@@ -17,7 +17,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
     <style>
       :root {
@@ -32,7 +32,7 @@
         --accent-dim: rgba(232, 168, 87, 0.15);
         --border: #2e2935;
         --border-strong: #3a3340;
-        --font-display: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
+        --font-display: "Bricolage Grotesque", "Inter Tight", system-ui, -apple-system, sans-serif;
         --font-body: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
         --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
         color-scheme: dark;
@@ -204,6 +204,60 @@
         text-align: center;
         color: var(--text-muted);
         font-size: 0.9rem;
+      }
+
+      /* Guides index: project shelves + rail nav (design ruling 2026-07-22,
+         mockup variant B). --c is set per shelf from the project registry. */
+      main:has(.guides-layout) { max-width: 72rem; }
+      .guides-layout { display: grid; grid-template-columns: 13rem 1fr; gap: 3rem; }
+      .guides-rail { position: sticky; top: 2rem; align-self: start; font-size: 0.92rem; }
+      .guides-rail-label {
+        font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);
+        letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem;
+      }
+      .guides-rail a {
+        display: flex; align-items: center; gap: 0.6rem; color: var(--text);
+        padding: 0.4rem 0.6rem; border-radius: 8px;
+      }
+      .guides-rail a:hover { background: var(--bg-hover); color: var(--text-h); text-decoration: none; }
+      .rail-dot { width: 0.55em; height: 0.55em; border-radius: 50%; flex: none; }
+      .rail-count { margin-left: auto; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
+      .shelf { margin-bottom: 3.25rem; scroll-margin-top: 2rem; }
+      .shelf-head {
+        display: flex; align-items: baseline; gap: 0.9rem;
+        border-bottom: 1px dashed var(--border-strong); padding-bottom: 0.6rem; margin-bottom: 1.1rem;
+      }
+      .shelf-head h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; color: var(--text-h); }
+      .shelf-swatch { width: 0.7em; height: 0.7em; border-radius: 50%; align-self: center; background: var(--c); flex: none; }
+      .shelf-sub { color: var(--text-muted); font-size: 0.9rem; }
+      .shelf-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; }
+      .shelf-row.single { grid-template-columns: 1fr; }
+      .shelf-card {
+        position: relative; display: block; background: var(--bg-card);
+        border: 1px solid var(--border); border-radius: 12px; padding: 1.35rem 1.45rem;
+        transition: border-color 160ms ease, background 160ms ease; overflow: hidden; color: var(--text);
+      }
+      .shelf-card::after {
+        content: "\2192"; position: absolute; right: 1.2rem; bottom: 0.9rem;
+        color: var(--c, var(--accent)); opacity: 0; transition: all 160ms ease; transform: translateX(-4px);
+      }
+      .shelf-card:hover { border-color: var(--c, var(--accent)); background: var(--bg-hover); text-decoration: none; }
+      .shelf-card:hover::after { opacity: 1; transform: none; }
+      .shelf-card h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; color: var(--text-h); margin: 0 0 0.4rem; }
+      .shelf-card p { color: var(--text-muted); font-size: 0.95rem; margin: 0; max-width: 34rem; }
+      .shelf-kicker {
+        font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+        text-transform: uppercase; color: var(--c, var(--accent)); display: block; margin-bottom: 0.35rem;
+      }
+      .shelf-card.featured {
+        background: linear-gradient(135deg, color-mix(in srgb, var(--c) 12%, var(--bg-card)), var(--bg-card) 55%);
+      }
+      .shelf-card.soon { opacity: 0.5; }
+      @media (max-width: 860px) {
+        .guides-layout { grid-template-columns: 1fr; gap: 1.5rem; }
+        .guides-rail { position: static; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+        .guides-rail-label { width: 100%; }
+        .shelf-row { grid-template-columns: 1fr; }
       }
     </style>
     {% block head_extra %}{% endblock %}
