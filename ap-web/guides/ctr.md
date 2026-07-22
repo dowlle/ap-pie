@@ -1,6 +1,6 @@
 ## Crash Team Racing, the Archipelago way
 
-CTR Archipelago turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own. No emulator, no ROM patching, no extra client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
+CTR Archipelago turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own, so you do not need an emulator, ROM patching, or a separate client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
 
 New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. It explains rooms, YAML files, and slots. This page gets the game itself running. And if you only want plain Crash Team Racing on PC without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc) instead.
 
@@ -8,7 +8,7 @@ New to Archipelago itself? Read [Getting started with Archipelago](/guides/getti
 
 ## What you need
 
-**The game client**, from the [releases page](https://github.com/dowlle/ctr-native-ap/releases). Download the latest release and unzip it into a folder of its own. No Python, no installer, nothing to extract.
+**The game client**, from the [releases page](https://github.com/dowlle/ctr-native-ap/releases). Download the latest release and unzip it into a folder of its own. There is nothing else to install, and you do not need Python.
 
 > **Bring your own disc.** No game data is included. You need a disc image of your own North American (NTSC-U) Crash Team Racing disc, usually a `.bin` file. The European and Japanese releases are detected and refused, so it really has to be the North American disc.
 
@@ -46,4 +46,4 @@ The game tells you what is missing and why, and the [setup guide's troubleshooti
 
 ## Come say hi
 
-Questions, feedback, or just want to show off a seed? Join the [Archipelago Discord](https://discord.gg/8Z65BR2) and find us in the [Crash Team Racing channel](https://discord.com/channels/731205301247803413/1222304293751750777).
+For questions, feedback, or showing off a seed, join the [Archipelago Discord](https://discord.gg/8Z65BR2) and find the [Crash Team Racing channel](https://discord.com/channels/731205301247803413/1222304293751750777).

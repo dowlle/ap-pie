@@ -80,6 +80,68 @@ GUIDES: list[dict[str, str]] = [
         "featured": True,
     },
     {
+        "slug": "hosting-a-multiworld",
+        "file": "hosting-a-multiworld.md",
+        "h1": "Hosting a multiworld",
+        "page_title": "Hosting an Archipelago multiworld | Archipelago Pie",
+        "meta_description": (
+            "How to host an Archipelago multiworld: collect player YAMLs, "
+            "generate the game, put the server online via archipelago.gg or "
+            "your own machine, and run the session."
+        ),
+        "card_title": "Hosting a multiworld",
+        "card_blurb": (
+            "Collect the YAMLs, generate the game, put the server online, and "
+            "run the session for your group."
+        ),
+        "published": "2026-07-22",
+        "updated": "2026-07-22",
+        "project": "ap",
+        "kicker": "Hosting",
+        "featured": False,
+    },
+    {
+        "slug": "setting-up-your-yaml",
+        "file": "setting-up-your-yaml.md",
+        "h1": "Setting up your YAML",
+        "page_title": "Setting up your Archipelago YAML | Archipelago Pie",
+        "meta_description": (
+            "How Archipelago YAML files work: getting a template from the "
+            "website or the Launcher, reading the option shapes and weights, "
+            "validating the file, and handing it to your host."
+        ),
+        "card_title": "Setting up your YAML",
+        "card_blurb": (
+            "Get a template, change the options you care about, validate the "
+            "file, and hand it to your host."
+        ),
+        "published": "2026-07-22",
+        "updated": "2026-07-22",
+        "project": "ap",
+        "kicker": "Your settings",
+        "featured": False,
+    },
+    {
+        "slug": "setting-up-poptracker",
+        "file": "setting-up-poptracker.md",
+        "h1": "Setting up PopTracker",
+        "page_title": "Setting up PopTracker for Archipelago | Archipelago Pie",
+        "meta_description": (
+            "Install PopTracker, find a community pack for your game, load it, "
+            "and connect auto-tracking to your Archipelago room."
+        ),
+        "card_title": "Setting up PopTracker",
+        "card_blurb": (
+            "Install the tracker, find your game's community pack, and connect "
+            "auto-tracking to your room."
+        ),
+        "published": "2026-07-22",
+        "updated": "2026-07-22",
+        "project": "ap",
+        "kicker": "Tracking",
+        "featured": False,
+    },
+    {
         "slug": "crash-team-racing-pc",
         "file": "crash-team-racing-pc.md",
         "h1": "Play Crash Team Racing on PC",
@@ -91,8 +153,8 @@ GUIDES: list[dict[str, str]] = [
         ),
         "card_title": "Play Crash Team Racing on PC",
         "card_blurb": (
-            "The 1999 classic as a native PC port, no emulator needed, thanks "
-            "to the community decompilation. Setup in minutes."
+            "The 1999 classic as a native PC port with no emulator involved, "
+            "thanks to the community decompilation. It sets up in minutes."
         ),
         "published": "2026-07-22",
         "updated": "2026-07-22",

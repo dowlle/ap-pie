@@ -1,6 +1,6 @@
 ## Crash Team Racing, running natively on your PC
 
-Crash Team Racing, the 1999 PlayStation kart racer, can be played on a modern PC today. Not through an emulator: the game runs as a native Windows or Linux program, with the original handling intact. This is possible thanks to a community decompilation effort, and this page walks you through setting it up.
+Crash Team Racing, the 1999 PlayStation kart racer, can be played on a modern PC today, and it does not go through an emulator. The game runs as a native Windows or Linux program with the original handling intact, which is possible thanks to a community decompilation effort. This page walks you through setting it up.
 
 ## How is this possible?
 

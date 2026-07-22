@@ -71,7 +71,7 @@ export default function Landing() {
           <button type="button" className="lp-tool" onClick={() => login("/rooms")}>
             <span className="lp-k">Hosting</span>
             <h3>Room collector</h3>
-            <p>Create a room, set a deadline, and let players submit YAMLs in the browser. No file juggling.</p>
+            <p>Create a room, set a deadline, and let players submit YAMLs in the browser instead of chasing files in DMs.</p>
           </button>
           <a className="lp-tool" href="/guides">
             <span className="lp-k">Learn</span>

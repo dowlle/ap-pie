@@ -40,7 +40,7 @@ Two rules save the most headaches. Your slot name must match exactly between the
 
 ## Where this site fits
 
-Archipelago Pie is a YAML collector and lobby manager. Hosts create a room, set a deadline, and pin apworld versions; players submit their YAML in the browser, no account juggling or file passing in chat. The room page also shows a live tracker once the game is running.
+Archipelago Pie is a YAML collector and lobby manager. Hosts create a room, set a deadline, and pin apworld versions, and players submit their YAML in the browser instead of passing files around in chat. The room page also shows a live tracker once the game is running.
 
 ## Ready for a specific game?
 
