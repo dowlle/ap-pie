@@ -139,17 +139,19 @@ def apply_auth_to_app(app):
         "/api/public",
         "/api/features",
         "/api/deployment",
-        # FEAT-39: the APWorld index browser is public. Safe under this
-        # prefix because every non-read route keeps its own gate: install/
+        # FEAT-39: the APWorld index browser is public. IMPORTANT: skipping
+        # the middleware also means g.user is NEVER set on these routes, so
+        # any /api/apworlds/* route that wants the current user must read
+        # the session itself (apworld_requests._current_user does this via
+        # a session fallback since the 2026-07-22 branch audit; @requires_admin
+        # always did). Every mutating route keeps its own gate: install/
         # remove/refresh are @requires_admin, /installed is behind the
-        # generation flag, and index-candidates checks the session in-body.
-        # FEAT-38 merge (ruling 2026-07-22): the room-less builder-schema
-        # route (GET /api/apworlds/<name>/builder-schema) is intentionally
-        # public too - anonymous visitors build + download a YAML from the
-        # index. It reads only sha256-cached game metadata and keeps the
-        # shared fetch budget, so it needs no per-route guard. Any FUTURE
-        # /api/apworlds/* route that IS sensitive must add its own in-body
-        # session/admin check; do not assume this prefix gates reads.
+        # generation flag, maintainer routes resolve the session in-body.
+        # The room-less builder-schema route (FEAT-38, ruling 2026-07-22)
+        # is intentionally public: anonymous visitors build + download a
+        # YAML from the index; it serves sha256-cached metadata behind a
+        # size cap and a cold-derivation concurrency cap. Any FUTURE
+        # sensitive route under this prefix must add its own in-body check.
         "/api/apworlds",
     )
 

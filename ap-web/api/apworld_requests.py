@@ -30,7 +30,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from flask import Blueprint, current_app, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request, session
 
 from ap_lib.apworld_index import parse_index_dir
 from auth import requires_admin
@@ -66,7 +66,19 @@ _FIELD_LIMITS = {
 
 
 def _current_user() -> dict | None:
-    return getattr(g, "user", None)
+    user = getattr(g, "user", None)
+    if user is not None:
+        return user
+    # The /api/apworlds prefix skips the auth middleware since the index
+    # went public (FEAT-39), so g.user is never populated on these routes.
+    # Read the session directly, the same way requires_auth does; without
+    # this fallback the maintainer routes fail closed even for logged-in
+    # users (found by the 2026-07-22 branch security audit).
+    user_id = session.get("user_id")
+    if not user_id:
+        return None
+    from db import get_user
+    return get_user(user_id)
 
 
 def _validate_lengths(data: dict) -> tuple | None:

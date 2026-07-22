@@ -57,6 +57,19 @@ def _get_worlds_dir() -> Path:
     return Path(current_app.config["AP_WORLDS_DIR"])
 
 
+def _scrub_index_dict(d: dict) -> dict:
+    """Branch audit 2026-07-22 (low finding): home / setup_guide / tracker
+    come from index TOMLs and render as <a href> across several surfaces
+    with no scheme guard client-side, so a javascript: or data: URL slipped
+    past index PR review would land in the DOM. Serve http(s) only; anything
+    else reads as absent, which every consumer already handles."""
+    for key in ("home", "setup_guide", "tracker"):
+        v = d.get(key)
+        if isinstance(v, str) and not v.lower().startswith(("http://", "https://")):
+            d[key] = None
+    return d
+
+
 def _load_index_into_cache():
     """Populate all three index caches in one parse pass. Caller holds the
     lock. Cache is invalidated by `refresh_index` and on first read."""
@@ -65,7 +78,7 @@ def _load_index_into_cache():
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
         _index_worlds_cache = worlds
-        _index_cache = [w.to_dict() for w in worlds]
+        _index_cache = [_scrub_index_dict(w.to_dict()) for w in worlds]
         _index_lookup_cache = build_game_lookup(worlds)
     else:
         _index_worlds_cache = []
@@ -341,6 +354,16 @@ def iter_pinned_apworld_files(
                     continue
 
 
+# Branch audit 2026-07-22 (medium finding): the cold schema path downloads
+# and AST-parses an apworld inside an anonymous request, and gunicorn's
+# sync workers are a small pool. Two bounds keep an anonymous flood from
+# holding every worker on cold fetches: a hard size cap on the download,
+# and a process-wide cap on how many requests may run the cold path at
+# once (warm cache hits never touch either).
+_MAX_APWORLD_BYTES = 30 * 1024 * 1024
+_COLD_DERIVE_SLOTS = threading.BoundedSemaphore(2)
+
+
 def _fetch_apworld_bytes(world: APWorldInfo, ver) -> bytes | None:
     """FEAT-38: fetch one pinned .apworld's bytes for schema derivation.
 
@@ -370,7 +393,14 @@ def _fetch_apworld_bytes(world: APWorldInfo, ver) -> bytes | None:
             from urllib.request import Request, urlopen
             req = Request(ver.url, headers={"User-Agent": "archipelago-pie/1.0"})
             with urlopen(req, timeout=20) as resp:
-                return resp.read()
+                data = resp.read(_MAX_APWORLD_BYTES + 1)
+                if len(data) > _MAX_APWORLD_BYTES:
+                    current_app.logger.warning(
+                        f"builder-schemas: {world.name} {ver.version} exceeds "
+                        f"the apworld size cap, skipping"
+                    )
+                    return None
+                return data
         except Exception:
             return None
     return None
@@ -468,27 +498,38 @@ def builder_schemas_for_pins(
             entry["pending"] = True
             continue
 
-        data = _fetch_apworld_bytes(world, ver)
-        if data is None:
-            # Fetch failure is transient (upstream hiccup) - mark retryable
-            # and don't cache a negative for bytes we never saw.
+        if not _COLD_DERIVE_SLOTS.acquire(blocking=False):
+            # Every cold-derivation slot is busy (anonymous burst, or a
+            # fresh room warming many pins at once). Pending is the normal
+            # retryable signal; whoever holds a slot warms the cache for
+            # everyone. Branch audit 2026-07-22, medium finding.
             entry["pending"] = True
             continue
-
-        actual_sha = hashlib.sha256(data).hexdigest()
-        if ver.sha256 and actual_sha.lower() != ver.sha256.lower():
-            current_app.logger.warning(
-                f"builder-schemas: sha256 mismatch for {world.name} "
-                f"{ver.version}: lock {ver.sha256[:16]}..., got {actual_sha[:16]}..."
-            )
-            continue
-
-        schema = parse_apworld_options_bytes(data, stem_hint=world.name)
         try:
-            set_builder_schema(actual_sha, world.name, ver.version, schema)
-        except Exception:
-            pass
-        entry["schema"] = schema
+            data = _fetch_apworld_bytes(world, ver)
+            if data is None:
+                # Fetch failure is transient (upstream hiccup) - mark
+                # retryable and don't cache a negative for bytes we never
+                # saw.
+                entry["pending"] = True
+                continue
+
+            actual_sha = hashlib.sha256(data).hexdigest()
+            if ver.sha256 and actual_sha.lower() != ver.sha256.lower():
+                current_app.logger.warning(
+                    f"builder-schemas: sha256 mismatch for {world.name} "
+                    f"{ver.version}: lock {ver.sha256[:16]}..., got {actual_sha[:16]}..."
+                )
+                continue
+
+            schema = parse_apworld_options_bytes(data, stem_hint=world.name)
+            try:
+                set_builder_schema(actual_sha, world.name, ver.version, schema)
+            except Exception:
+                pass
+            entry["schema"] = schema
+        finally:
+            _COLD_DERIVE_SLOTS.release()
 
     return out
 
@@ -710,6 +751,13 @@ def apworld_download_proxy(name: str, version: str):
         abort(404, description=f"Version '{version}' not in index for '{name}'")
 
     if ver.url:
+        # SEC-38: the redirect target comes from the index TOML manifest.
+        # Gate it through the same scheme + outbound-host check the fetch
+        # paths use so a bad index PR cannot turn this public route into
+        # an open redirect to an arbitrary scheme or internal host.
+        from tracker import is_safe_tracker_url
+        if not is_safe_tracker_url(ver.url):
+            abort(404, description=f"No download source for '{name}' v{version}")
         return redirect(ver.url, code=302)
 
     local_path = resolve_local_path(_get_index_dir(), world, ver)
