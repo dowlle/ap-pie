@@ -97,6 +97,10 @@ function NavBar() {
           if (target.closest("a, button")) closeMenu();
         }}
       >
+        {/* FEAT-39: Guides are server-rendered pages outside the SPA, so this
+            is a plain anchor (full navigation), not a NavLink. Visible to
+            everyone and rides the hamburger drawer on mobile. */}
+        <a href="/guides">Guides</a>
         {showRoomsLink && <NavLink to="/rooms">Rooms</NavLink>}
         {/* APWorlds is now visible to any approved host (FEAT-21). Even with
             generation OFF in production, the index browser is useful: hosts
