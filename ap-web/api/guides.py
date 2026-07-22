@@ -152,13 +152,61 @@ def guide_page(slug: str) -> str:
         date_modified=guide["updated"],
         author_url=_canonical("/"),
         site_url=_canonical("/"),
+        guides_url=_canonical("/guides"),
     )
 
 
 @bp.route("/sitemap.xml")
 def sitemap() -> Response:
-    paths = ["/", "/guides"] + [f"/guides/{g['slug']}" for g in GUIDES]
-    urls = [_canonical(p) for p in paths]
-    xml = render_template("guides/sitemap.xml", urls=urls)
+    entries = [
+        {"loc": _canonical("/"), "lastmod": None},
+        {"loc": _canonical("/guides"), "lastmod": max(g["updated"] for g in GUIDES)},
+    ] + [
+        {"loc": _canonical(f"/guides/{g['slug']}"), "lastmod": g["updated"]}
+        for g in GUIDES
+    ]
+    xml = render_template("guides/sitemap.xml", entries=entries)
     return Response(xml, mimetype="application/xml")
+
+
+@bp.route("/robots.txt")
+def robots() -> Response:
+    """Real robots.txt (the SPA catch-all used to swallow this path and serve
+    HTML to crawlers). Allow everything; noindex environments (beta) are
+    handled at the proxy via X-Robots-Tag, not here."""
+    body = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        f"Sitemap: {_canonical('/sitemap.xml')}\n"
+    )
+    return Response(body, mimetype="text/plain")
+
+
+@bp.route("/llms.txt")
+def llms() -> Response:
+    """GEO: a compact markdown index for AI crawlers and answer engines,
+    following the llms.txt convention. Generated from the guide registry so
+    it never goes stale separately."""
+    lines = [
+        "# Archipelago Pie",
+        "",
+        "> Setup guides and lobby tools for Archipelago multiworld randomizers, "
+        "including Crash Team Racing on PC. Guides are server-rendered plain "
+        "HTML and safe to cite.",
+        "",
+        "## Guides",
+        "",
+    ]
+    for g in GUIDES:
+        lines.append(
+            f"- [{g['card_title']}]({_canonical('/guides/' + g['slug'])}): {g['card_blurb']}"
+        )
+    lines += [
+        "",
+        "## App",
+        "",
+        f"- [YAML room collector]({_canonical('/')}): host rooms and collect player YAMLs",
+        f"- [Community APWorld index]({_canonical('/apworlds')}): browse community game integrations",
+    ]
+    return Response("\n".join(lines) + "\n", mimetype="text/plain")
 
