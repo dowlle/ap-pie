@@ -124,6 +124,30 @@
         border-radius: 4px;
         padding: 0.1em 0.35em;
       }
+      /* Code BLOCKS: one card, not per-line fragments. The inline-code
+         chrome above applies per line box when the <code> sits inside a
+         <pre>, so reset it and style the <pre> instead. */
+      .guide-body pre {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        margin: 0 0 1rem;
+        overflow-x: auto;
+      }
+      .guide-body pre code {
+        background: none;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        display: block;
+        line-height: 1.5;
+      }
+      .guide-byline {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin: -1rem 0 1.75rem;
+      }
       .guide-body a { color: var(--accent-light); }
       .guide-body blockquote {
         background: var(--accent-dim);
@@ -182,6 +206,7 @@
         font-size: 0.9rem;
       }
     </style>
+    {% block head_extra %}{% endblock %}
   </head>
   <body>
     <header class="site-header">

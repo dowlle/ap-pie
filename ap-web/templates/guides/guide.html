@@ -1,7 +1,35 @@
 {% extends "guides/base.html" %}
+{% block head_extra %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": {{ h1|tojson }},
+    "description": {{ meta_description|tojson }},
+    "author": {
+      "@type": "Person",
+      "name": "Appie",
+      "url": {{ author_url|tojson }}
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Archipelago Pie",
+      "url": {{ site_url|tojson }}
+    },
+    "datePublished": {{ date_published|tojson }},
+    "dateModified": {{ date_modified|tojson }},
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": {{ canonical_url|tojson }}
+    },
+    "inLanguage": "en"
+  }
+  </script>
+{% endblock %}
 {% block main %}
   <article>
     <h1>{{ h1 }}</h1>
+    <p class="guide-byline">By Appie · Updated {{ date_modified }}</p>
     <div class="guide-body">
       {{ body_html|safe }}
     </div>

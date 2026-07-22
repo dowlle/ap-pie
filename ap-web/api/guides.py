@@ -1,4 +1,4 @@
-"""FEAT-39: server-rendered guide pages.
+﻿"""FEAT-39: server-rendered guide pages.
 
 These routes are deliberately NOT part of the React SPA. They render full HTML
 on the server so that search engines and AI answer systems get complete
@@ -31,6 +31,9 @@ bp = Blueprint("guides", __name__, template_folder=str(_TEMPLATES_DIR))
 # Registry of guide pages. Order here is the order shown on the index and in
 # the sitemap. `file` is resolved against _GUIDES_DIR. Adding a guide is a
 # matter of dropping a markdown file in ap-web/guides/ and adding a row here.
+# `published`/`updated` feed the byline + TechArticle structured data: bump
+# `updated` whenever a guide's content materially changes (part of the same
+# release-sweep discipline that keeps guide content current).
 GUIDES: list[dict[str, str]] = [
     {
         "slug": "getting-started",
@@ -46,6 +49,8 @@ GUIDES: list[dict[str, str]] = [
             "New to multiworld? Start here: what Archipelago is, and how YAMLs, "
             "rooms, and clients fit together."
         ),
+        "published": "2026-07-22",
+        "updated": "2026-07-22",
     },
     {
         "slug": "crash-team-racing-pc",
@@ -62,6 +67,8 @@ GUIDES: list[dict[str, str]] = [
             "The 1999 classic as a native PC port, no emulator needed, thanks "
             "to the community decompilation. Setup in minutes."
         ),
+        "published": "2026-07-22",
+        "updated": "2026-07-22",
     },
     {
         "slug": "ctr",
@@ -77,6 +84,8 @@ GUIDES: list[dict[str, str]] = [
             "Get the native CTR Archipelago client installed, launched, and "
             "connected to your multiworld room."
         ),
+        "published": "2026-07-22",
+        "updated": "2026-07-22",
     },
 ]
 
@@ -139,6 +148,10 @@ def guide_page(slug: str) -> str:
         meta_description=guide["meta_description"],
         canonical_url=_canonical(f"/guides/{slug}"),
         og_type="article",
+        date_published=guide["published"],
+        date_modified=guide["updated"],
+        author_url=_canonical("/"),
+        site_url=_canonical("/"),
     )
 
 
@@ -148,3 +161,4 @@ def sitemap() -> Response:
     urls = [_canonical(p) for p in paths]
     xml = render_template("guides/sitemap.xml", urls=urls)
     return Response(xml, mimetype="application/xml")
+
