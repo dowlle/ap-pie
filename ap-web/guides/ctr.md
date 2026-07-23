@@ -4,8 +4,6 @@ CTR Archipelago turns the 1999 PlayStation classic into a native PC randomizer t
 
 New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. It explains rooms, YAML files, and slots. This page gets the game itself running. And if you only want plain Crash Team Racing on PC without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc) instead.
 
-<!-- video embed slot: setup walkthrough, when published -->
-
 ## What you need
 
 **The game client**, from the [releases page](https://github.com/dowlle/ctr-native-ap/releases). Download the latest release and unzip it into a folder of its own. There is nothing else to install, and you do not need Python.
@@ -38,7 +36,7 @@ The Deck build works without a keyboard. Add the game to Steam, launch it from G
 
 ## Your YAML
 
-The release bundle includes a template YAML with every option documented, and you can also build one in the browser from [the APWorld index](/apworlds) with the Create YAML button on the CTR entry. Set your name, pick your goal, and submit it to your host. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the details, and [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth if it is new to you. <!-- video embed slot: YAML explainer, when published -->
+The release bundle includes a template YAML with every option documented, and you can also build one in the browser from [the APWorld index](/apworlds) with the Create YAML button on the CTR entry. Set your name, pick your goal, and submit it to your host. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the details, and [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth if it is new to you.
 
 ## When something goes wrong
 
