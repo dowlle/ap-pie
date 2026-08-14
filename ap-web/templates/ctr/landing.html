@@ -1,6 +1,34 @@
 {% extends "guides/base.html" %}
 {% block head_extra %}
   <style>
+    /* Two-column layout: content + sticky action rail (Stef, 2026-08-14).
+       The rail keeps Download + Setup in view for the whole scroll; the
+       pill subnav takes over below the breakpoint. */
+    main:has(.ctr-layout) { max-width: 66rem; }
+    .ctr-layout { display: grid; grid-template-columns: minmax(0, 46rem) 14rem; gap: 3rem; justify-content: center; }
+    .ctr-rail { position: sticky; top: 2rem; align-self: start; }
+    .ctr-rail-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.1rem 1.2rem;
+    }
+    .ctr-rail-kicker {
+      font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 0.2rem;
+    }
+    .ctr-rail-version { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.9rem; }
+    .ctr-rail .btn-primary { display: block; text-align: center; margin-bottom: 0.5rem; padding: 0.55rem 1rem; }
+    .ctr-rail .btn-secondary { display: block; text-align: center; padding: 0.5rem 1rem; }
+    .ctr-rail-links { list-style: none; margin: 1rem 0 0; padding: 0.9rem 0 0; border-top: 1px dashed var(--border-strong); font-size: 0.88rem; }
+    .ctr-rail-links li { margin-bottom: 0.45rem; }
+    .ctr-rail-links a { color: var(--text); }
+    .ctr-rail-links a:hover { color: var(--text-h); }
+    @media (max-width: 1000px) {
+      .ctr-layout { grid-template-columns: 1fr; gap: 0; }
+      .ctr-rail { display: none; }
+    }
+    @media (min-width: 1001px) {
+      .ctr-layout .section-subnav { display: none; }
+    }
     .ctr-hero { text-align: left; padding: 1.5rem 0 2.5rem; }
     .ctr-hero .kicker {
       font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
@@ -58,6 +86,8 @@
   </style>
 {% endblock %}
 {% block main %}
+  <div class="ctr-layout">
+  <div class="ctr-content">
   <nav class="section-subnav" aria-label="CTR section">
     <a class="current" href="/ctr">Overview</a>
     <a href="/ctr/download">Download</a>
@@ -80,7 +110,7 @@
     <p class="hero-note">Requires a disc image made from your own North American (NTSC-U) Crash Team Racing disc. No game data is included.</p>
   </div>
 
-  <section class="ctr-section">
+  <section class="ctr-section" id="how-it-works">
     <h2>Win a race, unlock another world</h2>
     <p>
       CTR Archipelago connects Crash Team Racing directly to an
@@ -117,7 +147,7 @@
     </figure>
   </section>
 
-  <section class="ctr-section">
+  <section class="ctr-section" id="adventure">
     <h2>Adventure Mode becomes a new puzzle every time</h2>
     <p>
       The familiar Adventure Mode hub turns into a randomized progression
@@ -138,7 +168,7 @@
     </div>
   </section>
 
-  <section class="ctr-section">
+  <section class="ctr-section" id="native">
     <h2>No emulator, no patching</h2>
     <p>
       CTR Archipelago is built on the community decompilation work around the
@@ -180,4 +210,21 @@
       <a class="btn-secondary" href="https://github.com/dowlle/ctr-native-ap" rel="noopener noreferrer">View on GitHub</a>
     </div>
   </section>
+  </div>
+  <aside class="ctr-rail" aria-label="CTR quick actions">
+    <div class="ctr-rail-card">
+      <div class="ctr-rail-kicker">CTR Archipelago</div>
+      <div class="ctr-rail-version">Stable release {{ stable.version }}</div>
+      <a class="btn-primary" href="/ctr/download">Download</a>
+      <a class="btn-secondary" href="/guides/ctr">Setup guide</a>
+      <ul class="ctr-rail-links">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#adventure">Adventure Mode</a></li>
+        <li><a href="#native">No emulator</a></li>
+        <li><a href="/guides/crash-team-racing-pc">Vanilla CTR on PC</a></li>
+        <li><a href="https://github.com/dowlle/ctr-native-ap" rel="noopener noreferrer">GitHub</a></li>
+      </ul>
+    </div>
+  </aside>
+  </div>
 {% endblock %}
