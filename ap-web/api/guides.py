@@ -259,8 +259,29 @@ def guide_page(slug: str) -> str:
     if not md_path.is_file():
         abort(404)
     body_html, sections = _render_markdown(md_path)
+
+    # Section navigation: the shelf this guide belongs to plus its sibling
+    # guides, so every guide page can say where it lives and link sideways.
+    # The CTR shelf additionally links the /ctr product pages (FEAT-40).
+    project = next((p for p in PROJECTS if p["key"] == guide.get("project")), None)
+    related = []
+    if guide.get("project") == "ctr":
+        related += [
+            {"path": "/ctr", "kicker": "Overview", "title": "CTR Archipelago",
+             "blurb": "What the randomizer is and why it is fun."},
+            {"path": "/ctr/download", "kicker": "Downloads", "title": "Download CTR Archipelago",
+             "blurb": "Current stable builds for Windows and Linux."},
+        ]
+    related += [
+        {"path": f"/guides/{g['slug']}", "kicker": g.get("kicker", "Guide"),
+         "title": g["card_title"], "blurb": g["card_blurb"]}
+        for g in GUIDES
+        if g.get("project") == guide.get("project") and g["slug"] != slug
+    ]
     return render_template(
         "guides/guide.html",
+        project_name=project["name"] if project else None,
+        related=related,
         h1=guide["h1"],
         body_html=body_html,
         sections=sections,

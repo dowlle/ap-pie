@@ -48,11 +48,27 @@
     </nav>
     {% endif %}
     <article>
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/guides">Guides</a>{% if project_name %}<span class="sep">/</span>{{ project_name }}{% endif %}
+      </nav>
       <h1>{{ h1 }}</h1>
       <p class="guide-byline">By Appie · Updated {{ date_modified }}</p>
       <div class="guide-body">
         {{ body_html|safe }}
       </div>
+      {% if related %}
+      <div class="related-block">
+        <div class="related-label">More in {{ project_name|default("this section") }}</div>
+        <div class="guide-cards">
+          {% for r in related %}
+          <a class="guide-card" href="{{ r.path }}">
+            <h2>{{ r.title }}</h2>
+            <p>{{ r.blurb }}</p>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </article>
   </div>
 {% endblock %}

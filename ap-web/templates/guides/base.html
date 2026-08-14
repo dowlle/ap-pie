@@ -282,6 +282,36 @@
         .shelf-row { grid-template-columns: 1fr; }
       }
     </style>
+    <style>
+      /* Section navigation (2026-08-14): breadcrumbs + a pill switcher so a
+         reader always knows where they are inside a section and can move
+         sideways without going through the article links. Shared by the
+         guide pages and the CTR section. */
+      .crumbs {
+        font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.04em;
+        color: var(--text-muted); margin-bottom: 1.1rem;
+      }
+      .crumbs a { color: var(--text-muted); }
+      .crumbs a:hover { color: var(--text-h); }
+      .crumbs .sep { margin: 0 0.45rem; opacity: 0.6; }
+      .section-subnav {
+        display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.75rem;
+      }
+      .section-subnav a {
+        display: inline-block; border: 1px solid var(--border-strong); border-radius: 999px;
+        padding: 0.28rem 0.9rem; font-size: 0.85rem; color: var(--text);
+      }
+      .section-subnav a:hover { background: var(--bg-hover); color: var(--text-h); border-color: var(--accent); text-decoration: none; }
+      .section-subnav a.current {
+        border-color: var(--accent); color: var(--accent-light); background: var(--accent-dim);
+        pointer-events: none;
+      }
+      .related-block { border-top: 1px dashed var(--border-strong); margin-top: 3rem; padding-top: 1.75rem; }
+      .related-label {
+        font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);
+        letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem;
+      }
+    </style>
     {% block head_extra %}{% endblock %}
   </head>
   <body>
