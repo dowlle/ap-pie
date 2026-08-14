@@ -20,6 +20,14 @@
     .btn-secondary:hover { background: var(--bg-hover); border-color: var(--accent); text-decoration: none; }
     .cta-aside { color: var(--text-muted); font-size: 0.9rem; }
     .hero-note { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.9rem; max-width: 38rem; }
+    .shot { margin: 1.5rem 0; }
+    .shot img {
+      display: block; width: 100%; max-width: 42rem; height: auto;
+      border: 1px solid var(--border-strong); border-radius: 12px;
+    }
+    .shot figcaption { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; max-width: 42rem; }
+    .shot-grid { display: grid; gap: 1rem; align-items: start; }
+    @media (min-width: 640px) { .shot-grid { grid-template-columns: 1fr 1fr; } .shot-grid .shot { margin: 1.5rem 0 0; } }
     .ctr-section { margin: 2.75rem 0; }
     .ctr-section h2 {
       font-family: var(--font-display); font-weight: 500; color: var(--text-h);
@@ -114,6 +122,16 @@
       arrive from any game in your multiworld. Instead of following the same
       route every time, you work with what your multiworld gives you.
     </p>
+    <div class="shot-grid">
+      <figure class="shot">
+        <img src="/img/ctr/warp-pad-requirements.jpg" alt="The Slide Coliseum warp pad with item icons hovering above it, showing what this seed asks for" loading="lazy" width="800" height="600" />
+        <figcaption>A warp pad showing what this seed asks for before it opens.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="/img/ctr/warp-pad-hub.jpg" alt="The Crash Cove warp pad in the Adventure hub, with the Archipelago symbol hovering above it" loading="lazy" width="1554" height="904" />
+        <figcaption>The Crash Cove pad carrying the Archipelago marker.</figcaption>
+      </figure>
+    </div>
   </section>
 
   <section class="ctr-section">

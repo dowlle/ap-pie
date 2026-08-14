@@ -86,6 +86,7 @@ def ctr_landing() -> str:
         ),
         canonical_url=_canonical("/ctr"),
         og_type="website",
+        og_image=_canonical("/img/ctr/og-ctr.jpg"),
         site_url=_canonical("/"),
     )
 
@@ -104,6 +105,7 @@ def ctr_download() -> str:
         ),
         canonical_url=_canonical("/ctr/download"),
         og_type="website",
+        og_image=_canonical("/img/ctr/og-ctr.jpg"),
         site_url=_canonical("/"),
     )
 

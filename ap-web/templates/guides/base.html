@@ -13,6 +13,10 @@
     <meta property="og:description" content="{{ og_description|default(meta_description) }}" />
     <meta property="og:url" content="{{ canonical_url }}" />
     <meta property="og:site_name" content="Archipelago Pie" />
+    {% if og_image %}
+    <meta property="og:image" content="{{ og_image }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {% endif %}
     <meta name="theme-color" content="#15131a" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
