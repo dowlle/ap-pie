@@ -59,7 +59,9 @@
     <p>
       The latest stable release is <strong>{{ stable.version }}</strong>,
       published {{ stable.released }}. Pick your platform, then follow the
-      <a href="/guides/ctr">setup guide</a> to get connected.
+      <a href="/guides/ctr">setup guide</a> to get connected. Every build
+      needs a disc image made from your own North American (NTSC-U) Crash
+      Team Racing disc.
     </p>
   </div>
 
@@ -97,10 +99,10 @@
     </p>
     <div class="notice">
       <p>
-        <strong>Client and seed versions must match.</strong> A stable
+        <strong>Ask the host which client version to use.</strong> A stable
         {{ stable.version }} client cannot join a game generated with a newer
-        pre-release APWorld, and a pre-release client should only be used in
-        rooms generated for it.
+        pre-release APWorld, so upgrade when the host asks you to. A newer
+        client can still play games generated for {{ stable.version }}.
       </p>
     </div>
     <p><a href="{{ prerelease.url }}" rel="noopener noreferrer">Get the {{ prerelease.version }} pre-release on GitHub</a></p>

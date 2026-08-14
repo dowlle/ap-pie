@@ -19,6 +19,7 @@
     .btn-secondary { border: 1px solid var(--border-strong); color: var(--text-h); }
     .btn-secondary:hover { background: var(--bg-hover); border-color: var(--accent); text-decoration: none; }
     .cta-aside { color: var(--text-muted); font-size: 0.9rem; }
+    .hero-note { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.9rem; max-width: 38rem; }
     .ctr-section { margin: 2.75rem 0; }
     .ctr-section h2 {
       font-family: var(--font-display); font-weight: 500; color: var(--text-h);
@@ -68,6 +69,7 @@
       <a class="btn-secondary" href="/guides/ctr">Setup guide</a>
       <span class="cta-aside">Current stable release: {{ stable.version }}</span>
     </div>
+    <p class="hero-note">Requires a disc image made from your own North American (NTSC-U) Crash Team Racing disc. No game data is included.</p>
   </div>
 
   <section class="ctr-section">
@@ -84,7 +86,7 @@
         <div class="flow-label">You, in CTR</div>
         <ol>
           <li>Win <strong>Cortex Castle</strong></li>
-          <li>That check held a <strong>Hookshot</strong></li>
+          <li>That race held a <strong>Hookshot</strong></li>
           <li>It lands in <strong>another player's game</strong></li>
         </ol>
       </div>
@@ -104,13 +106,13 @@
   </section>
 
   <section class="ctr-section">
-    <h2>Adventure Mode becomes a new puzzle every seed</h2>
+    <h2>Adventure Mode becomes a new puzzle every time</h2>
     <p>
       The familiar Adventure Mode hub turns into a randomized progression
-      puzzle. Warp pads ask for new requirements every seed, and trophies,
-      keys, gems, and relics become items that can arrive from any world in
-      your multiworld. Instead of following the same route every time, you
-      work with what your multiworld gives you.
+      puzzle. Every newly generated world asks something different of the
+      warp pads, and trophies, keys, gems, and relics become items that can
+      arrive from any game in your multiworld. Instead of following the same
+      route every time, you work with what your multiworld gives you.
     </p>
   </section>
 
@@ -138,7 +140,10 @@
     <p>
       Joining a multiworld somebody else generated takes a download, your
       disc image, and your room details. The setup guide walks through all of
-      it, and hosts will find the APWorld on the download page.
+      it, and if your group's host needs the add-on that generates CTR worlds
+      (the APWorld), it is on the download page. No room details yet?
+      <a href="/guides/getting-started">Getting started with Archipelago</a>
+      explains how multiworld games get organized.
     </p>
     <div class="cta-row">
       <a class="btn-primary" href="/ctr/download">Download CTR Archipelago</a>

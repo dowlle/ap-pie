@@ -87,7 +87,7 @@ export default function Landing() {
 
         <div className="lp-sect">Projects</div>
         <div className="lp-projects">
-          <a className="lp-pj" style={{ "--c": "#e8a857" } as React.CSSProperties} href="/guides/ctr">
+          <a className="lp-pj" style={{ "--c": "#e8a857" } as React.CSSProperties} href="/ctr">
             <span className="lp-st">Released</span>
             <div className="lp-glyph">CT</div>
             <h3>CTR Archipelago</h3>
