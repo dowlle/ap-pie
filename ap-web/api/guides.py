@@ -177,7 +177,7 @@ GUIDES: list[dict[str, str]] = [
             "connected to your multiworld room."
         ),
         "published": "2026-07-22",
-        "updated": "2026-07-22",
+        "updated": "2026-08-14",
         "project": "ctr",
         "kicker": "Randomizer",
         "featured": True,
@@ -278,12 +278,17 @@ def guide_page(slug: str) -> str:
 
 @bp.route("/sitemap.xml")
 def sitemap() -> Response:
+    from api.ctr import CTR_PAGES, PAGES_UPDATED as CTR_UPDATED
+
     entries = [
         {"loc": _canonical("/"), "lastmod": None},
         {"loc": _canonical("/guides"), "lastmod": max(g["updated"] for g in GUIDES)},
     ] + [
         {"loc": _canonical(f"/guides/{g['slug']}"), "lastmod": g["updated"]}
         for g in GUIDES
+    ] + [
+        {"loc": _canonical(p["path"]), "lastmod": CTR_UPDATED}
+        for p in CTR_PAGES
     ]
     xml = render_template("guides/sitemap.xml", entries=entries)
     return Response(xml, mimetype="application/xml")
@@ -321,6 +326,15 @@ def llms() -> Response:
         lines.append(
             f"- [{g['card_title']}]({_canonical('/guides/' + g['slug'])}): {g['card_blurb']}"
         )
+    from api.ctr import CTR_PAGES
+
+    lines += [
+        "",
+        "## CTR Archipelago",
+        "",
+    ]
+    for p in CTR_PAGES:
+        lines.append(f"- [{p['title']}]({_canonical(p['path'])}): {p['blurb']}")
     lines += [
         "",
         "## App",

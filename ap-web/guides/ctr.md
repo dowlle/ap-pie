@@ -1,12 +1,12 @@
 ## Crash Team Racing, the Archipelago way
 
-CTR Archipelago turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own, so you do not need an emulator, ROM patching, or a separate client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
+[CTR Archipelago](/ctr) turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own, so you do not need an emulator, ROM patching, or a separate client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
 
 New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. It explains rooms, YAML files, and slots. This page gets the game itself running. And if you only want plain Crash Team Racing on PC without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc) instead.
 
 ## What you need
 
-**The game client**, from the [releases page](https://github.com/dowlle/ctr-native-ap/releases). Download the latest release and unzip it into a folder of its own. There is nothing else to install, and you do not need Python.
+**The game client**, from the [download page](/ctr/download). Download the latest stable release and unzip it into a folder of its own. There is nothing else to install, and you do not need Python.
 
 > **Bring your own disc.** No game data is included. You need a disc image of your own North American (NTSC-U) Crash Team Racing disc, usually a `.bin` file. The European and Japanese releases are detected and refused, so it really has to be the North American disc.
 
