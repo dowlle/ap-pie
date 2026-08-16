@@ -40,7 +40,9 @@ The Linux build ships as a `.tar.gz` with a `ctr_native_ap` executable inside; e
 
 If somebody already generated the multiworld for your group, you can skip this section: joining needs nothing but the client and your room details. A YAML is how you pick your own settings while the host is still collecting players for a new game.
 
-The release bundle includes a template YAML with every option documented, and you can also build one in the browser from [the APWorld index](/apworlds) with the Create YAML button on the CTR entry. Set your name, pick your goal, and submit it to your host. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the details, and [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth if it is new to you.
+The easiest way is the browser builder: go to [the APWorld index](/apworlds), search for CTR, and press **Create YAML** on the CTR entry. Set your name, pick your goal, and the rest of the options come filled in with sensible defaults you can adjust as you like. Review the result, download it, and hand it to your host.
+
+You can also start from the template YAML included in the release bundle and edit it by hand if you would rather; [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth. Either way, make sure your host is generating with the same CTR version you downloaded: an older apworld cannot always read a newer YAML. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) has the full details.
 
 ## When something goes wrong
 

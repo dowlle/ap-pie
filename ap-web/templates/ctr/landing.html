@@ -55,6 +55,14 @@
     }
     .notice p { margin: 0; }
     .ctr-final { border-top: 1px dashed var(--border-strong); margin-top: 3rem; padding-top: 2.25rem; }
+    .video-embed {
+      position: relative; width: 100%; max-width: 42rem; aspect-ratio: 16 / 9;
+      margin: 1.5rem 0; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border-strong); background: #000;
+    }
+    .video-embed iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+    }
   </style>
 {% endblock %}
 {% block main %}
@@ -161,6 +169,22 @@
         retail game data. You need a disc image of your own North American
         (NTSC-U) Crash Team Racing disc.
       </p>
+    </div>
+  </section>
+
+  <section class="ctr-section">
+    <h2>Watch how it works</h2>
+    <p>
+      A full walkthrough for joining a room somebody else is hosting: getting
+      the client, your disc image, and your YAML settings, then connecting
+      and playing.
+    </p>
+    <div class="video-embed">
+      <iframe src="https://www.youtube-nocookie.com/embed/9x63P6JP93E"
+              title="How to play the Crash Team Racing Archipelago | For players"
+              loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen></iframe>
     </div>
   </section>
 

@@ -51,7 +51,7 @@ STABLE: dict = {
 PRERELEASE: dict | None = None
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-08-14"
+PAGES_UPDATED = "2026-08-16"
 
 # Consumed by api/guides.py for /sitemap.xml and /llms.txt so the CTR section
 # never goes stale in either surface separately.

@@ -177,10 +177,16 @@ GUIDES: list[dict[str, str]] = [
             "connected to your multiworld room."
         ),
         "published": "2026-07-22",
-        "updated": "2026-08-14",
+        "updated": "2026-08-16",
         "project": "ctr",
         "kicker": "Randomizer",
         "featured": True,
+        # Optional per-guide video embed (design ruling 2026-07-22: "videos
+        # embed in guides, descriptions link back"). Set to a youtube-nocookie
+        # embed URL to show a "Watch" block above the guide body; omit/None
+        # for guides with no video yet.
+        "video_url": "https://www.youtube-nocookie.com/embed/9x63P6JP93E",
+        "video_title": "How to play the Crash Team Racing Archipelago | For players",
     },
 ]
 
@@ -294,6 +300,8 @@ def guide_page(slug: str) -> str:
         author_url=_canonical("/"),
         site_url=_canonical("/"),
         guides_url=_canonical("/guides"),
+        video_url=guide.get("video_url"),
+        video_title=guide.get("video_title"),
     )
 
 
