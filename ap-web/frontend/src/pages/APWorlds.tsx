@@ -733,6 +733,36 @@ export default function APWorlds() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, generationOn]);
 
+  // Deep link: /apworlds?build=<name> opens the guided YAML builder for
+  // that world straight away, same handler as clicking "Create YAML" on
+  // its card. Optional &version=<version> pins a specific version; without
+  // it, the world's latest (versions[0], the index's own sort order) is
+  // used. Guards on a ref (not state) so it fires exactly once per page
+  // load, not every time `available` refetches (e.g. after handleRefresh)
+  // or the user closes the modal.
+  const autoBuildTriggered = useRef(false);
+  useEffect(() => {
+    if (autoBuildTriggered.current) return;
+    if (typeof window === "undefined" || available.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const buildParam = params.get("build");
+    if (!buildParam) return;
+    autoBuildTriggered.current = true;
+    const versionParam = params.get("version");
+    const world = available.find((w) => w.name === buildParam);
+    const target = versionParam
+      ? world?.versions.find((v) => v.version === versionParam)
+      : world?.versions[0];
+    if (world && target) {
+      handleBuild(world.name, target.version);
+    } else if (world && versionParam) {
+      setError(`APWorld "${buildParam}" has no version "${versionParam}" to build a YAML for.`);
+    } else {
+      setError(`No APWorld named "${buildParam}" was found to build a YAML for.`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [available]);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     setError("");
