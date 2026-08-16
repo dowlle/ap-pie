@@ -1,17 +1,5 @@
 {% extends "guides/base.html" %}
 {% block head_extra %}
-  {% if video_url %}
-  <style>
-    .video-embed {
-      position: relative; width: 100%; max-width: 42rem; aspect-ratio: 16 / 9;
-      margin: 0 0 1.75rem; border-radius: 12px; overflow: hidden;
-      border: 1px solid var(--border-strong); background: #000;
-    }
-    .video-embed iframe {
-      position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
-    }
-  </style>
-  {% endif %}
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -67,10 +55,14 @@
       <p class="guide-byline">By Appie · Updated {{ date_modified }}</p>
       {% if video_url %}
       <div class="video-embed">
-        <iframe src="{{ video_url }}" title="{{ video_title|default(h1) }}" loading="lazy"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowfullscreen></iframe>
+        <button type="button" class="video-facade"
+                data-embed-src="{{ video_url }}?autoplay=1"
+                data-embed-title="{{ video_title|default(h1) }}"
+                style="background-image:url('{{ video_thumb|default('/img/ctr/tutorial-thumb.jpg') }}')"
+                aria-label="Play video: {{ video_title|default(h1) }}">
+          <span class="play-icon" aria-hidden="true"></span>
+          <span class="facade-note">Loads a video from YouTube on click</span>
+        </button>
       </div>
       {% endif %}
       <div class="guide-body">

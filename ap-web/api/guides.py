@@ -187,6 +187,7 @@ GUIDES: list[dict[str, str]] = [
         # for guides with no video yet.
         "video_url": "https://www.youtube-nocookie.com/embed/9x63P6JP93E",
         "video_title": "How to play the Crash Team Racing Archipelago | For players",
+        "video_thumb": "/img/ctr/tutorial-thumb.jpg",
     },
 ]
 
@@ -302,6 +303,7 @@ def guide_page(slug: str) -> str:
         guides_url=_canonical("/guides"),
         video_url=guide.get("video_url"),
         video_title=guide.get("video_title"),
+        video_thumb=guide.get("video_thumb"),
     )
 
 
