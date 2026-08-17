@@ -1180,6 +1180,49 @@ def events_funnel(days: int = 7) -> dict:
         out["top_views"] = [
             {"view": r["view"], "count": int(r["n"])} for r in _dictrow(cur)
         ]
+
+        # Journey edges. Because no identifier survives a page load, a
+        # journey across documents (a guide, then the app) can only be seen
+        # in aggregate: "N arrivals at X came from Y". That is what this is.
+        cur.execute(
+            """SELECT props->>'from_path' AS from_path,
+                      kind,
+                      coalesce(props->>'view', props->>'slug', props->>'page') AS landed_on,
+                      COUNT(*) AS n
+                 FROM events
+                WHERE props->>'from_path' IS NOT NULL
+                  AND ts > NOW() - make_interval(days => %s)
+             GROUP BY from_path, kind, landed_on
+             ORDER BY n DESC LIMIT 25""",
+            (days,),
+        )
+        out["entry_edges"] = [
+            {
+                "from_path": r["from_path"],
+                "kind": r["kind"],
+                "landed_on": r["landed_on"],
+                "count": int(r["n"]),
+            }
+            for r in _dictrow(cur)
+        ]
+
+        # In-app edges: view-to-view moves inside one document.
+        cur.execute(
+            """SELECT props->>'from_view' AS from_view,
+                      props->>'view' AS to_view,
+                      COUNT(*) AS n
+                 FROM events
+                WHERE kind = 'page_view'
+                  AND props->>'from_view' IS NOT NULL
+                  AND ts > NOW() - make_interval(days => %s)
+             GROUP BY from_view, to_view
+             ORDER BY n DESC LIMIT 25""",
+            (days,),
+        )
+        out["view_edges"] = [
+            {"from_view": r["from_view"], "to_view": r["to_view"], "count": int(r["n"])}
+            for r in _dictrow(cur)
+        ]
     return out
 
 

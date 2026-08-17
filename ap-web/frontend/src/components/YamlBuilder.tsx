@@ -134,18 +134,19 @@ export default function YamlBuilder({
 
   useEffect(() => {
     if (!open || !entry) return;
-    const abandonIfUnfinished = () => {
+    const abandonIfUnfinished = (unloading: boolean) => {
       if (emittedRef.current || abandonReportedRef.current) return;
       // Only latch when the send actually succeeded. Latching first meant a
-      // dropped beacon permanently suppressed the report for this builder.
+      // dropped send permanently suppressed the report for this builder.
       abandonReportedRef.current = trackBuilderAbandoned(
-        entry.game, entry.version, stepRef.current, roomId,
+        entry.game, entry.version, stepRef.current, roomId, unloading,
       );
     };
-    window.addEventListener("pagehide", abandonIfUnfinished);
+    const onPageHide = () => abandonIfUnfinished(true);
+    window.addEventListener("pagehide", onPageHide);
     return () => {
-      window.removeEventListener("pagehide", abandonIfUnfinished);
-      abandonIfUnfinished();
+      window.removeEventListener("pagehide", onPageHide);
+      abandonIfUnfinished(false);
     };
   }, [open, entry, roomId]);
 

@@ -121,12 +121,52 @@ function sendBeacon(event: QueuedEvent): boolean {
 }
 
 /**
+ * Where this document was opened from, as a bare internal path.
+ *
+ * The point is to make journeys across the server-rendered pages and the
+ * app measurable - "someone read /guides/ctr and then landed on the index" -
+ * without any identifier that survives a page load. Only same-origin paths
+ * are kept; an external referrer becomes the literal string "external" and
+ * its URL is discarded, because an external referrer can carry search terms
+ * and campaign parameters that say something about the person. Query
+ * strings and fragments are stripped from internal paths too.
+ */
+function entryPath(): string | undefined {
+  try {
+    const ref = document.referrer;
+    if (!ref) return undefined;
+    const url = new URL(ref);
+    if (url.origin !== window.location.origin) return "external";
+    return url.pathname.slice(0, 120);
+  } catch {
+    return undefined;
+  }
+}
+
+/** The previous SPA view in this document, for in-app navigation edges. */
+let lastView: string | undefined;
+let entryReported = false;
+
+/**
  * Which SPA view the visitor is looking at. Takes a coarse view NAME rather
  * than the URL: room ids and query strings stay out of the log, and the
  * server records only the request path (always "/api/events" here).
+ *
+ * The first view of a document also reports how the document was reached
+ * (`from_path`); later views report which view preceded them (`from_view`).
+ * Both are aggregate edges, not a trail belonging to anyone.
  */
 export function trackPageView(view: string, roomId?: string): void {
-  send({ kind: "page_view", room_id: roomId, props: { view } });
+  const props: EventProps = { view };
+  if (!entryReported) {
+    entryReported = true;
+    const from = entryPath();
+    if (from) props.from_path = from;
+  } else if (lastView && lastView !== view) {
+    props.from_view = lastView;
+  }
+  lastView = view;
+  send({ kind: "page_view", room_id: roomId, props });
 }
 
 export function trackBuilderOpened(game: string, version: string, surface: string, roomId?: string): void {
@@ -143,14 +183,30 @@ export function trackBuilderEmitted(
   send({ kind: "builder_yaml_emitted", room_id: roomId, props: { game, version, action } });
 }
 
-/** stage: the furthest step reached before the builder was closed. */
+/**
+ * stage: the furthest step reached before the builder was closed.
+ *
+ * `unloading` picks the transport. Closing a modal is an ordinary in-page
+ * event where a keepalive fetch is strictly more reliable, so that is the
+ * default; the beacon is reserved for the one case it exists for, a page
+ * that is going away underneath us.
+ */
 export function trackBuilderAbandoned(
   game: string,
   version: string,
   stage: string,
   roomId?: string,
+  unloading = false,
 ): boolean {
-  return sendBeacon({ kind: "builder_abandoned", room_id: roomId, props: { game, version, stage } });
+  const event: QueuedEvent = {
+    kind: "builder_abandoned",
+    room_id: roomId,
+    props: { game, version, stage },
+  };
+  if (unloading) return sendBeacon(event);
+  if (disabled) return false;
+  send(event);
+  return true;
 }
 
 export function trackApworldDownloadClicked(name: string, version: string, surface: string): void {

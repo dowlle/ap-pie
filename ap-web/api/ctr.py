@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Blueprint, abort, redirect, render_template, request
+from flask import Blueprint, abort, redirect, render_template, request, session
 
 import analytics
 import config
@@ -76,7 +76,12 @@ def _canonical(path: str) -> str:
 
 @bp.route("/ctr", strict_slashes=False)
 def ctr_landing() -> str:
-    analytics.record_event("ctr_view", props={"page": "landing"}, req=request)
+    analytics.record_event(
+        "ctr_view",
+        user_id=session.get("user_id"),
+        props={"page": "landing", "from_path": analytics.entry_path(request)},
+        req=request,
+    )
     return render_template(
         "ctr/landing.html",
         stable=STABLE,
@@ -95,7 +100,12 @@ def ctr_landing() -> str:
 
 @bp.route("/ctr/download", strict_slashes=False)
 def ctr_download() -> str:
-    analytics.record_event("ctr_view", props={"page": "download"}, req=request)
+    analytics.record_event(
+        "ctr_view",
+        user_id=session.get("user_id"),
+        props={"page": "download", "from_path": analytics.entry_path(request)},
+        req=request,
+    )
     return render_template(
         "ctr/download.html",
         stable=STABLE,
@@ -123,7 +133,12 @@ def ctr_download_redirect(platform: str):
     # shows which channel sends people here.
     analytics.record_event(
         "ctr_download",
-        props={"asset": platform, "version": STABLE["version"]},
+        user_id=session.get("user_id"),
+        props={
+            "asset": platform,
+            "version": STABLE["version"],
+            "from_path": analytics.entry_path(request),
+        },
         req=request,
     )
     return redirect(url, code=302)

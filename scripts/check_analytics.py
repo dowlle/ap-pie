@@ -158,7 +158,49 @@ check(
     analytics.CLIENT_KINDS <= set(analytics.KIND_SPECS),
 )
 
-# ── 7: every caller actually imports the module ──────────────────
+# ── 7: referrer handling (journey edges) ─────────────────────────
+# Internal paths are kept so cross-document journeys are measurable without
+# an identifier. External referrers must NEVER be stored: they can carry
+# search terms and campaign parameters that describe the person.
+with app.test_request_context(
+    "/apworlds",
+    base_url="https://ap-pie.com",
+    headers={"Referer": "https://ap-pie.com/guides/ctr?utm_source=discord#top"},
+):
+    internal = analytics.entry_path()
+check("internal referrer keeps the path", internal == "/guides/ctr")
+check("internal referrer drops query + fragment", "utm_source" not in (internal or ""))
+
+with app.test_request_context(
+    "/apworlds",
+    base_url="https://ap-pie.com",
+    headers={"Referer": "https://www.google.com/search?q=how+to+play+crash+team+racing"},
+):
+    external = analytics.entry_path()
+check("external referrer collapses to a bucket", external == "external")
+check("external referrer URL is discarded", "google" not in (external or ""))
+
+with app.test_request_context("/apworlds", base_url="https://ap-pie.com"):
+    check("absent referrer yields nothing", analytics.entry_path() is None)
+
+before = len(captured)
+with app.test_request_context(
+    "/guides/ctr",
+    base_url="https://ap-pie.com",
+    headers={"Referer": "https://duckduckgo.com/?q=archipelago+yaml"},
+):
+    analytics.record_event(
+        "guide_view",
+        props={"slug": "ctr", "from_path": analytics.entry_path()},
+    )
+drain(before + 1)
+check(
+    "no external referrer text reaches storage",
+    "duckduckgo" not in repr(captured[-1]) and "archipelago+yaml" not in repr(captured[-1]),
+)
+check("bucket value is stored instead", captured[-1]["props"]["from_path"] == "external")
+
+# ── 8: every caller actually imports the module ──────────────────
 # The recorders are one-liners dropped into existing routes, which makes it
 # easy to add a call and forget the import - a NameError that only fires when
 # that route is hit. This shipped once (api/apworlds.py, the builder-schema

@@ -77,7 +77,14 @@ _STR_LIST = "str_list"
 
 KIND_SPECS: dict[str, dict[str, Any]] = {
     # ── Client-postable: what only the browser can see ──
-    "page_view": {"client": True, "props": {"view": _STR}},
+    # from_path: how this document was reached (internal path, or the literal
+    # "external"). from_view: the previous view inside this document. At most
+    # one is ever set. Both are edges between pages, not a trail belonging to
+    # a person - neither survives a page load.
+    "page_view": {
+        "client": True,
+        "props": {"view": _STR, "from_path": _STR, "from_view": _STR},
+    },
     "builder_opened": {
         "client": True,
         "props": {"game": _STR, "version": _STR, "surface": _STR},
@@ -135,9 +142,15 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
     },
 
     # ── Server-rendered content ──
-    "guide_view": {"client": False, "props": {"slug": _STR}},
-    "ctr_view": {"client": False, "props": {"page": _STR}},
-    "ctr_download": {"client": False, "props": {"asset": _STR, "version": _STR}},
+    # `from_path` on these is what makes the guides-to-app journey visible:
+    # the server-rendered pages are separate documents, so no client-side
+    # value can span them.
+    "guide_view": {"client": False, "props": {"slug": _STR, "from_path": _STR}},
+    "ctr_view": {"client": False, "props": {"page": _STR, "from_path": _STR}},
+    "ctr_download": {
+        "client": False,
+        "props": {"asset": _STR, "version": _STR, "from_path": _STR},
+    },
 
     # ── Security signals ──
     "admin_403": {"client": False, "props": {}},
@@ -200,6 +213,38 @@ def _ua_class(ua: str) -> str:
         if marker in low:
             return "mobile"
     return "desktop"
+
+
+def entry_path(req=None) -> str | None:
+    """Where a server-rendered page was reached from, as a bare path.
+
+    Makes cross-page journeys measurable ("readers of /guides/ctr go on to
+    the index") without any identifier that survives a page load, which is
+    the thing we deliberately do not have.
+
+    Only same-origin paths are returned. An external referrer collapses to
+    the literal string "external" and its URL is discarded: an external
+    referrer can carry search terms and campaign parameters that say
+    something about the person, and none of that is our business. Query
+    strings and fragments are stripped from internal paths too.
+    """
+    req = _current_request(req)
+    if req is None:
+        return None
+    try:
+        ref = (req.headers.get("Referer") or "").strip()
+        if not ref:
+            return None
+        from urllib.parse import urlparse
+
+        parsed = urlparse(ref)
+        if not parsed.netloc:
+            return None
+        if parsed.netloc != (req.host or ""):
+            return "external"
+        return (parsed.path or "/")[:120]
+    except Exception:
+        return None
 
 
 def objection_signalled(req=None) -> bool:

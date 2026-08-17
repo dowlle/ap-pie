@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import markdown
-from flask import Blueprint, Response, abort, render_template, request
+from flask import Blueprint, Response, abort, render_template, request, session
 
 import analytics
 import config
@@ -268,9 +268,17 @@ def guide_page(slug: str) -> str:
         abort(404)
     body_html, sections = _render_markdown(md_path)
     # FEAT-31: guides are server-rendered, so a read is visible here without
-    # any client-side script. Cloudflare counts the pageview; this records
-    # which guide, so guide reads can be joined to what the reader does next.
-    analytics.record_event("guide_view", props={"slug": slug}, req=request)
+    # any client-side script. `from_path` records the internal page the
+    # reader arrived from (external referrers collapse to "external"), which
+    # is what makes the guides-to-app journey measurable across documents.
+    # `user_id` is attached when a session exists, for the same reason the
+    # rest of the log does it: signed-in journeys are already attributable.
+    analytics.record_event(
+        "guide_view",
+        user_id=session.get("user_id"),
+        props={"slug": slug, "from_path": analytics.entry_path(request)},
+        req=request,
+    )
 
     # Section navigation: the shelf this guide belongs to plus its sibling
     # guides, so every guide page can say where it lives and link sideways.

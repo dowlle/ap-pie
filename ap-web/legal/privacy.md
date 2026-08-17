@@ -19,6 +19,7 @@ The site keeps a server-side log of things that happen on it, so its own funnel 
 - what happened, as a short code such as `guide_view` or `submit_rejected`
 - when it happened
 - the page path it happened on
+- which page on this site you came from, as a bare path such as `/guides/ctr`. If you arrived from somewhere else on the internet, the record says only the word `external`; the address you came from is discarded and never stored, because it can contain search terms
 - a two-letter country code, supplied by Cloudflare
 - whether the device looked like a desktop, a mobile, or a bot
 - a small set of technical details for that event type, such as a game name, a version number, or a rejection reason code
@@ -29,7 +30,12 @@ That is the whole record. In particular it does **not** contain:
 - **your IP address.** It is used momentarily to apply rate limits and is never written to the database
 - **your browser's User-Agent string.** Only the three-way desktop / mobile / bot classification is kept
 - **any tracking identifier on your device.** No analytics cookie, no localStorage, no sessionStorage, no fingerprint. To measure how far people get in a single visit, the page generates a random value that lives only in the browser tab's memory and disappears the moment you reload or close it. It cannot connect two visits, two devices, or two browsers
+- **the address of the site that sent you here**, when that site is not this one. Only the word `external` is recorded
 - **the contents of anything you write.** YAML files, room names, room descriptions and player names never enter the analytics log
+
+Because the visit value cannot survive a page load, the log has no concept of a session. It can say that fifty people arrived at a page from a guide; it cannot follow one person from one page to the next. That limitation is deliberate, and it is what the site gives up in exchange for having no cookie banner.
+
+If you are signed in, page views on the guides and the Crash Team Racing pages are recorded with your account id, the same as the rest of your activity on the site. Signed out, they are not linked to anything.
 
 ### Signing in with Discord
 
