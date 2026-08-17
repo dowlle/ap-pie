@@ -1117,6 +1117,12 @@ def list_presets_for_apworld(apworld_name: str, viewer_user_id: int | None = Non
     Order is the design's: official first, then by upvote score, then by
     usage, then newest. Ties break on newest so a fresh preset is not buried
     behind an old one with the same score forever.
+
+    Capped at 200. A single game accumulating more than that says something
+    has gone wrong (or the feature has succeeded far past what this UI was
+    built for), and either way the answer is paging rather than shipping a
+    thousand rows to a browser. The cap is deliberate and noted here rather
+    than silent.
     """
     conn = _get_conn()
     with conn.cursor() as cur:
@@ -1127,7 +1133,8 @@ def list_presets_for_apworld(apworld_name: str, viewer_user_id: int | None = Non
                 WHERE p.apworld_name = %s
                   AND (p.status = 'published'
                        OR (p.status = 'private' AND p.author_user_id = %s))
-             ORDER BY p.is_official DESC, p.score DESC, p.uses DESC, p.created_at DESC""",
+             ORDER BY p.is_official DESC, p.score DESC, p.uses DESC, p.created_at DESC
+                LIMIT 200""",
             (apworld_name, viewer_user_id),
         )
         rows = _dictrow(cur)

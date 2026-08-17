@@ -2503,6 +2503,19 @@ a.btn:hover { text-decoration: none; }
   background: var(--bg);
 }
 .preset-row-text { min-width: 0; }
+.preset-use-btn { white-space: nowrap; flex-shrink: 0; }
+.preset-filter {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+.preset-filter:focus { outline: none; border-color: var(--accent); }
 .preset-row-head { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
 .preset-row-desc { margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--text); }
 .preset-row-meta { margin: 0.25rem 0 0; font-size: 0.72rem; color: var(--text-muted); }

@@ -77,6 +77,8 @@ export default function YamlBuilder({
   const [presets, setPresets] = useState<Preset[]>([]);
   const [savingPreset, setSavingPreset] = useState(false);
   const [presetName, setPresetName] = useState("");
+  const [presetFilter, setPresetFilter] = useState("");
+  const [showAllPresets, setShowAllPresets] = useState(false);
   const [presetSaved, setPresetSaved] = useState("");
 
   const entry = useMemo(
@@ -129,6 +131,8 @@ export default function YamlBuilder({
     setEditing(false);
     setCoreValues({});
     setPresets([]);
+    setPresetFilter("");
+    setShowAllPresets(false);
     setSavingPreset(false);
     setPresetName("");
     setPresetSaved("");
@@ -194,6 +198,24 @@ export default function YamlBuilder({
       .catch(() => { if (!cancelled) setPresets([]); });
     return () => { cancelled = true; };
   }, [open, entry]);
+
+  // Presets are ordered server-side (official, then upvotes, then uses), so
+  // the first few are the ones worth showing. A game with fifty presets
+  // would otherwise bury the actual options form under a wall of cards.
+  const filteredPresets = useMemo(() => {
+    const q = presetFilter.trim().toLowerCase();
+    if (!q) return presets;
+    return presets.filter((p) =>
+      `${p.name} ${p.description} ${p.author_username ?? ""}`.toLowerCase().includes(q),
+    );
+  }, [presets, presetFilter]);
+
+  const shownPresets = showAllPresets
+    ? filteredPresets
+    : filteredPresets.slice(0, PRESET_PREVIEW_COUNT);
+  const hiddenPresetCount = showAllPresets
+    ? 0
+    : Math.max(0, filteredPresets.length - PRESET_PREVIEW_COUNT);
 
   const CORE_KEYS = useMemo(() => new Set(CORE_OPTIONS.map((o) => o.name)), []);
 
@@ -386,15 +408,27 @@ export default function YamlBuilder({
             </section>
 
             {schema && presets.length > 0 && (
-              <section className="settings-section">
-                <h3>Start from a preset</h3>
+              <details className="settings-section yaml-builder-group" open>
+                <summary>
+                  Start from a preset <span className="muted">({presets.length})</span>
+                </summary>
+                <div className="yaml-builder-group-body">
                 <p className="settings-hint">
                   A configuration someone else already worked out. Applying one
                   fills the form below and changes nothing you cannot edit
                   afterwards.
                 </p>
+                {presets.length > PRESET_FILTER_THRESHOLD && (
+                  <input
+                    type="search"
+                    className="preset-filter"
+                    placeholder="Filter presets by name, description or author..."
+                    value={presetFilter}
+                    onChange={(e) => setPresetFilter(e.target.value)}
+                  />
+                )}
                 <ul className="preset-list">
-                  {presets.map((p) => (
+                  {shownPresets.map((p) => (
                     <li key={p.id} className="preset-row">
                       <div className="preset-row-text">
                         <div className="preset-row-head">
@@ -427,7 +461,7 @@ export default function YamlBuilder({
                       </div>
                       <button
                         type="button"
-                        className="btn btn-sm"
+                        className="btn btn-sm preset-use-btn"
                         onClick={() => applyPreset(p)}
                       >
                         Use this
@@ -435,7 +469,31 @@ export default function YamlBuilder({
                     </li>
                   ))}
                 </ul>
-              </section>
+                {filteredPresets.length === 0 && (
+                  <p className="settings-hint" style={{ margin: 0 }}>
+                    No presets match that filter.
+                  </p>
+                )}
+                {hiddenPresetCount > 0 && (
+                  <button
+                    type="button"
+                    className="yaml-builder-desc-toggle"
+                    onClick={() => setShowAllPresets(true)}
+                  >
+                    Show {hiddenPresetCount} more preset{hiddenPresetCount === 1 ? "" : "s"}
+                  </button>
+                )}
+                {showAllPresets && filteredPresets.length > PRESET_PREVIEW_COUNT && (
+                  <button
+                    type="button"
+                    className="yaml-builder-desc-toggle"
+                    onClick={() => setShowAllPresets(false)}
+                  >
+                    Show fewer
+                  </button>
+                )}
+                </div>
+              </details>
             )}
 
             {schema && (
@@ -776,6 +834,12 @@ function OptionsForm({
  * scannable without hiding anything.
  */
 const DESC_CLAMP_CHARS = 180;
+
+/** How many presets show before "Show N more", and when a filter box earns
+ *  its place. Both exist for the fifty-presets-per-game case rather than
+ *  today's handful. */
+const PRESET_PREVIEW_COUNT = 4;
+const PRESET_FILTER_THRESHOLD = 8;
 
 function OptionDescription({ text }: { text?: string | null }) {
   const [expanded, setExpanded] = useState(false);
