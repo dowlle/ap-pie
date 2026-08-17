@@ -21,8 +21,10 @@ import { usePageTitle } from "../lib/usePageTitle";
  * that is never published is exactly the "save my own setup and reuse it"
  * feature that row asked for.
  */
-export default function MyPresets() {
-  usePageTitle("My presets");
+export default function MyPresets({ embedded = false }: { embedded?: boolean } = {}) {
+  // Rendered standalone at /presets (legacy path) and inside the FEAT-43
+  // hub, which supplies its own heading.
+  usePageTitle(embedded ? null : "My presets");
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -73,7 +75,7 @@ export default function MyPresets() {
 
   return (
     <div>
-      <h1>My presets</h1>
+      {!embedded && <h1>My presets</h1>}
       <p className="muted" style={{ marginBottom: "1.25rem" }}>
         Configurations you saved from the YAML builder. They stay private until
         you publish them. Published presets appear for everyone building a YAML

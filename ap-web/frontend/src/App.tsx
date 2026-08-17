@@ -15,8 +15,7 @@ import Admin from "./pages/Admin";
 import AdminApworldRequests from "./pages/AdminApworldRequests";
 import Play from "./pages/Play";
 import Landing from "./pages/Landing";
-import MyRoomTemplates from "./pages/MyRoomTemplates";
-import MyPresets from "./pages/MyPresets";
+import MyArea from "./pages/MyArea";
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
 import { useEffect, useState } from "react";
@@ -229,7 +228,7 @@ function RouteAnalytics() {
     else if (p === "/apworlds") view = "apworlds";
     else if (p === "/rooms") view = "rooms";
     else if (p === "/rooms/templates") view = "room_templates";
-    else if (p === "/presets") view = "my_presets";
+    else if (p.startsWith("/my")) view = "my_area";
     else if (p.startsWith("/rooms/")) view = "room_detail";
     else if (p.startsWith("/r/")) view = "room_public";
     else if (p.startsWith("/play/")) view = "play";
@@ -266,10 +265,12 @@ function AppRoutes() {
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />
       <Route path="/servers" element={<AdminShell><RequireApproval><Servers /></RequireApproval></AdminShell>} />
       <Route path="/apworlds" element={<AdminShell><APWorlds /></AdminShell>} />
-      <Route path="/rooms/templates" element={<AdminShell><RequireApproval><MyRoomTemplates /></RequireApproval></AdminShell>} />
-      {/* FEAT-42: signed in, but not approval-gated - anyone with an
-          account can save and publish presets, same as building a YAML. */}
-      <Route path="/presets" element={<AdminShell><MyPresets /></AdminShell>} />
+      <Route path="/rooms/templates" element={<Navigate to="/my/templates" replace />} />
+      {/* FEAT-43: one personal area. The old single-purpose paths redirect
+          so existing links and bookmarks keep working. */}
+      <Route path="/my" element={<Navigate to="/my/yamls" replace />} />
+      <Route path="/my/:tab" element={<AdminShell><MyArea /></AdminShell>} />
+      <Route path="/presets" element={<Navigate to="/my/presets" replace />} />
       <Route path="/summary" element={<AdminShell><RequireApproval><Summary /></RequireApproval></AdminShell>} />
     </Routes>
   );

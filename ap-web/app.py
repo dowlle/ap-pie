@@ -249,6 +249,7 @@ def create_app() -> Flask:
     from api.ctr import bp as ctr_bp
     from api.events import bp as events_bp
     from api.presets import bp as presets_bp
+    from api.user_yamls import bp as user_yamls_bp
     from api.legal import bp as legal_bp
 
     app.register_blueprint(games_bp)
@@ -281,6 +282,8 @@ def create_app() -> Flask:
     app.register_blueprint(events_bp)
     # FEAT-42: community presets for the YAML builder.
     app.register_blueprint(presets_bp)
+    # FEAT-43: the player's own YAML library and submission history.
+    app.register_blueprint(user_yamls_bp)
     app.register_blueprint(legal_bp)
 
     # Apply auth middleware - protects all /api/* except /api/market, /api/auth, /api/trackers

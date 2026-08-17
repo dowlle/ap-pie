@@ -458,6 +458,58 @@ def init_db(db_url: str) -> None:
             )
         """)
 
+        # FEAT-43: a player's own YAML library.
+        #
+        # Separate from apworld_presets on purpose: presets are public
+        # content with publish / report / vote lifecycles, a saved YAML is a
+        # private artifact with a slot name and a submission history. Same
+        # payload shape, different lives.
+        #
+        # kind mirrors the preset split (design D2): a form-built YAML is
+        # stored as option values so it survives version bumps and can be
+        # re-validated, a hand-edited one is kept verbatim because rewriting
+        # someone's plando block would be worse than not storing it.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_yamls (
+                id            SERIAL PRIMARY KEY,
+                user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                apworld_name  TEXT NOT NULL,
+                version       TEXT NOT NULL,
+                player_name   TEXT NOT NULL,
+                label         TEXT NOT NULL DEFAULT '',
+                kind          TEXT NOT NULL DEFAULT 'simple'
+                              CHECK (kind IN ('simple', 'advanced')),
+                option_values JSONB,
+                yaml_content  TEXT,
+                created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT user_yaml_label_length CHECK (length(label) <= 120),
+                CONSTRAINT user_yaml_payload CHECK (
+                    (kind = 'simple' AND option_values IS NOT NULL AND yaml_content IS NULL)
+                    OR (kind = 'advanced' AND yaml_content IS NOT NULL AND option_values IS NULL)
+                )
+            )
+        """)
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_user_yamls_user ON user_yamls"
+            "(user_id, updated_at DESC)"
+        )
+        # Additive link so a submission can point back at the library row it
+        # came from. Nullable: every existing submission predates the library,
+        # and anonymous submits never have one.
+        cur.execute(
+            "ALTER TABLE room_yamls ADD COLUMN IF NOT EXISTS source_user_yaml_id "
+            "INTEGER REFERENCES user_yamls(id) ON DELETE SET NULL"
+        )
+        # FEAT-31 gap 2: option-level validation results. validate_yaml only
+        # ever checked structure, so a bad option value surfaced at generation
+        # time in the host's lap. Warnings are advisory and never block a
+        # submission - a custom fork or a triggers block is legitimately not
+        # schema-checkable.
+        cur.execute(
+            "ALTER TABLE room_yamls ADD COLUMN IF NOT EXISTS option_warnings JSONB"
+        )
+
         # FEAT-31: cookieless server-side analytics.
         #
         # Privacy shape is load-bearing, not incidental (see analytics.py and
@@ -1067,6 +1119,126 @@ def get_activity(room_id: str, limit: int = 50) -> list[dict]:
         )
         rows = _dictrow(cur)
     return [_serialize(r) for r in rows]
+
+
+# ── FEAT-43 personal YAML library ────────────────────────────────
+
+
+def _serialize_user_yaml(row: dict) -> dict:
+    d = _serialize(row)
+    d["values"] = d.pop("option_values", None)
+    return d
+
+
+def create_user_yaml(
+    *,
+    user_id: int,
+    apworld_name: str,
+    version: str,
+    player_name: str,
+    label: str,
+    kind: str,
+    option_values: dict | None,
+    yaml_content: str | None,
+) -> dict:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO user_yamls
+                   (user_id, apworld_name, version, player_name, label,
+                    kind, option_values, yaml_content)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
+            (user_id, apworld_name, version, player_name, label, kind,
+             psycopg2.extras.Json(option_values) if option_values is not None else None,
+             yaml_content),
+        )
+        row = _dictrow(cur)[0]
+    conn.commit()
+    return _serialize_user_yaml(row)
+
+
+def list_user_yamls(user_id: int) -> list[dict]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT * FROM user_yamls WHERE user_id = %s ORDER BY updated_at DESC LIMIT 200",
+            (user_id,),
+        )
+        rows = _dictrow(cur)
+    return [_serialize_user_yaml(r) for r in rows]
+
+
+def get_user_yaml(yaml_id: int) -> dict | None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM user_yamls WHERE id = %s", (yaml_id,))
+        rows = _dictrow(cur)
+    return _serialize_user_yaml(rows[0]) if rows else None
+
+
+def update_user_yaml(yaml_id: int, **fields) -> dict | None:
+    allowed = {"label", "player_name", "option_values", "yaml_content", "version"}
+    updates = {k: v for k, v in fields.items() if k in allowed}
+    if not updates:
+        return get_user_yaml(yaml_id)
+    if "option_values" in updates and updates["option_values"] is not None:
+        updates["option_values"] = psycopg2.extras.Json(updates["option_values"])
+    sets = ", ".join(f"{k} = %s" for k in updates)
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            f"UPDATE user_yamls SET {sets}, updated_at = NOW() WHERE id = %s RETURNING *",
+            (*updates.values(), yaml_id),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    return _serialize_user_yaml(rows[0]) if rows else None
+
+
+def delete_user_yaml(yaml_id: int) -> bool:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM user_yamls WHERE id = %s", (yaml_id,))
+        deleted = cur.rowcount > 0
+    conn.commit()
+    return deleted
+
+
+def list_submissions_by_user(user_id: int) -> list[dict]:
+    """Every YAML this account has submitted, across all rooms.
+
+    Derived from room_yamls rather than from the library, so it works
+    retroactively for everything submitted before the library existed. Room
+    name and status ride along because "where is this in use" is the whole
+    question the Submitted view answers.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT y.id, y.room_id, y.player_name, y.game, y.filename,
+                      y.validation_status, y.validation_error, y.option_warnings,
+                      y.apworld_versions, y.uploaded_at, y.source_user_yaml_id,
+                      r.name AS room_name, r.status AS room_status
+                 FROM room_yamls y
+                 JOIN rooms r ON r.id = y.room_id
+                WHERE y.submitter_user_id = %s
+             ORDER BY y.uploaded_at DESC
+                LIMIT 200""",
+            (user_id,),
+        )
+        rows = _dictrow(cur)
+    return [_serialize(r) for r in rows]
+
+
+def set_yaml_option_warnings(yaml_id: int, warnings: list | None) -> None:
+    """Advisory option-level findings from the submit-time schema check."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE room_yamls SET option_warnings = %s WHERE id = %s",
+            (psycopg2.extras.Json(warnings) if warnings else None, yaml_id),
+        )
+    conn.commit()
 
 
 # ── FEAT-42 community presets ────────────────────────────────────

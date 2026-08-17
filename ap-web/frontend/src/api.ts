@@ -1621,3 +1621,90 @@ export async function reportPreset(id: number): Promise<void> {
   const res = await fetch(`${BASE}/presets/${id}/report`, { method: "POST" });
   if (!res.ok) throw new Error("Failed to report preset");
 }
+
+// ── FEAT-43: personal YAML library ───────────────────────────────
+
+export interface UserYaml {
+  id: number;
+  apworld_name: string;
+  version: string;
+  player_name: string;
+  label: string;
+  kind: "simple" | "advanced";
+  values: Record<string, unknown> | null;
+  yaml_content: string | null;
+  created_at?: string;
+  updated_at?: string;
+  /** Newest version of this apworld in the index, when there is one. */
+  latest_version: string | null;
+  outdated: boolean;
+  /** Advisory findings against the newest version's schema. */
+  warnings: { code: string; option: string; detail: string }[];
+}
+
+export interface UserSubmission {
+  id: number;
+  room_id: string;
+  room_name: string;
+  room_status: string;
+  player_name: string;
+  game: string;
+  filename: string;
+  validation_status: string;
+  validation_error: string | null;
+  option_warnings: { code: string; option: string; detail: string }[] | null;
+  uploaded_at: string;
+  source_user_yaml_id: number | null;
+}
+
+export async function getMyYamls(): Promise<UserYaml[]> {
+  const data = await fetchJson<{ yamls: UserYaml[] }>(`${BASE}/my/yamls`);
+  return data.yamls;
+}
+
+export async function getMySubmissions(): Promise<UserSubmission[]> {
+  const data = await fetchJson<{ submissions: UserSubmission[] }>(`${BASE}/my/submissions`);
+  return data.submissions;
+}
+
+export async function saveMyYaml(input: {
+  apworld_name: string;
+  version: string;
+  player_name: string;
+  label?: string;
+  kind: "simple" | "advanced";
+  values?: Record<string, unknown>;
+  yaml_content?: string;
+}): Promise<UserYaml> {
+  const res = await fetch(`${BASE}/my/yamls`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to save YAML");
+  }
+  return res.json();
+}
+
+export async function updateMyYaml(
+  id: number,
+  patch: { label?: string; player_name?: string; values?: Record<string, unknown>; yaml_content?: string },
+): Promise<UserYaml> {
+  const res = await fetch(`${BASE}/my/yamls/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to update YAML");
+  }
+  return res.json();
+}
+
+export async function deleteMyYaml(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/my/yamls/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete YAML");
+}

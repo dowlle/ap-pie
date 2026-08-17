@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   getAPWorlds,
   getApworldBuilderSchema,
+  getMyYamls,
   getInstalledAPWorlds,
   getRooms,
   installAPWorld,
@@ -718,6 +719,11 @@ export default function APWorlds() {
   const [installableOnly, setInstallableOnly] = useState(false);
 
   const [builder, setBuilder] = useState<BuilderSchemaEntry | null>(null);
+  // FEAT-43: /apworlds?build=<name>&from=<library id> opens the builder with
+  // a saved YAML loaded, which is the "Open in builder" action on My stuff.
+  const [initialYaml, setInitialYaml] = useState<string | null>(null);
+  const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(null);
+  const [initialPlayerName, setInitialPlayerName] = useState<string | null>(null);
   const [building, setBuilding] = useState<string | null>(null);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [pendingYaml, setPendingYaml] = useState<string | null>(null);
@@ -726,9 +732,21 @@ export default function APWorlds() {
     setBuilding(`${name}@${version}`);
     setError("");
     try {
-      const entry = await getApworldBuilderSchema(name, version);
+      // Gap 3: the first person to build for an uncached world used to be
+      // told to try again in a few seconds, which is a dead end dressed up
+      // as an instruction. Deriving a schema means downloading and parsing
+      // the apworld, so it genuinely takes a moment - we wait for it rather
+      // than handing the work back to the user.
+      let entry = await getApworldBuilderSchema(name, version);
+      for (let attempt = 0; entry.pending && attempt < 6; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        entry = await getApworldBuilderSchema(name, version);
+      }
       if (entry.pending) {
-        setError(`Still deriving the option form for ${entry.display_name} v${version} - try again in a few seconds.`);
+        setError(
+          `${entry.display_name} v${version} is taking longer than usual to prepare. ` +
+          `It keeps working in the background - try again in a minute.`,
+        );
       } else if (!entry.schema) {
         // Only when the archive itself could not be understood. A world with
         // no options of its own still gets a builder: Archipelago's own
@@ -863,6 +881,24 @@ export default function APWorlds() {
     if (!buildParam) return;
     autoBuildTriggered.current = true;
     const versionParam = params.get("version");
+    const fromParam = params.get("from");
+    if (fromParam) {
+      // "Open in builder" from My stuff. A config entry hands its values to
+      // the form; a file entry hands its text to the editor. The builder
+      // decides what to do with each.
+      getMyYamls()
+        .then((list) => {
+          const saved = list.find((y) => String(y.id) === fromParam);
+          if (!saved) return;
+          if (saved.kind === "advanced" && saved.yaml_content) {
+            setInitialYaml(saved.yaml_content);
+          } else if (saved.values) {
+            setInitialValues(saved.values as Record<string, unknown>);
+            setInitialPlayerName(saved.player_name);
+          }
+        })
+        .catch(() => {});
+    }
     const world = available.find((w) => w.name === buildParam);
     const target = versionParam
       ? world?.versions.find((v) => v.version === versionParam)
@@ -933,7 +969,7 @@ export default function APWorlds() {
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's
               "My templates" on the Rooms page. Signed-in only, because a
               preset library needs somewhere to belong. */}
-          {user && <Link to="/presets" className="btn">My presets</Link>}
+          {user && <Link to="/my/yamls" className="btn">My stuff</Link>}
           {isAdmin && (
             <button className="btn" onClick={handleRefresh} disabled={refreshing}>
               {refreshing ? "Fetching index..." : "Refresh index"}
@@ -1045,6 +1081,9 @@ export default function APWorlds() {
         games={builder ? [builder] : []}
         initialGame={builder?.apworld_name}
         surface="apworlds"
+        initialYaml={initialYaml}
+        initialValues={initialValues}
+        initialPlayerName={initialPlayerName}
         reviewExtra={(yamlContent) =>
           user ? (
             <RoomAttach

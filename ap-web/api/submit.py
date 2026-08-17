@@ -40,6 +40,8 @@ from db import (
 )
 from validation import classify_validation_error, extract_player_info, validate_yaml
 
+import option_check
+
 import analytics
 
 bp = Blueprint("submit", __name__)
@@ -303,6 +305,51 @@ def submit_yaml(room_id: str):
             req=request,
         )
 
+    # FEAT-31 gap 2: advisory option-level check against the version this
+    # room has pinned. Never blocks the submission - see option_check's
+    # module docstring for why - but tells the submitter now, rather than
+    # letting the host discover it at generation time.
+    warnings: list = []
+    try:
+        import yaml as _yaml
+
+        from api.apworlds import _get_game_lookup, builder_schemas_for_pins
+
+        world = _get_game_lookup().get(game)
+        if world is not None:
+            pinned = None
+            try:
+                from db import get_room_apworlds
+
+                pinned = next(
+                    (p["version"] for p in get_room_apworlds(room_id)
+                     if p["apworld_name"] == world.name),
+                    None,
+                )
+            except Exception:
+                pinned = None
+            if pinned is None:
+                ver = next((v for v in world.versions if v.url or v.local), None)
+                pinned = ver.version if ver else None
+            if pinned:
+                rows = builder_schemas_for_pins(
+                    [{"apworld_name": world.name, "version": pinned}],
+                    fetch_budget_seconds=4.0,
+                )
+                schema = rows[0].get("schema") if rows else None
+                if schema:
+                    doc = _yaml.safe_load(yaml_content)
+                    warnings = option_check.check_document(doc, game, schema)
+                    if warnings:
+                        from db import set_yaml_option_warnings
+
+                        set_yaml_option_warnings(yaml_record["id"], warnings)
+    except Exception as e:
+        # A failed advisory check must never affect a submission.
+        from flask import current_app
+
+        current_app.logger.warning(f"option check failed for {room_id}: {e}")
+
     # FEAT-21 auto-pin: even public submits trigger the first-game-sets-pin
     # behaviour, so the host doesn't have to come back and pin every game
     # players bring in. Honours the YAML's `requires.game` declaration
@@ -319,4 +366,6 @@ def submit_yaml(room_id: str):
         "game": game,
         "validation_status": yaml_record["validation_status"],
         "validation_error": yaml_record.get("validation_error"),
+        # Advisory: the YAML is stored and accepted either way.
+        "option_warnings": warnings,
     }), 201

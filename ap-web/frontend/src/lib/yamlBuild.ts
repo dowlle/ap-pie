@@ -18,6 +18,9 @@ export function buildYamlContent(input: {
    *  Empty string omits the requires block. */
   worldVersion: string;
   template: ParsedTemplate;
+  /** Minimum Archipelago version this apworld was built against, from the
+   *  derived schema. Emitted as `requires.version`. */
+  apVersion?: string;
   values: Record<string, unknown>;
   /** Archipelago's own options (see lib/coreOptions). Only keys the user
    *  actually set are present; anything left on "game default" is absent
@@ -27,7 +30,7 @@ export function buildYamlContent(input: {
 }): string {
   const {
     playerName, game, worldVersion, template, values,
-    coreValues = {}, coreOptions = [],
+    coreValues = {}, coreOptions = [], apVersion,
   } = input;
 
   const doc: Record<string, unknown> = {
@@ -36,7 +39,13 @@ export function buildYamlContent(input: {
     game,
   };
   if (worldVersion) {
-    doc.requires = { game: { [game]: worldVersion } };
+    // `requires.game` pins the apworld; `requires.version` states the
+    // minimum generator this file expects (Generate.py:539-545). Emitting
+    // both means a host on an older Archipelago is told so at generation
+    // time instead of hitting a confusing option error.
+    const requires: Record<string, unknown> = { game: { [game]: worldVersion } };
+    if (apVersion) requires.version = apVersion;
+    doc.requires = requires;
   }
 
   const gameSection: Record<string, unknown> = {};

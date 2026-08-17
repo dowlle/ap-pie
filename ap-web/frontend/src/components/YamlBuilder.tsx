@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { BuilderSchemaEntry, Preset, TemplateOption } from "../api";
-import { createPreset, getPresets, recordPresetUse } from "../api";
+import { createPreset, getPresets, recordPresetUse, saveMyYaml } from "../api";
 import { dump, load } from "js-yaml";
 import { buildYamlContent, downloadYaml, isRandomValue } from "../lib/yamlBuild";
 import { CORE_CATEGORY, CORE_OPTIONS } from "../lib/coreOptions";
+import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import MarkdownText from "./MarkdownText";
 import { trackBuilderAbandoned, trackBuilderEmitted, trackBuilderOpened } from "../lib/analytics";
@@ -34,6 +35,9 @@ export default function YamlBuilder({
   onClose,
   surface = "unknown",
   roomId,
+  initialYaml,
+  initialValues,
+  initialPlayerName,
 }: {
   open: boolean;
   games: BuilderSchemaEntry[];
@@ -55,6 +59,16 @@ export default function YamlBuilder({
   surface?: string;
   /** Room the builder is operating in, when there is one. */
   roomId?: string;
+  /** FEAT-43: open with an existing YAML loaded. Values the schema knows
+   *  fill the form; anything else sends the document to the editor instead,
+   *  because a form that silently dropped a plando block would be worse
+   *  than no form at all. */
+  initialYaml?: string | null;
+  /** FEAT-43: open with a saved configuration loaded into the form. Used by
+   *  "Open in builder" for a config-kind library entry, where there is no
+   *  document to parse - the values were never a file in the first place. */
+  initialValues?: Record<string, unknown> | null;
+  initialPlayerName?: string | null;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const onCloseRef = useRef(onClose);
@@ -176,6 +190,59 @@ export default function YamlBuilder({
     };
   }, [open, entry, roomId]);
 
+  // FEAT-43: import an existing document when one is handed in. Runs after
+  // the defaults effect below has seeded the form, so imported values land
+  // on top of defaults rather than under them.
+  const importedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !entry?.schema || !initialYaml) return;
+    if (importedRef.current === initialYaml) return;
+    importedRef.current = initialYaml;
+    const parsed = importYaml(initialYaml, entry.schema);
+    if (!parsed) {
+      // Unparseable: hand it to the editor rather than refusing to open.
+      setManualYaml(initialYaml);
+      setStep("review");
+      return;
+    }
+    if (parsed.unknown.length > 0 || parsed.extraRootKeys.length > 0) {
+      // Carries things no form can represent (plando, triggers, options this
+      // version dropped). Editing it as text is the honest answer.
+      setManualYaml(initialYaml);
+      setStep("review");
+      setError(
+        `Opened in the editor: this YAML carries ${
+          [...parsed.unknown, ...parsed.extraRootKeys].slice(0, 3).join(", ")
+        }${
+          parsed.unknown.length + parsed.extraRootKeys.length > 3 ? " and more" : ""
+        }, which the form cannot show without dropping it.`,
+      );
+      return;
+    }
+    if (parsed.playerName) setPlayerName(parsed.playerName);
+    setValues((prev) => ({ ...prev, ...parsed.values }));
+    setCoreValues((prev) => ({ ...prev, ...parsed.coreValues }));
+    setStep("form");
+  }, [open, entry, initialYaml]);
+
+  // FEAT-43: a saved configuration, applied the same way a preset is.
+  const importedValuesRef = useRef<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    if (!open || !entry?.schema || !initialValues) return;
+    if (importedValuesRef.current === initialValues) return;
+    importedValuesRef.current = initialValues;
+    const core: Record<string, unknown> = {};
+    const game: Record<string, unknown> = {};
+    const coreNames = new Set(CORE_OPTIONS.map((o) => o.name));
+    for (const [k, v] of Object.entries(initialValues)) {
+      if (coreNames.has(k)) core[k] = v;
+      else game[k] = v;
+    }
+    setCoreValues((prev) => ({ ...prev, ...core }));
+    setValues((prev) => ({ ...prev, ...game }));
+    if (initialPlayerName) setPlayerName(initialPlayerName);
+  }, [open, entry, initialValues, initialPlayerName]);
+
   // Seed form values from schema defaults whenever the game changes.
   useEffect(() => {
     if (!entry?.schema) { setValues({}); return; }
@@ -258,6 +325,32 @@ export default function YamlBuilder({
     recordPresetUse(p.id);
   };
 
+  /** FEAT-43: keep this YAML in your own library. Distinct from saving a
+   *  preset: a library entry carries your slot name and is yours, a preset
+   *  is a configuration you may publish for other people. */
+  const handleSaveToLibrary = async () => {
+    if (!entry) return;
+    setBusy(true);
+    setError("");
+    try {
+      await saveMyYaml({
+        apworld_name: entry.apworld_name,
+        version: entry.version,
+        player_name: submittedIdentity.playerName,
+        label: `${entry.display_name} - ${submittedIdentity.playerName}`,
+        kind: manualYaml !== null ? "advanced" : "simple",
+        ...(manualYaml !== null
+          ? { yaml_content: manualYaml }
+          : { values: { ...coreValues, ...values } }),
+      });
+      setPresetSaved("Saved to My stuff. You can reopen it in the builder any time.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleSavePreset = async () => {
     if (!entry) return;
     const name = presetName.trim();
@@ -293,6 +386,7 @@ export default function YamlBuilder({
       game: entry.game,
       worldVersion: entry.version,
       template: entry.schema,
+      apVersion: entry.schema.ap_version,
       values,
       coreValues,
       coreOptions: CORE_OPTIONS,
@@ -524,6 +618,15 @@ export default function YamlBuilder({
               <div className="yaml-builder-review-head">
                 <h3>Review</h3>
                 <div className="yaml-builder-review-actions">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={busy}
+                    onClick={handleSaveToLibrary}
+                    title="Keep this YAML in your own library so you can reopen or reuse it"
+                  >
+                    Save to my YAMLs
+                  </button>
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -776,10 +879,38 @@ function OptionsForm({
   values: Record<string, unknown>;
   setValues: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }) {
+  // Gap 4: CTR has 26 options and Stardew has 53. Past a certain size the
+  // only way to change one thing is to hunt for it, so the form gets a
+  // filter. It appears only when there are enough options to need it.
+  const [filter, setFilter] = useState("");
+  const q = filter.trim().toLowerCase();
+  const matches = (o: TemplateOption) =>
+    !q ||
+    o.name.toLowerCase().includes(q) ||
+    (o.display_name ?? "").toLowerCase().includes(q) ||
+    (o.description ?? "").toLowerCase().includes(q);
+  const hitCount = q ? schema.options.filter(matches).length : 0;
+
   return (
     <>
+      {schema.options.length > OPTION_FILTER_THRESHOLD && (
+        <div className="option-filter-row">
+          <input
+            type="search"
+            className="preset-filter"
+            placeholder={`Filter ${schema.options.length} options by name or description...`}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          {q && (
+            <span className="muted option-filter-count">
+              {hitCount} match{hitCount === 1 ? "" : "es"}
+            </span>
+          )}
+        </div>
+      )}
       {schema.categories.map((cat) => {
-        const opts = schema.options.filter((o) => o.category === cat);
+        const opts = schema.options.filter((o) => o.category === cat && matches(o));
         if (opts.length === 0) return null;
         return (
           <details key={cat} className="settings-section yaml-builder-group" open>
@@ -840,6 +971,9 @@ const DESC_CLAMP_CHARS = 180;
  *  today's handful. */
 const PRESET_PREVIEW_COUNT = 4;
 const PRESET_FILTER_THRESHOLD = 8;
+
+/** Option count past which the options form earns a filter box. */
+const OPTION_FILTER_THRESHOLD = 12;
 
 function OptionDescription({ text }: { text?: string | null }) {
   const [expanded, setExpanded] = useState(false);
