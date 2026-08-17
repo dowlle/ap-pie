@@ -11,6 +11,8 @@ from typing import Iterator
 
 from auth import requires_admin
 
+import analytics
+
 from ap_lib.apworld_index import (
     APWorldInfo,
     build_game_lookup,

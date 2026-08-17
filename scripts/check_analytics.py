@@ -158,6 +158,42 @@ check(
     analytics.CLIENT_KINDS <= set(analytics.KIND_SPECS),
 )
 
+# ── 7: every caller actually imports the module ──────────────────
+# The recorders are one-liners dropped into existing routes, which makes it
+# easy to add a call and forget the import - a NameError that only fires when
+# that route is hit. This shipped once (api/apworlds.py, the builder-schema
+# and download routes, caught on beta 2026-08-17). No linter is installed in
+# this project, so the check lives here.
+import ast  # noqa: E402
+
+web_root = Path(__file__).resolve().parent.parent / "ap-web"
+missing_imports: list[str] = []
+for path in sorted(web_root.rglob("*.py")):
+    if path.name == "analytics.py":
+        continue
+    tree = ast.parse(path.read_text(encoding="utf-8-sig"))
+    # Real attribute access on a name `analytics`, not a mention in a comment
+    # or docstring - db.py legitimately talks about the module in prose.
+    uses = any(
+        isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "analytics"
+        for node in ast.walk(tree)
+    )
+    if not uses:
+        continue
+    imported = any(
+        isinstance(node, ast.Import) and any(a.name == "analytics" for a in node.names)
+        for node in ast.walk(tree)
+    )
+    if not imported:
+        missing_imports.append(str(path.relative_to(web_root)))
+
+check(
+    f"every analytics caller imports the module ({missing_imports or 'all good'})",
+    not missing_imports,
+)
+
 print()
 if failures:
     print(f"{len(failures)} check(s) FAILED:")
