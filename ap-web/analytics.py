@@ -89,9 +89,12 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
         "client": True,
         "props": {"game": _STR, "version": _STR, "surface": _STR},
     },
+    # `edited` marks a YAML that was hand-edited in the review step rather
+    # than produced by the form alone. It is the demand signal for what the
+    # form does not cover yet (weights, item links, plando, triggers).
     "builder_yaml_emitted": {
         "client": True,
-        "props": {"game": _STR, "version": _STR, "action": _STR},
+        "props": {"game": _STR, "version": _STR, "action": _STR, "edited": _BOOL},
     },
     "builder_abandoned": {
         "client": True,

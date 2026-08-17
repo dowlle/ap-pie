@@ -90,7 +90,7 @@ export default function YamlBuilder({
   const noteEmitted = (action: string) => {
     if (!entry) return;
     emittedRef.current = true;
-    trackBuilderEmitted(entry.game, entry.version, action, roomId);
+    trackBuilderEmitted(entry.game, entry.version, action, roomId, manualYaml !== null);
   };
 
   // Native <dialog> lifecycle - same pattern as CreateRoomModal.

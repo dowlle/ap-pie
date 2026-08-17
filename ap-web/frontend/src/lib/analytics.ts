@@ -179,8 +179,13 @@ export function trackBuilderEmitted(
   version: string,
   action: string,
   roomId?: string,
+  edited = false,
 ): void {
-  send({ kind: "builder_yaml_emitted", room_id: roomId, props: { game, version, action } });
+  send({
+    kind: "builder_yaml_emitted",
+    room_id: roomId,
+    props: { game, version, action, edited },
+  });
 }
 
 /**
