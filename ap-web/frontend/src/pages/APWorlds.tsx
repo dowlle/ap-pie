@@ -929,11 +929,17 @@ export default function APWorlds() {
             .apworld for local install, or use a room's Settings to pin a version for your players.
           </p>
         </div>
-        {isAdmin && (
-          <button className="btn" onClick={handleRefresh} disabled={refreshing}>
-            {refreshing ? "Fetching index..." : "Refresh index"}
-          </button>
-        )}
+        <div className="apworlds-header-actions">
+          {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's
+              "My templates" on the Rooms page. Signed-in only, because a
+              preset library needs somewhere to belong. */}
+          {user && <Link to="/presets" className="btn">My presets</Link>}
+          {isAdmin && (
+            <button className="btn" onClick={handleRefresh} disabled={refreshing}>
+              {refreshing ? "Fetching index..." : "Refresh index"}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <p className="error">{error}</p>}

@@ -1522,3 +1522,102 @@ export async function updateRoomTemplate(
 export async function deleteRoomTemplate(id: number): Promise<void> {
   await _send<void>(`${BASE}/users/me/room-templates/${id}`, { method: "DELETE" });
 }
+
+// ── FEAT-42: community YAML presets ──────────────────────────────
+
+export interface Preset {
+  id: number;
+  apworld_name: string;
+  version: string;
+  name: string;
+  description: string;
+  kind: "simple" | "advanced";
+  /** Simple presets: the values as stored. Prefer `applies` when filling a
+   *  form - it is this set minus anything the target version dropped. */
+  values: Record<string, unknown> | null;
+  yaml_content: string | null;
+  author_username: string | null;
+  is_official: boolean;
+  status: "private" | "published" | "hidden";
+  uses: number;
+  score: number;
+  voted: boolean;
+  /** Keys this preset carries that the target version no longer declares. */
+  stale_keys: string[];
+  applies: Record<string, unknown> | null;
+  created_at?: string;
+}
+
+export async function getPresets(apworldName: string, version?: string): Promise<Preset[]> {
+  const qs = version ? `?version=${encodeURIComponent(version)}` : "";
+  const data = await fetchJson<{ presets: Preset[] }>(
+    `${BASE}/apworlds/${encodeURIComponent(apworldName)}/presets${qs}`,
+  );
+  return data.presets;
+}
+
+export async function getMyPresets(): Promise<Preset[]> {
+  const data = await fetchJson<{ presets: Preset[] }>(`${BASE}/presets/mine`);
+  return data.presets;
+}
+
+export async function createPreset(input: {
+  apworld_name: string;
+  version: string;
+  name: string;
+  description?: string;
+  kind: "simple" | "advanced";
+  values?: Record<string, unknown>;
+  yaml_content?: string;
+}): Promise<Preset> {
+  const res = await fetch(`${BASE}/presets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to save preset");
+  }
+  return res.json();
+}
+
+export async function updatePreset(
+  id: number,
+  patch: { name?: string; description?: string; status?: "private" | "published" },
+): Promise<Preset> {
+  const res = await fetch(`${BASE}/presets/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to update preset");
+  }
+  return res.json();
+}
+
+export async function deletePreset(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/presets/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete preset");
+}
+
+/** Fire-and-forget: bumps the visible usage count and records the event. */
+export function recordPresetUse(id: number): void {
+  void fetch(`${BASE}/presets/${id}/use`, { method: "POST", keepalive: true }).catch(() => {});
+}
+
+export async function votePreset(id: number): Promise<{ score: number; voted: boolean }> {
+  const res = await fetch(`${BASE}/presets/${id}/vote`, { method: "POST" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to vote");
+  }
+  return res.json();
+}
+
+export async function reportPreset(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/presets/${id}/report`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to report preset");
+}

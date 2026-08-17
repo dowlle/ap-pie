@@ -2488,6 +2488,47 @@ a.btn:hover { text-decoration: none; }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
+.apworlds-header-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+/* FEAT-42 presets: the picker inside the builder, and the manage page. */
+.preset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.preset-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.preset-row-text { min-width: 0; }
+.preset-row-head { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.preset-row-desc { margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--text); }
+.preset-row-meta { margin: 0.25rem 0 0; font-size: 0.72rem; color: var(--text-muted); }
+.preset-save-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.preset-save-row input { flex: 1 1 18rem; }
+.yaml-builder-review-actions { display: flex; gap: 0.5rem; }
+
+.preset-manage-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+.preset-manage-row { display: flex; flex-direction: column; gap: 0.5rem; }
+.preset-manage-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.preset-manage-game { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-h); }
+.preset-manage-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.preset-manage-field { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.78rem; color: var(--text-muted); }
+.preset-manage-field input, .preset-manage-field textarea {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+.preset-manage-meta { font-size: 0.72rem; margin: 0; }
+.preset-manage-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
 .apworld-download-btn {
   padding-left: 0.45rem;
   padding-right: 0.45rem;

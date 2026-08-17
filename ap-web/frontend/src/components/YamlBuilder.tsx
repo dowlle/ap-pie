@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { BuilderSchemaEntry, TemplateOption } from "../api";
-import { load } from "js-yaml";
+import type { BuilderSchemaEntry, Preset, TemplateOption } from "../api";
+import { createPreset, getPresets, recordPresetUse } from "../api";
+import { dump, load } from "js-yaml";
 import { buildYamlContent, downloadYaml, isRandomValue } from "../lib/yamlBuild";
 import { CORE_CATEGORY, CORE_OPTIONS } from "../lib/coreOptions";
 import { highlightYaml } from "../lib/yamlHighlight";
@@ -71,6 +72,12 @@ export default function YamlBuilder({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  // FEAT-42: presets for the selected game. Published ones plus the
+  // viewer's own drafts; the endpoint decides which.
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [savingPreset, setSavingPreset] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const [presetSaved, setPresetSaved] = useState("");
 
   const entry = useMemo(
     () => games.find((g) => g.apworld_name === selected) ?? null,
@@ -121,6 +128,10 @@ export default function YamlBuilder({
     setManualYaml(null);
     setEditing(false);
     setCoreValues({});
+    setPresets([]);
+    setSavingPreset(false);
+    setPresetName("");
+    setPresetSaved("");
   }, [open, initialGame, games]);
 
   // FEAT-31: one "opened" per (open, game) pair - switching game inside an
@@ -171,6 +182,87 @@ export default function YamlBuilder({
     setError("");
     setSuccess("");
   }, [entry]);
+
+  // FEAT-42: load presets for whatever game is selected. Failure is silent:
+  // presets are an aid, and a builder that still works without them is
+  // better than an error banner over a form that is fine.
+  useEffect(() => {
+    if (!open || !entry) { setPresets([]); return; }
+    let cancelled = false;
+    getPresets(entry.apworld_name, entry.version)
+      .then((list) => { if (!cancelled) setPresets(list); })
+      .catch(() => { if (!cancelled) setPresets([]); });
+    return () => { cancelled = true; };
+  }, [open, entry]);
+
+  const CORE_KEYS = useMemo(() => new Set(CORE_OPTIONS.map((o) => o.name)), []);
+
+  /** Apply a preset. Simple presets fill the form and leave everything
+   *  editable; advanced ones carry constructs no form can express, so they
+   *  load straight into the review step's editor with the player's own slot
+   *  name substituted for the author's. */
+  const applyPreset = (p: Preset) => {
+    setError("");
+    setSuccess("");
+    if (p.kind === "advanced" && p.yaml_content) {
+      let text = p.yaml_content;
+      try {
+        const doc = load(text) as Record<string, unknown>;
+        if (doc && typeof doc === "object") {
+          doc.name = playerName.trim() || "Player1";
+          text = dump(doc, { noRefs: true, lineWidth: -1, sortKeys: false });
+        }
+      } catch {
+        // Unparseable stored YAML: hand it over as-is rather than refusing.
+        // The author will see the same text they saved, and the server
+        // validates on submit.
+      }
+      setManualYaml(text);
+      setEditing(false);
+      setStep("review");
+    } else {
+      const applies = (p.applies ?? p.values ?? {}) as Record<string, unknown>;
+      const core: Record<string, unknown> = {};
+      const game: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(applies)) {
+        if (CORE_KEYS.has(k)) core[k] = v;
+        else game[k] = v;
+      }
+      setCoreValues((prev) => ({ ...prev, ...core }));
+      setValues((prev) => ({ ...prev, ...game }));
+      setManualYaml(null);
+      setStep("form");
+    }
+    recordPresetUse(p.id);
+  };
+
+  const handleSavePreset = async () => {
+    if (!entry) return;
+    const name = presetName.trim();
+    if (!name) return;
+    setBusy(true);
+    setError("");
+    try {
+      const saved = await createPreset({
+        apworld_name: entry.apworld_name,
+        version: entry.version,
+        name,
+        kind: manualYaml !== null ? "advanced" : "simple",
+        ...(manualYaml !== null
+          ? { yaml_content: manualYaml }
+          : { values: { ...coreValues, ...values } }),
+      });
+      setPresetSaved(
+        `Saved "${saved.name}" to your presets. Publish it from My presets when you want others to see it.`,
+      );
+      setSavingPreset(false);
+      setPresetName("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save preset");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const generatedYaml = useMemo(() => {
     if (!entry?.schema || step !== "review") return "";
@@ -293,6 +385,59 @@ export default function YamlBuilder({
               </p>
             </section>
 
+            {schema && presets.length > 0 && (
+              <section className="settings-section">
+                <h3>Start from a preset</h3>
+                <p className="settings-hint">
+                  A configuration someone else already worked out. Applying one
+                  fills the form below and changes nothing you cannot edit
+                  afterwards.
+                </p>
+                <ul className="preset-list">
+                  {presets.map((p) => (
+                    <li key={p.id} className="preset-row">
+                      <div className="preset-row-text">
+                        <div className="preset-row-head">
+                          <strong>{p.name}</strong>
+                          {p.is_official && <span className="badge badge-builtin">official</span>}
+                          {p.kind === "advanced" && (
+                            <span
+                              className="badge badge-save"
+                              title="Carries plando, triggers or item links. Opens in the YAML editor."
+                            >
+                              advanced
+                            </span>
+                          )}
+                          {p.status === "private" && (
+                            <span className="badge">draft</span>
+                          )}
+                        </div>
+                        {p.description && <p className="preset-row-desc">{p.description}</p>}
+                        <p className="preset-row-meta">
+                          {p.author_username ? `by ${p.author_username}` : "by an unknown author"}
+                          {" · "}
+                          {p.uses === 1 ? "used once" : `used ${p.uses} times`}
+                          {p.score > 0 && ` · ${p.score} upvote${p.score === 1 ? "" : "s"}`}
+                          {p.version !== entry?.version && ` · written for v${p.version}`}
+                          {p.stale_keys.length > 0 &&
+                            ` · ${p.stale_keys.length} option${
+                              p.stale_keys.length === 1 ? "" : "s"
+                            } no longer apply`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        onClick={() => applyPreset(p)}
+                      >
+                        Use this
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             {schema && (
               <CoreOptionsForm values={coreValues} setValues={setCoreValues} />
             )}
@@ -320,16 +465,25 @@ export default function YamlBuilder({
             <section className="settings-section">
               <div className="yaml-builder-review-head">
                 <h3>Review</h3>
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => {
-                    if (!editing && manualYaml === null) setManualYaml(generatedYaml);
-                    setEditing((v) => !v);
-                  }}
-                >
-                  {editing ? "Done editing" : "Edit YAML"}
-                </button>
+                <div className="yaml-builder-review-actions">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => { setSavingPreset((v) => !v); setPresetSaved(""); }}
+                  >
+                    Save as preset
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => {
+                      if (!editing && manualYaml === null) setManualYaml(generatedYaml);
+                      setEditing((v) => !v);
+                    }}
+                  >
+                    {editing ? "Done editing" : "Edit YAML"}
+                  </button>
+                </div>
               </div>
               <p className="settings-hint">
                 This is the YAML that will be {submit ? "submitted" : "downloaded"}.
@@ -337,6 +491,37 @@ export default function YamlBuilder({
                 {submit ? "room runs" : "builder was opened for"}, so it
                 validates without version-mismatch warnings.
               </p>
+              {savingPreset && (
+                <div className="preset-save-row">
+                  <input
+                    type="text"
+                    value={presetName}
+                    maxLength={80}
+                    placeholder="Name this preset, e.g. First multiworld, gentle"
+                    onChange={(e) => setPresetName(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary"
+                    disabled={busy || !presetName.trim()}
+                    onClick={handleSavePreset}
+                  >
+                    {busy ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => setSavingPreset(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+              {presetSaved && (
+                <p className="settings-aux-note" style={{ color: "var(--green)" }}>
+                  ✓ {presetSaved}
+                </p>
+              )}
               {editing ? (
                 <textarea
                   className="yaml-builder-editor"
