@@ -109,6 +109,24 @@ TRACKER_WS_ENABLED = _bool_env("AP_TRACKER_WS_ENABLED", False)
 TRACKER_WS_MAX = int(os.environ.get("AP_TRACKER_WS_MAX", "200"))
 TRACKER_WS_IDLE_MINUTES = int(os.environ.get("AP_TRACKER_WS_IDLE_MINUTES", "60"))
 
+# ── FEAT-31: cookieless analytics ────────────────────────────────
+# ANALYTICS_ENABLED is the master switch: off means nothing is recorded
+# anywhere and POST /api/events returns 204 without touching the database.
+# ANALYTICS_VISIT_ID disables the in-memory per-page-load visit id on its
+# own, which downgrades anonymous funnels to plain counts while leaving
+# every other event intact. Neither flag stores anything on a visitor's
+# device in any configuration - there is no cookie and no web storage.
+ANALYTICS_ENABLED = _bool_env("AP_ANALYTICS_ENABLED", True)
+ANALYTICS_VISIT_ID = _bool_env("AP_ANALYTICS_VISIT_ID", True)
+# Storage limitation (GDPR Art. 5(1)(e)). Raw rows are deleted past this
+# horizon; the events_daily rollup keeps counts-only history after that.
+ANALYTICS_RETENTION_DAYS = int(os.environ.get("AP_ANALYTICS_RETENTION_DAYS", "180"))
+# Per-IP ceiling for the public POST /api/events endpoint, per hour. The IP
+# is used transiently for this bucket and is never persisted with an event.
+ANALYTICS_EVENTS_PER_IP_PER_HOUR = int(
+    os.environ.get("AP_ANALYTICS_EVENTS_PER_IP_PER_HOUR", "600")
+)
+
 # Templates
 from pathlib import Path as _Path
 TEMPLATES_DIR = os.environ.get("AP_TEMPLATES_DIR",

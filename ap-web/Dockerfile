@@ -28,6 +28,8 @@ COPY ap-web/api/ ./api/
 # would 500 on /guides in the built image.
 COPY ap-web/templates/ ./templates/
 COPY ap-web/guides/ ./guides/
+# FEAT-31: /privacy renders from repo-controlled markdown the same way.
+COPY ap-web/legal/ ./legal/
 
 COPY ap-web/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

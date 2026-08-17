@@ -36,6 +36,8 @@ from db import (
 )
 from validation import extract_player_info, validate_yaml
 
+import analytics
+
 bp = Blueprint("public", __name__)
 
 
@@ -154,6 +156,15 @@ def public_room_read(room_id: str):
     payload = _sanitize_room(room)
     payload["yamls"] = [_sanitize_yaml(y, expose_submitter=user is not None) for y in yamls]
     payload["player_count"] = len(yamls)
+    # FEAT-31: the public room page is where a shared link lands, so this is
+    # the arrival event for players who never touch the SPA landing page.
+    analytics.record_event(
+        "room_public_view",
+        user_id=(user or {}).get("id"),
+        room_id=room_id,
+        props={"has_session": user is not None},
+        req=request,
+    )
     return jsonify(payload)
 
 
@@ -607,6 +618,12 @@ def public_yaml_claim(room_id: str, yaml_id: int):
         return gate[1]
     room, target = gate
 
+    # FEAT-31: recorded after the gate so it counts real attempts on a
+    # claimable slot, which is what the attempt-vs-race ratio needs.
+    analytics.record_event(
+        "claim_attempted", user_id=user["id"], room_id=room_id, req=request
+    )
+
     if target.get("submitter_user_id") is not None:
         # Already claimed - surface the username so the UI can render
         # "Already claimed by @<user>" without an extra round-trip.
@@ -628,6 +645,9 @@ def public_yaml_claim(room_id: str, yaml_id: int):
     claimed = claim_yaml(yaml_id, user["id"])
     if claimed is None:
         # Lost the race - somebody else's UPDATE landed first.
+        analytics.record_event(
+            "claim_raced", user_id=user["id"], room_id=room_id, req=request
+        )
         owner = None
         latest = get_yaml(yaml_id)
         if latest and latest.get("submitter_user_id"):
@@ -641,6 +661,9 @@ def public_yaml_claim(room_id: str, yaml_id: int):
     add_activity(
         room_id, "yaml_claimed",
         f"{actor} claimed {claimed['game']} YAML for player {claimed['player_name']}",
+    )
+    analytics.record_event(
+        "claim_succeeded", user_id=user["id"], room_id=room_id, req=request
     )
     return jsonify({
         "status": "claimed",

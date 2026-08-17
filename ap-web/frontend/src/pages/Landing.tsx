@@ -114,6 +114,8 @@ export default function Landing() {
           for the Archipelago community. Open source on{" "}
           <a href="https://github.com/dowlle/ap-pie" target="_blank" rel="noreferrer">GitHub</a>.
         </p>
+        {/* Server-rendered page, so a plain anchor rather than a router Link. */}
+        <p><a href="/privacy">Privacy</a></p>
       </section>
     </div>
   );

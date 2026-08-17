@@ -1,0 +1,434 @@
+"""FEAT-31: cookieless, server-side product analytics.
+
+Every privacy rule for the events log lives in this module. `db.insert_event`
+is the storage layer and should not be called from anywhere else.
+
+What this records
+-----------------
+Outcomes at the Flask layer that Cloudflare Web Analytics structurally cannot
+see: why a YAML submission was rejected, whether an OAuth round-trip finished,
+which games people open the YAML builder for, whether a guide reader goes on
+to download anything. Server-rendered pages record themselves; the five
+client-postable kinds cover what only the browser knows (which SPA view is on
+screen, and how far someone got inside the builder modal).
+
+What it never records
+---------------------
+- **No IP address.** The client IP is read for the per-IP rate-limit bucket on
+  POST /api/events and for nothing else; it is never passed to the recorder
+  and never reaches Postgres. Only `cf_country`, the two-letter country code
+  Cloudflare supplies, is stored.
+- **No User-Agent string.** Only a three-value class: desktop / mobile / bot.
+- **No cookie, no localStorage, no sessionStorage, no fingerprint.** The
+  `visit_id` is a random value created in the page's JavaScript memory and
+  passed along with client events; it is never written to the device and does
+  not survive a reload, so it cannot link two visits or two devices.
+- **No free-form text.** Props are validated against a per-kind allowlist
+  below; unknown keys are dropped, strings are length-capped. Usernames,
+  e-mail addresses, YAML contents and validator prose never enter an event.
+
+GDPR posture
+------------
+- **Lawful basis:** legitimate interest, Art. 6(1)(f) - understanding how the
+  site's own funnel performs, with minimised data and no third-party sharing.
+  The balancing test is recorded in the vault design note.
+- **Objection, Art. 21:** a request carrying `Sec-GPC: 1` or `DNT: 1` is
+  recorded with `user_id` and `visit_id` forced to NULL, which reduces the
+  event to an unlinkable counter. That is honoured on server-side events too,
+  not just on the client endpoint.
+- **Storage limitation, Art. 5(1)(e):** raw rows are pruned past
+  `ANALYTICS_RETENTION_DAYS`; the surviving `events_daily` rollup is counts
+  only and relates to no identifiable person.
+- **Erasure, Art. 17:** `db.delete_events_for_user` removes a logged-in
+  user's rows outright. The public /privacy page documents how to ask.
+- **Transparency, Art. 13:** the /privacy page describes this module in plain
+  language. If a new kind or prop is added here, that page is part of the
+  change, not a follow-up.
+
+Failure posture
+---------------
+Recording is best-effort and asynchronous: events go onto a bounded in-memory
+queue and a daemon thread writes them. A full queue drops the event, and a
+database problem can never slow down or break a user's request. `record_event`
+does not raise, ever.
+"""
+
+from __future__ import annotations
+
+import queue
+import secrets
+import threading
+from typing import Any
+
+import config
+
+# ── Event taxonomy ───────────────────────────────────────────────
+#
+# `props` maps a prop name to its accepted type. `client` marks the kinds the
+# public POST /api/events endpoint will accept; everything else is
+# server-recorded only and is rejected if a browser tries to post it.
+#
+# Adding a kind means adding it here AND describing it on the /privacy page.
+
+_STR = "str"
+_INT = "int"
+_BOOL = "bool"
+_STR_LIST = "str_list"
+
+KIND_SPECS: dict[str, dict[str, Any]] = {
+    # ── Client-postable: what only the browser can see ──
+    "page_view": {"client": True, "props": {"view": _STR}},
+    "builder_opened": {
+        "client": True,
+        "props": {"game": _STR, "version": _STR, "surface": _STR},
+    },
+    "builder_yaml_emitted": {
+        "client": True,
+        "props": {"game": _STR, "version": _STR, "action": _STR},
+    },
+    "builder_abandoned": {
+        "client": True,
+        "props": {"game": _STR, "version": _STR, "stage": _STR},
+    },
+    "apworld_download_clicked": {
+        "client": True,
+        "props": {"name": _STR, "version": _STR, "surface": _STR},
+    },
+
+    # ── Auth funnel ──
+    "oauth_login_started": {"client": False, "props": {"next_path": _STR}},
+    "oauth_callback_succeeded": {"client": False, "props": {"first_login": _BOOL}},
+    "oauth_callback_failed": {"client": False, "props": {"reason": _STR}},
+
+    # ── Submit funnel ──
+    "submit_attempted": {
+        "client": False,
+        "props": {"has_session": _BOOL, "content_bytes": _INT},
+    },
+    "submit_succeeded": {"client": False, "props": {"game": _STR, "has_session": _BOOL}},
+    "submit_rejected": {
+        "client": False,
+        "props": {"reason_code": _STR, "has_session": _BOOL},
+    },
+    "submit_rate_limited": {"client": False, "props": {"has_session": _BOOL}},
+
+    # ── Rooms ──
+    "room_public_view": {"client": False, "props": {"has_session": _BOOL}},
+    "room_created": {"client": False, "props": {}},
+    "room_settings_changed": {"client": False, "props": {"fields": _STR_LIST}},
+    "claim_attempted": {"client": False, "props": {}},
+    "claim_succeeded": {"client": False, "props": {}},
+    "claim_raced": {"client": False, "props": {}},
+
+    # ── APWorld index + builder ──
+    "picker_pin_set": {
+        "client": False,
+        "props": {"game": _STR, "version": _STR, "in_index": _BOOL},
+    },
+    "apworld_downloaded": {
+        "client": False,
+        "props": {"name": _STR, "version": _STR, "via": _STR},
+    },
+    "builder_schema_served": {
+        "client": False,
+        "props": {"game": _STR, "version": _STR, "cache": _STR, "derivable": _BOOL},
+    },
+
+    # ── Server-rendered content ──
+    "guide_view": {"client": False, "props": {"slug": _STR}},
+    "ctr_view": {"client": False, "props": {"page": _STR}},
+    "ctr_download": {"client": False, "props": {"asset": _STR, "version": _STR}},
+
+    # ── Security signals ──
+    "admin_403": {"client": False, "props": {}},
+    "auth_403": {"client": False, "props": {}},
+}
+
+CLIENT_KINDS = frozenset(k for k, spec in KIND_SPECS.items() if spec["client"])
+
+# Props are metadata, never content. 120 characters is longer than any game
+# name, version string, or reason code we emit, and short enough that a
+# malformed caller cannot smuggle a YAML fragment into the table.
+_MAX_STR = 120
+_MAX_LIST = 25
+
+# Bounded queue: at this traffic it never fills, and if it ever does the
+# right answer is to drop analytics rather than slow the site down.
+_QUEUE_MAX = 2000
+_queue: queue.Queue[dict] = queue.Queue(maxsize=_QUEUE_MAX)
+_writer_started = threading.Event()
+_writer_lock = threading.Lock()
+_dropped = 0
+_dropped_lock = threading.Lock()
+
+_logger = None
+
+
+def _log(msg: str) -> None:
+    if _logger is not None:
+        try:
+            _logger.warning(msg)
+        except Exception:
+            pass
+
+
+def set_logger(logger) -> None:
+    """Attach the Flask app logger (called once from create_app)."""
+    global _logger
+    _logger = logger
+
+
+# ── Request-context extraction ───────────────────────────────────
+
+
+def new_request_id() -> str:
+    """Short correlation id, set per request in app.py's before_request."""
+    return secrets.token_hex(8)
+
+
+def _ua_class(ua: str) -> str:
+    """Bucket a User-Agent into desktop / mobile / bot. The string itself is
+    read here and discarded; only the bucket is ever stored."""
+    if not ua:
+        return "unknown"
+    low = ua.lower()
+    for marker in ("bot", "crawler", "spider", "slurp", "curl", "wget",
+                   "python-requests", "headless", "monitor", "preview"):
+        if marker in low:
+            return "bot"
+    for marker in ("android", "iphone", "ipad", "ipod", "mobile", "windows phone"):
+        if marker in low:
+            return "mobile"
+    return "desktop"
+
+
+def objection_signalled(req=None) -> bool:
+    """True when the request carries a recognised opt-out signal.
+
+    Defaults to the ambient Flask request, so callers cannot accidentally
+    bypass an opt-out by omitting the argument.
+
+    Global Privacy Control is a legally recognised objection signal in a
+    growing number of jurisdictions, and Do Not Track is the older
+    convention. Honouring both costs us nothing and is the cleanest way to
+    respect Art. 21 without a consent banner.
+    """
+    req = _current_request(req)
+    if req is None:
+        return False
+    try:
+        if (req.headers.get("Sec-GPC") or "").strip() == "1":
+            return True
+        return (req.headers.get("DNT") or "").strip() == "1"
+    except Exception:
+        return False
+
+
+def _current_request(req=None):
+    """The request to read context from.
+
+    Falls back to Flask's ambient request when the caller passes nothing.
+    That default is load-bearing rather than a convenience: the objection
+    check below lives on this path, so a recorder that forgets to pass
+    `req=request` must still honour Sec-GPC / DNT. Failing open here would
+    mean silently ignoring an opt-out.
+    """
+    if req is not None:
+        return req
+    try:
+        from flask import has_request_context, request as flask_request
+
+        return flask_request if has_request_context() else None
+    except Exception:
+        return None
+
+
+def _request_context(req) -> dict:
+    """Pull the (already minimised) request attributes we store.
+
+    Runs in the request thread because the writer thread has no request
+    context. Note what is absent: no IP, no UA string, no referrer, no
+    query string - `path` is the route path only.
+    """
+    ctx = {
+        "path": None,
+        "cf_country": None,
+        "ua_class": None,
+        "request_id": None,
+        "objection": False,
+    }
+    req = _current_request(req)
+    if req is None:
+        return ctx
+    try:
+        ctx["path"] = (req.path or "")[:200] or None
+        country = (req.headers.get("CF-IPCountry") or "").strip().upper()
+        # Cloudflare sends XX for unknown and T1 for Tor; neither is a country
+        # and neither is worth storing.
+        if len(country) == 2 and country not in ("XX", "T1"):
+            ctx["cf_country"] = country
+        ctx["ua_class"] = _ua_class(req.headers.get("User-Agent") or "")
+        ctx["objection"] = objection_signalled(req)
+        from flask import g
+        ctx["request_id"] = getattr(g, "request_id", None)
+    except Exception:
+        pass
+    return ctx
+
+
+# ── Props sanitising ─────────────────────────────────────────────
+
+
+def sanitize_props(kind: str, props: dict | None) -> dict:
+    """Keep only the props declared for `kind`, coerced to the declared type.
+
+    Unknown keys are dropped silently rather than rejected: a caller passing
+    something extra should lose the extra, not lose the event. Anything that
+    cannot be coerced is dropped too.
+    """
+    spec = KIND_SPECS.get(kind)
+    if not spec or not isinstance(props, dict):
+        return {}
+    allowed: dict[str, str] = spec["props"]
+    out: dict[str, Any] = {}
+    for key, want in allowed.items():
+        if key not in props:
+            continue
+        val = props[key]
+        if val is None:
+            continue
+        try:
+            if want == _STR:
+                if isinstance(val, bool) or not isinstance(val, (str, int, float)):
+                    continue
+                out[key] = str(val)[:_MAX_STR]
+            elif want == _INT:
+                if isinstance(val, bool) or not isinstance(val, (int, float)):
+                    continue
+                out[key] = int(val)
+            elif want == _BOOL:
+                if not isinstance(val, bool):
+                    continue
+                out[key] = val
+            elif want == _STR_LIST:
+                if not isinstance(val, (list, tuple)):
+                    continue
+                out[key] = [
+                    str(v)[:_MAX_STR] for v in val[:_MAX_LIST]
+                    if isinstance(v, (str, int, float)) and not isinstance(v, bool)
+                ]
+        except Exception:
+            continue
+    return out
+
+
+# ── Writer thread ────────────────────────────────────────────────
+
+
+def _writer_loop() -> None:
+    from db import insert_event
+
+    while True:
+        row = _queue.get()
+        try:
+            insert_event(
+                row["kind"],
+                user_id=row.get("user_id"),
+                room_id=row.get("room_id"),
+                path=row.get("path"),
+                cf_country=row.get("cf_country"),
+                ua_class=row.get("ua_class"),
+                request_id=row.get("request_id"),
+                visit_id=row.get("visit_id"),
+                props=row.get("props"),
+            )
+        except Exception as e:
+            # Best-effort by contract: a failed write is logged once and
+            # forgotten. Never retried, never surfaced to the request.
+            _log(f"analytics: event write failed ({row.get('kind')}): {e}")
+        finally:
+            _queue.task_done()
+
+
+def start_writer() -> None:
+    """Start the background writer once per process. Safe to call repeatedly."""
+    with _writer_lock:
+        if _writer_started.is_set():
+            return
+        t = threading.Thread(target=_writer_loop, name="analytics-writer", daemon=True)
+        t.start()
+        _writer_started.set()
+
+
+# ── Public API ───────────────────────────────────────────────────
+
+
+def record_event(
+    kind: str,
+    *,
+    user_id: int | None = None,
+    room_id: str | None = None,
+    props: dict | None = None,
+    req=None,
+    visit_id: str | None = None,
+) -> None:
+    """Record one event. Never raises, never blocks on the database.
+
+    `req` overrides which request the context is read from; it defaults to
+    the ambient Flask request, which is what makes the objection check
+    impossible to skip by forgetting an argument. `visit_id` is only ever
+    supplied by the client-event endpoint; server-recorded events leave it
+    NULL.
+    """
+    try:
+        if not config.ANALYTICS_ENABLED:
+            return
+        if kind not in KIND_SPECS:
+            _log(f"analytics: refusing unknown kind {kind!r}")
+            return
+
+        ctx = _request_context(req)
+        if ctx["objection"]:
+            # Art. 21 objection: keep the counter, drop everything that could
+            # tie it to a person or a session.
+            user_id = None
+            visit_id = None
+        if not config.ANALYTICS_VISIT_ID:
+            visit_id = None
+
+        row = {
+            "kind": kind,
+            "user_id": user_id,
+            "room_id": (str(room_id)[:64] if room_id else None),
+            "path": ctx["path"],
+            "cf_country": ctx["cf_country"],
+            "ua_class": ctx["ua_class"],
+            "request_id": ctx["request_id"],
+            "visit_id": (str(visit_id)[:64] if visit_id else None),
+            "props": sanitize_props(kind, props),
+        }
+
+        start_writer()
+        try:
+            _queue.put_nowait(row)
+        except queue.Full:
+            global _dropped
+            with _dropped_lock:
+                _dropped += 1
+                if _dropped % 100 == 1:
+                    _log(f"analytics: queue full, dropped {_dropped} event(s)")
+    except Exception as e:  # pragma: no cover - the whole point is not raising
+        _log(f"analytics: record_event failed: {e}")
+
+
+def queue_depth() -> int:
+    """Current backlog, exposed on the admin summary for sanity checks."""
+    try:
+        return _queue.qsize()
+    except Exception:
+        return -1
+
+
+def dropped_count() -> int:
+    with _dropped_lock:
+        return _dropped

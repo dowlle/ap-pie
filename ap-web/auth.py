@@ -122,6 +122,21 @@ def requires_admin(f):
     return wrapper
 
 
+def _record_403(kind: str, user: dict) -> None:
+    """FEAT-31: record a middleware refusal.
+
+    The blocked path is already stored as the event's `path`, so no props are
+    needed. Import is local to keep auth.py free of an import-time dependency
+    on the analytics module.
+    """
+    try:
+        import analytics
+
+        analytics.record_event(kind, user_id=user.get("id"), req=request)
+    except Exception:
+        pass
+
+
 def apply_auth_to_app(app):
     """Register a before_request hook that protects non-public routes.
 
@@ -153,6 +168,13 @@ def apply_auth_to_app(app):
         # size cap and a cold-derivation concurrency cap. Any FUTURE
         # sensitive route under this prefix must add its own in-body check.
         "/api/apworlds",
+        # FEAT-31: the browser event intake is public by necessity - it
+        # records what anonymous visitors do. It accepts only allowlisted
+        # kinds, always answers 204, and reads the session itself when one
+        # happens to be present (same in-body pattern as /api/apworlds).
+        # The admin read surface lives at /api/admin/events, which does not
+        # start with this prefix and so stays behind the is_admin check.
+        "/api/events",
     )
 
     @app.before_request
@@ -189,11 +211,13 @@ def apply_auth_to_app(app):
         # admin route without the decorator still gets blocked here.
         if request.path.startswith("/api/admin"):
             if not user.get("is_admin"):
+                _record_403("admin_403", user)
                 return jsonify({"error": "Admin access required"}), 403
             return None
 
         # Non-admin protected routes require approval
         if not user.get("is_approved") and not user.get("is_admin"):
+            _record_403("auth_403", user)
             return jsonify({"error": "Account not yet approved"}), 403
 
         return None

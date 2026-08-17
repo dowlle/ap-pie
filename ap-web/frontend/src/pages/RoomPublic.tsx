@@ -875,6 +875,8 @@ function RoomPublic() {
         open={builderGame !== null}
         games={builderGames}
         initialGame={builderGame ?? undefined}
+        surface="room_public"
+        roomId={room.id}
         submit={{
           label: "Submit to this room",
           run: async (yamlContent) => {

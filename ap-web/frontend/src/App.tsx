@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, Navigate, Link, useLocation } from "react-router-dom";
 import GameList from "./pages/GameList";
 import GameDetail from "./pages/GameDetail";
 import Summary from "./pages/Summary";
@@ -24,6 +24,7 @@ import { FeaturesProvider, useFeature } from "./context/FeaturesContext";
 import { DeploymentProvider } from "./context/DeploymentContext";
 import AuthButton from "./components/AuthButton";
 import DeploymentBanner from "./components/DeploymentBanner";
+import { trackPageView } from "./lib/analytics";
 
 function NavBar() {
   const { user, authEnabled, loading, isOwner, viewAs, setViewAs } = useAuth();
@@ -211,6 +212,36 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * FEAT-31: record which SPA view is on screen.
+ *
+ * The backend serves the same index.html for every client route, so this is
+ * the only place a view can be identified. A coarse view NAME is sent, never
+ * the URL: room ids, seeds and query strings stay out of the analytics log.
+ */
+function RouteAnalytics() {
+  const location = useLocation();
+  useEffect(() => {
+    const p = location.pathname;
+    let view = "other";
+    if (p === "/") view = "landing";
+    else if (p === "/apworlds") view = "apworlds";
+    else if (p === "/rooms") view = "rooms";
+    else if (p === "/rooms/templates") view = "room_templates";
+    else if (p.startsWith("/rooms/")) view = "room_detail";
+    else if (p.startsWith("/r/")) view = "room_public";
+    else if (p.startsWith("/play/")) view = "play";
+    else if (p.startsWith("/admin")) view = "admin";
+    else if (p.startsWith("/market")) view = "market";
+    else if (p.startsWith("/games/")) view = "game_detail";
+    else if (p === "/tracker") view = "tracker";
+    else if (p === "/servers") view = "servers";
+    else if (p === "/summary") view = "summary";
+    trackPageView(view);
+  }, [location.pathname]);
+  return null;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -256,6 +287,7 @@ function App() {
       <FeaturesProvider>
         <DeploymentProvider>
           <BrowserRouter>
+            <RouteAnalytics />
             <AppRoutes />
           </BrowserRouter>
         </DeploymentProvider>

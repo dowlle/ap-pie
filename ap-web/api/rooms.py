@@ -32,6 +32,8 @@ from db import (
 from validation import extract_player_info, validate_yaml
 from api.features import requires_feature
 
+import analytics
+
 bp = Blueprint("rooms", __name__)
 
 
@@ -217,6 +219,12 @@ def rooms_create():
         auto_upgrade_apworld_pins=auto_upgrade,
         claim_mode=claim_mode,
     )
+    # FEAT-31: the room's own name and description are the host's content and
+    # stay out of the events log; the id is enough to join a room to its
+    # downstream submit and claim events.
+    analytics.record_event(
+        "room_created", user_id=host_user_id, room_id=room["id"], req=request
+    )
     return jsonify(room), 201
 
 
@@ -322,6 +330,18 @@ def rooms_update(room_id: str):
                 _maybe_reschedule_tracker_ws(updated)
     except Exception as e:
         current_app.logger.warning(f"FEAT-17 reschedule on PUT failed: {e}")
+    # FEAT-31: which settings hosts actually change, by field NAME only -
+    # never the values, which include room descriptions and tracker URLs.
+    changed = sorted(k for k in data.keys() if room.get(k) != updated.get(k))
+    if changed:
+        _user = _current_user()
+        analytics.record_event(
+            "room_settings_changed",
+            user_id=(_user or {}).get("id"),
+            room_id=room_id,
+            props={"fields": changed},
+            req=request,
+        )
     return jsonify(updated)
 
 
@@ -1849,4 +1869,24 @@ def room_apworld_set(room_id: str, apworld_name: str):
         clear_room_apworld(room_id, apworld_name)
         return jsonify({"status": "cleared", "apworld_name": apworld_name})
     row = set_room_apworld(room_id, apworld_name, str(version))
+    # FEAT-31: a host deliberately pinning a version is the strongest signal
+    # of which games are actually being played here. `in_index` records
+    # whether the pinned version still resolves against the index, which is
+    # how drift (a version pulled upstream) shows up in aggregate.
+    in_index = False
+    try:
+        from api.apworlds import _get_index_worlds
+
+        world = next((w for w in _get_index_worlds() if w.name == apworld_name), None)
+        in_index = bool(world and any(v.version == str(version) for v in world.versions))
+    except Exception:
+        pass
+    _user = _current_user()
+    analytics.record_event(
+        "picker_pin_set",
+        user_id=(_user or {}).get("id"),
+        room_id=room_id,
+        props={"game": apworld_name, "version": str(version), "in_index": in_index},
+        req=request,
+    )
     return jsonify({"status": "pinned", **row})

@@ -18,8 +18,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import markdown
-from flask import Blueprint, Response, abort, render_template
+from flask import Blueprint, Response, abort, render_template, request
 
+import analytics
 import config
 
 _GUIDES_DIR = Path(__file__).resolve().parent.parent / "guides"
@@ -266,6 +267,10 @@ def guide_page(slug: str) -> str:
     if not md_path.is_file():
         abort(404)
     body_html, sections = _render_markdown(md_path)
+    # FEAT-31: guides are server-rendered, so a read is visible here without
+    # any client-side script. Cloudflare counts the pageview; this records
+    # which guide, so guide reads can be joined to what the reader does next.
+    analytics.record_event("guide_view", props={"slug": slug}, req=request)
 
     # Section navigation: the shelf this guide belongs to plus its sibling
     # guides, so every guide page can say where it lives and link sideways.
@@ -310,6 +315,8 @@ def guide_page(slug: str) -> str:
 @bp.route("/sitemap.xml")
 def sitemap() -> Response:
     from api.ctr import CTR_PAGES, PAGES_UPDATED as CTR_UPDATED
+    from api.legal import PRIVACY_PATH as LEGAL_PRIVACY_PATH
+    from api.legal import PRIVACY_UPDATED as LEGAL_PRIVACY_UPDATED
 
     entries = [
         {"loc": _canonical("/"), "lastmod": None},
@@ -320,6 +327,8 @@ def sitemap() -> Response:
     ] + [
         {"loc": _canonical(p["path"]), "lastmod": CTR_UPDATED}
         for p in CTR_PAGES
+    ] + [
+        {"loc": _canonical(LEGAL_PRIVACY_PATH), "lastmod": LEGAL_PRIVACY_UPDATED},
     ]
     xml = render_template("guides/sitemap.xml", entries=entries)
     return Response(xml, mimetype="application/xml")

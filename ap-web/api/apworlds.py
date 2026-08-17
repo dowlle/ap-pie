@@ -755,6 +755,19 @@ def apworld_builder_schema(name: str):
     rows = builder_schemas_for_pins([{"apworld_name": name, "version": version}])
     if not rows:
         abort(404, description=f"APWorld '{name}' not in index")
+    # FEAT-31: the server-side half of builder usage. `derivable` false means
+    # this apworld is Tier 0 (no option form can be derived), which is the
+    # signal for which games still send people to paste a YAML by hand.
+    analytics.record_event(
+        "builder_schema_served",
+        user_id=session.get("user_id"),
+        props={
+            "game": rows[0].get("game") or name,
+            "version": version,
+            "derivable": bool(rows[0].get("schema")),
+        },
+        req=request,
+    )
     return jsonify(rows[0])
 
 
@@ -775,6 +788,15 @@ def apworld_download_proxy(name: str, version: str):
     ver = next((v for v in world.versions if v.version == version), None)
     if not ver:
         abort(404, description=f"Version '{version}' not in index for '{name}'")
+
+    # FEAT-31: which apworlds people actually pull. Recorded before the 302
+    # so url-backed and local-backed downloads count the same way.
+    analytics.record_event(
+        "apworld_downloaded",
+        user_id=session.get("user_id"),
+        props={"name": name, "version": version, "via": "single"},
+        req=request,
+    )
 
     if ver.url:
         # SEC-38: the redirect target comes from the index TOML manifest.

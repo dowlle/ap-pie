@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { BuilderSchemaEntry, TemplateOption } from "../api";
 import { buildYamlContent, downloadYaml } from "../lib/yamlBuild";
 import { highlightYaml } from "../lib/yamlHighlight";
+import { trackBuilderAbandoned, trackBuilderEmitted, trackBuilderOpened } from "../lib/analytics";
 
 /**
  * FEAT-38: guided YAML builder modal. One shared shell for all three
@@ -27,6 +28,8 @@ export default function YamlBuilder({
   submit,
   reviewExtra,
   onClose,
+  surface = "unknown",
+  roomId,
 }: {
   open: boolean;
   games: BuilderSchemaEntry[];
@@ -42,6 +45,12 @@ export default function YamlBuilder({
    *  injects its "Add to room / Create room" actions here. */
   reviewExtra?: (yamlContent: string, playerName: string) => ReactNode;
   onClose: () => void;
+  /** FEAT-31: which mount opened the builder - "room_public", "room_detail"
+   *  or "apworlds". Recorded as a plain label so builder usage can be split
+   *  by entry point. */
+  surface?: string;
+  /** Room the builder is operating in, when there is one. */
+  roomId?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const onCloseRef = useRef(onClose);
@@ -59,6 +68,21 @@ export default function YamlBuilder({
     () => games.find((g) => g.apworld_name === selected) ?? null,
     [games, selected],
   );
+
+  // FEAT-31 builder funnel. `emitted` marks that the visitor got a YAML out
+  // of the builder (downloaded or submitted); anything else is an abandon,
+  // recorded with the step they were on. Refs, not state: these must be
+  // readable from the unload path without re-rendering.
+  const emittedRef = useRef(false);
+  const stepRef = useRef(step);
+  useEffect(() => { stepRef.current = step; }, [step]);
+  const openedKeyRef = useRef("");
+
+  const noteEmitted = (action: string) => {
+    if (!entry) return;
+    emittedRef.current = true;
+    trackBuilderEmitted(entry.game, entry.version, action, roomId);
+  };
 
   // Native <dialog> lifecycle - same pattern as CreateRoomModal.
   useEffect(() => {
@@ -86,6 +110,39 @@ export default function YamlBuilder({
     setError("");
     setSuccess("");
   }, [open, initialGame, games]);
+
+  // FEAT-31: one "opened" per (open, game) pair - switching game inside an
+  // open builder counts as opening the builder for that game, reopening the
+  // same game after a close counts again.
+  useEffect(() => {
+    if (!open || !entry) return;
+    const key = `${entry.apworld_name}@${entry.version}`;
+    if (openedKeyRef.current === key) return;
+    openedKeyRef.current = key;
+    emittedRef.current = false;
+    trackBuilderOpened(entry.game, entry.version, surface, roomId);
+  }, [open, entry, surface, roomId]);
+
+  // Abandonment: fired when the builder closes (or the tab goes away) after
+  // being opened for a game without producing a YAML.
+  useEffect(() => {
+    if (open) return;
+    openedKeyRef.current = "";
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !entry) return;
+    const abandonIfUnfinished = () => {
+      if (emittedRef.current) return;
+      trackBuilderAbandoned(entry.game, entry.version, stepRef.current, roomId);
+      emittedRef.current = true; // don't double-report on unmount after unload
+    };
+    window.addEventListener("pagehide", abandonIfUnfinished);
+    return () => {
+      window.removeEventListener("pagehide", abandonIfUnfinished);
+      abandonIfUnfinished();
+    };
+  }, [open, entry, roomId]);
 
   // Seed form values from schema defaults whenever the game changes.
   useEffect(() => {
@@ -116,6 +173,7 @@ export default function YamlBuilder({
     try {
       const msg = await submit.run(yamlContent, playerName.trim() || "Player1", entry.game);
       setSuccess(msg);
+      noteEmitted("submit");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Submission failed");
     } finally {
@@ -240,7 +298,10 @@ export default function YamlBuilder({
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => downloadYaml(yamlContent, playerName.trim() || "Player1", entry.game)}
+              onClick={() => {
+                downloadYaml(yamlContent, playerName.trim() || "Player1", entry.game);
+                noteEmitted("download");
+              }}
               disabled={busy}
             >
               Download .yaml

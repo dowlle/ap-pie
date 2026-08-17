@@ -13,7 +13,15 @@ from auth import (
 )
 from db import create_or_update_user, get_user
 
+import analytics
+
 bp = Blueprint("auth", __name__)
+
+
+def _record_callback_failed(reason: str) -> None:
+    """FEAT-31: one canonical short code per OAuth failure mode. Never the
+    provider's error text, which can echo request parameters."""
+    analytics.record_event("oauth_callback_failed", props={"reason": reason}, req=request)
 
 
 def _safe_next(value: str | None) -> str | None:
@@ -42,6 +50,11 @@ def login():
     elif "post_login_next" in session:
         # Don't carry a stale next-redirect across unrelated logins
         session.pop("post_login_next", None)
+    # FEAT-31: top of the auth funnel. next_path is a site-relative path
+    # already validated by _safe_next, so it carries no third-party URL.
+    analytics.record_event(
+        "oauth_login_started", props={"next_path": next_url or "/"}, req=request
+    )
     return redirect(discord_login_url(state))
 
 
@@ -49,18 +62,22 @@ def login():
 def callback():
     """Handle the OAuth2 callback from Discord."""
     if not consume_oauth_state(request.args.get("state")):
+        _record_callback_failed("state_mismatch")
         return jsonify({"error": "Invalid or missing OAuth state"}), 400
 
     code = request.args.get("code")
     if not code:
+        _record_callback_failed("missing_code")
         return jsonify({"error": "Missing authorization code"}), 400
 
     token_data = exchange_code(code)
     if not token_data or "access_token" not in token_data:
+        _record_callback_failed("token_exchange")
         return jsonify({"error": "Failed to exchange authorization code"}), 400
 
     discord_user = get_discord_user(token_data["access_token"])
     if not discord_user or "id" not in discord_user:
+        _record_callback_failed("profile_fetch")
         return jsonify({"error": "Failed to get Discord user info"}), 400
 
     # Prefer the Discord display name (`global_name`) over the unique handle
@@ -80,6 +97,16 @@ def callback():
 
     session["user_id"] = user["id"]
     session["discord_username"] = user["discord_username"]
+
+    # FEAT-31: bottom of the auth funnel. The Discord id and display name are
+    # deliberately not recorded - user_id is the same identity the rest of the
+    # events log uses.
+    analytics.record_event(
+        "oauth_callback_succeeded",
+        user_id=user["id"],
+        props={"first_login": bool(user.get("is_new_user"))},
+        req=request,
+    )
 
     # Redirect to the post-login next URL when set (validated as relative
     # path on /api/auth/login), otherwise the frontend root.

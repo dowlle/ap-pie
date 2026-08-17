@@ -4,7 +4,7 @@ import atexit
 import threading
 from pathlib import Path
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, g, jsonify, send_from_directory
 from flask_cors import CORS
 
 import config
@@ -160,6 +160,53 @@ def create_app() -> Flask:
         sweeper = threading.Thread(target=_deadline_sweeper, name="deadline-sweeper", daemon=True)
         sweeper.start()
 
+    # FEAT-31: analytics recorder + retention sweeper.
+    #
+    # The recorder writes on a daemon thread so no user request ever waits on
+    # an analytics INSERT. The sweeper folds each day into the counts-only
+    # events_daily rollup and then prunes raw rows past the retention horizon
+    # (GDPR Art. 5(1)(e)) - in-process rather than a host cron so it survives
+    # redeploys and needs no state on the box.
+    import analytics
+
+    analytics.set_logger(app.logger)
+    if db_available and config.ANALYTICS_ENABLED:
+        analytics.start_writer()
+
+        import os
+        import time as _time
+
+        RETENTION_SWEEP_INTERVAL_SECONDS = 12 * 3600
+
+        def _retention_sweeper() -> None:
+            from db import rollup_and_prune_events
+
+            # Stagger workers so N gunicorn processes don't all sweep at once.
+            _time.sleep(300 + (os.getpid() % 120))
+            while True:
+                try:
+                    result = rollup_and_prune_events(config.ANALYTICS_RETENTION_DAYS)
+                    if result["rows_pruned"]:
+                        app.logger.info(
+                            f"analytics retention: pruned {result['rows_pruned']} row(s) "
+                            f"older than {config.ANALYTICS_RETENTION_DAYS} days"
+                        )
+                except Exception as e:
+                    app.logger.error(f"analytics retention sweep failed: {e}")
+                _time.sleep(RETENTION_SWEEP_INTERVAL_SECONDS)
+
+        threading.Thread(
+            target=_retention_sweeper, name="analytics-retention", daemon=True
+        ).start()
+
+    @app.before_request
+    def _assign_request_id() -> None:
+        """Correlation id for this request. Lets a client-posted event and the
+        server-side event it triggered be lined up without any visitor
+        identifier. Registered before the auth middleware so 403 recorders
+        can read it."""
+        g.request_id = analytics.new_request_id()
+
     # FEAT-17 V0: real-time WebSocket tracker. Off by default until V1
     # wires the cache into the API. Toggle with AP_TRACKER_WS_ENABLED=1.
     if db_available and config.TRACKER_WS_ENABLED:
@@ -200,6 +247,8 @@ def create_app() -> Flask:
     from api.room_templates import bp as room_templates_bp
     from api.guides import bp as guides_bp
     from api.ctr import bp as ctr_bp
+    from api.events import bp as events_bp
+    from api.legal import bp as legal_bp
 
     app.register_blueprint(games_bp)
     app.register_blueprint(summary_bp)
@@ -226,6 +275,10 @@ def create_app() -> Flask:
     # FEAT-40: server-rendered CTR section (/ctr, /ctr/download + stable
     # download redirects). Same before-the-catch-all rule as guides.
     app.register_blueprint(ctr_bp)
+    # FEAT-31: analytics event intake + admin read surface, and the
+    # server-rendered /privacy page that documents what they record.
+    app.register_blueprint(events_bp)
+    app.register_blueprint(legal_bp)
 
     # Apply auth middleware - protects all /api/* except /api/market, /api/auth, /api/trackers
     apply_auth_to_app(app)

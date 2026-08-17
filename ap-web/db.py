@@ -390,6 +390,61 @@ def init_db(db_url: str) -> None:
             "CREATE INDEX IF NOT EXISTS idx_apworld_builder_schemas_name_version "
             "ON apworld_builder_schemas(apworld_name, version)"
         )
+
+        # FEAT-31: cookieless server-side analytics.
+        #
+        # Privacy shape is load-bearing, not incidental (see analytics.py and
+        # the public /privacy page): no raw IP, no User-Agent string, no
+        # persistent or device-stored identifier. `cf_country` is a 2-letter
+        # code, `ua_class` is one of desktop/mobile/bot, and `visit_id` is a
+        # per-page-load random id held only in the browser's memory, so it
+        # dies on reload and links nothing across visits or devices.
+        #
+        # `room_id` is deliberately NOT a foreign key: rooms get deleted and
+        # we want the historical event to survive. `user_id` IS a foreign key
+        # with ON DELETE SET NULL so deleting a user anonymises their history
+        # instead of orphaning it (GDPR Art. 17 via db.delete_events_for_user
+        # for the narrower "erase my analytics" request).
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS events (
+                id         BIGSERIAL PRIMARY KEY,
+                ts         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                kind       TEXT NOT NULL,
+                user_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                room_id    TEXT,
+                path       TEXT,
+                cf_country TEXT,
+                ua_class   TEXT,
+                request_id TEXT,
+                visit_id   TEXT,
+                props      JSONB NOT NULL DEFAULT '{}'::jsonb
+            )
+        """)
+        for stmt in (
+            "CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_events_kind_ts ON events(kind, ts DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_events_user_ts ON events(user_id, ts DESC) "
+            "WHERE user_id IS NOT NULL",
+            "CREATE INDEX IF NOT EXISTS idx_events_room_ts ON events(room_id, ts DESC) "
+            "WHERE room_id IS NOT NULL",
+            "CREATE INDEX IF NOT EXISTS idx_events_visit_ts ON events(visit_id, ts DESC) "
+            "WHERE visit_id IS NOT NULL",
+        ):
+            cur.execute(stmt)
+
+        # Daily rollup. Written by the retention sweeper BEFORE raw rows are
+        # pruned, so long-term trend survives the retention window. Contains
+        # counts only - no user_id, no room_id, no visit_id, nothing that
+        # relates to an identifiable person - which is why it has no
+        # expiry of its own.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS events_daily (
+                day         DATE NOT NULL,
+                kind        TEXT NOT NULL,
+                event_count INTEGER NOT NULL,
+                PRIMARY KEY (day, kind)
+            )
+        """)
     conn.autocommit = False
     conn.close()
     _db_url = db_url
@@ -947,6 +1002,214 @@ def get_activity(room_id: str, limit: int = 50) -> list[dict]:
     return [_serialize(r) for r in rows]
 
 
+# ── FEAT-31 analytics events ─────────────────────────────────────
+#
+# Storage layer only. Every privacy rule (what may be passed in, what gets
+# dropped, how objection signals are honoured) lives in analytics.py, which
+# is the only module that should call insert_event directly.
+
+
+def insert_event(
+    kind: str,
+    *,
+    user_id: int | None = None,
+    room_id: str | None = None,
+    path: str | None = None,
+    cf_country: str | None = None,
+    ua_class: str | None = None,
+    request_id: str | None = None,
+    visit_id: str | None = None,
+    props: dict | None = None,
+) -> None:
+    """Append one analytics event. Callers go through analytics.record_event."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO events
+                   (kind, user_id, room_id, path, cf_country, ua_class,
+                    request_id, visit_id, props)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            (kind, user_id, room_id, path, cf_country, ua_class,
+             request_id, visit_id, psycopg2.extras.Json(props or {})),
+        )
+    conn.commit()
+
+
+def query_events(
+    *,
+    kind: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    room_id: str | None = None,
+    user_id: int | None = None,
+    visit_id: str | None = None,
+    limit: int = 200,
+) -> list[dict]:
+    """Filtered read for the admin endpoint. Newest first, hard-capped."""
+    limit = max(1, min(int(limit), 1000))
+    where: list[str] = []
+    params: list = []
+    if kind:
+        where.append("kind = %s")
+        params.append(kind)
+    if since:
+        where.append("ts >= %s")
+        params.append(since)
+    if until:
+        where.append("ts < %s")
+        params.append(until)
+    if room_id:
+        where.append("room_id = %s")
+        params.append(room_id)
+    if user_id is not None:
+        where.append("user_id = %s")
+        params.append(user_id)
+    if visit_id:
+        where.append("visit_id = %s")
+        params.append(visit_id)
+    clause = f"WHERE {' AND '.join(where)}" if where else ""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            f"SELECT * FROM events {clause} ORDER BY ts DESC, id DESC LIMIT %s",
+            (*params, limit),
+        )
+        rows = _dictrow(cur)
+    return [_serialize(r) for r in rows]
+
+
+def events_counts_by_kind(days: int = 7) -> list[dict]:
+    """Event volume per kind over a trailing window."""
+    days = max(1, min(int(days), 3650))
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT kind, COUNT(*) AS event_count
+                 FROM events
+                WHERE ts > NOW() - make_interval(days => %s)
+             GROUP BY kind
+             ORDER BY event_count DESC""",
+            (days,),
+        )
+        rows = _dictrow(cur)
+    return [{"kind": r["kind"], "count": int(r["event_count"])} for r in rows]
+
+
+def events_funnel(days: int = 7) -> dict:
+    """The four questions the design note exists to answer.
+
+    Visit-scoped conversion uses visit_id, which only client-side events
+    carry, so anonymous funnel rates are 'of visits we could observe' -
+    a visitor who blocks the events endpoint or sends Sec-GPC counts in
+    the server-side totals but not in the visit-scoped ones.
+    """
+    days = max(1, min(int(days), 3650))
+    conn = _get_conn()
+    out: dict = {"window_days": days}
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT
+                   COUNT(*) FILTER (WHERE kind = 'page_view') AS page_views,
+                   COUNT(DISTINCT visit_id) FILTER (WHERE visit_id IS NOT NULL) AS visits,
+                   COUNT(*) FILTER (WHERE kind = 'oauth_login_started') AS login_started,
+                   COUNT(*) FILTER (WHERE kind = 'oauth_callback_succeeded') AS login_succeeded,
+                   COUNT(*) FILTER (WHERE kind = 'builder_opened') AS builder_opened,
+                   COUNT(*) FILTER (WHERE kind = 'builder_yaml_emitted') AS builder_emitted,
+                   COUNT(*) FILTER (WHERE kind = 'submit_succeeded') AS submit_succeeded,
+                   COUNT(*) FILTER (WHERE kind = 'submit_rejected') AS submit_rejected,
+                   COUNT(*) FILTER (WHERE kind = 'room_created') AS room_created,
+                   COUNT(*) FILTER (WHERE kind = 'guide_view') AS guide_views,
+                   COUNT(*) FILTER (WHERE kind = 'ctr_download') AS ctr_downloads
+                 FROM events
+                WHERE ts > NOW() - make_interval(days => %s)""",
+            (days,),
+        )
+        out["totals"] = {k: int(v or 0) for k, v in _dictrow(cur)[0].items()}
+
+        cur.execute(
+            """SELECT props->>'reason_code' AS reason, COUNT(*) AS n
+                 FROM events
+                WHERE kind = 'submit_rejected'
+                  AND ts > NOW() - make_interval(days => %s)
+             GROUP BY reason ORDER BY n DESC LIMIT 15""",
+            (days,),
+        )
+        out["rejection_reasons"] = [
+            {"reason_code": r["reason"], "count": int(r["n"])} for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            """SELECT props->>'game' AS game, COUNT(*) AS n
+                 FROM events
+                WHERE kind IN ('builder_opened', 'builder_schema_served', 'picker_pin_set')
+                  AND props->>'game' IS NOT NULL
+                  AND ts > NOW() - make_interval(days => %s)
+             GROUP BY game ORDER BY n DESC LIMIT 20""",
+            (days,),
+        )
+        out["top_games"] = [
+            {"game": r["game"], "count": int(r["n"])} for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            """SELECT path, COUNT(*) AS n
+                 FROM events
+                WHERE kind IN ('page_view', 'guide_view', 'ctr_view')
+                  AND path IS NOT NULL
+                  AND ts > NOW() - make_interval(days => %s)
+             GROUP BY path ORDER BY n DESC LIMIT 20""",
+            (days,),
+        )
+        out["top_paths"] = [
+            {"path": r["path"], "count": int(r["n"])} for r in _dictrow(cur)
+        ]
+    return out
+
+
+def rollup_and_prune_events(retention_days: int = 180) -> dict:
+    """Fold expiring rows into events_daily, then delete them.
+
+    Rollup runs over the WHOLE table (idempotent upsert) so a day is never
+    missed if the sweeper skips a tick; the delete only touches rows past
+    the retention horizon. Returns {'days_rolled': n, 'rows_pruned': n}.
+    """
+    retention_days = max(1, int(retention_days))
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO events_daily (day, kind, event_count)
+               SELECT (ts AT TIME ZONE 'UTC')::date AS day, kind, COUNT(*)
+                 FROM events
+             GROUP BY day, kind
+               ON CONFLICT (day, kind)
+               DO UPDATE SET event_count = GREATEST(
+                   events_daily.event_count, EXCLUDED.event_count)"""
+        )
+        days_rolled = cur.rowcount
+        cur.execute(
+            "DELETE FROM events WHERE ts < NOW() - make_interval(days => %s)",
+            (retention_days,),
+        )
+        pruned = cur.rowcount
+    conn.commit()
+    return {"days_rolled": max(days_rolled, 0), "rows_pruned": max(pruned, 0)}
+
+
+def delete_events_for_user(user_id: int) -> int:
+    """Erase one user's analytics rows outright (GDPR Art. 17 request).
+
+    Deletes rather than anonymises: a request to erase should not leave
+    behind rows that are still linkable via visit_id within a session.
+    Returns the number of rows removed.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM events WHERE user_id = %s", (user_id,))
+        n = cur.rowcount
+    conn.commit()
+    return max(n, 0)
+
+
 # ── Per-room APWorld pins (FEAT-21) ──────────────────────────────
 
 
@@ -1378,13 +1641,17 @@ def create_or_update_user(discord_id: str, discord_username: str) -> dict:
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
+            # `xmax = 0` is the standard way to tell an upsert's INSERT from
+            # its UPDATE: a freshly inserted tuple has no update transaction
+            # id. Surfaced as is_new_user so the OAuth callback can record
+            # first-login vs returning (FEAT-31) without a second query.
             """INSERT INTO users (discord_id, discord_username, is_admin, is_approved)
                VALUES (%s, %s, %s, %s)
                ON CONFLICT (discord_id)
                DO UPDATE SET discord_username = EXCLUDED.discord_username,
                              is_admin = users.is_admin OR EXCLUDED.is_admin,
                              is_approved = users.is_approved OR EXCLUDED.is_approved
-               RETURNING *""",
+               RETURNING *, (xmax = 0) AS is_new_user""",
             (discord_id, discord_username, is_owner, is_owner),
         )
         row = _dictrow(cur)[0]

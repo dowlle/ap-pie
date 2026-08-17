@@ -63,6 +63,40 @@ def _resolve_name_template(name: str, slot: int = 1, number: int = 1) -> str:
     return resolved.strip()[:_NAME_MAX_LEN].strip()
 
 
+def classify_validation_error(error: str | None) -> str:
+    """Map a validator message to a canonical short reason code (FEAT-31).
+
+    The messages themselves interpolate player names and YAML fragments, so
+    they must never be recorded as analytics props. This collapses them to a
+    fixed vocabulary that is safe to store and stable to group by. Anything
+    unrecognised becomes `other`, which is the signal to add a code here.
+    """
+    if not error:
+        return "unknown"
+    text = error.lower()
+    checks = (
+        ("invalid yaml syntax", "yaml_syntax"),
+        ("yaml file is empty", "yaml_empty"),
+        ("must be a mapping", "not_a_mapping"),
+        ("missing required field: 'name'", "missing_name"),
+        ("contains characters that would be stripped", "name_bad_chars"),
+        ("resolves to empty", "name_empty_after_template"),
+        ("is reserved by archipelago", "name_reserved"),
+        ("duplicate player name within this yaml", "name_duplicate_in_file"),
+        ("duplicate player name", "name_duplicate_in_room"),
+        ("missing required field: 'game'", "missing_game"),
+        ("has no entries with positive weight", "game_pool_no_weight"),
+        ("list for", "game_pool_empty"),
+        ("must be a string, dict, or list", "game_wrong_type"),
+        ("missing game-specific section", "missing_game_section"),
+        ("must be a mapping for player", "game_section_not_mapping"),
+    )
+    for needle, code in checks:
+        if needle in text:
+            return code
+    return "other"
+
+
 def validate_yaml(content: str, existing_names: list[str] | None = None) -> tuple[bool, str | None]:
     """Validate a player YAML string. Returns (is_valid, error_message)."""
     try:

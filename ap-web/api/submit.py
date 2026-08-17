@@ -38,9 +38,27 @@ from db import (
     maybe_auto_close_room,
     update_yaml_validation,
 )
-from validation import extract_player_info, validate_yaml
+from validation import classify_validation_error, extract_player_info, validate_yaml
+
+import analytics
 
 bp = Blueprint("submit", __name__)
+
+
+def _reject(room_id: str, reason_code: str, has_session: bool, payload: dict, status: int):
+    """FEAT-31: record why a submission bounced, then return the response.
+
+    Every early return in submit_yaml goes through here so the rejection
+    taxonomy can't drift from the code paths. `reason_code` is a canonical
+    short string; the user-facing message is not recorded.
+    """
+    analytics.record_event(
+        "submit_rejected",
+        room_id=room_id,
+        props={"reason_code": reason_code, "has_session": has_session},
+        req=request,
+    )
+    return jsonify(payload), status
 
 PUBLIC_SUBMIT_DEFAULT_CAP = 50
 # Per-IP sliding-window rate limit. Anonymous public submits only - logged-in
@@ -112,11 +130,24 @@ def submit_yaml(room_id: str):
     # FEAT-04: lazy auto-close on the public submit path - a stale 'open'
     # status post-deadline would let a YAML through that the host doesn't
     # want, so close it before the rate-limit and validation work happens.
+    has_session = bool(session.get("user_id"))
+    analytics.record_event(
+        "submit_attempted",
+        room_id=room_id,
+        props={
+            "has_session": has_session,
+            "content_bytes": int(request.content_length or 0),
+        },
+        req=request,
+    )
+
     room = maybe_auto_close_room(room_id)
     if not room:
-        return jsonify({"error": "Room not found"}), 404
+        return _reject(room_id, "room_not_found", has_session,
+                       {"error": "Room not found"}, 404)
     if room["status"] != "open":
-        return jsonify({"error": "This room is no longer accepting YAMLs"}), 400
+        return _reject(room_id, "room_closed", has_session,
+                       {"error": "This room is no longer accepting YAMLs"}, 400)
 
     # Discord-login gate: if the room requires it, refuse anonymous submits.
     # Logged-in submits regardless of room.require_discord_login also have their
@@ -128,10 +159,10 @@ def submit_yaml(room_id: str):
         if u:
             submitter_user_id = u["id"]
     if room.get("require_discord_login") and submitter_user_id is None:
-        return jsonify({
+        return _reject(room_id, "requires_discord_login", has_session, {
             "error": "This room requires a Discord login before submitting a YAML.",
             "require_discord_login": True,
-        }), 401
+        }, 401)
 
     # FEAT-07: per-user cap enforcement (logged-in submits only - anonymous
     # has no identity to count against). max_yamls_per_user = 0 means no cap.
@@ -139,10 +170,10 @@ def submit_yaml(room_id: str):
     if submitter_user_id is not None and per_user_cap > 0:
         existing_for_user = count_yamls_by_submitter(room_id, submitter_user_id)
         if existing_for_user >= per_user_cap:
-            return jsonify({
+            return _reject(room_id, "per_user_cap", has_session, {
                 "error": f"You've reached the per-player limit ({per_user_cap}) for this room.",
                 "max_yamls_per_user": per_user_cap,
-            }), 400
+            }, 400)
 
     # Rate-limit anonymous submits only. Logged-in users have a stable
     # Discord identity that the per-user cap (FEAT-07) and the host-side
@@ -152,6 +183,12 @@ def submit_yaml(room_id: str):
         ip = _client_ip()
         allowed, retry_after = _check_and_record_rate_limit(ip)
         if not allowed:
+            analytics.record_event(
+                "submit_rate_limited",
+                room_id=room_id,
+                props={"has_session": has_session},
+                req=request,
+            )
             return jsonify({
                 "error": "Too many submissions from this IP. Try again later.",
                 "retry_after_seconds": retry_after,
@@ -161,7 +198,8 @@ def submit_yaml(room_id: str):
         else PUBLIC_SUBMIT_DEFAULT_CAP
     existing = get_yamls(room_id)
     if len(existing) >= cap:
-        return jsonify({"error": f"Room has reached its YAML cap ({cap})"}), 400
+        return _reject(room_id, "room_cap", has_session,
+                       {"error": f"Room has reached its YAML cap ({cap})"}, 400)
 
     # Accept either multipart file upload (form) or JSON body with yaml_content.
     yaml_content: str | None = None
@@ -169,11 +207,13 @@ def submit_yaml(room_id: str):
     if "file" in request.files:
         f = request.files["file"]
         if not f.filename:
-            return jsonify({"error": "No filename"}), 400
+            return _reject(room_id, "no_filename", has_session,
+                           {"error": "No filename"}, 400)
         try:
             yaml_content = f.read().decode("utf-8-sig")
         except UnicodeDecodeError:
-            return jsonify({"error": "File must be UTF-8 text"}), 400
+            return _reject(room_id, "not_utf8", has_session,
+                           {"error": "File must be UTF-8 text"}, 400)
         filename = f.filename
     else:
         data = request.get_json(silent=True) or {}
@@ -181,11 +221,15 @@ def submit_yaml(room_id: str):
             yaml_content = data["yaml_content"]
 
     if not yaml_content:
-        return jsonify({"error": "No YAML provided"}), 400
+        return _reject(room_id, "no_yaml", has_session,
+                       {"error": "No YAML provided"}, 400)
 
     info = extract_player_info(yaml_content)
     if not info:
-        return jsonify({"error": "Could not extract player name and game from YAML"}), 400
+        return _reject(
+            room_id, "no_player_info", has_session,
+            {"error": "Could not extract player name and game from YAML"}, 400,
+        )
     player_name, game = info
 
     if not filename:
@@ -227,6 +271,15 @@ def submit_yaml(room_id: str):
             room_id, "yaml_submitted",
             f"{uploader} uploaded {game} YAML for player {player_name}",
         )
+        # FEAT-31: the game name is index metadata, not personal data. The
+        # player name and the YAML body are never recorded.
+        analytics.record_event(
+            "submit_succeeded",
+            user_id=submitter_user_id,
+            room_id=room_id,
+            props={"game": game, "has_session": has_session},
+            req=request,
+        )
     else:
         update_yaml_validation(yaml_record["id"], "failed", error)
         yaml_record["validation_status"] = "failed"
@@ -234,6 +287,20 @@ def submit_yaml(room_id: str):
         add_activity(
             room_id, "yaml_submitted_invalid",
             f"{uploader} uploaded invalid {game} YAML for player {player_name}: {error}",
+        )
+        # A validator failure still stores the YAML (the host can see it and
+        # ask the player to fix it), so this is "rejected by the validator",
+        # not "refused at the door" like the early returns above. Same event
+        # kind, distinguishable by reason_code.
+        analytics.record_event(
+            "submit_rejected",
+            user_id=submitter_user_id,
+            room_id=room_id,
+            props={
+                "reason_code": classify_validation_error(error),
+                "has_session": has_session,
+            },
+            req=request,
         )
 
     # FEAT-21 auto-pin: even public submits trigger the first-game-sets-pin

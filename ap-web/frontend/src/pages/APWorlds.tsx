@@ -875,6 +875,7 @@ export default function APWorlds() {
         open={builder !== null}
         games={builder ? [builder] : []}
         initialGame={builder?.apworld_name}
+        surface="apworlds"
         reviewExtra={(yamlContent) =>
           user ? (
             <RoomAttach

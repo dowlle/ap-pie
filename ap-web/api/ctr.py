@@ -17,8 +17,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Blueprint, abort, redirect, render_template
+from flask import Blueprint, abort, redirect, render_template, request
 
+import analytics
 import config
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
@@ -75,6 +76,7 @@ def _canonical(path: str) -> str:
 
 @bp.route("/ctr", strict_slashes=False)
 def ctr_landing() -> str:
+    analytics.record_event("ctr_view", props={"page": "landing"}, req=request)
     return render_template(
         "ctr/landing.html",
         stable=STABLE,
@@ -93,6 +95,7 @@ def ctr_landing() -> str:
 
 @bp.route("/ctr/download", strict_slashes=False)
 def ctr_download() -> str:
+    analytics.record_event("ctr_view", props={"page": "download"}, req=request)
     return render_template(
         "ctr/download.html",
         stable=STABLE,
@@ -115,4 +118,12 @@ def ctr_download_redirect(platform: str):
     url = STABLE["downloads"].get(platform)
     if url is None:
         abort(404)
+    # FEAT-31: the conversion event for the whole CTR section. These are the
+    # stable aliases tutorials and video descriptions point at, so this also
+    # shows which channel sends people here.
+    analytics.record_event(
+        "ctr_download",
+        props={"asset": platform, "version": STABLE["version"]},
+        req=request,
+    )
     return redirect(url, code=302)

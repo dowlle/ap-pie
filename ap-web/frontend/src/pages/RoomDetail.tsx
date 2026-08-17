@@ -977,6 +977,8 @@ export default function RoomDetail() {
         <YamlBuilder
           open={showEditor}
           games={builderGames}
+          surface="room_detail"
+          roomId={id}
           submit={{
             label: "Add to this room",
             run: async (yamlContent, playerName, game) => {
