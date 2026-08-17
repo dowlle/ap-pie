@@ -91,19 +91,33 @@ function send(event: QueuedEvent): void {
   }
 }
 
-/** Fire-and-forget variant for unload paths, where fetch may be cancelled. */
-function sendBeacon(event: QueuedEvent): void {
-  if (disabled) return;
+/**
+ * Fire-and-forget variant for unload paths, where a normal fetch may be
+ * cancelled. Returns true when the event was handed off successfully.
+ *
+ * Two things here are load-bearing and were both wrong in the first cut:
+ *
+ * 1. `sendBeacon` returns a boolean. It answers false when the browser
+ *    refuses to queue the request, and ignoring that return silently drops
+ *    the event. We fall back to a keepalive fetch instead.
+ * 2. The Blob's type must be a CORS-safelisted content type. A beacon typed
+ *    `application/json` is refused outright by some browsers; `text/plain`
+ *    is always accepted, and the endpoint parses the body regardless of the
+ *    declared type.
+ */
+function sendBeacon(event: QueuedEvent): boolean {
+  if (disabled) return false;
   const body = JSON.stringify({ ...event, visit_id: visitId });
   try {
     if (navigator.sendBeacon) {
-      navigator.sendBeacon(ENDPOINT, new Blob([body], { type: "application/json" }));
-      return;
+      const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
+      if (navigator.sendBeacon(ENDPOINT, blob)) return true;
     }
   } catch {
-    /* fall through */
+    /* fall through to the fetch path */
   }
   send(event);
+  return true;
 }
 
 /**
@@ -130,8 +144,13 @@ export function trackBuilderEmitted(
 }
 
 /** stage: the furthest step reached before the builder was closed. */
-export function trackBuilderAbandoned(game: string, version: string, stage: string, roomId?: string): void {
-  sendBeacon({ kind: "builder_abandoned", room_id: roomId, props: { game, version, stage } });
+export function trackBuilderAbandoned(
+  game: string,
+  version: string,
+  stage: string,
+  roomId?: string,
+): boolean {
+  return sendBeacon({ kind: "builder_abandoned", room_id: roomId, props: { game, version, stage } });
 }
 
 export function trackApworldDownloadClicked(name: string, version: string, surface: string): void {

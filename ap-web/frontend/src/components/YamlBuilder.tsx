@@ -74,6 +74,7 @@ export default function YamlBuilder({
   // recorded with the step they were on. Refs, not state: these must be
   // readable from the unload path without re-rendering.
   const emittedRef = useRef(false);
+  const abandonReportedRef = useRef(false);
   const stepRef = useRef(step);
   useEffect(() => { stepRef.current = step; }, [step]);
   const openedKeyRef = useRef("");
@@ -120,6 +121,7 @@ export default function YamlBuilder({
     if (openedKeyRef.current === key) return;
     openedKeyRef.current = key;
     emittedRef.current = false;
+    abandonReportedRef.current = false;
     trackBuilderOpened(entry.game, entry.version, surface, roomId);
   }, [open, entry, surface, roomId]);
 
@@ -133,9 +135,12 @@ export default function YamlBuilder({
   useEffect(() => {
     if (!open || !entry) return;
     const abandonIfUnfinished = () => {
-      if (emittedRef.current) return;
-      trackBuilderAbandoned(entry.game, entry.version, stepRef.current, roomId);
-      emittedRef.current = true; // don't double-report on unmount after unload
+      if (emittedRef.current || abandonReportedRef.current) return;
+      // Only latch when the send actually succeeded. Latching first meant a
+      // dropped beacon permanently suppressed the report for this builder.
+      abandonReportedRef.current = trackBuilderAbandoned(
+        entry.game, entry.version, stepRef.current, roomId,
+      );
     };
     window.addEventListener("pagehide", abandonIfUnfinished);
     return () => {

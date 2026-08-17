@@ -83,7 +83,11 @@ def post_events():
     if not _rate_ok(_client_ip()):
         return NO_CONTENT
 
-    payload = request.get_json(silent=True)
+    # force=True because navigator.sendBeacon can only send CORS-safelisted
+    # content types, so unload-path events arrive as text/plain. The body is
+    # parsed as JSON either way and every field is validated below, so the
+    # declared type carries no trust.
+    payload = request.get_json(silent=True, force=True)
     if not isinstance(payload, dict):
         return NO_CONTENT
 
