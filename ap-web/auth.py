@@ -175,6 +175,11 @@ def apply_auth_to_app(app):
         # The admin read surface lives at /api/admin/events, which does not
         # start with this prefix and so stays behind the is_admin check.
         "/api/events",
+        # FEAT-42: browsing presets and recording that one was applied are
+        # public, because building a YAML is. Every mutating route in that
+        # blueprint carries @requires_auth itself, and the admin routes live
+        # under /api/admin where the middleware still gates them.
+        "/api/presets",
     )
 
     @app.before_request

@@ -22,7 +22,7 @@ The site keeps a server-side log of things that happen on it, so its own funnel 
 - which page on this site you came from, as a bare path such as `/guides/ctr`. If you arrived from somewhere else on the internet, the record says only the word `external`; the address you came from is discarded and never stored, because it can contain search terms
 - a two-letter country code, supplied by Cloudflare
 - whether the device looked like a desktop, a mobile, or a bot
-- a small set of technical details for that event type, such as a game name, a version number, a rejection reason code, or whether a YAML was hand-edited rather than built from the form
+- a small set of technical details for that event type, such as a game name, a version number, a rejection reason code, whether a YAML was hand-edited rather than built from the form, or that a community preset was used
 - your account id, **only if you were signed in**
 
 That is the whole record. In particular it does **not** contain:

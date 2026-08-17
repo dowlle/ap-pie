@@ -248,6 +248,7 @@ def create_app() -> Flask:
     from api.guides import bp as guides_bp
     from api.ctr import bp as ctr_bp
     from api.events import bp as events_bp
+    from api.presets import bp as presets_bp
     from api.legal import bp as legal_bp
 
     app.register_blueprint(games_bp)
@@ -278,6 +279,8 @@ def create_app() -> Flask:
     # FEAT-31: analytics event intake + admin read surface, and the
     # server-rendered /privacy page that documents what they record.
     app.register_blueprint(events_bp)
+    # FEAT-42: community presets for the YAML builder.
+    app.register_blueprint(presets_bp)
     app.register_blueprint(legal_bp)
 
     # Apply auth middleware - protects all /api/* except /api/market, /api/auth, /api/trackers

@@ -139,6 +139,19 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
         "client": False,
         "props": {"name": _STR, "version": _STR, "via": _STR},
     },
+    # FEAT-42 presets. `preset_applied` versus `builder_yaml_emitted` is the
+    # measure that matters: does starting from someone else's configuration
+    # make people more likely to finish a YAML at all.
+    "preset_applied": {
+        "client": False,
+        "props": {"game": _STR, "version": _STR, "kind": _STR, "official": _BOOL},
+    },
+    "preset_published": {
+        "client": False,
+        "props": {"game": _STR, "version": _STR, "kind": _STR},
+    },
+    "preset_reported": {"client": False, "props": {}},
+
     "builder_schema_served": {
         "client": False,
         "props": {"game": _STR, "version": _STR, "cache": _STR, "derivable": _BOOL},

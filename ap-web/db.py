@@ -391,6 +391,73 @@ def init_db(db_url: str) -> None:
             "ON apworld_builder_schemas(apworld_name, version)"
         )
 
+        # FEAT-42: community YAML presets.
+        #
+        # A preset is a named configuration someone publishes so a newcomer
+        # can start from a working setup instead of 26 options they cannot
+        # evaluate. Two kinds (design D5): `simple` stores option values and
+        # fills the builder form; `advanced` stores a full YAML document and
+        # opens in the review step's editor, which is how plando, triggers,
+        # item links and weights stay shareable.
+        #
+        # Column is `option_values`, not `values`: VALUES is a reserved word
+        # in SQL and every query touching it would need quoting.
+        #
+        # status starts at `private` (design D6): saving is cheap and
+        # personal, publishing is a separate deliberate act from the My
+        # presets page. That private tier is what FEAT-23 asked for.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS apworld_presets (
+                id             SERIAL PRIMARY KEY,
+                apworld_name   TEXT NOT NULL,
+                version        TEXT NOT NULL,
+                name           TEXT NOT NULL,
+                description    TEXT NOT NULL DEFAULT '',
+                kind           TEXT NOT NULL DEFAULT 'simple'
+                               CHECK (kind IN ('simple', 'advanced')),
+                option_values  JSONB,
+                yaml_content   TEXT,
+                author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                is_official    BOOLEAN NOT NULL DEFAULT FALSE,
+                status         TEXT NOT NULL DEFAULT 'private'
+                               CHECK (status IN ('private', 'published', 'hidden')),
+                uses           INTEGER NOT NULL DEFAULT 0,
+                score          INTEGER NOT NULL DEFAULT 0,
+                reports        INTEGER NOT NULL DEFAULT 0,
+                created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT preset_name_length CHECK (length(name) <= 80),
+                CONSTRAINT preset_desc_length CHECK (length(description) <= 500),
+                CONSTRAINT preset_yaml_length CHECK (length(COALESCE(yaml_content, '')) <= 65536),
+                CONSTRAINT preset_payload CHECK (
+                    (kind = 'simple' AND option_values IS NOT NULL AND yaml_content IS NULL)
+                    OR (kind = 'advanced' AND yaml_content IS NOT NULL AND option_values IS NULL)
+                )
+            )
+        """)
+        for stmt in (
+            "CREATE INDEX IF NOT EXISTS idx_presets_apworld ON apworld_presets"
+            "(apworld_name, status)",
+            "CREATE INDEX IF NOT EXISTS idx_presets_author ON apworld_presets"
+            "(author_user_id, created_at DESC) WHERE author_user_id IS NOT NULL",
+        ):
+            cur.execute(stmt)
+
+        # One upvote per user per preset. No downvotes (decision 2026-08-17):
+        # in a community this size a negative vote reads as a personal remark
+        # rather than a data point, and report + admin hide already covers
+        # junk. `value` is constrained to 1 so widening it later is a
+        # deliberate migration rather than an accident.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS apworld_preset_votes (
+                preset_id  INTEGER NOT NULL REFERENCES apworld_presets(id) ON DELETE CASCADE,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                value      SMALLINT NOT NULL DEFAULT 1 CHECK (value IN (1)),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (preset_id, user_id)
+            )
+        """)
+
         # FEAT-31: cookieless server-side analytics.
         #
         # Privacy shape is load-bearing, not incidental (see analytics.py and
@@ -1000,6 +1067,214 @@ def get_activity(room_id: str, limit: int = 50) -> list[dict]:
         )
         rows = _dictrow(cur)
     return [_serialize(r) for r in rows]
+
+
+# ── FEAT-42 community presets ────────────────────────────────────
+
+
+def _serialize_preset(row: dict) -> dict:
+    d = _serialize(row)
+    # option_values is the storage name (VALUES is reserved in SQL); the API
+    # speaks `values`, which is what the builder and the design note use.
+    d["values"] = d.pop("option_values", None)
+    return d
+
+
+def create_preset(
+    *,
+    apworld_name: str,
+    version: str,
+    name: str,
+    description: str,
+    kind: str,
+    option_values: dict | None,
+    yaml_content: str | None,
+    author_user_id: int,
+    is_official: bool = False,
+    status: str = "private",
+) -> dict:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO apworld_presets
+                   (apworld_name, version, name, description, kind,
+                    option_values, yaml_content, author_user_id,
+                    is_official, status)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+               RETURNING *""",
+            (apworld_name, version, name, description, kind,
+             psycopg2.extras.Json(option_values) if option_values is not None else None,
+             yaml_content, author_user_id, is_official, status),
+        )
+        row = _dictrow(cur)[0]
+    conn.commit()
+    return _serialize_preset(row)
+
+
+def list_presets_for_apworld(apworld_name: str, viewer_user_id: int | None = None) -> list[dict]:
+    """Published presets for a world, plus the viewer's own private ones.
+
+    Order is the design's: official first, then by upvote score, then by
+    usage, then newest. Ties break on newest so a fresh preset is not buried
+    behind an old one with the same score forever.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT p.*, u.discord_username AS author_username
+                 FROM apworld_presets p
+            LEFT JOIN users u ON u.id = p.author_user_id
+                WHERE p.apworld_name = %s
+                  AND (p.status = 'published'
+                       OR (p.status = 'private' AND p.author_user_id = %s))
+             ORDER BY p.is_official DESC, p.score DESC, p.uses DESC, p.created_at DESC""",
+            (apworld_name, viewer_user_id),
+        )
+        rows = _dictrow(cur)
+    return [_serialize_preset(r) for r in rows]
+
+
+def list_presets_by_author(user_id: int) -> list[dict]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT * FROM apworld_presets WHERE author_user_id = %s "
+            "ORDER BY created_at DESC",
+            (user_id,),
+        )
+        rows = _dictrow(cur)
+    return [_serialize_preset(r) for r in rows]
+
+
+def get_preset(preset_id: int) -> dict | None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT p.*, u.discord_username AS author_username
+                 FROM apworld_presets p
+            LEFT JOIN users u ON u.id = p.author_user_id
+                WHERE p.id = %s""",
+            (preset_id,),
+        )
+        rows = _dictrow(cur)
+    return _serialize_preset(rows[0]) if rows else None
+
+
+_PRESET_UPDATABLE = {"name", "description", "status"}
+
+
+def update_preset(preset_id: int, **fields) -> dict | None:
+    """Rename, re-describe, publish or unpublish. Ignores anything else, so a
+    caller cannot flip is_official or rewrite the payload through this path."""
+    updates = {k: v for k, v in fields.items() if k in _PRESET_UPDATABLE}
+    if not updates:
+        return get_preset(preset_id)
+    sets = ", ".join(f"{k} = %s" for k in updates)
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            f"UPDATE apworld_presets SET {sets}, updated_at = NOW() "
+            f"WHERE id = %s RETURNING *",
+            (*updates.values(), preset_id),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    return _serialize_preset(rows[0]) if rows else None
+
+
+def delete_preset(preset_id: int) -> bool:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM apworld_presets WHERE id = %s", (preset_id,))
+        deleted = cur.rowcount > 0
+    conn.commit()
+    return deleted
+
+
+def record_preset_use(preset_id: int) -> None:
+    """Bump the visible usage counter. Best-effort: a lost increment is not
+    worth failing a user's action over."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE apworld_presets SET uses = uses + 1 WHERE id = %s AND status != 'hidden'",
+            (preset_id,),
+        )
+    conn.commit()
+
+
+def vote_preset(preset_id: int, user_id: int) -> dict | None:
+    """Toggle this user's upvote. Returns the preset with its new score.
+
+    The votes table is the source of truth; `score` is denormalised so the
+    listing can order without a join.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM apworld_preset_votes WHERE preset_id = %s AND user_id = %s",
+            (preset_id, user_id),
+        )
+        removed = cur.rowcount > 0
+        if not removed:
+            cur.execute(
+                "INSERT INTO apworld_preset_votes (preset_id, user_id) VALUES (%s, %s)",
+                (preset_id, user_id),
+            )
+        cur.execute(
+            """UPDATE apworld_presets
+                  SET score = (SELECT COALESCE(SUM(value), 0)
+                                 FROM apworld_preset_votes WHERE preset_id = %s)
+                WHERE id = %s RETURNING *""",
+            (preset_id, preset_id),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    if not rows:
+        return None
+    out = _serialize_preset(rows[0])
+    out["voted"] = not removed
+    return out
+
+
+def has_voted(preset_ids: list[int], user_id: int | None) -> set[int]:
+    if not preset_ids or user_id is None:
+        return set()
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT preset_id FROM apworld_preset_votes "
+            "WHERE user_id = %s AND preset_id = ANY(%s)",
+            (user_id, preset_ids),
+        )
+        return {r["preset_id"] for r in _dictrow(cur)}
+
+
+def report_preset(preset_id: int) -> None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE apworld_presets SET reports = reports + 1 WHERE id = %s",
+            (preset_id,),
+        )
+    conn.commit()
+
+
+def list_reported_presets(limit: int = 100) -> list[dict]:
+    """Admin view: anything reported at least once, or recently published."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT p.*, u.discord_username AS author_username
+                 FROM apworld_presets p
+            LEFT JOIN users u ON u.id = p.author_user_id
+                WHERE p.reports > 0 OR p.status = 'published'
+             ORDER BY p.reports DESC, p.created_at DESC
+                LIMIT %s""",
+            (max(1, min(int(limit), 500)),),
+        )
+        rows = _dictrow(cur)
+    return [_serialize_preset(r) for r in rows]
 
 
 # ── FEAT-31 analytics events ─────────────────────────────────────
