@@ -73,8 +73,14 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
     group_map = _parse_option_groups([s for s in (options_src, init_src) if s])
 
     options = _parse_options_source(options_src, group_map)
-    if not options:
-        return None
+    # An empty option list is a real answer, not a failure. A world can
+    # legitimately declare no options of its own (or only ones we
+    # deliberately do not render), and a YAML with name / game / requires
+    # plus Archipelago's own options is valid and submittable. Returning
+    # None here used to send those players away with "grab the template
+    # from the setup guide" for a game the builder can handle fine.
+    # None stays reserved for "this archive could not be understood",
+    # which the callers above still return.
 
     categories = []
     for opt in options:
@@ -232,6 +238,32 @@ _AP_TYPE_MAP = {
 # Aggregate dataclasses and tombstones - never form fields.
 _SKIP_BASES = {"PerGameCommonOptions", "CommonOptions", "Removed"}
 
+# Archipelago-provided option classes a world can pull into its own options
+# dataclass. They live in AP core, so their class body is not in the archive
+# and the normal in-file base resolution finds nothing to render.
+#
+# Only options that are per-world by nature and that we can render belong
+# here. `death_link` is the case that matters: it is a mixin a game opts into
+# (`DeathLinkMixin`, Archipelago Options.py:1727), so finding it in a world's
+# dataclass is precisely the signal that this game supports it.
+#
+# Deliberately absent: StartInventoryPool, LocalItems, ExcludeLocations and
+# the rest of the item/location-name family. Those need exact item and
+# location names, which cannot be derived without executing the world, so the
+# builder points at the review step's YAML editor rather than offering a
+# field that fails at generation time.
+_AP_CORE_OPTIONS: dict[str, dict] = {
+    "DeathLink": {
+        "type": "toggle",
+        "default": False,
+        "display_name": "Death Link",
+        "description": (
+            "When you die, everyone who enabled death link dies. "
+            "Of course, the reverse is true too."
+        ),
+    },
+}
+
 
 def _parse_option_groups(sources: list[str]) -> dict[str, str]:
     """Extract the apworld's own option_groups as a class-name -> group-name
@@ -353,13 +385,33 @@ def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> 
 
     if field_map:
         candidates = [(key, cls) for key, cls in field_map if cls in class_defs]
+        # Fields whose option class comes from AP core rather than this
+        # apworld (see _AP_CORE_OPTIONS). Without this a world that declares
+        # only core options - BKBK But It's Only Furnace Fun declares exactly
+        # `start_inventory_from_pool` and `death_link` - yields no options at
+        # all and looks unparseable.
+        core_fields = [
+            (key, cls) for key, cls in field_map
+            if cls not in class_defs and cls in _AP_CORE_OPTIONS
+        ]
     else:
         # No aggregate dataclass in this source (older worlds, or options
         # defined via the legacy dict) - fall back to every option-typed
         # class in file order, named by snake_cased class name.
         candidates = [(_camel_to_snake(c), c) for c in order]
+        core_fields = []
 
     options = []
+    for opt_name, cls_name in core_fields:
+        spec = _AP_CORE_OPTIONS[cls_name]
+        options.append({
+            "name": opt_name,
+            "display_name": spec["display_name"],
+            "description": spec["description"],
+            "category": group_map.get(cls_name, "Game Options"),
+            "type": spec["type"],
+            "default": spec["default"],
+        })
     for opt_name, cls_name in candidates:
         node = class_defs[cls_name]
         if cls_name.startswith("_"):

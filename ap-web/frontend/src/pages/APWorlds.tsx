@@ -676,7 +676,11 @@ export default function APWorlds() {
       if (entry.pending) {
         setError(`Still deriving the option form for ${entry.display_name} v${version} - try again in a few seconds.`);
       } else if (!entry.schema) {
-        setError(`No option form could be derived for ${entry.display_name} v${version} - grab the template from the game's setup guide instead.`);
+        // Only when the archive itself could not be understood. A world with
+        // no options of its own still gets a builder: Archipelago's own
+        // options apply to every game, and name / game / requires alone is a
+        // valid YAML.
+        setError(`The option form for ${entry.display_name} v${version} could not be read from the apworld - grab the template from the game's setup guide instead.`);
       } else {
         setBuilder(entry);
       }

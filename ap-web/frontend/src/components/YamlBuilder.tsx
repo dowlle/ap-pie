@@ -300,6 +300,18 @@ export default function YamlBuilder({
             {schema && schema.options.length > 0 && (
               <OptionsForm schema={schema} values={values} setValues={setValues} />
             )}
+
+            {schema && schema.options.length === 0 && (
+              <section className="settings-section">
+                <h3>Game options</h3>
+                <p className="settings-hint" style={{ margin: 0 }}>
+                  {entry?.display_name} defines no options of its own, so there
+                  is nothing more to set here. The Archipelago options above
+                  still apply, and the YAML this produces is complete and ready
+                  to submit.
+                </p>
+              </section>
+            )}
           </>
         )}
 
