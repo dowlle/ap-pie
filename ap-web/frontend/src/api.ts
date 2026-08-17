@@ -1258,6 +1258,22 @@ export interface SubmitResult {
   game: string;
   validation_status: ValidationStatus;
   validation_error: string | null;
+  /** Advisory option-level findings from the submit-time schema check. The
+   *  YAML was accepted either way; these are things the generator would have
+   *  complained about later. */
+  option_warnings?: { code: string; option: string; detail: string }[];
+}
+
+/** One line summarising a submission, including anything the option check
+ *  found. Shared by the paste, upload and builder paths so all three report
+ *  the same way. */
+export function describeSubmission(r: SubmitResult): string {
+  const base = `Submitted ${r.player_name} (${r.game}) - ${r.validation_status}`;
+  const warnings = r.option_warnings ?? [];
+  if (warnings.length === 0) return base;
+  const detail = warnings.slice(0, 3).map((w) => w.detail).join(" ");
+  const more = warnings.length > 3 ? ` (+${warnings.length - 3} more)` : "";
+  return `${base}. Worth checking before the host generates: ${detail}${more}`;
 }
 
 export async function submitYamlToRoom(roomId: string, file: File): Promise<SubmitResult> {

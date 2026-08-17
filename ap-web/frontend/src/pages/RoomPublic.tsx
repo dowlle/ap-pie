@@ -10,6 +10,7 @@ import {
   releaseYaml,
   submitYamlToRoom,
   submitYamlContentToRoom,
+  describeSubmission,
   type BuilderSchemaEntry,
   type PublicRoom,
   type PublicRoomYaml,
@@ -158,7 +159,7 @@ function SubmissionForm({
         busy: false,
         busyLabel: "",
         error: "",
-        success: `Submitted ${r.player_name} (${r.game}) - ${r.validation_status}`,
+        success: describeSubmission(r),
       });
       setPasted("");
       setPasteOpen(false);
@@ -345,6 +346,7 @@ function RoomPublic() {
     }
     const total = yamlFiles.length;
     const results: string[] = [];
+    const warningDetails: string[] = [];
     try {
       for (let i = 0; i < yamlFiles.length; i++) {
         const file = yamlFiles[i];
@@ -355,13 +357,25 @@ function RoomPublic() {
           success: null,
         });
         const r = await submitYamlToRoom(id, file);
-        results.push(`${r.player_name} (${r.game}) - ${r.validation_status}`);
+        // Multi-file upload: keep each line short, but never swallow a
+        // finding the submitter should act on before the host generates.
+        const warned = (r.option_warnings ?? []).length;
+        results.push(
+          `${r.player_name} (${r.game}) - ${r.validation_status}` +
+          (warned ? ` · ⚠ ${warned} option${warned === 1 ? "" : "s"} to check` : ""),
+        );
+        if (warned) warningDetails.push(...(r.option_warnings ?? []).map((w) => w.detail));
       }
       setSubmitState({
         busy: false,
         busyLabel: "",
         error: "",
-        success: `Submitted ${results.join(", ")}`,
+        success: `Submitted ${results.join(", ")}` +
+          (warningDetails.length
+            ? `. ${warningDetails.slice(0, 3).join(" ")}${
+                warningDetails.length > 3 ? ` (+${warningDetails.length - 3} more)` : ""
+              }`
+            : ""),
       });
       await refreshRef.current();
     } catch (e) {
@@ -882,7 +896,7 @@ function RoomPublic() {
           run: async (yamlContent) => {
             const r = await submitYamlContentToRoom(room.id, yamlContent);
             await refresh();
-            return `Submitted ${r.player_name} (${r.game}) - ${r.validation_status}`;
+            return describeSubmission(r);
           },
         }}
         onClose={() => setBuilderGame(null)}
