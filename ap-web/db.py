@@ -1151,10 +1151,11 @@ def events_funnel(days: int = 7) -> dict:
             {"game": r["game"], "count": int(r["n"])} for r in _dictrow(cur)
         ]
 
+        # Server-rendered pages: `path` is the page itself.
         cur.execute(
             """SELECT path, COUNT(*) AS n
                  FROM events
-                WHERE kind IN ('page_view', 'guide_view', 'ctr_view')
+                WHERE kind IN ('guide_view', 'ctr_view')
                   AND path IS NOT NULL
                   AND ts > NOW() - make_interval(days => %s)
              GROUP BY path ORDER BY n DESC LIMIT 20""",
@@ -1162,6 +1163,22 @@ def events_funnel(days: int = 7) -> dict:
         )
         out["top_paths"] = [
             {"path": r["path"], "count": int(r["n"])} for r in _dictrow(cur)
+        ]
+
+        # SPA views arrive on the shared /api/events path by design - the
+        # browser sends a coarse view name instead of the URL, so room ids
+        # and query strings never reach the log. Group on that name.
+        cur.execute(
+            """SELECT props->>'view' AS view, COUNT(*) AS n
+                 FROM events
+                WHERE kind = 'page_view'
+                  AND props->>'view' IS NOT NULL
+                  AND ts > NOW() - make_interval(days => %s)
+             GROUP BY view ORDER BY n DESC LIMIT 20""",
+            (days,),
+        )
+        out["top_views"] = [
+            {"view": r["view"], "count": int(r["n"])} for r in _dictrow(cur)
         ]
     return out
 
