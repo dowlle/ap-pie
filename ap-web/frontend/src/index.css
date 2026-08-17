@@ -2488,6 +2488,15 @@ a.btn:hover { text-decoration: none; }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
+.apworld-download-btn {
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+}
+.apworld-download-svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
 .apworld-check {
   display: flex;
   align-items: center;

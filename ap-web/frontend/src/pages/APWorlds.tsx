@@ -173,6 +173,29 @@ function TrackerIcon() {
   );
 }
 
+/** Download glyph for the per-version action row. The word "Download" next
+ *  to "Create YAML" made every version line long enough to wrap on narrower
+ *  cards; the icon keeps the row to one line and the action stays labelled
+ *  for screen readers and on hover. */
+function DownloadIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="apworld-download-svg"
+    >
+      <path d="M12 3v12" />
+      <path d="m7 11 5 5 5-5" />
+      <path d="M4 20h16" />
+    </svg>
+  );
+}
+
 function compareVersions(a: string, b: string): number {
   const partsA = a.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
   const partsB = b.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
@@ -307,7 +330,15 @@ function VersionRow({
           </button>
         )}
         {(v.source === "url" || v.source === "local") && (
-          <a className="btn btn-sm" href={downloadHref} download>Download</a>
+          <a
+            className="btn btn-sm apworld-download-btn"
+            href={downloadHref}
+            download
+            title={`Download ${world.display_name} v${v.version}`}
+            aria-label={`Download ${world.display_name} v${v.version}`}
+          >
+            <DownloadIcon />
+          </a>
         )}
         {generationOn && (v.source === "url" || v.source === "local") && !isCurrent && (
           <button
