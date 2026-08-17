@@ -2488,6 +2488,11 @@ a.btn:hover { text-decoration: none; }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
+.apworld-updated {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
 .apworld-check {
   display: flex;
   align-items: center;

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import subprocess
 import threading
+from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 
@@ -73,6 +75,55 @@ def _scrub_index_dict(d: dict) -> dict:
     return d
 
 
+def _index_updated_map(index_dir: Path) -> dict[str, str]:
+    """UX-20: last-changed date per index entry, from the index repo's own
+    git history.
+
+    "When did this world last change" needed no new TOML field and no
+    backfill: the clone already knows, because every version add is a commit
+    touching that world's file. One `git log` pass over `index/` covers all
+    616 entries in about 0.06s, so it rides along with the index parse
+    instead of being a per-request cost.
+
+    Returns {apworld_name: "YYYY-MM-DD"}. Empty on any failure - this is a
+    display nicety and must never take the index page down with it.
+
+    Note this is the date the entry changed HERE, not the upstream release
+    date. A world whose new version we have not merged yet reads as stale,
+    which is the honest signal for a page that lists what ap-pie can serve.
+
+    `-c safe.directory` is passed inline rather than mutating global git
+    config: the clone is owned by a different uid than the app user, which
+    otherwise trips git's dubious-ownership guard.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-c", f"safe.directory={index_dir}", "-C", str(index_dir),
+             "log", "--pretty=format:%ct", "--name-only", "--diff-filter=AM", "--", "index/"],
+            capture_output=True, text=True, timeout=30, check=False,
+        )
+        if out.returncode != 0:
+            return {}
+        updated: dict[str, str] = {}
+        ts: int | None = None
+        for line in out.stdout.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if line.isdigit():
+                ts = int(line)
+                continue
+            # git lists newest commits first, so the first sighting of a path
+            # is its most recent change; later ones are history.
+            if line.startswith("index/") and line.endswith(".toml") and ts is not None:
+                name = line[len("index/"):-len(".toml")]
+                updated.setdefault(name, datetime.fromtimestamp(ts, timezone.utc)
+                                   .date().isoformat())
+        return updated
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return {}
+
+
 def _load_index_into_cache():
     """Populate all three index caches in one parse pass. Caller holds the
     lock. Cache is invalidated by `refresh_index` and on first read."""
@@ -81,7 +132,12 @@ def _load_index_into_cache():
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
         _index_worlds_cache = worlds
-        _index_cache = [_scrub_index_dict(w.to_dict()) for w in worlds]
+        updated = _index_updated_map(index_dir)
+        _index_cache = []
+        for w in worlds:
+            d = _scrub_index_dict(w.to_dict())
+            d["updated_at"] = updated.get(w.name)
+            _index_cache.append(d)
         _index_lookup_cache = build_game_lookup(worlds)
     else:
         _index_worlds_cache = []

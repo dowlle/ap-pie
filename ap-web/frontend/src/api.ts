@@ -206,6 +206,10 @@ export interface APWorldInfo {
   stability: string | null;
   setup_guide: string | null;
   tracker: string | null;
+  /** UX-20: when this entry last changed in the index, as YYYY-MM-DD,
+   *  derived from the index repo's git history. Null when the history is
+   *  unavailable. This is not the upstream release date. */
+  updated_at: string | null;
 }
 
 export interface InstalledAPWorld {
@@ -250,6 +254,10 @@ export interface RoomAPWorldEntry {
   stability: string | null;
   setup_guide: string | null;
   tracker: string | null;
+  /** UX-20: when this entry last changed in the index, as YYYY-MM-DD,
+   *  derived from the index repo's git history. Null when the history is
+   *  unavailable. This is not the upstream release date. */
+  updated_at: string | null;
 }
 
 export async function getAPWorlds(search?: string): Promise<APWorldInfo[]> {

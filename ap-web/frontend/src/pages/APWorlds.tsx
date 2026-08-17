@@ -482,6 +482,17 @@ function WorldCard({
           {world.tags.map((t) => (
             <span key={t} className="tag" title={TAG_DESCRIPTIONS[t]}>{t}</span>
           ))}
+          {/* UX-20: sorting by "recently updated" is meaningless if the date
+              is invisible, so the card carries it. This is when the entry
+              last changed in the index, not the upstream release date. */}
+          {world.updated_at && (
+            <span
+              className="apworld-updated"
+              title={`This index entry last changed on ${world.updated_at}`}
+            >
+              updated {world.updated_at}
+            </span>
+          )}
         </div>
       </header>
 
@@ -666,7 +677,7 @@ export default function APWorlds() {
   // UX-20: client-side sort + filter over the card grid. The index is ~600
   // entries and the whole list is already in memory, so this never needs the
   // server. Search stays server-side (?search=) as before.
-  const [sortBy, setSortBy] = useState<"name" | "name-desc" | "stability">("name");
+  const [sortBy, setSortBy] = useState<"name" | "name-desc" | "stability" | "updated">("name");
   const [stabilityFilter, setStabilityFilter] = useState("");
   const [installableOnly, setInstallableOnly] = useState(false);
 
@@ -757,7 +768,18 @@ export default function APWorlds() {
     const sorted = [...list];
     if (sortBy === "name") sorted.sort(byName);
     else if (sortBy === "name-desc") sorted.sort((a, b) => byName(b, a));
-    else if (sortBy === "stability") {
+    else if (sortBy === "updated") {
+      // Newest change first. Entries with no date (git history unavailable)
+      // sort last rather than pretending to be ancient.
+      sorted.sort((a, b) => {
+        const da = a.updated_at ?? "";
+        const db = b.updated_at ?? "";
+        if (da === db) return byName(a, b);
+        if (!da) return 1;
+        if (!db) return -1;
+        return db.localeCompare(da);
+      });
+    } else if (sortBy === "stability") {
       sorted.sort((a, b) => {
         const rank = (w: APWorldInfo) => {
           const i = STABILITY_ORDER.indexOf((w.stability || "").toLowerCase());
@@ -893,6 +915,7 @@ export default function APWorlds() {
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
             <option value="name">Name (A to Z)</option>
             <option value="name-desc">Name (Z to A)</option>
+            <option value="updated">Recently updated</option>
             <option value="stability">Stability</option>
           </select>
         </label>
