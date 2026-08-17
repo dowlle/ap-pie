@@ -4080,6 +4080,43 @@ details.yaml-builder-group > summary .muted {
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
+/* Review step: hand-editing the emitted document. The builder can only
+   render what an apworld declares, so this is the escape hatch for
+   Archipelago's own options and for anything the form does not cover. */
+.yaml-builder-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.yaml-builder-review-head h3 { margin: 0; }
+.yaml-builder-editor {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  tab-size: 2;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+.yaml-builder-editor:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.yaml-builder-manual-note { font-size: 0.76rem; line-height: 1.5; }
+.yaml-builder-manual-note code {
+  font-size: 0.92em;
+  padding: 0.05em 0.3em;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
 .yaml-builder-checkgrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));

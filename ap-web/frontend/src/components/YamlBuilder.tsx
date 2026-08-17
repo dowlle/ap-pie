@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { BuilderSchemaEntry, TemplateOption } from "../api";
+import { load } from "js-yaml";
 import { buildYamlContent, downloadYaml } from "../lib/yamlBuild";
 import { highlightYaml } from "../lib/yamlHighlight";
 import MarkdownText from "./MarkdownText";
@@ -61,6 +62,9 @@ export default function YamlBuilder({
   const [playerName, setPlayerName] = useState("Player1");
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [step, setStep] = useState<"form" | "review">("form");
+  // Non-null once the review step's YAML has been hand-edited.
+  const [manualYaml, setManualYaml] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -111,6 +115,8 @@ export default function YamlBuilder({
     setBusy(false);
     setError("");
     setSuccess("");
+    setManualYaml(null);
+    setEditing(false);
   }, [open, initialGame, games]);
 
   // FEAT-31: one "opened" per (open, game) pair - switching game inside an
@@ -162,7 +168,7 @@ export default function YamlBuilder({
     setSuccess("");
   }, [entry]);
 
-  const yamlContent = useMemo(() => {
+  const generatedYaml = useMemo(() => {
     if (!entry?.schema || step !== "review") return "";
     return buildYamlContent({
       playerName: playerName.trim() || "Player1",
@@ -173,12 +179,45 @@ export default function YamlBuilder({
     });
   }, [entry, step, playerName, values]);
 
+  // Hand-edited YAML wins over the generated document when present. The
+  // builder only covers the options an apworld declares, so anything AP
+  // supports centrally - progression_balancing, start_inventory, triggers,
+  // multiple slots in one file - has to be reachable somehow, and until
+  // those get real controls this is that path.
+  const yamlContent = manualYaml ?? generatedYaml;
+
+  /** Player name + game as they appear in the document being submitted.
+   *  A hand-edit may have changed `name:`, and the room endpoints take the
+   *  player name as its own field, so read it back rather than trusting
+   *  the form. */
+  const submittedIdentity = useMemo(() => {
+    const fallback = {
+      playerName: playerName.trim() || "Player1",
+      game: entry?.game ?? "",
+    };
+    if (!manualYaml) return fallback;
+    try {
+      const doc = load(manualYaml) as Record<string, unknown> | undefined;
+      if (!doc || typeof doc !== "object") return fallback;
+      return {
+        playerName: typeof doc.name === "string" && doc.name.trim() ? doc.name.trim() : fallback.playerName,
+        game: typeof doc.game === "string" && doc.game.trim() ? doc.game.trim() : fallback.game,
+      };
+    } catch {
+      // Invalid YAML: fall back to the form values. The server validates on
+      // submit and will report the real parse error.
+      return fallback;
+    }
+  }, [manualYaml, playerName, entry]);
+
   const handleSubmit = async () => {
     if (!submit || !yamlContent || !entry) return;
     setBusy(true);
     setError("");
     try {
-      const msg = await submit.run(yamlContent, playerName.trim() || "Player1", entry.game);
+      const msg = await submit.run(
+        yamlContent, submittedIdentity.playerName, submittedIdentity.game,
+      );
       setSuccess(msg);
       noteEmitted("submit");
     } catch (e) {
@@ -257,16 +296,54 @@ export default function YamlBuilder({
         {step === "review" && entry && (
           <>
             <section className="settings-section">
-              <h3>Review</h3>
+              <div className="yaml-builder-review-head">
+                <h3>Review</h3>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => {
+                    if (!editing && manualYaml === null) setManualYaml(generatedYaml);
+                    setEditing((v) => !v);
+                  }}
+                >
+                  {editing ? "Done editing" : "Edit YAML"}
+                </button>
+              </div>
               <p className="settings-hint">
                 This is the YAML that will be {submit ? "submitted" : "downloaded"}.
                 The version pin (v{entry.version}) matches what this{" "}
                 {submit ? "room runs" : "builder was opened for"}, so it
                 validates without version-mismatch warnings.
               </p>
-              <pre className="yaml-builder-preview">{highlightYaml(yamlContent)}</pre>
+              {editing ? (
+                <textarea
+                  className="yaml-builder-editor"
+                  value={yamlContent}
+                  spellCheck={false}
+                  onChange={(e) => setManualYaml(e.target.value)}
+                  rows={18}
+                />
+              ) : (
+                <pre className="yaml-builder-preview">{highlightYaml(yamlContent)}</pre>
+              )}
+              {manualYaml !== null && (
+                <p className="settings-aux-note yaml-builder-manual-note">
+                  Hand-edited. The options form no longer drives this document, so
+                  anything the builder does not cover yet - Archipelago's own
+                  options like <code>progression_balancing</code> or{" "}
+                  <code>start_inventory</code>, or extra slots - can be written
+                  here directly.{" "}
+                  <button
+                    type="button"
+                    className="yaml-builder-desc-toggle"
+                    onClick={() => { setManualYaml(null); setEditing(false); }}
+                  >
+                    Discard edits and rebuild from the form
+                  </button>
+                </p>
+              )}
             </section>
-            {reviewExtra && !success && reviewExtra(yamlContent, playerName.trim() || "Player1")}
+            {reviewExtra && !success && reviewExtra(yamlContent, submittedIdentity.playerName)}
           </>
         )}
 
@@ -297,8 +374,13 @@ export default function YamlBuilder({
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => { setError(""); setSuccess(""); setStep("form"); }}
+              onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("form"); }}
               disabled={busy}
+              title={
+                manualYaml !== null
+                  ? "Your hand-edits are kept; changing the form again will not overwrite them until you discard them"
+                  : undefined
+              }
             >
               ← Back
             </button>
@@ -306,7 +388,9 @@ export default function YamlBuilder({
               type="button"
               className="btn btn-sm"
               onClick={() => {
-                downloadYaml(yamlContent, playerName.trim() || "Player1", entry.game);
+                downloadYaml(
+                  yamlContent, submittedIdentity.playerName, submittedIdentity.game,
+                );
                 noteEmitted("download");
               }}
               disabled={busy}
