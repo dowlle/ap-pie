@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { BuilderSchemaEntry, TemplateOption } from "../api";
 import { load } from "js-yaml";
-import { buildYamlContent, downloadYaml } from "../lib/yamlBuild";
+import { buildYamlContent, downloadYaml, isRandomValue } from "../lib/yamlBuild";
+import { CORE_CATEGORY, CORE_OPTIONS } from "../lib/coreOptions";
 import { highlightYaml } from "../lib/yamlHighlight";
 import MarkdownText from "./MarkdownText";
 import { trackBuilderAbandoned, trackBuilderEmitted, trackBuilderOpened } from "../lib/analytics";
@@ -61,6 +62,8 @@ export default function YamlBuilder({
   const [selected, setSelected] = useState<string>("");
   const [playerName, setPlayerName] = useState("Player1");
   const [values, setValues] = useState<Record<string, unknown>>({});
+  // Archipelago-level options. Absent key = "leave the game default".
+  const [coreValues, setCoreValues] = useState<Record<string, unknown>>({});
   const [step, setStep] = useState<"form" | "review">("form");
   // Non-null once the review step's YAML has been hand-edited.
   const [manualYaml, setManualYaml] = useState<string | null>(null);
@@ -117,6 +120,7 @@ export default function YamlBuilder({
     setSuccess("");
     setManualYaml(null);
     setEditing(false);
+    setCoreValues({});
   }, [open, initialGame, games]);
 
   // FEAT-31: one "opened" per (open, game) pair - switching game inside an
@@ -176,8 +180,10 @@ export default function YamlBuilder({
       worldVersion: entry.version,
       template: entry.schema,
       values,
+      coreValues,
+      coreOptions: CORE_OPTIONS,
     });
-  }, [entry, step, playerName, values]);
+  }, [entry, step, playerName, values, coreValues]);
 
   // Hand-edited YAML wins over the generated document when present. The
   // builder only covers the options an apworld declares, so anything AP
@@ -286,6 +292,10 @@ export default function YamlBuilder({
                 what you care about.
               </p>
             </section>
+
+            {schema && (
+              <CoreOptionsForm values={coreValues} setValues={setCoreValues} />
+            )}
 
             {schema && schema.options.length > 0 && (
               <OptionsForm schema={schema} values={values} setValues={setValues} />
@@ -420,6 +430,88 @@ export default function YamlBuilder({
 }
 
 /** Options grouped by category, each group a collapsible section. */
+/**
+ * Archipelago's own options, above the game's own.
+ *
+ * Every control starts on "game default" and is only written into the YAML
+ * once the user picks something - see lib/coreOptions for why writing our
+ * own defaults would be wrong. The footer note points at the review step's
+ * editor for the parts of Archipelago's option surface that deliberately
+ * have no form here.
+ */
+function CoreOptionsForm({
+  values,
+  setValues,
+}: {
+  values: Record<string, unknown>;
+  setValues: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+}) {
+  return (
+    <details className="settings-section yaml-builder-group" open>
+      <summary>
+        {CORE_CATEGORY} <span className="muted">({CORE_OPTIONS.length})</span>
+      </summary>
+      <div className="yaml-builder-group-body">
+        {CORE_OPTIONS.map((opt) => {
+          const set = values[opt.name] !== undefined && values[opt.name] !== "";
+          return (
+            <div key={opt.name} className="yaml-builder-option">
+              <div className="yaml-builder-option-text">
+                <div className="yaml-builder-option-header">
+                  <span className="yaml-builder-option-name">{opt.display_name}</span>
+                  <code className="yaml-builder-option-key">{opt.name}</code>
+                </div>
+                <OptionDescription text={opt.description} />
+              </div>
+              <div className="yaml-builder-option-control">
+                {set ? (
+                  <>
+                    <OptionControl
+                      option={opt}
+                      value={values[opt.name]}
+                      onChange={(v) => setValues((prev) => ({ ...prev, [opt.name]: v }))}
+                    />
+                    <button
+                      type="button"
+                      className="yaml-builder-desc-toggle"
+                      onClick={() =>
+                        setValues((prev) => {
+                          const next = { ...prev };
+                          delete next[opt.name];
+                          return next;
+                        })
+                      }
+                    >
+                      Use the game's default
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-sm yaml-builder-core-set"
+                    onClick={() =>
+                      setValues((prev) => ({ ...prev, [opt.name]: opt.default }))
+                    }
+                  >
+                    Game default · change
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        <p className="settings-hint yaml-builder-advanced-note">
+          Archipelago supports more per-slot settings than this form covers:
+          starting inventory, excluded and priority locations, item links,
+          plando and triggers. Those need exact item and location names, so
+          they are not offered as fields. Use <strong>Edit YAML</strong> in the
+          next step to add them by hand.
+        </p>
+      </div>
+    </details>
+  );
+}
+
 function OptionsForm({
   schema,
   values,
@@ -510,6 +602,18 @@ function OptionDescription({ text }: { text?: string | null }) {
   );
 }
 
+/**
+ * The random modes a range accepts, in the order they are offered.
+ * `random-range-<min>-<max>` takes its bounds from two extra inputs.
+ */
+const RANGE_RANDOM_MODES: { value: string; label: string }[] = [
+  { value: "random", label: "Random" },
+  { value: "random-low", label: "Random, low" },
+  { value: "random-middle", label: "Random, middle" },
+  { value: "random-high", label: "Random, high" },
+  { value: "random-range", label: "Random in range…" },
+];
+
 /** One form control per option type. */
 function OptionControl({
   option,
@@ -521,17 +625,26 @@ function OptionControl({
   onChange: (val: unknown) => void;
 }) {
   switch (option.type) {
-    case "toggle":
+    case "toggle": {
+      // Three states rather than a checkbox: Archipelago accepts "random"
+      // for a toggle and a checkbox cannot express it.
+      const state = isRandomValue(value) ? "random" : value ? "on" : "off";
       return (
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={!!value}
-            onChange={(e) => onChange(e.target.checked)}
-          />
-          <span>{value ? "on" : "off"}</span>
-        </label>
+        <div className="yaml-builder-segmented" role="group">
+          {(["off", "on", "random"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={state === s ? "is-active" : undefined}
+              aria-pressed={state === s}
+              onClick={() => onChange(s === "random" ? "random" : s === "on")}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
       );
+    }
 
     case "choice":
       return (
@@ -539,46 +652,102 @@ function OptionControl({
           {option.choices?.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
+          {/* Archipelago picks uniformly among the game's own values. */}
+          <option value="random">random</option>
         </select>
       );
 
     case "range": {
       const named = option.named_values;
-      const num = typeof value === "number" ? value : Number(value ?? option.default);
+      const isRandom = isRandomValue(value);
+      const rangeMatch = isRandom
+        ? /^random-range-(?:(low|middle|high)-)?(-?\d+)-(-?\d+)$/.exec(String(value))
+        : null;
+      const mode = !isRandom
+        ? "fixed"
+        : rangeMatch
+        ? "random-range"
+        : String(value);
+      const num = typeof value === "number" ? value : Number(option.default);
       const matchingAlias = named
         ? Object.entries(named).find(([, v]) => v === num)?.[0]
         : undefined;
+      const lo = rangeMatch ? Number(rangeMatch[2]) : (option.min ?? 0);
+      const hi = rangeMatch ? Number(rangeMatch[3]) : (option.max ?? 0);
       return (
         <div className="range-input">
-          <input
-            type="number"
-            min={option.min}
-            max={option.max}
-            value={Number.isFinite(num) ? num : ""}
-            onChange={(e) => onChange(Number(e.target.value))}
-          />
-          <input
-            type="range"
-            min={option.min}
-            max={option.max}
-            value={Number.isFinite(num) ? num : option.min}
-            onChange={(e) => onChange(Number(e.target.value))}
-            className="range-slider"
-          />
-          {named && Object.keys(named).length > 0 && (
-            <select
-              value={matchingAlias ?? ""}
-              onChange={(e) => {
-                if (e.target.value && named[e.target.value] !== undefined) {
-                  onChange(named[e.target.value]);
-                }
-              }}
-            >
-              <option value="">Custom</option>
-              {Object.entries(named).map(([name, n]) => (
-                <option key={name} value={name}>{name} ({n})</option>
-              ))}
-            </select>
+          <select
+            className="yaml-builder-mode"
+            value={mode}
+            onChange={(e) => {
+              const m = e.target.value;
+              if (m === "fixed") onChange(option.default);
+              else if (m === "random-range") {
+                onChange(`random-range-${option.min ?? 0}-${option.max ?? 0}`);
+              } else onChange(m);
+            }}
+          >
+            <option value="fixed">Fixed value</option>
+            {RANGE_RANDOM_MODES.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+
+          {mode === "random-range" && (
+            <div className="yaml-builder-range-bounds">
+              <input
+                type="number"
+                min={option.min}
+                max={option.max}
+                value={lo}
+                aria-label="Random range minimum"
+                onChange={(e) => onChange(`random-range-${Number(e.target.value)}-${hi}`)}
+              />
+              <span>to</span>
+              <input
+                type="number"
+                min={option.min}
+                max={option.max}
+                value={hi}
+                aria-label="Random range maximum"
+                onChange={(e) => onChange(`random-range-${lo}-${Number(e.target.value)}`)}
+              />
+            </div>
+          )}
+
+          {!isRandom && (
+            <>
+              <input
+                type="number"
+                min={option.min}
+                max={option.max}
+                value={Number.isFinite(num) ? num : ""}
+                onChange={(e) => onChange(Number(e.target.value))}
+              />
+              <input
+                type="range"
+                min={option.min}
+                max={option.max}
+                value={Number.isFinite(num) ? num : option.min}
+                onChange={(e) => onChange(Number(e.target.value))}
+                className="range-slider"
+              />
+              {named && Object.keys(named).length > 0 && (
+                <select
+                  value={matchingAlias ?? ""}
+                  onChange={(e) => {
+                    if (e.target.value && named[e.target.value] !== undefined) {
+                      onChange(named[e.target.value]);
+                    }
+                  }}
+                >
+                  <option value="">Custom</option>
+                  {Object.entries(named).map(([name, n]) => (
+                    <option key={name} value={name}>{name} ({n})</option>
+                  ))}
+                </select>
+              )}
+            </>
           )}
         </div>
       );

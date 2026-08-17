@@ -19,8 +19,16 @@ export function buildYamlContent(input: {
   worldVersion: string;
   template: ParsedTemplate;
   values: Record<string, unknown>;
+  /** Archipelago's own options (see lib/coreOptions). Only keys the user
+   *  actually set are present; anything left on "game default" is absent
+   *  and stays absent from the document, so the game's own default wins. */
+  coreValues?: Record<string, unknown>;
+  coreOptions?: TemplateOption[];
 }): string {
-  const { playerName, game, worldVersion, template, values } = input;
+  const {
+    playerName, game, worldVersion, template, values,
+    coreValues = {}, coreOptions = [],
+  } = input;
 
   const doc: Record<string, unknown> = {
     name: playerName,
@@ -32,6 +40,15 @@ export function buildYamlContent(input: {
   }
 
   const gameSection: Record<string, unknown> = {};
+  // Core options first, mirroring where Archipelago's own templates put
+  // them. They live inside the game section: CommonOptions keys are
+  // accepted there, and keeping every option in one block is what a
+  // reader expects.
+  for (const opt of coreOptions) {
+    const picked = coreValues[opt.name];
+    if (picked === undefined || picked === "") continue;
+    gameSection[opt.name] = normalizeValue(opt, picked);
+  }
   for (const opt of template.options) {
     gameSection[opt.name] = normalizeValue(opt, values[opt.name]);
   }
@@ -49,10 +66,31 @@ export function buildYamlContent(input: {
   });
 }
 
+/**
+ * Archipelago resolves these strings at generation time instead of storing a
+ * fixed value (`Options.py:25-56`, plus `Range.from_text`, `Choice.from_text`
+ * and `Toggle.from_text`):
+ *
+ *   random                          any valid value, uniformly
+ *   random-low / -middle / -high    weighted towards that end of a range
+ *   random-range-<min>-<max>        uniform inside a sub-range
+ *   random-range-<bias>-<min>-<max> the same, weighted
+ *
+ * They stay plain strings in the YAML even for numeric options, so the
+ * emitter passes them through untouched rather than coercing to a number.
+ */
+export function isRandomValue(v: unknown): v is string {
+  return typeof v === "string" && /^random(-|$)/.test(v);
+}
+
 /** Coerce a form value into the shape the option expects, falling back to
  *  the schema default when the user never touched the control. */
 function normalizeValue(opt: TemplateOption, raw: unknown): unknown {
   const val = raw === undefined ? opt.default : raw;
+
+  // Every option type accepts "random"; ranges accept the weighted and
+  // sub-range forms too. Emit verbatim whatever the type.
+  if (isRandomValue(val)) return val;
 
   switch (opt.type) {
     case "toggle":
