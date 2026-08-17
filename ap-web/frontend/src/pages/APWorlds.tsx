@@ -663,6 +663,13 @@ export default function APWorlds() {
   // name@version whose schema fetch is in flight (per-row spinner);
   // `pendingYaml` carries the built YAML into the create-room flow.
   const navigate = useNavigate();
+  // UX-20: client-side sort + filter over the card grid. The index is ~600
+  // entries and the whole list is already in memory, so this never needs the
+  // server. Search stays server-side (?search=) as before.
+  const [sortBy, setSortBy] = useState<"name" | "name-desc" | "stability">("name");
+  const [stabilityFilter, setStabilityFilter] = useState("");
+  const [installableOnly, setInstallableOnly] = useState(false);
+
   const [builder, setBuilder] = useState<BuilderSchemaEntry | null>(null);
   const [building, setBuilding] = useState<string | null>(null);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
@@ -716,6 +723,51 @@ export default function APWorlds() {
     () => new Map(installed.map((w) => [w.name, w])),
     [installed],
   );
+
+  // Stability values present in the current result set, so the filter never
+  // offers a value that would return nothing. `null` (most of the index
+  // after OPS-16 backfilled ~214 of 616) is offered as "not recorded".
+  const stabilityValues = useMemo(() => {
+    const seen = new Set<string>();
+    for (const w of available) if (w.stability) seen.add(w.stability);
+    return [...seen].sort();
+  }, [available]);
+
+  const visible = useMemo(() => {
+    let list = available;
+    if (stabilityFilter === "__unset__") {
+      list = list.filter((w) => !w.stability);
+    } else if (stabilityFilter) {
+      list = list.filter((w) => w.stability === stabilityFilter);
+    }
+    if (installableOnly) {
+      list = list.filter((w) => w.downloadable_versions.length > 0);
+    }
+    // Order the index by what people actually read. The API returns TOML
+    // filename order (`sorted(toml_dir.iterdir())` in parse_index_dir), which
+    // is why "Ape Escape 3" could land before "Against the Storm": the keys
+    // are ape_escape_3 and against_the_storm. Sorting on display_name fixes
+    // the surprise without changing the API.
+    const byName = (a: APWorldInfo, b: APWorldInfo) =>
+      (a.display_name || a.name).localeCompare(b.display_name || b.name, undefined, {
+        sensitivity: "base",
+        numeric: true,
+      });
+    const STABILITY_ORDER = ["stable", "beta", "unstable", "alpha"];
+    const sorted = [...list];
+    if (sortBy === "name") sorted.sort(byName);
+    else if (sortBy === "name-desc") sorted.sort((a, b) => byName(b, a));
+    else if (sortBy === "stability") {
+      sorted.sort((a, b) => {
+        const rank = (w: APWorldInfo) => {
+          const i = STABILITY_ORDER.indexOf((w.stability || "").toLowerCase());
+          return i === -1 ? STABILITY_ORDER.length : i;
+        };
+        return rank(a) - rank(b) || byName(a, b);
+      });
+    }
+    return sorted;
+  }, [available, sortBy, stabilityFilter, installableOnly]);
 
   const fetchData = () => {
     setLoading(true);
@@ -828,23 +880,71 @@ export default function APWorlds() {
 
       {error && <p className="error">{error}</p>}
 
-      <input
-        type="search"
-        placeholder="Search by game name or apworld key..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="apworld-search"
-      />
+      <div className="apworld-controls">
+        <input
+          type="search"
+          placeholder="Search by game name or apworld key..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="apworld-search"
+        />
+        <label className="apworld-control">
+          <span>Sort</span>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
+            <option value="name">Name (A to Z)</option>
+            <option value="name-desc">Name (Z to A)</option>
+            <option value="stability">Stability</option>
+          </select>
+        </label>
+        {stabilityValues.length > 0 && (
+          <label className="apworld-control">
+            <span>Stability</span>
+            <select
+              value={stabilityFilter}
+              onChange={(e) => setStabilityFilter(e.target.value)}
+            >
+              <option value="">Any</option>
+              {stabilityValues.map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+              <option value="__unset__">Not recorded</option>
+            </select>
+          </label>
+        )}
+        <label className="apworld-check">
+          <input
+            type="checkbox"
+            checked={installableOnly}
+            onChange={(e) => setInstallableOnly(e.target.checked)}
+          />
+          <span>Installable only</span>
+        </label>
+      </div>
 
       {loading ? (
         <p className="loading">Loading...</p>
       ) : available.length === 0 ? (
         <p className="muted">No APWorlds found. Try refreshing the index.</p>
+      ) : visible.length === 0 ? (
+        <p className="muted">
+          No APWorlds match these filters.{" "}
+          <button
+            type="button"
+            className="yaml-builder-desc-toggle"
+            onClick={() => { setStabilityFilter(""); setInstallableOnly(false); }}
+          >
+            Clear filters
+          </button>
+        </p>
       ) : (
         <>
-          <p className="muted apworlds-count">{available.length} APWorlds</p>
+          <p className="muted apworlds-count">
+            {visible.length === available.length
+              ? `${available.length} APWorlds`
+              : `${visible.length} of ${available.length} APWorlds`}
+          </p>
           <div className="apworlds-grid">
-            {available.map((w) => (
+            {visible.map((w) => (
               <WorldCard
                 key={w.name}
                 world={w}

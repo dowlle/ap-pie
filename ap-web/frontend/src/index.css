@@ -2454,6 +2454,48 @@ a.btn:hover { text-decoration: none; }
 }
 .apworlds-page-sub a { color: var(--accent); }
 .apworlds-count { font-size: 0.8rem; margin: 0 0 0.6rem; }
+
+/* UX-20: sort + filter row above the card grid. The search box keeps its
+   own width and the controls sit beside it, wrapping onto their own line
+   on narrow viewports. */
+.apworld-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  margin-bottom: 0.9rem;
+}
+.apworld-controls .apworld-search { flex: 1 1 18rem; margin-bottom: 0; }
+.apworld-control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.apworld-control select {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.apworld-control select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.apworld-check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
 .apworld-search {
   width: 100%;
   max-width: 28rem;
