@@ -245,9 +245,15 @@ function VersionRow({
   onInstall,
   onBuild,
   building,
+  isLatest,
 }: {
   world: APWorldInfo;
   v: APWorldVersion;
+  /** UX-20: the newest version carries the "index entry last updated" date
+   *  as a tooltip. It used to be a chip in the badges row, which widened
+   *  the header and wrapped long titles onto three lines - the card is
+   *  already competing hard for attention. */
+  isLatest?: boolean;
   installed: InstalledAPWorld | undefined;
   installing: boolean;
   generationOn: boolean;
@@ -267,7 +273,16 @@ function VersionRow({
   return (
     <li className="apworld-version-row">
       <span className="apworld-version-label">
-        <span className="apworld-version-num">v{v.version}</span>
+        <span
+          className="apworld-version-num"
+          title={
+            isLatest && world.updated_at
+              ? `Latest in the index. This entry last changed on ${world.updated_at}.`
+              : undefined
+          }
+        >
+          v{v.version}
+        </span>
         <span className="apworld-version-source" title={`Source: ${sourceLabel}`}>{sourceLabel}</span>
         {v.sha256 && (
           <span className="apworld-version-sha" title={`sha256: ${v.sha256}`}>
@@ -482,17 +497,6 @@ function WorldCard({
           {world.tags.map((t) => (
             <span key={t} className="tag" title={TAG_DESCRIPTIONS[t]}>{t}</span>
           ))}
-          {/* UX-20: sorting by "recently updated" is meaningless if the date
-              is invisible, so the card carries it. This is when the entry
-              last changed in the index, not the upstream release date. */}
-          {world.updated_at && (
-            <span
-              className="apworld-updated"
-              title={`This index entry last changed on ${world.updated_at}`}
-            >
-              updated {world.updated_at}
-            </span>
-          )}
         </div>
       </header>
 
@@ -513,6 +517,7 @@ function WorldCard({
                 key={v.version}
                 world={world}
                 v={v}
+                isLatest={v.version === versions[0]?.version}
                 installed={installed}
                 installing={installingVersion === v.version}
                 generationOn={generationOn}
