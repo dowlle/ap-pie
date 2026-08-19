@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { BuilderSchemaEntry, Preset, TemplateOption } from "../api";
 import { createPreset, getPresets, recordPresetUse, saveMyYaml } from "../api";
 import { dump, load } from "js-yaml";
+import { parseDocument } from "yaml";
 import { buildYamlContent, downloadYaml, isRandomValue } from "../lib/yamlBuild";
 import { CORE_CATEGORY, CORE_OPTIONS } from "../lib/coreOptions";
 import { importYaml } from "../lib/yamlImport";
@@ -91,6 +92,8 @@ export default function YamlBuilder({
   const [step, setStep] = useState<"preset" | "options" | "review">("preset");
   // Non-null once the review step's YAML has been hand-edited.
   const [manualYaml, setManualYaml] = useState<string | null>(null);
+  const [yamlSync, setYamlSync] = useState<"synced" | "typing" | "custom" | "error">("synced");
+  const [yamlSyncMessage, setYamlSyncMessage] = useState("Form and YAML match.");
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -105,6 +108,8 @@ export default function YamlBuilder({
   const [showAllPresets, setShowAllPresets] = useState(false);
   const [presetSaved, setPresetSaved] = useState("");
   const active = presentation === "page" || open;
+  const yamlEditPendingRef = useRef(false);
+  const applyingYamlRef = useRef(false);
 
   const entry = useMemo(
     () => games.find((g) => g.apworld_name === selected) ?? null,
@@ -181,6 +186,8 @@ export default function YamlBuilder({
     setError("");
     setSuccess("");
     setManualYaml(null);
+    setYamlSync("synced");
+    setYamlSyncMessage("Form and YAML match.");
     setEditing(false);
     setCoreValues({});
     setPresets([]);
@@ -506,6 +513,98 @@ export default function YamlBuilder({
   // those get real controls this is that path.
   const yamlContent = manualYaml ?? generatedYaml;
 
+  const handleYamlEdit = (text: string) => {
+    yamlEditPendingRef.current = true;
+    setManualYaml(text);
+    setYamlSync("typing");
+    setYamlSyncMessage("Checking your YAML…");
+  };
+
+  // YAML → form. Wait until the visitor pauses so partially typed YAML is
+  // never replaced. Valid values flow back to their controls; values the
+  // generic form cannot represent remain in the document and are labelled
+  // custom rather than silently coerced.
+  useEffect(() => {
+    const syncSchema = entry?.schema;
+    if (manualYaml === null || !syncSchema) return;
+    const timer = window.setTimeout(() => {
+      const document = parseDocument(manualYaml);
+      if (document.errors.length > 0) {
+        yamlEditPendingRef.current = false;
+        setYamlSync("error");
+        setYamlSyncMessage(document.errors[0]?.message.split(" at line")[0] || "Fix the YAML syntax to resume syncing.");
+        return;
+      }
+      const parsed = importYaml(manualYaml, syncSchema);
+      if (!parsed) {
+        yamlEditPendingRef.current = false;
+        setYamlSync("error");
+        setYamlSyncMessage("The document needs a name, game and option mapping before it can sync.");
+        return;
+      }
+
+      const custom: string[] = [...parsed.unknown, ...parsed.extraRootKeys];
+      const invalid: string[] = [];
+      for (const option of syncSchema.options) {
+        const issue = classifyYamlValue(option, parsed.values[option.name]);
+        if (issue === "custom") custom.push(option.name);
+        if (issue === "invalid") invalid.push(option.name);
+      }
+
+      applyingYamlRef.current = true;
+      if (parsed.playerName) setPlayerName(parsed.playerName);
+      setValues({ ...defaultValues, ...parsed.values });
+      setCoreValues(parsed.coreValues);
+      yamlEditPendingRef.current = false;
+      if (invalid.length > 0) {
+        setYamlSync("error");
+        setYamlSyncMessage(`${invalid.length} value${invalid.length === 1 ? " is" : "s are"} outside what this APWorld version accepts: ${invalid.slice(0, 3).join(", ")}.`);
+      } else if (custom.length > 0) {
+        setYamlSync("custom");
+        setYamlSyncMessage(`${custom.length} custom field${custom.length === 1 ? " is" : "s are"} preserved in YAML even though the form cannot fully represent ${custom.length === 1 ? "it" : "them"}.`);
+      } else {
+        setYamlSync("synced");
+        setYamlSyncMessage("Form and YAML match.");
+      }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [defaultValues, entry, manualYaml]);
+
+  // Form → YAML. The Document API changes known nodes in-place and keeps
+  // unsupported sections, comments and ordering. If the visitor is midway
+  // through invalid YAML, form changes pause instead of overwriting it.
+  const lastGeneratedRef = useRef("");
+  useEffect(() => {
+    if (!generatedYaml) return;
+    if (!lastGeneratedRef.current) {
+      lastGeneratedRef.current = generatedYaml;
+      return;
+    }
+    if (generatedYaml === lastGeneratedRef.current) return;
+    lastGeneratedRef.current = generatedYaml;
+    if (applyingYamlRef.current) {
+      applyingYamlRef.current = false;
+      return;
+    }
+    if (manualYaml === null || !entry?.schema || yamlEditPendingRef.current) return;
+    const document = parseDocument(manualYaml);
+    if (document.errors.length > 0) return;
+    document.setIn(["name"], playerName.trim() || "Player1");
+    for (const option of entry.schema.options) {
+      document.setIn([entry.game, option.name], values[option.name]);
+    }
+    for (const option of CORE_OPTIONS) {
+      if (coreValues[option.name] === undefined || coreValues[option.name] === "") {
+        document.deleteIn([entry.game, option.name]);
+      } else {
+        document.setIn([entry.game, option.name], coreValues[option.name]);
+      }
+    }
+    setManualYaml(document.toString({ lineWidth: 0 }));
+    setYamlSync("synced");
+    setYamlSyncMessage("Form change applied without removing your custom YAML.");
+  }, [coreValues, entry, generatedYaml, manualYaml, playerName, values]);
+
   /** Player name + game as they appear in the document being submitted.
    *  A hand-edit may have changed `name:`, and the room endpoints take the
    *  player name as its own field, so read it back rather than trusting
@@ -813,7 +912,7 @@ export default function YamlBuilder({
                   className="yaml-builder-editor"
                   value={yamlContent}
                   spellCheck={false}
-                  onChange={(e) => setManualYaml(e.target.value)}
+                  onChange={(e) => handleYamlEdit(e.target.value)}
                   rows={18}
                 />
               ) : presentation === "modal" ? (
@@ -830,15 +929,11 @@ export default function YamlBuilder({
               )}
               {manualYaml !== null && (
                 <p className="settings-aux-note yaml-builder-manual-note">
-                  Hand-edited. The options form no longer drives this document, so
-                  anything the builder does not cover yet - Archipelago's own
-                  options like <code>progression_balancing</code> or{" "}
-                  <code>start_inventory</code>, or extra slots - can be written
-                  here directly.{" "}
+                  {yamlSyncMessage}{" "}
                   <button
                     type="button"
                     className="yaml-builder-desc-toggle"
-                    onClick={() => { setManualYaml(null); setEditing(false); }}
+                    onClick={() => { setManualYaml(null); setEditing(false); setYamlSync("synced"); setYamlSyncMessage("Rebuilt from the form."); }}
                   >
                     Discard edits and rebuild from the form
                   </button>
@@ -941,18 +1036,26 @@ export default function YamlBuilder({
           <div className="yaml-builder-live-head">
             <div>
               <strong>Live YAML</strong>
-              <span>Updates as you change the options</span>
+              <span>Edit here or change the form</span>
             </div>
-            {entry && <span className="badge">v{entry.version}</span>}
+            <div className="yaml-builder-live-statuses">
+              <span className={`yaml-builder-sync-status is-${yamlSync}`}>{yamlSync === "error" ? "Needs attention" : yamlSync === "custom" ? "Custom values" : yamlSync === "typing" ? "Typing…" : "Synced"}</span>
+              {entry && <span className="badge">v{entry.version}</span>}
+            </div>
           </div>
-          <pre className="yaml-builder-preview yaml-builder-live-preview">
-            {yamlContent ? highlightYaml(yamlContent) : "Choose a game to start building."}
-          </pre>
-          {manualYaml !== null && (
-            <p className="settings-aux-note yaml-builder-live-note">
-              Showing your hand-edited YAML. Form changes will not overwrite it until you discard those edits.
-            </p>
-          )}
+          <textarea
+            className="yaml-builder-live-editor"
+            value={yamlContent}
+            onChange={(event) => handleYamlEdit(event.target.value)}
+            spellCheck={false}
+            aria-label="Editable live YAML"
+          />
+          <p className={`settings-aux-note yaml-builder-live-note is-${yamlSync}`}>
+            {yamlSyncMessage}
+            {manualYaml !== null && (
+              <>{" "}<button type="button" className="yaml-builder-desc-toggle" onClick={() => { setManualYaml(null); setYamlSync("synced"); setYamlSyncMessage("Rebuilt from the form."); }}>Rebuild from form</button></>
+            )}
+          </p>
         </aside>
       </div>
     );
@@ -1150,6 +1253,30 @@ const PRESET_FILTER_THRESHOLD = 8;
 /** Option count past which the options form earns a filter box. */
 const OPTION_FILTER_THRESHOLD = 12;
 
+function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "custom" | "invalid" {
+  if (value === undefined) return "form";
+  if (typeof value === "object" && value !== null && option.type !== "list" && option.type !== "dict") {
+    return "custom"; // Weighted YAML values are valid AP input, but not one form value.
+  }
+  if (isRandomValue(value)) return "form";
+  switch (option.type) {
+    case "toggle":
+      return typeof value === "boolean" ? "form" : "invalid";
+    case "choice":
+      return typeof value === "string" && option.choices?.includes(value) ? "form" : "invalid";
+    case "range":
+      return typeof value === "number" && value >= (option.min ?? value) && value <= (option.max ?? value)
+        ? "form"
+        : "invalid";
+    case "list":
+      return Array.isArray(value) ? "form" : "invalid";
+    case "dict":
+      return typeof value === "object" && value !== null && !Array.isArray(value) ? "form" : "invalid";
+    default:
+      return typeof value === "string" || typeof value === "number" ? "form" : "custom";
+  }
+}
+
 function OptionDescription({ text }: { text?: string | null }) {
   const [expanded, setExpanded] = useState(false);
   const [canCollapse, setCanCollapse] = useState(false);
@@ -1246,7 +1373,7 @@ function OptionControl({
     case "toggle": {
       // Three states rather than a checkbox: Archipelago accepts "random"
       // for a toggle and a checkbox cannot express it.
-      const state = isRandomValue(value) ? "random" : value ? "on" : "off";
+      const state = isRandomValue(value) ? "random" : typeof value === "boolean" ? (value ? "on" : "off") : "custom";
       return (
         <div className="yaml-builder-segmented" role="group">
           {(["off", "on", "random"] as const).map((s) => (
@@ -1260,13 +1387,18 @@ function OptionControl({
               {s}
             </button>
           ))}
+          {state === "custom" && <span className="yaml-builder-custom-value">Custom: {String(value)}</span>}
         </div>
       );
     }
 
     case "choice":
+      {
+      const choiceValue = String(value ?? "");
+      const known = option.choices?.includes(choiceValue) || choiceValue === "random";
       return (
-        <select value={String(value ?? "")} onChange={(e) => onChange(e.target.value)}>
+        <select value={choiceValue} onChange={(e) => onChange(e.target.value)}>
+          {!known && <option value={choiceValue}>Custom YAML value: {choiceValue}</option>}
           {option.choices?.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
@@ -1274,6 +1406,7 @@ function OptionControl({
           <option value="random">random</option>
         </select>
       );
+      }
 
     case "range": {
       const named = option.named_values;
@@ -1287,6 +1420,9 @@ function OptionControl({
         ? "random-range"
         : String(value);
       const num = typeof value === "number" ? value : Number(option.default);
+      const outside = !isRandom && typeof value === "number" && (
+        value < (option.min ?? value) || value > (option.max ?? value)
+      );
       const matchingAlias = named
         ? Object.entries(named).find(([, v]) => v === num)?.[0]
         : undefined;
@@ -1335,6 +1471,18 @@ function OptionControl({
 
           {!isRandom && (
             <>
+              {outside && (
+                <div className="yaml-builder-value-warning">
+                  <span>{String(value)} is outside {option.min}–{option.max}.</span>
+                  <button
+                    type="button"
+                    className="yaml-builder-desc-toggle"
+                    onClick={() => onChange(Math.min(option.max ?? value, Math.max(option.min ?? value, value)))}
+                  >
+                    Use nearest valid value
+                  </button>
+                </div>
+              )}
               <input
                 type="number"
                 min={option.min}

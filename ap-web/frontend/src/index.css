@@ -4433,13 +4433,55 @@ details.yaml-builder-group > summary .muted {
   color: var(--text-muted);
   font-size: 0.75rem;
 }
-.yaml-builder-live-preview {
+.yaml-builder-live-editor {
   flex: 1;
+  width: 100%;
   max-height: none;
   min-height: 28rem;
   border: 0;
   border-radius: 0;
   padding: 1rem 1.1rem;
+  resize: none;
+  color: var(--text);
+  background: var(--bg);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.48;
+  tab-size: 2;
+}
+.yaml-builder-live-editor:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.yaml-builder-live-head > .yaml-builder-live-statuses {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+.yaml-builder-sync-status {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-weight: 600;
+}
+.yaml-builder-sync-status.is-synced { color: var(--green) !important; }
+.yaml-builder-sync-status.is-typing { color: var(--accent-light) !important; }
+.yaml-builder-sync-status.is-custom { color: var(--yellow, #e8b85a) !important; }
+.yaml-builder-sync-status.is-error { color: var(--red) !important; }
+.yaml-builder-live-note.is-error { color: var(--red); }
+.yaml-builder-value-warning {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+  color: var(--red);
+  font-size: 0.75rem;
+}
+.yaml-builder-custom-value {
+  align-self: center;
+  color: var(--yellow, #e8b85a);
+  font-size: 0.72rem;
 }
 .yaml-builder-live-note {
   margin: 0;
