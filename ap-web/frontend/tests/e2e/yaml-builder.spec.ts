@@ -104,7 +104,8 @@ test("weighted YAML values remain intact when another form field changes", async
   );
   await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Custom values");
   await page.locator('input[placeholder^="Your slot name"]').fill("WeightedPlayer");
-  await expect(editor).toHaveValue(/oxide_final_challenge_relic_count: \{18: 50, 15: 50\}/);
+  await expect(editor).toHaveValue(/name: WeightedPlayer/);
+  await expect(editor).toHaveValue(/oxide_final_challenge_relic_count:\n\s+"15": 50\n\s+"18": 50/);
 });
 
 test("route drafts recover after refresh", async ({ page }) => {
@@ -127,7 +128,7 @@ test("mobile Review exposes the editable YAML and announced status", async ({ pa
   const editor = page.getByRole("textbox", { name: "YAML content" });
   await expect(editor).toBeVisible();
   await editor.fill((await editor.inputValue()).replace("name: Player1", "name: MobilePlayer"));
-  await expect(page.getByRole("status")).toContainText(/Typing|Synced/);
+  await expect(page.locator(".yaml-builder-manual-note")).toContainText("Form and YAML match");
 });
 
 test("editor scroll position stays synchronized with its highlight layer", async ({ page }) => {
