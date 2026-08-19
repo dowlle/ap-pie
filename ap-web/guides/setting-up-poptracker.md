@@ -2,6 +2,8 @@
 
 PopTracker is an open source progress tracker for randomizers. You load a pack for your game and it shows your items, your map, and which checks are currently in logic, and with auto-tracking connected it updates itself while you play. It is the tool most Archipelago players reach for when the in-game tracking is not enough.
 
+PopTracker helps you track checks and progression. It does not replace your game's Archipelago client unless that game's maintained setup guide explicitly describes that workflow. Set up the game side first with its own guide or [the game-client overview](/guides/setting-up-a-game-client).
+
 ## Installing PopTracker
 
 Download it from the [PopTracker releases page](https://github.com/black-sliver/PopTracker/releases). Builds exist for Windows, macOS, and Linux, and on Windows you just unzip and run it. The app itself is game-agnostic, so this is a one-time install.

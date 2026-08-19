@@ -17,6 +17,7 @@ Prepare the information players need before making their YAMLs:
 - the maximum number of worlds per player;
 - expected game length and testing requirements;
 - how players should send custom APWorlds that are missing from the index;
+- where players can find the maintained setup guide for each game;
 - the start procedure, tracker policy, and activity rules.
 
 Putting these rules in the room description keeps the collector link useful even when the Discord announcement scrolls away.
@@ -103,6 +104,17 @@ Upload the successful output zip through the official [Host Game page](https://a
 
 Share the server address, exact slot names, optional password, and any tracker links with the group. You can also add the external host and port in the Archipelago Pie room settings so the collection page points players toward the live server.
 
+Before announcing that the game is ready, check that:
+
+- generation succeeded with the frozen Archipelago and APWorld versions;
+- every player received the maintained setup guide for their game;
+- any generated player-specific patches or mods were delivered;
+- the server address, exact slot names, and optional password were shared;
+- players know where to get help and whether they may connect before a synchronized start;
+- each player has completed the connection test appropriate for their game.
+
+Archipelago Pie organizes the pre-generation collection. It does not install or configure every participant's game client. Send new players to [Setting up an Archipelago game client](/guides/setting-up-a-game-client), then to the maintained instructions for their exact game and version.
+
 For a synchronized event, state whether players may connect before the countdown and warn them when connecting itself sends a location. For an asynchronous event, publish the activity, hint, tracker, and slot-release rules with the room link.
 
 ## Ionium Lobby is another collector
@@ -117,5 +129,6 @@ Ionium Lobby is open source at [ionium-ap/Archipelago-lobby](https://github.com/
 
 - [Getting started with Archipelago](/guides/getting-started) explains the player journey and terminology.
 - [Setting up your YAML](/guides/setting-up-your-yaml) covers player configuration in more detail.
+- [Setting up an Archipelago game client](/guides/setting-up-a-game-client) covers the player handoff, connection patterns, and pre-play testing.
 - [Hosting a multiworld](/guides/hosting-a-multiworld) continues with generation, server hosting, and host commands.
 - The [official setup guide](https://archipelago.gg/tutorial/Archipelago/setup_en) is the canonical reference for local generation and server connection.

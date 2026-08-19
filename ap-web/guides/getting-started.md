@@ -18,6 +18,20 @@ The games included with Archipelago are listed on [archipelago.gg](https://archi
 
 **A multi-game lets those players use different games.** One person might play a platformer while another plays a role-playing game. Archipelago sends the right items to each game.
 
+## From options to playing
+
+Every Archipelago game follows the same broad path:
+
+1. Configure each world with a YAML or options page.
+2. Generate those world configurations together to create a seed.
+3. Host the generated seed in an Archipelago server room.
+4. Set up each game's client, mod, or connector.
+5. Connect with the server address and exact slot name, then play.
+
+A client or connector links your game to the Archipelago server. It reports completed locations and receives your items. Depending on the game, it may be a separate program, part of a mod, or an entry added to Archipelago Launcher. [Setting up an Archipelago game client](/guides/setting-up-a-game-client) explains the common patterns.
+
+Archipelago Pie helps before generation by collecting YAMLs and keeping APWorld versions together. Its collection room is not the server room used during play.
+
 ![The common community workflow moves from a Discord announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
 
 ## Choose what you want to do
@@ -36,7 +50,7 @@ Read the whole announcement before making your YAML. The host may limit how many
 2. Check the rules, deadline, Archipelago version, and available APWorld versions before choosing your game. Some hosts also set a freeze date after which APWorld versions may no longer change.
 3. Create one YAML for your world. It contains your exact slot name and the options for your randomized game.
 4. Submit the YAML through the collector before the deadline.
-5. Install and test the client or mod required by your game. Some hosts ask you to finish a solo seed with the same YAML before joining.
+5. Follow the maintained setup guide for your game, then install and test its client, mod, or connector. [The game-client guide](/guides/setting-up-a-game-client) explains what to expect. Some hosts ask you to finish a solo seed with the same YAML before joining.
 
 > **Need to make your YAML?**
 >
@@ -52,7 +66,7 @@ You do not need the generator or server tools as a player. After submissions clo
 
 #### Connect and follow the start rules
 
-After local generation succeeds, the host uploads the generated seed to archipelago.gg and shares the server address, your exact slot name, and a password if the room uses one.
+After local generation succeeds, the host uploads the generated seed to archipelago.gg and shares the server address, your exact slot name, a password if the room uses one, and any player file or setup instructions your game needs.
 
 For a sync, follow the host's start instructions. You may be allowed to connect before the countdown, but do not play or send locations until the host starts the game. Some clients send a location as soon as they connect. If yours does, wait until the countdown before connecting.
 
@@ -93,6 +107,8 @@ Choose this path when you are the person bringing everyone's YAMLs together and 
 ## Words you will see
 
 **Location or check:** A place or action that can award an item. Players often call completed locations "checks."
+
+**Logic:** The rules used during generation and play to decide which locations your current items and chosen settings make reachable. A location is "in logic" when the randomizer expects you can reach it with what your slot currently has.
 
 **World:** One generated copy of a game, with its own options and item placements.
 

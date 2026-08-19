@@ -1,4 +1,4 @@
-﻿"""FEAT-39: server-rendered guide pages.
+"""FEAT-39: server-rendered guide pages.
 
 These routes are deliberately NOT part of the React SPA. They render full HTML
 on the server so that search engines and AI answer systems get complete
@@ -117,7 +117,7 @@ GUIDES: list[dict[str, str]] = [
             "run the session for your group."
         ),
         "published": "2026-07-22",
-        "updated": "2026-07-22",
+        "updated": "2026-08-19",
         "project": "ap",
         "kicker": "Hosting",
         "featured": False,
@@ -138,9 +138,29 @@ GUIDES: list[dict[str, str]] = [
             "file, and hand it to your host."
         ),
         "published": "2026-07-22",
-        "updated": "2026-07-22",
+        "updated": "2026-08-19",
         "project": "ap",
         "kicker": "Your settings",
+        "featured": False,
+    },
+    {
+        "slug": "setting-up-a-game-client",
+        "file": "setting-up-a-game-client.md",
+        "h1": "Setting up an Archipelago game client",
+        "page_title": "Setting up an Archipelago game client | Archipelago Pie",
+        "meta_description": (
+            "Learn what an Archipelago client or connector does, which files and "
+            "room details you need, the common setup patterns, and how to troubleshoot."
+        ),
+        "card_title": "Set up your game client",
+        "card_blurb": (
+            "Understand clients, connectors, generated patches, room details, "
+            "and the checks to run before you start playing."
+        ),
+        "published": "2026-08-19",
+        "updated": "2026-08-19",
+        "project": "ap",
+        "kicker": "Connect and play",
         "featured": False,
     },
     {
@@ -158,7 +178,7 @@ GUIDES: list[dict[str, str]] = [
             "auto-tracking to your room."
         ),
         "published": "2026-07-22",
-        "updated": "2026-07-22",
+        "updated": "2026-08-19",
         "project": "ap",
         "kicker": "Tracking",
         "featured": False,
