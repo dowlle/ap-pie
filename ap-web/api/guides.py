@@ -209,7 +209,7 @@ GUIDES: list[dict[str, str]] = [
         # for guides with no video yet.
         "video_url": "https://www.youtube-nocookie.com/embed/9x63P6JP93E",
         "video_title": "How to play the Crash Team Racing Archipelago | For players",
-        "video_thumb": "/img/ctr/tutorial-thumb.jpg",
+        "video_thumb": "/img/ctr/tutorial-thumb.webp",
     },
 ]
 
@@ -350,6 +350,7 @@ def sitemap() -> Response:
 
     entries = [
         {"loc": _canonical("/"), "lastmod": None},
+        {"loc": _canonical("/apworlds"), "lastmod": "2026-08-19"},
         {"loc": _canonical("/guides"), "lastmod": max(g["updated"] for g in GUIDES)},
     ] + [
         {"loc": _canonical(f"/guides/{g['slug']}"), "lastmod": g["updated"]}

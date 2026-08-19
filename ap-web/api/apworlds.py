@@ -681,6 +681,7 @@ def apworlds_for_room(
             "stability": world.stability if world else None,
             "setup_guide": world.setup_guide if world else None,
             "tracker": world.tracker if world else None,
+            "disabled": world.disabled if world else False,
             "selected_version": None,
             "download_url": None,
             "available_versions": [],
@@ -708,7 +709,7 @@ def apworlds_for_room(
         else:
             selected = pin_map.get(world.name)
         entry["selected_version"] = selected
-        if selected:
+        if selected and not world.disabled:
             # Both host and public benefit from the resolved download URL,
             # but the public version uses the proxy endpoint so we can
             # serve `local`-only versions too.
@@ -743,14 +744,18 @@ def list_apworlds():
     search = request.args.get("search", "").lower()
     supported_only = request.args.get("supported") == "true"
 
-    worlds = _get_index()
+    # Retired entries remain in the index so historic room pins can be
+    # explained, but they are not player-facing catalog choices. Never
+    # advertise artifacts or builder actions that the maintainer explicitly
+    # disabled.
+    worlds = [world for world in _get_index() if not world["disabled"]]
     if search:
         worlds = [
             w for w in worlds
             if search in w["display_name"].lower() or search in w["name"].lower()
         ]
     if supported_only:
-        worlds = [w for w in worlds if w["supported"] and not w["disabled"]]
+        worlds = [w for w in worlds if w["supported"]]
 
     return jsonify(worlds)
 
@@ -797,7 +802,7 @@ def apworld_builder_schema(name: str):
     """
     worlds = _get_index_worlds()
     world = next((w for w in worlds if w.name == name), None)
-    if not world:
+    if not world or world.disabled:
         abort(404, description=f"APWorld '{name}' not in index")
 
     version = request.args.get("version")
@@ -829,7 +834,7 @@ def apworld_builder_schema(name: str):
     return jsonify(rows[0])
 
 
-@bp.route("/api/apworlds/<name>/<version>/download")
+@bp.route("/api/apworlds/<name>/<path:version>/download")
 def apworld_download_proxy(name: str, version: str):
     """Single download URL the public room page can hand to players,
     regardless of whether the index entry is `url`- or `local`-backed.
@@ -841,7 +846,7 @@ def apworld_download_proxy(name: str, version: str):
     """
     worlds = _get_index_worlds()
     world = next((w for w in worlds if w.name == name), None)
-    if not world:
+    if not world or world.disabled:
         abort(404, description=f"APWorld '{name}' not in index")
     ver = next((v for v in world.versions if v.version == version), None)
     if not ver:
