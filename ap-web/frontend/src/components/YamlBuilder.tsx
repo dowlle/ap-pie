@@ -521,6 +521,36 @@ export default function YamlBuilder({
     setYamlSyncMessage("Checking your YAML…");
   };
 
+  const rebuildFromForm = () => {
+    if (!entry?.schema) return;
+    const normalized = { ...values };
+    for (const option of entry.schema.options) {
+      if (classifyYamlValue(option, normalized[option.name]) === "form") continue;
+      if (option.type === "range" && typeof normalized[option.name] === "number") {
+        const current = normalized[option.name] as number;
+        normalized[option.name] = Math.min(
+          option.max ?? current,
+          Math.max(option.min ?? current, current),
+        );
+      } else {
+        normalized[option.name] = option.default;
+      }
+    }
+    const normalizedCore = { ...coreValues };
+    for (const option of CORE_OPTIONS) {
+      if (normalizedCore[option.name] === undefined) continue;
+      if (classifyYamlValue(option, normalizedCore[option.name]) !== "form") {
+        delete normalizedCore[option.name];
+      }
+    }
+    setValues(normalized);
+    setCoreValues(normalizedCore);
+    setManualYaml(null);
+    setEditing(false);
+    setYamlSync("synced");
+    setYamlSyncMessage("Rebuilt from valid form values.");
+  };
+
   // YAML → form. Wait until the visitor pauses so partially typed YAML is
   // never replaced. Valid values flow back to their controls; values the
   // generic form cannot represent remain in the document and are labelled
@@ -934,7 +964,7 @@ export default function YamlBuilder({
                   <button
                     type="button"
                     className="yaml-builder-desc-toggle"
-                    onClick={() => { setManualYaml(null); setEditing(false); setYamlSync("synced"); setYamlSyncMessage("Rebuilt from the form."); }}
+                    onClick={rebuildFromForm}
                   >
                     Discard edits and rebuild from the form
                   </button>
@@ -1067,7 +1097,7 @@ export default function YamlBuilder({
           <p className={`settings-aux-note yaml-builder-live-note is-${yamlSync}`}>
             {yamlSyncMessage}
             {manualYaml !== null && (
-              <>{" "}<button type="button" className="yaml-builder-desc-toggle" onClick={() => { setManualYaml(null); setYamlSync("synced"); setYamlSyncMessage("Rebuilt from the form."); }}>Rebuild from form</button></>
+              <>{" "}<button type="button" className="yaml-builder-desc-toggle" onClick={rebuildFromForm}>Rebuild from form</button></>
             )}
           </p>
         </aside>
