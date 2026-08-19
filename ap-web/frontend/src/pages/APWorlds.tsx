@@ -2,25 +2,17 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   getAPWorlds,
-  getApworldBuilderSchema,
-  getMyYamls,
   getInstalledAPWorlds,
-  getRooms,
   installAPWorld,
   removeAPWorld,
   refreshAPWorldIndex,
-  submitYamlContentToRoom,
   type APWorldInfo,
   type APWorldVersion,
-  type BuilderSchemaEntry,
   type InstalledAPWorld,
-  type Room,
 } from "../api";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
-import CreateRoomModal from "../components/CreateRoomModal";
 import FuzzResultPill from "../components/FuzzResultPill";
-import YamlBuilder from "../components/YamlBuilder";
 
 /**
  * /apworlds - browser for the Archipelago-index (now sourced from
@@ -587,101 +579,6 @@ function WorldCard({
   );
 }
 
-/**
- * FEAT-38 (§2.5a): review-step room actions for the index "Create YAML"
- * flow. The built YAML can be attached to one of the user's own open rooms
- * (via the same public submit endpoint players use) or carried into a
- * fresh room via CreateRoomModal.
- */
-function RoomAttach({
-  yamlContent,
-  onCreateRoom,
-}: {
-  yamlContent: string;
-  onCreateRoom: (yamlContent: string) => void;
-}) {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [selected, setSelected] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [added, setAdded] = useState<{ roomId: string; msg: string } | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getRooms("open")
-      .then((r) => { if (!cancelled) setRooms(r); })
-      .catch(() => { /* room list unavailable - create-room path still works */ });
-    return () => { cancelled = true; };
-  }, []);
-
-  const handleAdd = async () => {
-    if (!selected) return;
-    setBusy(true);
-    setError("");
-    try {
-      const r = await submitYamlContentToRoom(selected, yamlContent);
-      setAdded({
-        roomId: selected,
-        msg: `Added ${r.player_name} (${r.game}) - ${r.validation_status}`,
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to add YAML to the room");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <section className="settings-section">
-      <h3>Use this YAML</h3>
-      {added ? (
-        <p className="settings-aux-note" style={{ margin: 0, color: "var(--green)" }}>
-          ✓ {added.msg}. <Link to={`/rooms/${added.roomId}`}>Open the room</Link>
-        </p>
-      ) : (
-        <>
-          <div className="settings-controls">
-            <select
-              value={selected}
-              onChange={(e) => setSelected(e.target.value)}
-              style={{ flex: 1, minWidth: "12rem" }}
-            >
-              <option value="">
-                {rooms.length ? "Select one of your open rooms…" : "No open rooms"}
-              </option>
-              {rooms.map((r) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="btn btn-sm btn-primary"
-              onClick={handleAdd}
-              disabled={!selected || busy}
-            >
-              {busy ? "Adding…" : "Add to room"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => onCreateRoom(yamlContent)}
-              disabled={busy}
-            >
-              Create room with this YAML
-            </button>
-          </div>
-          <p className="settings-hint">
-            Adding goes through the room's normal submission flow, so its
-            claim/login rules still apply. Or just download the file and use
-            it anywhere.
-          </p>
-          {error && <p className="settings-error" style={{ margin: 0 }}>{error}</p>}
-        </>
-      )}
-    </section>
-  );
-}
-
 export default function APWorlds() {
   const generationOn = useFeature("generation");
   // Refresh button is admin-only (matches the @requires_admin gate on
@@ -718,70 +615,8 @@ export default function APWorlds() {
   const [stabilityFilter, setStabilityFilter] = useState("");
   const [installableOnly, setInstallableOnly] = useState(false);
 
-  const [builder, setBuilder] = useState<BuilderSchemaEntry | null>(null);
-  // FEAT-43: /apworlds?build=<name>&from=<library id> opens the builder with
-  // a saved YAML loaded, which is the "Open in builder" action on My stuff.
-  const [initialYaml, setInitialYaml] = useState<string | null>(null);
-  const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(null);
-  const [initialPlayerName, setInitialPlayerName] = useState<string | null>(null);
-  const [building, setBuilding] = useState<string | null>(null);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
-  const [pendingYaml, setPendingYaml] = useState<string | null>(null);
-
-  const handleBuild = async (name: string, version: string) => {
-    setBuilding(`${name}@${version}`);
-    setError("");
-    try {
-      // Gap 3: the first person to build for an uncached world used to be
-      // told to try again in a few seconds, which is a dead end dressed up
-      // as an instruction. Deriving a schema means downloading and parsing
-      // the apworld, so it genuinely takes a moment - we wait for it rather
-      // than handing the work back to the user.
-      let entry = await getApworldBuilderSchema(name, version);
-      for (let attempt = 0; entry.pending && attempt < 6; attempt++) {
-        await new Promise((r) => setTimeout(r, 1500));
-        entry = await getApworldBuilderSchema(name, version);
-      }
-      if (entry.pending) {
-        setError(
-          `${entry.display_name} v${version} is taking longer than usual to prepare. ` +
-          `It keeps working in the background - try again in a minute.`,
-        );
-      } else if (!entry.schema) {
-        // Only when the archive itself could not be understood. A world with
-        // no options of its own still gets a builder: Archipelago's own
-        // options apply to every game, and name / game / requires alone is a
-        // valid YAML.
-        setError(`The option form for ${entry.display_name} v${version} could not be read from the apworld - grab the template from the game's setup guide instead.`);
-      } else {
-        setBuilder(entry);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load the builder");
-    } finally {
-      setBuilding(null);
-    }
-  };
-
-  const handleRoomCreated = async (room: Room) => {
-    setCreateRoomOpen(false);
-    const yaml = pendingYaml;
-    setPendingYaml(null);
-    setBuilder(null);
-    if (yaml) {
-      try {
-        await submitYamlContentToRoom(room.id, yaml);
-      } catch (e) {
-        // The room exists either way - land the user on it and surface why
-        // the YAML didn't attach so they can paste/upload it there.
-        window.alert(
-          `Room created, but the YAML couldn't be added automatically: ` +
-          `${e instanceof Error ? e.message : "submission failed"}. ` +
-          `You can paste it on the room page.`,
-        );
-      }
-    }
-    navigate(`/rooms/${room.id}`);
+  const handleBuild = (name: string, version: string) => {
+    navigate(`/yaml-builder/${encodeURIComponent(name)}?version=${encodeURIComponent(version)}`);
   };
 
   const installedMap = useMemo(
@@ -865,13 +700,9 @@ export default function APWorlds() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, generationOn]);
 
-  // Deep link: /apworlds?build=<name> opens the guided YAML builder for
-  // that world straight away, same handler as clicking "Create YAML" on
-  // its card. Optional &version=<version> pins a specific version; without
-  // it, the world's latest (versions[0], the index's own sort order) is
-  // used. Guards on a ref (not state) so it fires exactly once per page
-  // load, not every time `available` refetches (e.g. after handleRefresh)
-  // or the user closes the modal.
+  // Compatibility for links created before the builder became its own
+  // route. Resolve a missing version from the index, then replace the URL
+  // so refresh and Back both behave like a normal page.
   const autoBuildTriggered = useRef(false);
   useEffect(() => {
     if (autoBuildTriggered.current) return;
@@ -882,36 +713,20 @@ export default function APWorlds() {
     autoBuildTriggered.current = true;
     const versionParam = params.get("version");
     const fromParam = params.get("from");
-    if (fromParam) {
-      // "Open in builder" from My stuff. A config entry hands its values to
-      // the form; a file entry hands its text to the editor. The builder
-      // decides what to do with each.
-      getMyYamls()
-        .then((list) => {
-          const saved = list.find((y) => String(y.id) === fromParam);
-          if (!saved) return;
-          if (saved.kind === "advanced" && saved.yaml_content) {
-            setInitialYaml(saved.yaml_content);
-          } else if (saved.values) {
-            setInitialValues(saved.values as Record<string, unknown>);
-            setInitialPlayerName(saved.player_name);
-          }
-        })
-        .catch(() => {});
-    }
     const world = available.find((w) => w.name === buildParam);
     const target = versionParam
       ? world?.versions.find((v) => v.version === versionParam)
       : world?.versions[0];
     if (world && target) {
-      handleBuild(world.name, target.version);
+      const next = new URLSearchParams({ version: target.version });
+      if (fromParam) next.set("from", fromParam);
+      navigate(`/yaml-builder/${encodeURIComponent(world.name)}?${next}`, { replace: true });
     } else if (world && versionParam) {
       setError(`APWorld "${buildParam}" has no version "${versionParam}" to build a YAML for.`);
     } else {
       setError(`No APWorld named "${buildParam}" was found to build a YAML for.`);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [available]);
+  }, [available, navigate]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -1059,58 +874,13 @@ export default function APWorlds() {
                 onInstall={handleInstall}
                 onRemove={handleRemove}
                 onBuild={handleBuild}
-                buildingVersion={
-                  building && building.startsWith(`${w.name}@`)
-                    ? building.slice(w.name.length + 1)
-                    : null
-                }
+                buildingVersion={null}
               />
             ))}
           </div>
         </>
       )}
 
-      {/* FEAT-38 (§2.5a): guided builder for the version the user picked.
-          No direct submit action here - the review step offers Download
-          (always, for everyone via YamlBuilder) plus, for signed-in users
-          only, the RoomAttach actions (add to an open room / create a room).
-          Anonymous visitors (the index is public) build + download freely and
-          see a sign-in hint in place of the room actions. */}
-      <YamlBuilder
-        open={builder !== null}
-        games={builder ? [builder] : []}
-        initialGame={builder?.apworld_name}
-        surface="apworlds"
-        initialYaml={initialYaml}
-        initialValues={initialValues}
-        initialPlayerName={initialPlayerName}
-        reviewExtra={(yamlContent) =>
-          user ? (
-            <RoomAttach
-              yamlContent={yamlContent}
-              onCreateRoom={(yaml) => {
-                setPendingYaml(yaml);
-                setCreateRoomOpen(true);
-              }}
-            />
-          ) : (
-            <section className="settings-section">
-              <h3>Use this YAML</h3>
-              <p className="settings-hint" style={{ margin: 0 }}>
-                Download the file above and use it in any room.{" "}
-                <a href="/api/auth/login?next=/apworlds">Sign in with Discord</a>{" "}
-                to add it straight to one of your rooms or start a new room with it.
-              </p>
-            </section>
-          )
-        }
-        onClose={() => setBuilder(null)}
-      />
-      <CreateRoomModal
-        open={createRoomOpen}
-        onClose={() => { setCreateRoomOpen(false); setPendingYaml(null); }}
-        onCreated={handleRoomCreated}
-      />
     </div>
   );
 }

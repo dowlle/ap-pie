@@ -4367,3 +4367,101 @@ details.yaml-builder-group > summary .muted {
   white-space: pre;
   margin: 0;
 }
+
+/* Full-page builder. The form keeps the established modal controls while
+   desktop gains a persistent document pane that updates on every change. */
+.yaml-builder-page {
+  position: relative;
+  left: 50%;
+  width: min(1540px, calc(100vw - 2rem));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: minmax(34rem, 1.15fr) minmax(24rem, 0.85fr);
+  gap: 1.25rem;
+  align-items: start;
+  padding-bottom: 2rem;
+}
+.yaml-builder-workspace-form,
+.yaml-builder-live {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+  overflow: hidden;
+}
+.yaml-builder-workspace-form {
+  display: flex;
+  flex-direction: column;
+}
+.yaml-builder-workspace-form .settings-modal-body {
+  overflow: visible;
+  max-height: none;
+}
+.yaml-builder-workspace-form .settings-modal-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  box-shadow: 0 -8px 20px rgb(0 0 0 / 16%);
+}
+.yaml-builder-live {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+}
+.yaml-builder-live-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.yaml-builder-live-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.yaml-builder-live-head strong {
+  color: var(--text-h);
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+.yaml-builder-live-head span:not(.badge) {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.yaml-builder-live-preview {
+  flex: 1;
+  max-height: none;
+  min-height: 28rem;
+  border: 0;
+  border-radius: 0;
+  padding: 1rem 1.1rem;
+}
+.yaml-builder-live-note {
+  margin: 0;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--border);
+}
+.yaml-builder-page-mobile-preview { display: none; }
+.yaml-builder-route-state {
+  max-width: 42rem;
+  margin: 4rem auto;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+@media (max-width: 980px) {
+  .yaml-builder-page {
+    display: block;
+    width: min(760px, calc(100vw - 2rem));
+  }
+  .yaml-builder-live { display: none; }
+  .yaml-builder-page-review-note { display: none; }
+  .yaml-builder-page-mobile-preview { display: block; }
+}

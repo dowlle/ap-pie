@@ -16,6 +16,7 @@ import AdminApworldRequests from "./pages/AdminApworldRequests";
 import Play from "./pages/Play";
 import Landing from "./pages/Landing";
 import MyArea from "./pages/MyArea";
+import YamlBuilderPage from "./pages/YamlBuilderPage";
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
 import { useEffect, useState } from "react";
@@ -226,6 +227,7 @@ function RouteAnalytics() {
     let view = "other";
     if (p === "/") view = "landing";
     else if (p === "/apworlds") view = "apworlds";
+    else if (p.startsWith("/yaml-builder/")) view = "yaml_builder";
     else if (p === "/rooms") view = "rooms";
     else if (p === "/rooms/templates") view = "room_templates";
     else if (p.startsWith("/my")) view = "my_area";
@@ -265,6 +267,7 @@ function AppRoutes() {
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />
       <Route path="/servers" element={<AdminShell><RequireApproval><Servers /></RequireApproval></AdminShell>} />
       <Route path="/apworlds" element={<AdminShell><APWorlds /></AdminShell>} />
+      <Route path="/yaml-builder/:apworld" element={<AdminShell><YamlBuilderPage /></AdminShell>} />
       <Route path="/rooms/templates" element={<Navigate to="/my/templates" replace />} />
       {/* FEAT-43: one personal area. The old single-purpose paths redirect
           so existing links and bookmarks keep working. */}

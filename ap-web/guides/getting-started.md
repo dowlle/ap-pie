@@ -18,6 +18,8 @@ The games included with Archipelago are listed on [archipelago.gg](https://archi
 
 **A multi-game lets those players use different games.** One person might play a platformer while another plays a role-playing game. Archipelago sends the right items to each game.
 
+![The common community workflow moves from a Discord announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
+
 ## Choose what you want to do
 
 You do not need to understand every Archipelago tool before starting. Pick the path that matches what you have now.
@@ -83,8 +85,6 @@ Choose this path when you are the person bringing everyone's YAMLs together and 
 4. Close submissions, download the YAMLs, and generate the game on your computer.
 5. Upload the result to archipelago.gg and share the connection details.
 6. For a sync, run the countdown. For an async, post the room, tracker, activity, and hint information.
-
-![The common community workflow moves from a Discord announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
 
 > **Ready to organize a game?**
 >
