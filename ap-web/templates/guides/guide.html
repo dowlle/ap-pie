@@ -68,6 +68,88 @@
       <div class="guide-body">
         {{ body_html|safe }}
       </div>
+      {% if path_tabs %}
+      <script>
+      (() => {
+        const body = document.querySelector(".guide-body");
+        const sectionHeading = body?.querySelector("#choose-what-you-want-to-do");
+        if (!body || !sectionHeading) return;
+
+        const pathHeadings = [];
+        let cursor = sectionHeading.nextElementSibling;
+        while (cursor && cursor.tagName !== "H2") {
+          if (cursor.tagName === "H3") pathHeadings.push(cursor);
+          cursor = cursor.nextElementSibling;
+        }
+        const nextSection = cursor;
+        if (pathHeadings.length < 2) return;
+
+        const tabs = document.createElement("div");
+        tabs.className = "guide-path-tabs";
+        const tablist = document.createElement("div");
+        tablist.className = "guide-path-tablist";
+        tablist.setAttribute("role", "tablist");
+        tablist.setAttribute("aria-label", "Choose your Archipelago path");
+        const panels = document.createElement("div");
+        panels.className = "guide-path-panels";
+
+        const select = (index, moveFocus = false) => {
+          [...tablist.children].forEach((tab, i) => {
+            const active = i === index;
+            tab.setAttribute("aria-selected", String(active));
+            tab.tabIndex = active ? 0 : -1;
+            panels.children[i].hidden = !active;
+          });
+          if (moveFocus) tablist.children[index].focus();
+        };
+
+        pathHeadings.forEach((heading, index) => {
+          const id = heading.id;
+          const tab = document.createElement("button");
+          tab.type = "button";
+          tab.className = "guide-path-tab";
+          tab.id = `tab-${id}`;
+          tab.setAttribute("role", "tab");
+          tab.setAttribute("aria-controls", `panel-${id}`);
+          tab.textContent = heading.textContent;
+
+          const panel = document.createElement("section");
+          panel.className = "guide-path-panel";
+          panel.id = `panel-${id}`;
+          panel.setAttribute("role", "tabpanel");
+          panel.setAttribute("aria-labelledby", tab.id);
+          panel.tabIndex = 0;
+
+          let node = heading;
+          const nextHeading = pathHeadings[index + 1];
+          while (node && node !== nextHeading && node.tagName !== "H2") {
+            const next = node.nextElementSibling;
+            panel.appendChild(node);
+            node = next;
+          }
+          tab.addEventListener("click", () => select(index));
+          tab.addEventListener("keydown", (event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            let next = index;
+            if (event.key === "ArrowLeft") next = (index - 1 + pathHeadings.length) % pathHeadings.length;
+            if (event.key === "ArrowRight") next = (index + 1) % pathHeadings.length;
+            if (event.key === "Home") next = 0;
+            if (event.key === "End") next = pathHeadings.length - 1;
+            select(next, true);
+          });
+          tablist.appendChild(tab);
+          panels.appendChild(panel);
+        });
+
+        tabs.append(tablist, panels);
+        body.insertBefore(tabs, nextSection);
+
+        const hashIndex = pathHeadings.findIndex((heading) => `#${heading.id}` === window.location.hash);
+        select(hashIndex >= 0 ? hashIndex : 0);
+      })();
+      </script>
+      {% endif %}
       {% if related %}
       <div class="related-block">
         <div class="related-label">More in {{ project_name|default("this section") }}</div>

@@ -6,8 +6,6 @@ It is not the Archipelago server used during play. After collection closes, you 
 
 ![The common hosting workflow moves from an announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
 
-*Archipelago Pie covers the collection stage. The host remains responsible for generation and the playable server room.*
-
 ## Before you create the room
 
 Prepare the information players need before making their YAMLs:

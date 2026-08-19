@@ -79,6 +79,7 @@ GUIDES: list[dict[str, str]] = [
         "project": "ap",
         "kicker": "Start here",
         "featured": True,
+        "path_tabs": True,
     },
     {
         "slug": "hosting-on-archipelago-pie",
@@ -337,6 +338,7 @@ def guide_page(slug: str) -> str:
         video_url=guide.get("video_url"),
         video_title=guide.get("video_title"),
         video_thumb=guide.get("video_thumb"),
+        path_tabs=guide.get("path_tabs", False),
     )
 
 
