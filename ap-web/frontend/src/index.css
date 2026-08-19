@@ -4455,6 +4455,189 @@ details.yaml-builder-group > summary .muted {
   border-radius: 10px;
   background: var(--bg-card);
 }
+.yaml-builder-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.yaml-builder-steps button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.yaml-builder-steps button > span {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.7rem;
+}
+.yaml-builder-steps button.is-active {
+  color: var(--text-h);
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.yaml-builder-steps button.is-active > span {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.yaml-builder-steps button:disabled { opacity: 0.5; cursor: not-allowed; }
+.yaml-builder-step-line { color: var(--text-muted); font-size: 0.8rem; }
+
+/* Public YAML builder landing page. Individual workspaces stay noindex;
+   this page is the stable, searchable explanation and discovery route. */
+.yaml-builder-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-bottom: 3rem;
+}
+.yaml-builder-landing-hero {
+  padding: clamp(1.4rem, 4vw, 3rem);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 38%),
+    var(--bg-card);
+}
+.yaml-builder-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--accent-light);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.yaml-builder-landing-hero h1 { margin: 0 0 0.55rem; font-size: clamp(2rem, 5vw, 3.4rem); }
+.yaml-builder-landing-hero > p:not(.yaml-builder-eyebrow) {
+  max-width: 48rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+.yaml-builder-game-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 52rem;
+  margin-top: 1.5rem;
+  color: var(--text-h);
+  font-weight: 600;
+}
+.yaml-builder-game-search input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+.yaml-builder-game-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.yaml-builder-landing-links { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.yaml-builder-landing-section { display: flex; flex-direction: column; gap: 0.9rem; }
+.yaml-builder-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+}
+.yaml-builder-section-head h2 { margin: 0 0 0.2rem; }
+.yaml-builder-section-head p { margin: 0; color: var(--text-muted); font-size: 0.86rem; }
+.yaml-builder-game-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+.yaml-builder-game-card {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+.yaml-builder-game-card:hover,
+.yaml-builder-game-card:focus-visible {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  outline: none;
+}
+.yaml-builder-game-card-main { min-width: 0; display: flex; flex-direction: column; gap: 0.18rem; }
+.yaml-builder-game-card-main strong { overflow: hidden; color: var(--text-h); text-overflow: ellipsis; white-space: nowrap; }
+.yaml-builder-game-card-main code { color: var(--text-muted); font-size: 0.7rem; }
+.yaml-builder-game-card-meta { display: flex; align-items: center; gap: 0.45rem; color: var(--text-muted); font-size: 0.78rem; white-space: nowrap; }
+.yaml-builder-draft-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+.yaml-builder-draft-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  background: var(--accent-dim);
+}
+.yaml-builder-draft-card > div { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.yaml-builder-draft-card strong { color: var(--text-h); text-transform: capitalize; }
+.yaml-builder-draft-card span { color: var(--text-muted); font-size: 0.78rem; }
+.yaml-builder-empty { margin: 0; padding: 1.5rem; border: 1px dashed var(--border); border-radius: 9px; color: var(--text-muted); text-align: center; }
+.yaml-builder-explainer {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 2rem;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+.yaml-builder-explainer h2 { margin: 0 0 0.5rem; }
+.yaml-builder-explainer p:not(.yaml-builder-eyebrow) { margin: 0; color: var(--text-muted); line-height: 1.6; }
+.yaml-builder-explainer ol { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; margin: 0; padding: 0; counter-reset: builder-step; }
+.yaml-builder-explainer li { position: relative; display: flex; flex-direction: column; gap: 0.12rem; padding-left: 2.3rem; counter-increment: builder-step; }
+.yaml-builder-explainer li::before {
+  content: counter(builder-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.yaml-builder-explainer li strong { color: var(--text-h); }
+.yaml-builder-explainer li span { color: var(--text-muted); font-size: 0.8rem; }
 
 @media (max-width: 980px) {
   .yaml-builder-page {
@@ -4464,4 +4647,16 @@ details.yaml-builder-group > summary .muted {
   .yaml-builder-live { display: none; }
   .yaml-builder-page-review-note { display: none; }
   .yaml-builder-page-mobile-preview { display: block; }
+  .yaml-builder-game-grid,
+  .yaml-builder-draft-grid,
+  .yaml-builder-explainer { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .yaml-builder-steps { gap: 0.3rem; padding-inline: 0.75rem; }
+  .yaml-builder-steps button { padding-inline: 0.4rem; }
+  .yaml-builder-step-line { display: none; }
+  .yaml-builder-game-card { align-items: flex-start; }
+  .yaml-builder-game-card-meta { flex-wrap: wrap; justify-content: flex-end; }
+  .yaml-builder-section-head { align-items: flex-start; flex-direction: column; }
 }

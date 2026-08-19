@@ -565,6 +565,29 @@ export default function YamlBuilder({
         </button>
       </header>
 
+      {presentation === "page" && (
+        <nav className="yaml-builder-steps" aria-label="YAML builder steps">
+          <button
+            type="button"
+            className={step === "form" ? "is-active" : undefined}
+            aria-current={step === "form" ? "step" : undefined}
+            onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("form"); }}
+          >
+            <span>1</span> Options
+          </button>
+          <span className="yaml-builder-step-line" aria-hidden="true">→</span>
+          <button
+            type="button"
+            className={step === "review" ? "is-active" : undefined}
+            aria-current={step === "review" ? "step" : undefined}
+            disabled={!schema || !playerName.trim()}
+            onClick={() => { setError(""); setStep("review"); }}
+          >
+            <span>2</span> Review and finish
+          </button>
+        </nav>
+      )}
+
       <div className="settings-modal-body">
         {step === "form" && (
           <>
@@ -866,7 +889,7 @@ export default function YamlBuilder({
                   : undefined
               }
             >
-              ← Back
+              ← Back to options
             </button>
             <button
               type="button"
