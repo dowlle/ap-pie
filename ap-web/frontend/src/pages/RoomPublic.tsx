@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import MarkdownText from "../components/MarkdownText";
 import {
   claimYaml,
@@ -31,7 +31,6 @@ import {
   type YamlSortKey,
 } from "../lib/yamlTable";
 import DropOverlay from "../components/DropOverlay";
-import YamlBuilder from "../components/YamlBuilder";
 import YamlModal from "../components/YamlModal";
 import CopyButton from "../components/CopyButton";
 import DropZone from "../components/DropZone";
@@ -285,6 +284,7 @@ function DiscordLoginGate({ roomId }: { roomId: string }) {
 
 function RoomPublic() {
   const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const apworldLookup = useAPWorldLookup();
   const [room, setRoom] = useState<PublicRoom | null>(null);
@@ -321,10 +321,8 @@ function RoomPublic() {
   const [updateToast, setUpdateToast] = useState<string | null>(null);
   const [yamlSearch, setYamlSearch] = useState("");
   const [yamlSort, setYamlSort] = useState<YamlSort | null>(null);
-  // FEAT-38: per-pinned-game builder schemas + which game's builder is open
-  // (apworld_name, or null when closed).
+  // FEAT-38: per-pinned-game builder schemas.
   const [builderSchemas, setBuilderSchemas] = useState<BuilderSchemaEntry[]>([]);
-  const [builderGame, setBuilderGame] = useState<string | null>(null);
   const toggleSort = (key: YamlSortKey) => setYamlSort((cur) => nextSort(cur, key));
 
   usePageTitle(room?.name);
@@ -426,7 +424,7 @@ function RoomPublic() {
   // visual flickering across Opera/Firefox/Chrome). The user is actively
   // interacting with the modal, so passive background updates aren't worth
   // the disruption - onUpdated resyncs after a save anyway.
-  const modalOpen = openYaml !== null || builderGame !== null;
+  const modalOpen = openYaml !== null;
   useEffect(() => {
     let cancelled = false;
     refresh();
@@ -878,29 +876,11 @@ function RoomPublic() {
           setState={setSubmitState}
           onSubmitted={refresh}
           builderGames={builderGames}
-          onBuild={setBuilderGame}
+          onBuild={(game) => navigate(
+            `/yaml-builder/${encodeURIComponent(game)}?context=public-room&room=${encodeURIComponent(room.id)}`,
+          )}
         />
       )}
-
-      {/* FEAT-38: guided YAML builder. Anonymous build + download always
-          works; the submit action goes through the same public submit
-          endpoint as paste, so claim/login gates hold server-side. */}
-      <YamlBuilder
-        open={builderGame !== null}
-        games={builderGames}
-        initialGame={builderGame ?? undefined}
-        surface="room_public"
-        roomId={room.id}
-        submit={{
-          label: "Submit to this room",
-          run: async (yamlContent) => {
-            const r = await submitYamlContentToRoom(room.id, yamlContent);
-            await refresh();
-            return describeSubmission(r);
-          },
-        }}
-        onClose={() => setBuilderGame(null)}
-      />
 
       {room.seed && (room.status === "generated" || room.status === "playing") && (
         <p className="public-section" style={{ textAlign: "center" }}>

@@ -18,8 +18,8 @@ export default function Admin() {
     try {
       const updated = await setUserApproval(user.id, !user.is_approved);
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to update approval");
     }
   };
 

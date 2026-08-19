@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import re
 import threading
 from pathlib import Path
 
@@ -18,6 +19,24 @@ _records_file_count: int = 0
 
 DIST_DIR = Path(__file__).parent / "frontend" / "dist"
 STATE_DIR = Path(__file__).parent / ".state"
+
+SPA_STATIC_PATHS = {
+    "", "market", "admin", "admin/apworld-requests", "rooms", "tracker",
+    "servers", "apworlds", "yaml-builder", "rooms/templates", "my",
+    "presets", "summary",
+}
+SPA_DYNAMIC_PATHS = (
+    re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
+    re.compile(r"games/[^/]+(?:/market)?"),
+)
+
+
+def _is_spa_route(path: str) -> bool:
+    """Keep direct links working while giving genuinely unknown URLs a 404."""
+    normalized = path.strip("/")
+    return normalized in SPA_STATIC_PATHS or any(
+        pattern.fullmatch(normalized) for pattern in SPA_DYNAMIC_PATHS
+    )
 
 
 def _output_file_count() -> int:
@@ -299,7 +318,10 @@ def create_app() -> Flask:
     def serve_frontend(path: str):
         if path and (DIST_DIR / path).is_file():
             return send_from_directory(DIST_DIR, path)
-        return send_from_directory(DIST_DIR, "index.html")
+        response = send_from_directory(DIST_DIR, "index.html")
+        if not _is_spa_route(path):
+            response.status_code = 404
+        return response
 
     return app
 

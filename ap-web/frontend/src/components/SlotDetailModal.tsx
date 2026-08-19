@@ -62,7 +62,9 @@ export default function SlotDetailModal({
 
   useEffect(() => {
     let cancelled = false;
-    setResponse(null);
+    const resetTimer = window.setTimeout(() => {
+      if (!cancelled) setResponse(null);
+    }, 0);
     const fetcher = publicMode
       ? getPublicRoomSlotTracker(roomId, player.slot)
       : getRoomSlotTracker(roomId, player.slot);
@@ -78,7 +80,10 @@ export default function SlotDetailModal({
           setResponse({ error: e instanceof Error ? e.message : "Failed to load slot data" });
         }
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      window.clearTimeout(resetTimer);
+    };
   }, [roomId, player.slot, publicMode, refreshTick]);
 
   useEffect(() => {
@@ -136,10 +141,6 @@ export default function SlotDetailModal({
     return list;
   }, [detail, search, showOnlyOpenHints]);
 
-  // Reset search when switching tabs - what's relevant on Items
-  // ("sword") rarely overlaps with what's relevant on Locations.
-  useEffect(() => { setSearch(""); }, [tab]);
-
   const isYourSlot = !!(
     detail?.submitter_user_id !== undefined &&
     detail?.submitter_user_id !== null &&
@@ -181,7 +182,10 @@ export default function SlotDetailModal({
             role="tab"
             aria-selected={tab === key}
             className={`slot-modal-tab${tab === key ? " is-active" : ""}`}
-            onClick={() => setTab(key)}
+            onClick={() => {
+              setTab(key);
+              setSearch("");
+            }}
           >
             {label}
             {detail && key === "items" && ` (${detail.items_received.length})`}

@@ -102,10 +102,8 @@ function MyYamlsTab() {
   }, []);
 
   const openInBuilder = (y: UserYaml) => {
-    // The deep link the builder already understands, plus the library id so
-    // the form opens with these values rather than the schema defaults.
-    navigate(`/apworlds?build=${encodeURIComponent(y.apworld_name)}` +
-      `&version=${encodeURIComponent(y.version)}&from=${y.id}`);
+    navigate(`/yaml-builder/${encodeURIComponent(y.apworld_name)}` +
+      `?version=${encodeURIComponent(y.version)}&from=${y.id}`);
   };
 
   const remove = async (y: UserYaml) => {

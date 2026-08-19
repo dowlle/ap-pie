@@ -1,23 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { BuilderSchemaEntry, Preset, TemplateOption } from "../api";
 import { createPreset, getPresets, recordPresetUse, saveMyYaml } from "../api";
 import { dump, load } from "js-yaml";
+import { parseDocument } from "yaml";
 import { buildYamlContent, downloadYaml, isRandomValue } from "../lib/yamlBuild";
 import { CORE_CATEGORY, CORE_OPTIONS } from "../lib/coreOptions";
 import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import MarkdownText from "./MarkdownText";
 import { trackBuilderAbandoned, trackBuilderEmitted, trackBuilderOpened } from "../lib/analytics";
+import type { ParseResponse } from "../workers/yamlParseWorker";
 
 /**
  * FEAT-38: guided YAML builder modal. One shared shell for all three
  * mounts - RoomPublic (players), RoomDetail (hosts) and /apworlds (the
  * room-less "Create YAML" flow).
  *
- * Two steps: an options form auto-rendered from the Tier-1 builder schema
- * (grouped by the apworld's own option_groups), then a review step showing
- * the emitted YAML (js-yaml, so quoting is always valid) with Download
+ * Three steps: choose a preset (or defaults), change the auto-rendered
+ * options, then review the emitted YAML (js-yaml, so quoting is always
+ * valid) with Download
  * always available and a caller-supplied submit action / extra actions.
  *
  * The caller decides which games are offered (`games` should be tier >= 1,
@@ -38,6 +40,9 @@ export default function YamlBuilder({
   initialYaml,
   initialValues,
   initialPlayerName,
+  presentation = "modal",
+  draftKey,
+  onGameChange,
 }: {
   open: boolean;
   games: BuilderSchemaEntry[];
@@ -69,8 +74,15 @@ export default function YamlBuilder({
    *  document to parse - the values were never a file in the first place. */
   initialValues?: Record<string, unknown> | null;
   initialPlayerName?: string | null;
+  /** Full-page routes reuse the same builder state machine without native
+   *  dialog focus, backdrop, or Escape behavior. */
+  presentation?: "modal" | "page";
+  /** sessionStorage key for route-level crash/refresh recovery. */
+  draftKey?: string;
+  onGameChange?: (apworldName: string) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const liveHighlightRef = useRef<HTMLPreElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
@@ -79,9 +91,13 @@ export default function YamlBuilder({
   const [values, setValues] = useState<Record<string, unknown>>({});
   // Archipelago-level options. Absent key = "leave the game default".
   const [coreValues, setCoreValues] = useState<Record<string, unknown>>({});
-  const [step, setStep] = useState<"form" | "review">("form");
+  const [step, setStep] = useState<"preset" | "options" | "review">("preset");
   // Non-null once the review step's YAML has been hand-edited.
   const [manualYaml, setManualYaml] = useState<string | null>(null);
+  const [yamlSync, setYamlSync] = useState<"synced" | "typing" | "custom" | "error">("synced");
+  const [yamlErrorKind, setYamlErrorKind] = useState<"syntax" | "schema" | "size" | null>(null);
+  const [yamlWarningAccepted, setYamlWarningAccepted] = useState(false);
+  const [yamlSyncMessage, setYamlSyncMessage] = useState("Form and YAML match.");
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -89,15 +105,35 @@ export default function YamlBuilder({
   // FEAT-42: presets for the selected game. Published ones plus the
   // viewer's own drafts; the endpoint decides which.
   const [presets, setPresets] = useState<Preset[]>([]);
+  const [presetsLoading, setPresetsLoading] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [presetFilter, setPresetFilter] = useState("");
   const [showAllPresets, setShowAllPresets] = useState(false);
   const [presetSaved, setPresetSaved] = useState("");
+  const active = presentation === "page" || open;
+  const yamlEditPendingRef = useRef(false);
+  const applyingYamlRef = useRef(false);
 
   const entry = useMemo(
     () => games.find((g) => g.apworld_name === selected) ?? null,
     [games, selected],
+  );
+
+  const defaultValues = useMemo(() => {
+    const defaults: Record<string, unknown> = {};
+    for (const option of entry?.schema?.options ?? []) defaults[option.name] = option.default;
+    return defaults;
+  }, [entry]);
+
+  const dirty = useMemo(
+    () => !!entry && (
+      playerName !== "Player1" ||
+      Object.keys(coreValues).length > 0 ||
+      JSON.stringify(values) !== JSON.stringify(defaultValues) ||
+      manualYaml !== null
+    ),
+    [coreValues, defaultValues, entry, manualYaml, playerName, values],
   );
 
   // FEAT-31 builder funnel. `emitted` marks that the visitor got a YAML out
@@ -113,23 +149,35 @@ export default function YamlBuilder({
   const noteEmitted = (action: string) => {
     if (!entry) return;
     emittedRef.current = true;
+    if (draftKey) sessionStorage.removeItem(draftKey);
     trackBuilderEmitted(entry.game, entry.version, action, roomId, manualYaml !== null);
   };
 
+  const requestClose = () => {
+    if (
+      presentation === "page" && dirty && !emittedRef.current &&
+      !window.confirm("Leave the YAML builder? Your draft will stay available in this tab.")
+    ) return;
+    onCloseRef.current();
+  };
+  const requestCloseRef = useRef(requestClose);
+  useEffect(() => { requestCloseRef.current = requestClose; });
+
   // Native <dialog> lifecycle - same pattern as CreateRoomModal.
   useEffect(() => {
+    if (presentation !== "modal") return;
     const dlg = dialogRef.current;
     if (!dlg) return;
     if (open && !dlg.open) dlg.showModal();
     else if (!open && dlg.open) dlg.close();
-    const onCancel = (e: Event) => { e.preventDefault(); onCloseRef.current(); };
+    const onCancel = (e: Event) => { e.preventDefault(); requestCloseRef.current(); };
     dlg.addEventListener("cancel", onCancel);
     return () => dlg.removeEventListener("cancel", onCancel);
-  }, [open]);
+  }, [open, presentation]);
 
   // Reset on open; preselect the requested (or only) game.
   useEffect(() => {
-    if (!open) return;
+    if (!active) return;
     const first =
       (initialGame && games.some((g) => g.apworld_name === initialGame))
         ? initialGame
@@ -137,11 +185,15 @@ export default function YamlBuilder({
         ? games[0].apworld_name
         : "";
     setSelected(first);
-    setStep("form");
+    setStep("preset");
     setBusy(false);
     setError("");
     setSuccess("");
     setManualYaml(null);
+    setYamlSync("synced");
+    setYamlErrorKind(null);
+    setYamlWarningAccepted(false);
+    setYamlSyncMessage("Form and YAML match.");
     setEditing(false);
     setCoreValues({});
     setPresets([]);
@@ -150,30 +202,30 @@ export default function YamlBuilder({
     setSavingPreset(false);
     setPresetName("");
     setPresetSaved("");
-  }, [open, initialGame, games]);
+  }, [active, initialGame, games]);
 
   // FEAT-31: one "opened" per (open, game) pair - switching game inside an
   // open builder counts as opening the builder for that game, reopening the
   // same game after a close counts again.
   useEffect(() => {
-    if (!open || !entry) return;
+    if (!active || !entry) return;
     const key = `${entry.apworld_name}@${entry.version}`;
     if (openedKeyRef.current === key) return;
     openedKeyRef.current = key;
     emittedRef.current = false;
     abandonReportedRef.current = false;
     trackBuilderOpened(entry.game, entry.version, surface, roomId);
-  }, [open, entry, surface, roomId]);
+  }, [active, entry, surface, roomId]);
 
   // Abandonment: fired when the builder closes (or the tab goes away) after
   // being opened for a game without producing a YAML.
   useEffect(() => {
-    if (open) return;
+    if (active) return;
     openedKeyRef.current = "";
-  }, [open]);
+  }, [active]);
 
   useEffect(() => {
-    if (!open || !entry) return;
+    if (!active || !entry) return;
     const abandonIfUnfinished = (unloading: boolean) => {
       if (emittedRef.current || abandonReportedRef.current) return;
       // Only latch when the send actually succeeded. Latching first meant a
@@ -188,14 +240,89 @@ export default function YamlBuilder({
       window.removeEventListener("pagehide", onPageHide);
       abandonIfUnfinished(false);
     };
-  }, [open, entry, roomId]);
+  }, [active, entry, roomId]);
+
+  // Full-page builders recover unfinished work after a refresh. Session
+  // storage keeps drafts local to this browser tab and avoids turning YAML
+  // content into URL or server state.
+  const restoredDraftKeyRef = useRef("");
+  useEffect(() => {
+    if (presentation !== "page" || !draftKey || !entry?.schema) return;
+    if (restoredDraftKeyRef.current === draftKey) return;
+    const raw = sessionStorage.getItem(draftKey);
+    if (!raw) {
+      restoredDraftKeyRef.current = draftKey;
+      return;
+    }
+    try {
+      const draft = JSON.parse(raw) as {
+        playerName?: string;
+        values?: Record<string, unknown>;
+        coreValues?: Record<string, unknown>;
+        manualYaml?: string | null;
+        step?: "form" | "preset" | "options" | "review";
+      };
+      const timer = window.setTimeout(() => {
+        if (draft.playerName) setPlayerName(draft.playerName);
+        if (draft.values) setValues((current) => ({ ...current, ...draft.values }));
+        if (draft.coreValues) setCoreValues(draft.coreValues);
+        if (draft.manualYaml !== undefined) setManualYaml(draft.manualYaml);
+        if (draft.step) setStep(draft.step === "form" ? "options" : draft.step);
+        restoredDraftKeyRef.current = draftKey;
+      }, 0);
+      return () => window.clearTimeout(timer);
+    } catch {
+      sessionStorage.removeItem(draftKey);
+      restoredDraftKeyRef.current = draftKey;
+    }
+  }, [draftKey, entry, presentation]);
+
+  useEffect(() => {
+    if (presentation !== "page" || !draftKey || !entry) return;
+    if (restoredDraftKeyRef.current !== draftKey) return;
+    if (!dirty || emittedRef.current) {
+      sessionStorage.removeItem(draftKey);
+      return;
+    }
+    sessionStorage.setItem(draftKey, JSON.stringify({
+      playerName,
+      values,
+      coreValues,
+      manualYaml,
+      step,
+    }));
+  }, [coreValues, dirty, draftKey, entry, manualYaml, playerName, presentation, step, values]);
+
+  useEffect(() => {
+    if (presentation !== "page" || !dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      if (emittedRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty, presentation]);
+
+  // Seed form values from schema defaults whenever the game changes.
+  // This must run before the saved-document effects below so imported
+  // values layer over defaults instead of being overwritten by them.
+  useEffect(() => {
+    if (!entry?.schema) { setValues({}); return; }
+    const defaults: Record<string, unknown> = {};
+    for (const opt of entry.schema.options) defaults[opt.name] = opt.default;
+    setValues(defaults);
+    setStep("preset");
+    setError("");
+    setSuccess("");
+  }, [entry]);
 
   // FEAT-43: import an existing document when one is handed in. Runs after
   // the defaults effect below has seeded the form, so imported values land
   // on top of defaults rather than under them.
   const importedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!open || !entry?.schema || !initialYaml) return;
+    if (!active || !entry?.schema || !initialYaml) return;
     if (importedRef.current === initialYaml) return;
     importedRef.current = initialYaml;
     const parsed = importYaml(initialYaml, entry.schema);
@@ -222,13 +349,13 @@ export default function YamlBuilder({
     if (parsed.playerName) setPlayerName(parsed.playerName);
     setValues((prev) => ({ ...prev, ...parsed.values }));
     setCoreValues((prev) => ({ ...prev, ...parsed.coreValues }));
-    setStep("form");
-  }, [open, entry, initialYaml]);
+    setStep("options");
+  }, [active, entry, initialYaml]);
 
   // FEAT-43: a saved configuration, applied the same way a preset is.
   const importedValuesRef = useRef<Record<string, unknown> | null>(null);
   useEffect(() => {
-    if (!open || !entry?.schema || !initialValues) return;
+    if (!active || !entry?.schema || !initialValues) return;
     if (importedValuesRef.current === initialValues) return;
     importedValuesRef.current = initialValues;
     const core: Record<string, unknown> = {};
@@ -241,30 +368,22 @@ export default function YamlBuilder({
     setCoreValues((prev) => ({ ...prev, ...core }));
     setValues((prev) => ({ ...prev, ...game }));
     if (initialPlayerName) setPlayerName(initialPlayerName);
-  }, [open, entry, initialValues, initialPlayerName]);
-
-  // Seed form values from schema defaults whenever the game changes.
-  useEffect(() => {
-    if (!entry?.schema) { setValues({}); return; }
-    const defaults: Record<string, unknown> = {};
-    for (const opt of entry.schema.options) defaults[opt.name] = opt.default;
-    setValues(defaults);
-    setStep("form");
-    setError("");
-    setSuccess("");
-  }, [entry]);
+    setStep("options");
+  }, [active, entry, initialValues, initialPlayerName]);
 
   // FEAT-42: load presets for whatever game is selected. Failure is silent:
   // presets are an aid, and a builder that still works without them is
   // better than an error banner over a form that is fine.
   useEffect(() => {
-    if (!open || !entry) { setPresets([]); return; }
+    if (!active || !entry) { setPresets([]); setPresetsLoading(false); return; }
     let cancelled = false;
+    setPresetsLoading(true);
     getPresets(entry.apworld_name, entry.version)
       .then((list) => { if (!cancelled) setPresets(list); })
-      .catch(() => { if (!cancelled) setPresets([]); });
+      .catch(() => { if (!cancelled) setPresets([]); })
+      .finally(() => { if (!cancelled) setPresetsLoading(false); });
     return () => { cancelled = true; };
-  }, [open, entry]);
+  }, [active, entry]);
 
   // Presets are ordered server-side (official, then upvotes, then uses), so
   // the first few are the ones worth showing. A game with fifty presets
@@ -320,7 +439,7 @@ export default function YamlBuilder({
       setCoreValues((prev) => ({ ...prev, ...core }));
       setValues((prev) => ({ ...prev, ...game }));
       setManualYaml(null);
-      setStep("form");
+      setStep("options");
     }
     recordPresetUse(p.id);
   };
@@ -380,7 +499,7 @@ export default function YamlBuilder({
   };
 
   const generatedYaml = useMemo(() => {
-    if (!entry?.schema || step !== "review") return "";
+    if (!entry?.schema) return "";
     return buildYamlContent({
       playerName: playerName.trim() || "Player1",
       game: entry.game,
@@ -391,7 +510,7 @@ export default function YamlBuilder({
       coreValues,
       coreOptions: CORE_OPTIONS,
     });
-  }, [entry, step, playerName, values, coreValues]);
+  }, [entry, playerName, values, coreValues]);
 
   // Hand-edited YAML wins over the generated document when present. The
   // builder only covers the options an apworld declares, so anything AP
@@ -400,32 +519,171 @@ export default function YamlBuilder({
   // those get real controls this is that path.
   const yamlContent = manualYaml ?? generatedYaml;
 
+  const handleYamlEdit = (text: string) => {
+    yamlEditPendingRef.current = true;
+    setManualYaml(text);
+    setYamlWarningAccepted(false);
+    if (new TextEncoder().encode(text).byteLength > MAX_EDITABLE_YAML_BYTES) {
+      yamlEditPendingRef.current = false;
+      setYamlSync("error");
+      setYamlErrorKind("size");
+      setYamlSyncMessage("This YAML is larger than 64 KiB. Shorten it before saving, downloading or submitting.");
+      return;
+    }
+    setYamlSync("typing");
+    setYamlErrorKind(null);
+    setYamlSyncMessage("Checking your YAML…");
+  };
+
+  const rebuildFromForm = () => {
+    if (!entry?.schema) return;
+    const normalized = { ...values };
+    for (const option of entry.schema.options) {
+      if (classifyYamlValue(option, normalized[option.name]) === "form") continue;
+      if (option.type === "range" && typeof normalized[option.name] === "number") {
+        const current = normalized[option.name] as number;
+        normalized[option.name] = Math.min(
+          option.max ?? current,
+          Math.max(option.min ?? current, current),
+        );
+      } else {
+        normalized[option.name] = option.default;
+      }
+    }
+    const normalizedCore = { ...coreValues };
+    for (const option of CORE_OPTIONS) {
+      if (normalizedCore[option.name] === undefined) continue;
+      if (classifyYamlValue(option, normalizedCore[option.name]) !== "form") {
+        delete normalizedCore[option.name];
+      }
+    }
+    setValues(normalized);
+    setCoreValues(normalizedCore);
+    setManualYaml(null);
+    setEditing(false);
+    setYamlSync("synced");
+    setYamlErrorKind(null);
+    setYamlWarningAccepted(false);
+    setYamlSyncMessage("Rebuilt from valid form values.");
+  };
+
+  // YAML → form. Wait until the visitor pauses so partially typed YAML is
+  // never replaced. Valid values flow back to their controls; values the
+  // generic form cannot represent remain in the document and are labelled
+  // custom rather than silently coerced.
+  useEffect(() => {
+    const syncSchema = entry?.schema;
+    if (manualYaml === null || !syncSchema) return;
+    if (new TextEncoder().encode(manualYaml).byteLength > MAX_EDITABLE_YAML_BYTES) return;
+    let worker: Worker | null = null;
+    const timer = window.setTimeout(() => {
+      worker = new Worker(new URL("../workers/yamlParseWorker.ts", import.meta.url), { type: "module" });
+      worker.onmessage = (event: MessageEvent<ParseResponse>) => {
+        worker?.terminate();
+        worker = null;
+        if (!event.data.ok) {
+          yamlEditPendingRef.current = false;
+          setYamlSync("error");
+          setYamlErrorKind("syntax");
+          setYamlSyncMessage(event.data.message);
+          return;
+        }
+        const parsed = event.data.parsed;
+        const custom: string[] = [...parsed.unknown, ...parsed.extraRootKeys];
+        const invalid: string[] = [];
+        for (const option of syncSchema.options) {
+          const issue = classifyYamlValue(option, parsed.values[option.name]);
+          if (issue === "custom") custom.push(option.name);
+          if (issue === "invalid") invalid.push(option.name);
+        }
+
+        applyingYamlRef.current = true;
+        if (parsed.playerName) setPlayerName(parsed.playerName);
+        setValues({ ...defaultValues, ...parsed.values });
+        setCoreValues(parsed.coreValues);
+        yamlEditPendingRef.current = false;
+        if (invalid.length > 0) {
+          setYamlSync("error");
+          setYamlErrorKind("schema");
+          setYamlSyncMessage(`${invalid.length} value${invalid.length === 1 ? " is" : "s are"} outside what this APWorld version accepts: ${invalid.slice(0, 3).join(", ")}.`);
+        } else if (custom.length > 0) {
+          setYamlSync("custom");
+          setYamlErrorKind(null);
+          setYamlSyncMessage(`${custom.length} custom field${custom.length === 1 ? " is" : "s are"} preserved in YAML even though the form cannot fully represent ${custom.length === 1 ? "it" : "them"}.`);
+        } else {
+          setYamlSync("synced");
+          setYamlErrorKind(null);
+          setYamlSyncMessage("Form and YAML match.");
+        }
+      };
+      worker.onerror = () => {
+        worker?.terminate();
+        worker = null;
+        yamlEditPendingRef.current = false;
+        setYamlSync("error");
+        setYamlErrorKind("syntax");
+        setYamlSyncMessage("The YAML checker could not finish. Try editing the document again.");
+      };
+      worker.postMessage({ text: manualYaml, schema: syncSchema });
+    }, 350);
+    return () => {
+      window.clearTimeout(timer);
+      worker?.terminate();
+    };
+  }, [defaultValues, entry, manualYaml]);
+
+  // Form → YAML. The Document API changes known nodes in-place and keeps
+  // unsupported sections, comments and ordering. If the visitor is midway
+  // through invalid YAML, form changes pause instead of overwriting it.
+  const lastGeneratedRef = useRef("");
+  useEffect(() => {
+    if (!generatedYaml) return;
+    // A YAML → form sync can produce the same generated string (for example
+    // when the only addition is an unsupported custom key). Clear the guard
+    // before the equality return or the visitor's next real form edit would
+    // be mistaken for the import and silently skipped.
+    if (applyingYamlRef.current) {
+      applyingYamlRef.current = false;
+      lastGeneratedRef.current = generatedYaml;
+      return;
+    }
+    if (!lastGeneratedRef.current) {
+      lastGeneratedRef.current = generatedYaml;
+      return;
+    }
+    if (generatedYaml === lastGeneratedRef.current) return;
+    lastGeneratedRef.current = generatedYaml;
+    if (manualYaml === null || !entry?.schema || yamlEditPendingRef.current) return;
+    const document = parseDocument(manualYaml);
+    if (document.errors.length > 0) return;
+    document.setIn(["name"], playerName.trim() || "Player1");
+    for (const option of entry.schema.options) {
+      document.setIn([entry.game, option.name], values[option.name]);
+    }
+    for (const option of CORE_OPTIONS) {
+      if (coreValues[option.name] === undefined || coreValues[option.name] === "") {
+        document.deleteIn([entry.game, option.name]);
+      } else {
+        document.setIn([entry.game, option.name], coreValues[option.name]);
+      }
+    }
+    setManualYaml(document.toString({ lineWidth: 0 }));
+    setYamlSync("synced");
+    setYamlErrorKind(null);
+    setYamlSyncMessage("Form change applied without removing your custom YAML.");
+  }, [coreValues, entry, generatedYaml, manualYaml, playerName, values]);
+
   /** Player name + game as they appear in the document being submitted.
    *  A hand-edit may have changed `name:`, and the room endpoints take the
    *  player name as its own field, so read it back rather than trusting
    *  the form. */
-  const submittedIdentity = useMemo(() => {
-    const fallback = {
+  const submittedIdentity = useMemo(() => ({
       playerName: playerName.trim() || "Player1",
       game: entry?.game ?? "",
-    };
-    if (!manualYaml) return fallback;
-    try {
-      const doc = load(manualYaml) as Record<string, unknown> | undefined;
-      if (!doc || typeof doc !== "object") return fallback;
-      return {
-        playerName: typeof doc.name === "string" && doc.name.trim() ? doc.name.trim() : fallback.playerName,
-        game: typeof doc.game === "string" && doc.game.trim() ? doc.game.trim() : fallback.game,
-      };
-    } catch {
-      // Invalid YAML: fall back to the form values. The server validates on
-      // submit and will report the real parse error.
-      return fallback;
-    }
-  }, [manualYaml, playerName, entry]);
+  }), [playerName, entry]);
 
   const handleSubmit = async () => {
-    if (!submit || !yamlContent || !entry) return;
+    if (!submit || !yamlContent || !entry || !canFinalize) return;
     setBusy(true);
     setError("");
     try {
@@ -442,13 +700,16 @@ export default function YamlBuilder({
   };
 
   const onBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) onClose();
+    if (e.target === dialogRef.current) requestClose();
   };
 
   const schema = entry?.schema ?? null;
+  const canFinalize = yamlSync !== "typing" && (
+    yamlSync !== "error" || (yamlErrorKind === "schema" && yamlWarningAccepted)
+  );
 
-  return (
-    <dialog ref={dialogRef} onClick={onBackdropClick} className="settings-modal yaml-builder-modal">
+  const builderContent = (
+    <>
       <header className="settings-modal-header">
         <div className="settings-modal-title">
           <strong>Build your YAML</strong>
@@ -458,12 +719,122 @@ export default function YamlBuilder({
             </span>
           )}
         </div>
-        <button type="button" className="btn btn-sm" onClick={onClose} aria-label="Close">✕</button>
+        <button type="button" className="btn btn-sm" onClick={requestClose} aria-label={presentation === "page" ? "Back" : "Close"}>
+          {presentation === "page" ? "← Back" : "✕"}
+        </button>
       </header>
 
+      {presentation === "page" && (
+        <nav className="yaml-builder-steps" aria-label="YAML builder steps">
+          <button
+            type="button"
+            className={step === "preset" ? "is-active" : undefined}
+            aria-current={step === "preset" ? "step" : undefined}
+            onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("preset"); }}
+          >
+            <span>1</span> Pick a preset
+          </button>
+          <span className="yaml-builder-step-line" aria-hidden="true">→</span>
+          <button
+            type="button"
+            className={step === "options" ? "is-active" : undefined}
+            aria-current={step === "options" ? "step" : undefined}
+            disabled={!schema}
+            onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("options"); }}
+          >
+            <span>2</span> Change your options
+          </button>
+          <span className="yaml-builder-step-line" aria-hidden="true">→</span>
+          <button
+            type="button"
+            className={step === "review" ? "is-active" : undefined}
+            aria-current={step === "review" ? "step" : undefined}
+            disabled={!schema || !playerName.trim()}
+            onClick={() => { setError(""); setStep("review"); }}
+          >
+            <span>3</span> Review and finish
+          </button>
+        </nav>
+      )}
+
       <div className="settings-modal-body">
-        {step === "form" && (
-          <>
+        {step === "preset" && (
+          <section className="settings-section yaml-builder-preset-step">
+            <h3>Pick a starting point</h3>
+            <p className="settings-hint">
+              A preset fills in a ready-made setup. You can change every option in the next step.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary yaml-builder-default-start"
+              disabled={!schema}
+              onClick={() => { setError(""); setManualYaml(null); setStep("options"); }}
+            >
+              Start with the game defaults
+            </button>
+            {presetsLoading && <p className="settings-hint">Loading presets…</p>}
+            {!presetsLoading && presets.length > 0 && (
+              <div className="yaml-builder-preset-list-wrap">
+                {presets.length > PRESET_FILTER_THRESHOLD && (
+                  <input
+                    type="search"
+                    className="preset-filter"
+                    placeholder="Filter presets by name, description or author..."
+                    value={presetFilter}
+                    onChange={(e) => setPresetFilter(e.target.value)}
+                  />
+                )}
+                <ul className="preset-list">
+                  {shownPresets.map((p) => (
+                    <li key={p.id} className="preset-row">
+                      <div className="preset-row-text">
+                        <div className="preset-row-head">
+                          <strong>{p.name}</strong>
+                          {p.is_official && <span className="badge badge-builtin">official</span>}
+                          {p.kind === "advanced" && <span className="badge badge-save">advanced</span>}
+                          {p.status === "private" && <span className="badge">draft</span>}
+                        </div>
+                        {p.description && <p className="preset-row-desc">{p.description}</p>}
+                        <p className="preset-row-meta">
+                          {p.author_username ? `by ${p.author_username}` : "by an unknown author"}
+                          {` · ${p.uses === 1 ? "used once" : `used ${p.uses} times`}`}
+                          {p.score > 0 && ` · ${p.score} upvote${p.score === 1 ? "" : "s"}`}
+                          {p.version !== entry?.version && ` · written for v${p.version}`}
+                          {p.stale_keys.length > 0 && ` · ${p.stale_keys.length} old option${p.stale_keys.length === 1 ? "" : "s"} skipped`}
+                        </p>
+                      </div>
+                      <button type="button" className="btn btn-sm preset-use-btn" onClick={() => applyPreset(p)}>
+                        Use this
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {filteredPresets.length === 0 && <p className="settings-hint">No presets match that filter.</p>}
+                {hiddenPresetCount > 0 && (
+                  <button type="button" className="yaml-builder-desc-toggle" onClick={() => setShowAllPresets(true)}>
+                    Show {hiddenPresetCount} more preset{hiddenPresetCount === 1 ? "" : "s"}
+                  </button>
+                )}
+                {showAllPresets && filteredPresets.length > PRESET_PREVIEW_COUNT && (
+                  <button type="button" className="yaml-builder-desc-toggle" onClick={() => setShowAllPresets(false)}>
+                    Show fewer
+                  </button>
+                )}
+              </div>
+            )}
+            {!presetsLoading && presets.length === 0 && (
+              <p className="settings-aux-note">There are no shared presets for this game yet. The game defaults are a safe place to begin.</p>
+            )}
+          </section>
+        )}
+
+        {step === "options" && (
+          <fieldset className="yaml-builder-form-fieldset" disabled={yamlSync === "typing"}>
+            {yamlSync === "typing" && (
+              <p className="yaml-builder-form-lock" role="status">
+                Checking the YAML edit before the form changes again…
+              </p>
+            )}
             <section className="settings-section">
               <h3>Player</h3>
               <div className="settings-controls yaml-builder-toprow">
@@ -472,7 +843,10 @@ export default function YamlBuilder({
                     <span>Game</span>
                     <select
                       value={selected}
-                      onChange={(e) => setSelected(e.target.value)}
+                      onChange={(e) => {
+                        setSelected(e.target.value);
+                        if (e.target.value) onGameChange?.(e.target.value);
+                      }}
                     >
                       <option value="">Select a game…</option>
                       {games.map((g) => (
@@ -501,95 +875,6 @@ export default function YamlBuilder({
               </p>
             </section>
 
-            {schema && presets.length > 0 && (
-              <details className="settings-section yaml-builder-group" open>
-                <summary>
-                  Start from a preset <span className="muted">({presets.length})</span>
-                </summary>
-                <div className="yaml-builder-group-body">
-                <p className="settings-hint">
-                  A configuration someone else already worked out. Applying one
-                  fills the form below and changes nothing you cannot edit
-                  afterwards.
-                </p>
-                {presets.length > PRESET_FILTER_THRESHOLD && (
-                  <input
-                    type="search"
-                    className="preset-filter"
-                    placeholder="Filter presets by name, description or author..."
-                    value={presetFilter}
-                    onChange={(e) => setPresetFilter(e.target.value)}
-                  />
-                )}
-                <ul className="preset-list">
-                  {shownPresets.map((p) => (
-                    <li key={p.id} className="preset-row">
-                      <div className="preset-row-text">
-                        <div className="preset-row-head">
-                          <strong>{p.name}</strong>
-                          {p.is_official && <span className="badge badge-builtin">official</span>}
-                          {p.kind === "advanced" && (
-                            <span
-                              className="badge badge-save"
-                              title="Carries plando, triggers or item links. Opens in the YAML editor."
-                            >
-                              advanced
-                            </span>
-                          )}
-                          {p.status === "private" && (
-                            <span className="badge">draft</span>
-                          )}
-                        </div>
-                        {p.description && <p className="preset-row-desc">{p.description}</p>}
-                        <p className="preset-row-meta">
-                          {p.author_username ? `by ${p.author_username}` : "by an unknown author"}
-                          {" · "}
-                          {p.uses === 1 ? "used once" : `used ${p.uses} times`}
-                          {p.score > 0 && ` · ${p.score} upvote${p.score === 1 ? "" : "s"}`}
-                          {p.version !== entry?.version && ` · written for v${p.version}`}
-                          {p.stale_keys.length > 0 &&
-                            ` · ${p.stale_keys.length} option${
-                              p.stale_keys.length === 1 ? "" : "s"
-                            } no longer apply`}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-sm preset-use-btn"
-                        onClick={() => applyPreset(p)}
-                      >
-                        Use this
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {filteredPresets.length === 0 && (
-                  <p className="settings-hint" style={{ margin: 0 }}>
-                    No presets match that filter.
-                  </p>
-                )}
-                {hiddenPresetCount > 0 && (
-                  <button
-                    type="button"
-                    className="yaml-builder-desc-toggle"
-                    onClick={() => setShowAllPresets(true)}
-                  >
-                    Show {hiddenPresetCount} more preset{hiddenPresetCount === 1 ? "" : "s"}
-                  </button>
-                )}
-                {showAllPresets && filteredPresets.length > PRESET_PREVIEW_COUNT && (
-                  <button
-                    type="button"
-                    className="yaml-builder-desc-toggle"
-                    onClick={() => setShowAllPresets(false)}
-                  >
-                    Show fewer
-                  </button>
-                )}
-                </div>
-              </details>
-            )}
-
             {schema && (
               <CoreOptionsForm values={coreValues} setValues={setCoreValues} />
             )}
@@ -609,7 +894,7 @@ export default function YamlBuilder({
                 </p>
               </section>
             )}
-          </>
+          </fieldset>
         )}
 
         {step === "review" && entry && (
@@ -621,7 +906,7 @@ export default function YamlBuilder({
                   <button
                     type="button"
                     className="btn btn-sm"
-                    disabled={busy}
+                    disabled={busy || !canFinalize}
                     onClick={handleSaveToLibrary}
                     title="Keep this YAML in your own library so you can reopen or reuse it"
                   >
@@ -630,6 +915,7 @@ export default function YamlBuilder({
                   <button
                     type="button"
                     className="btn btn-sm"
+                    disabled={!canFinalize}
                     onClick={() => { setSavingPreset((v) => !v); setPresetSaved(""); }}
                   >
                     Save as preset
@@ -664,7 +950,7 @@ export default function YamlBuilder({
                   <button
                     type="button"
                     className="btn btn-sm btn-primary"
-                    disabled={busy || !presetName.trim()}
+                    disabled={busy || !presetName.trim() || !canFinalize}
                     onClick={handleSavePreset}
                   >
                     {busy ? "Saving…" : "Save"}
@@ -688,30 +974,50 @@ export default function YamlBuilder({
                   className="yaml-builder-editor"
                   value={yamlContent}
                   spellCheck={false}
-                  onChange={(e) => setManualYaml(e.target.value)}
+                  onChange={(e) => handleYamlEdit(e.target.value)}
                   rows={18}
+                  aria-label="YAML content"
                 />
-              ) : (
+              ) : presentation === "modal" ? (
                 <pre className="yaml-builder-preview">{highlightYaml(yamlContent)}</pre>
+              ) : (
+                <>
+                  <p className="settings-aux-note yaml-builder-page-review-note">
+                    The live document stays visible on the right while you save, download, or submit it.
+                  </p>
+                  <pre className="yaml-builder-preview yaml-builder-page-mobile-preview">
+                    {highlightYaml(yamlContent)}
+                  </pre>
+                </>
               )}
               {manualYaml !== null && (
-                <p className="settings-aux-note yaml-builder-manual-note">
-                  Hand-edited. The options form no longer drives this document, so
-                  anything the builder does not cover yet - Archipelago's own
-                  options like <code>progression_balancing</code> or{" "}
-                  <code>start_inventory</code>, or extra slots - can be written
-                  here directly.{" "}
+                <p className="settings-aux-note yaml-builder-manual-note" role="status" aria-live="polite">
+                  {yamlSyncMessage}{" "}
                   <button
                     type="button"
                     className="yaml-builder-desc-toggle"
-                    onClick={() => { setManualYaml(null); setEditing(false); }}
+                    onClick={rebuildFromForm}
                   >
                     Discard edits and rebuild from the form
                   </button>
                 </p>
               )}
+              {yamlErrorKind === "schema" && !yamlWarningAccepted && (
+                <div className="yaml-builder-warning-gate" role="alert">
+                  <strong>Review the invalid value before finishing.</strong>
+                  <span>You can correct it in the form or explicitly keep the hand-written YAML.</span>
+                  <button type="button" className="btn btn-sm" onClick={() => setYamlWarningAccepted(true)}>
+                    Continue with this warning
+                  </button>
+                </div>
+              )}
+              {(yamlErrorKind === "syntax" || yamlErrorKind === "size") && (
+                <p className="settings-error" role="alert">
+                  Fix the YAML before downloading, saving or submitting it.
+                </p>
+              )}
             </section>
-            {reviewExtra && !success && reviewExtra(yamlContent, submittedIdentity.playerName)}
+            {reviewExtra && !success && canFinalize && reviewExtra(yamlContent, submittedIdentity.playerName)}
           </>
         )}
 
@@ -724,9 +1030,22 @@ export default function YamlBuilder({
       </div>
 
       <footer className="settings-modal-footer">
-        {step === "form" && (
+        {step === "preset" && (
           <>
-            <button type="button" className="btn btn-sm" onClick={onClose}>Cancel</button>
+            <button type="button" className="btn btn-sm" onClick={requestClose}>Cancel</button>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              disabled={!schema}
+              onClick={() => setStep("options")}
+            >
+              Continue with defaults →
+            </button>
+          </>
+        )}
+        {step === "options" && (
+          <>
+            <button type="button" className="btn btn-sm" onClick={() => setStep("preset")}>← Back to presets</button>
             <button
               type="button"
               className="btn btn-sm btn-primary"
@@ -742,7 +1061,7 @@ export default function YamlBuilder({
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("form"); }}
+              onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("options"); }}
               disabled={busy}
               title={
                 manualYaml !== null
@@ -750,7 +1069,7 @@ export default function YamlBuilder({
                   : undefined
               }
             >
-              ← Back
+              ← Back to options
             </button>
             <button
               type="button"
@@ -761,7 +1080,7 @@ export default function YamlBuilder({
                 );
                 noteEmitted("download");
               }}
-              disabled={busy}
+              disabled={busy || !canFinalize}
             >
               Download .yaml
             </button>
@@ -770,19 +1089,71 @@ export default function YamlBuilder({
                 type="button"
                 className="btn btn-sm btn-primary"
                 onClick={handleSubmit}
-                disabled={busy}
+                disabled={busy || !canFinalize}
               >
                 {busy ? "Submitting…" : submit.label}
               </button>
             )}
             {success && (
-              <button type="button" className="btn btn-sm btn-primary" onClick={onClose}>
+              <button type="button" className="btn btn-sm btn-primary" onClick={requestClose}>
                 Done
               </button>
             )}
           </>
         )}
       </footer>
+    </>
+  );
+
+  if (presentation === "page") {
+    return (
+      <div className="yaml-builder-page">
+        <div className="yaml-builder-workspace-form">{builderContent}</div>
+        <aside className="yaml-builder-live" aria-label="Live YAML preview">
+          <div className="yaml-builder-live-head">
+            <div>
+              <strong>Live YAML</strong>
+              <span>Edit here or change the form</span>
+            </div>
+            <div className="yaml-builder-live-statuses">
+              <span className={`yaml-builder-sync-status is-${yamlSync}`} role="status" aria-live="polite">{yamlSync === "error" ? "Needs attention" : yamlSync === "custom" ? "Custom values" : yamlSync === "typing" ? "Typing…" : "Synced"}</span>
+              {entry && <span className="badge">v{entry.version}</span>}
+            </div>
+          </div>
+          <div
+            className="yaml-builder-live-editor-shell"
+            style={{ "--yaml-lines": Math.max(1, yamlContent.split("\n").length) } as CSSProperties}
+          >
+            <pre ref={liveHighlightRef} className="yaml-builder-live-highlight" aria-hidden="true">
+              {yamlContent ? highlightYaml(yamlContent) : "Choose a game to start building."}
+            </pre>
+            <textarea
+              className="yaml-builder-live-editor"
+              value={yamlContent}
+              onChange={(event) => handleYamlEdit(event.target.value)}
+              onScroll={(event) => {
+                if (!liveHighlightRef.current) return;
+                liveHighlightRef.current.scrollTop = event.currentTarget.scrollTop;
+                liveHighlightRef.current.scrollLeft = event.currentTarget.scrollLeft;
+              }}
+              spellCheck={false}
+              aria-label="Editable live YAML"
+            />
+          </div>
+          <p className={`settings-aux-note yaml-builder-live-note is-${yamlSync}`}>
+            {yamlSyncMessage}
+            {manualYaml !== null && (
+              <>{" "}<button type="button" className="yaml-builder-desc-toggle" onClick={rebuildFromForm}>Rebuild from form</button></>
+            )}
+          </p>
+        </aside>
+      </div>
+    );
+  }
+
+  return (
+    <dialog ref={dialogRef} onClick={onBackdropClick} className="settings-modal yaml-builder-modal">
+      {builderContent}
     </dialog>
   );
 }
@@ -959,13 +1330,10 @@ function OptionsForm({
  * same MarkdownText component as room descriptions: no raw HTML, no
  * rehype-raw, external links forced to noopener.
  *
- * Long descriptions collapse to a few lines. AP docstrings routinely
- * enumerate every accepted value, which turns a 26-option form into a wall;
- * the toggle is per option and remembers nothing, so the default view stays
- * scannable without hiding anything.
+ * Long descriptions collapse only when doing so actually shortens the row.
+ * The browser measures the full and clamped text columns against the option
+ * control, so a tall control can use the otherwise-empty space beside it.
  */
-const DESC_CLAMP_CHARS = 180;
-
 /** How many presets show before "Show N more", and when a filter box earns
  *  its place. Both exist for the fifty-presets-per-game case rather than
  *  today's handful. */
@@ -974,17 +1342,90 @@ const PRESET_FILTER_THRESHOLD = 8;
 
 /** Option count past which the options form earns a filter box. */
 const OPTION_FILTER_THRESHOLD = 12;
+const MAX_EDITABLE_YAML_BYTES = 64 * 1024;
+
+function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "custom" | "invalid" {
+  if (value === undefined) return "form";
+  if (typeof value === "object" && value !== null && option.type !== "list" && option.type !== "dict") {
+    return "custom"; // Weighted YAML values are valid AP input, but not one form value.
+  }
+  if (isRandomValue(value)) return "form";
+  switch (option.type) {
+    case "toggle":
+      return typeof value === "boolean" ? "form" : "invalid";
+    case "choice":
+      return typeof value === "string" && option.choices?.includes(value) ? "form" : "invalid";
+    case "range":
+      return typeof value === "number" && value >= (option.min ?? value) && value <= (option.max ?? value)
+        ? "form"
+        : "invalid";
+    case "list":
+      return Array.isArray(value) ? "form" : "invalid";
+    case "dict":
+      return typeof value === "object" && value !== null && !Array.isArray(value) ? "form" : "invalid";
+    default:
+      return typeof value === "string" || typeof value === "number" ? "form" : "custom";
+  }
+}
 
 function OptionDescription({ text }: { text?: string | null }) {
   const [expanded, setExpanded] = useState(false);
+  const [canCollapse, setCanCollapse] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const row = root?.closest<HTMLElement>(".yaml-builder-option");
+    const textColumn = root?.closest<HTMLElement>(".yaml-builder-option-text");
+    const control = row?.querySelector<HTMLElement>(".yaml-builder-option-control");
+    if (!root || !row || !textColumn || !control) return;
+
+    const measure = () => {
+      const width = textColumn.getBoundingClientRect().width;
+      if (width <= 0) return;
+      const cloneHeight = (clamped: boolean) => {
+        const clone = textColumn.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll("button").forEach((button) => button.remove());
+        const content = clone.querySelector<HTMLElement>(".yaml-builder-option-desc-content");
+        content?.classList.toggle("yaml-builder-desc-clamp", clamped);
+        Object.assign(clone.style, {
+          position: "fixed",
+          visibility: "hidden",
+          pointerEvents: "none",
+          inset: "0 auto auto -10000px",
+          width: `${width}px`,
+        });
+        document.body.appendChild(clone);
+        const height = clone.getBoundingClientRect().height;
+        clone.remove();
+        return height;
+      };
+
+      const clampedHeight = cloneHeight(true);
+      const fullHeight = cloneHeight(false);
+      const textRect = textColumn.getBoundingClientRect();
+      const controlRect = control.getBoundingClientRect();
+      const stacked = controlRect.top >= textRect.bottom - 1;
+      const actuallyOverflows = fullHeight > clampedHeight + 1;
+      setCanCollapse(
+        actuallyOverflows && (stacked || fullHeight > controlRect.height + 1),
+      );
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    observer.observe(control);
+    return () => observer.disconnect();
+  }, [text]);
+
   if (!text) return null;
-  const long = text.length > DESC_CLAMP_CHARS;
   return (
-    <div className="yaml-builder-option-desc">
-      <div className={long && !expanded ? "yaml-builder-desc-clamp" : undefined}>
+    <div className="yaml-builder-option-desc" ref={rootRef}>
+      <div className={`yaml-builder-option-desc-content${canCollapse && !expanded ? " yaml-builder-desc-clamp" : ""}`}>
         <MarkdownText source={text} />
       </div>
-      {long && (
+      {canCollapse && (
         <button
           type="button"
           className="yaml-builder-desc-toggle"
@@ -1023,7 +1464,7 @@ function OptionControl({
     case "toggle": {
       // Three states rather than a checkbox: Archipelago accepts "random"
       // for a toggle and a checkbox cannot express it.
-      const state = isRandomValue(value) ? "random" : value ? "on" : "off";
+      const state = isRandomValue(value) ? "random" : typeof value === "boolean" ? (value ? "on" : "off") : "custom";
       return (
         <div className="yaml-builder-segmented" role="group">
           {(["off", "on", "random"] as const).map((s) => (
@@ -1037,13 +1478,18 @@ function OptionControl({
               {s}
             </button>
           ))}
+          {state === "custom" && <span className="yaml-builder-custom-value">Custom: {String(value)}</span>}
         </div>
       );
     }
 
     case "choice":
+      {
+      const choiceValue = String(value ?? "");
+      const known = option.choices?.includes(choiceValue) || choiceValue === "random";
       return (
-        <select value={String(value ?? "")} onChange={(e) => onChange(e.target.value)}>
+        <select value={choiceValue} onChange={(e) => onChange(e.target.value)}>
+          {!known && <option value={choiceValue}>Custom YAML value: {choiceValue}</option>}
           {option.choices?.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
@@ -1051,6 +1497,7 @@ function OptionControl({
           <option value="random">random</option>
         </select>
       );
+      }
 
     case "range": {
       const named = option.named_values;
@@ -1064,6 +1511,9 @@ function OptionControl({
         ? "random-range"
         : String(value);
       const num = typeof value === "number" ? value : Number(option.default);
+      const outside = !isRandom && typeof value === "number" && (
+        value < (option.min ?? value) || value > (option.max ?? value)
+      );
       const matchingAlias = named
         ? Object.entries(named).find(([, v]) => v === num)?.[0]
         : undefined;
@@ -1112,6 +1562,18 @@ function OptionControl({
 
           {!isRandom && (
             <>
+              {outside && (
+                <div className="yaml-builder-value-warning">
+                  <span>{String(value)} is outside {option.min}–{option.max}.</span>
+                  <button
+                    type="button"
+                    className="yaml-builder-desc-toggle"
+                    onClick={() => onChange(Math.min(option.max ?? value, Math.max(option.min ?? value, value)))}
+                  >
+                    Use nearest valid value
+                  </button>
+                </div>
+              )}
               <input
                 type="number"
                 min={option.min}

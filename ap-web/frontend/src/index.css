@@ -4024,6 +4024,32 @@ details.collapsible-section > .accordion-body {
 .lp-hint strong { color: var(--text-h); }
 .lp .landing-pending { position: relative; margin: 1.5rem auto 0; max-width: 32rem; text-align: left; }
 .lp-wrap { max-width: 64rem; margin: 0 auto; padding: 0 1.5rem 3rem; }
+.lp-intro {
+  margin: 0 0 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+}
+.lp-intro > h2 { margin: 0.25rem 0 0.65rem; color: var(--text-h); font-family: var(--lp-display); }
+.lp-intro > p { max-width: 48rem; color: var(--text-muted); }
+.lp-paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+.lp-path {
+  display: block;
+  width: 100%;
+  padding: 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.lp-path:hover, .lp-path:focus-visible { border-color: var(--accent); text-decoration: none; }
+.lp-path h3 { margin: 0.25rem 0 0.4rem; color: var(--text-h); font-family: var(--lp-display); font-size: 1.1rem; }
+.lp-path p { margin: 0; color: var(--text-muted); font-size: 0.92rem; }
+.lp-path-link { display: inline-block; margin-top: 0.8rem; color: var(--accent-light); font-weight: 600; }
 .lp-sect {
   font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.75rem;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);
@@ -4340,4 +4366,428 @@ details.yaml-builder-group > summary .muted {
   overflow: auto;
   white-space: pre;
   margin: 0;
+}
+
+/* Full-page builder. The form keeps the established modal controls while
+   desktop gains a persistent document pane that updates on every change. */
+.yaml-builder-page {
+  position: relative;
+  left: 50%;
+  width: min(1540px, calc(100vw - 2rem));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: minmax(34rem, 1.15fr) minmax(24rem, 0.85fr);
+  gap: 1.25rem;
+  align-items: start;
+  padding-bottom: 2rem;
+}
+.yaml-builder-workspace-form,
+.yaml-builder-live {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+  overflow: hidden;
+}
+.yaml-builder-workspace-form {
+  display: flex;
+  flex-direction: column;
+}
+.yaml-builder-workspace-form .settings-modal-body {
+  overflow: visible;
+  max-height: none;
+}
+.yaml-builder-workspace-form .settings-modal-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  box-shadow: 0 -8px 20px rgb(0 0 0 / 16%);
+}
+.yaml-builder-live {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+}
+.yaml-builder-live-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.yaml-builder-live-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.yaml-builder-live-head strong {
+  color: var(--text-h);
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+.yaml-builder-live-head span:not(.badge) {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.yaml-builder-live-editor-shell {
+  position: relative;
+  width: 100%;
+  height: min(
+    max(28rem, calc(var(--yaml-lines) * 1.154rem + 2rem)),
+    calc(100vh - 10.5rem)
+  );
+  min-height: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+.yaml-builder-live-highlight,
+.yaml-builder-live-editor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 1rem 1.1rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.48;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}
+.yaml-builder-live-highlight {
+  pointer-events: none;
+  color: var(--text);
+  background: var(--bg);
+  scrollbar-width: none;
+}
+.yaml-builder-live-highlight::-webkit-scrollbar { display: none; }
+.yaml-builder-live-editor {
+  resize: none;
+  color: transparent;
+  caret-color: var(--text-h);
+  background: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.yaml-builder-live-editor:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.yaml-builder-live-editor::selection {
+  background: color-mix(in srgb, var(--accent) 42%, transparent);
+  -webkit-text-fill-color: transparent;
+}
+.yaml-builder-live-head > .yaml-builder-live-statuses {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+.yaml-builder-sync-status {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-weight: 600;
+}
+.yaml-builder-sync-status.is-synced { color: var(--green) !important; }
+.yaml-builder-sync-status.is-typing { color: var(--accent-light) !important; }
+.yaml-builder-sync-status.is-custom { color: var(--yellow, #e8b85a) !important; }
+.yaml-builder-sync-status.is-error { color: var(--red) !important; }
+.yaml-builder-live-note.is-error { color: var(--red); }
+.yaml-builder-value-warning {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+  color: var(--red);
+  font-size: 0.75rem;
+}
+.yaml-builder-custom-value {
+  align-self: center;
+  color: var(--yellow, #e8b85a);
+  font-size: 0.72rem;
+}
+.yaml-builder-live-note {
+  margin: 0;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--border);
+}
+.yaml-builder-page-mobile-preview { display: none; }
+.yaml-builder-route-state {
+  max-width: 42rem;
+  margin: 4rem auto;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+.yaml-builder-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.yaml-builder-steps button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.yaml-builder-steps button > span {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.7rem;
+}
+.yaml-builder-steps button.is-active {
+  color: var(--text-h);
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.yaml-builder-steps button.is-active > span {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.yaml-builder-steps button:disabled { opacity: 0.5; cursor: not-allowed; }
+.yaml-builder-step-line { color: var(--text-muted); font-size: 0.8rem; }
+.yaml-builder-preset-step { display: flex; flex-direction: column; gap: 0.85rem; }
+.yaml-builder-preset-step > h3,
+.yaml-builder-preset-step > p { margin: 0; }
+.yaml-builder-default-start { align-self: flex-start; }
+.yaml-builder-preset-list-wrap { display: flex; flex-direction: column; gap: 0.7rem; }
+.yaml-builder-form-fieldset {
+  display: contents;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.yaml-builder-form-lock {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text-h);
+  background: var(--accent-dim);
+  font-size: 0.78rem;
+}
+.yaml-builder-warning-gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--yellow, #e8b85a);
+  border-radius: 8px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--yellow, #e8b85a) 8%, var(--bg));
+  font-size: 0.78rem;
+}
+.yaml-builder-warning-gate strong { color: var(--text-h); }
+.yaml-builder-warning-gate .btn { margin-left: auto; }
+
+.not-found {
+  max-width: 46rem;
+  margin: clamp(3rem, 10vh, 8rem) auto;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+}
+.not-found-code {
+  margin: 0;
+  color: var(--accent);
+  font-size: clamp(3.5rem, 12vw, 7rem);
+  font-weight: 800;
+  line-height: 0.9;
+}
+.not-found h1 { margin: 1rem 0 0.6rem; }
+.not-found > p:not(.not-found-code) { color: var(--text-muted); }
+.not-found-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.65rem; margin-top: 1.5rem; }
+
+/* Public YAML builder landing page. Individual workspaces stay noindex;
+   this page is the stable, searchable explanation and discovery route. */
+.yaml-builder-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-bottom: 3rem;
+}
+.yaml-builder-landing-hero {
+  padding: clamp(1.4rem, 4vw, 3rem);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 38%),
+    var(--bg-card);
+}
+.yaml-builder-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--accent-light);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.yaml-builder-landing-hero h1 { margin: 0 0 0.55rem; font-size: clamp(2rem, 5vw, 3.4rem); }
+.yaml-builder-landing-hero > p:not(.yaml-builder-eyebrow) {
+  max-width: 48rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+.yaml-builder-game-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 52rem;
+  margin-top: 1.5rem;
+  color: var(--text-h);
+  font-weight: 600;
+}
+.yaml-builder-game-search input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+.yaml-builder-game-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.yaml-builder-landing-links { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.yaml-builder-landing-section { display: flex; flex-direction: column; gap: 0.9rem; }
+.yaml-builder-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+}
+.yaml-builder-section-head h2 { margin: 0 0 0.2rem; }
+.yaml-builder-section-head p { margin: 0; color: var(--text-muted); font-size: 0.86rem; }
+.yaml-builder-game-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+.yaml-builder-game-card {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+.yaml-builder-game-card:hover,
+.yaml-builder-game-card:focus-visible {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  outline: none;
+}
+.yaml-builder-game-card-main { min-width: 0; display: flex; flex-direction: column; gap: 0.18rem; }
+.yaml-builder-game-card-main strong { overflow: hidden; color: var(--text-h); text-overflow: ellipsis; white-space: nowrap; }
+.yaml-builder-game-card-main code { color: var(--text-muted); font-size: 0.7rem; }
+.yaml-builder-game-card-meta { display: flex; align-items: center; gap: 0.45rem; color: var(--text-muted); font-size: 0.78rem; white-space: nowrap; }
+.yaml-builder-draft-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+.yaml-builder-draft-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  background: var(--accent-dim);
+}
+.yaml-builder-draft-card > div { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.yaml-builder-draft-card strong { color: var(--text-h); text-transform: capitalize; }
+.yaml-builder-draft-card span { color: var(--text-muted); font-size: 0.78rem; }
+.yaml-builder-empty { margin: 0; padding: 1.5rem; border: 1px dashed var(--border); border-radius: 9px; color: var(--text-muted); text-align: center; }
+.yaml-builder-explainer {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 2rem;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+.yaml-builder-explainer h2 { margin: 0 0 0.5rem; }
+.yaml-builder-explainer p:not(.yaml-builder-eyebrow) { margin: 0; color: var(--text-muted); line-height: 1.6; }
+.yaml-builder-explainer ol { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; margin: 0; padding: 0; counter-reset: builder-step; }
+.yaml-builder-explainer li { position: relative; display: flex; flex-direction: column; gap: 0.12rem; padding-left: 2.3rem; counter-increment: builder-step; }
+.yaml-builder-explainer li::before {
+  content: counter(builder-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.yaml-builder-explainer li strong { color: var(--text-h); }
+.yaml-builder-explainer li span { color: var(--text-muted); font-size: 0.8rem; }
+
+@media (max-width: 980px) {
+  .yaml-builder-page {
+    display: block;
+    width: min(760px, calc(100vw - 2rem));
+  }
+  .yaml-builder-live { display: none; }
+  .yaml-builder-page-review-note { display: none; }
+  .yaml-builder-page-mobile-preview { display: block; }
+  .yaml-builder-game-grid,
+  .yaml-builder-draft-grid,
+  .yaml-builder-explainer { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .yaml-builder-steps { gap: 0.3rem; padding-inline: 0.75rem; }
+  .yaml-builder-steps button { padding-inline: 0.4rem; }
+  .yaml-builder-step-line { display: none; }
+  .yaml-builder-game-card { align-items: flex-start; }
+  .yaml-builder-game-card-meta { flex-wrap: wrap; justify-content: flex-end; }
+  .yaml-builder-section-head { align-items: flex-start; flex-direction: column; }
 }

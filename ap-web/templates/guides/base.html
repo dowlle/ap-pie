@@ -153,6 +153,22 @@
         margin: -1rem 0 1.75rem;
       }
       .guide-body a { color: var(--accent-light); }
+      .guide-body img {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin: 0;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--bg-card);
+      }
+      .guide-body p:has(> img) { margin: 1.5rem 0 0.55rem; }
+      .guide-body p:has(> img) + p {
+        margin-top: 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        text-align: center;
+      }
       .guide-body blockquote {
         background: var(--accent-dim);
         border: 1px solid var(--border-strong);
@@ -163,6 +179,57 @@
       }
       .guide-body blockquote p { margin: 0; }
       .guide-body blockquote p + p { margin-top: 0.6rem; }
+      .guide-body blockquote a {
+        display: inline-block;
+        margin-top: 0.35rem;
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+      }
+      .guide-path-tabs {
+        margin: 1.25rem 0 2rem;
+        padding: 0.4rem;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--bg-card);
+      }
+      .guide-path-tablist {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.45rem;
+      }
+      .guide-path-tab {
+        min-height: 3rem;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--text-muted);
+        font: inherit;
+        font-weight: 650;
+        cursor: pointer;
+      }
+      .guide-path-tab:hover { color: var(--text-h); background: var(--bg-hover); }
+      .guide-path-tab[aria-selected="true"] {
+        color: var(--text-h);
+        border-color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .guide-path-tab:focus-visible { outline: 2px solid var(--accent-light); outline-offset: 2px; }
+      .guide-path-panel {
+        margin-top: 0.4rem;
+        padding: 1.35rem 1.2rem 0.35rem;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg);
+        outline: none;
+      }
+      .guide-path-panel[hidden] { display: none; }
+      .guide-path-panel > h3:first-child { margin-top: 0; }
+      @media (max-width: 620px) {
+        .guide-path-tablist { grid-template-columns: 1fr; }
+        .guide-path-tab { min-height: 2.65rem; text-align: left; }
+      }
 
       .guide-lede {
         color: var(--text-muted);

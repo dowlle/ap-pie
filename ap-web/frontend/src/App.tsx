@@ -16,6 +16,9 @@ import AdminApworldRequests from "./pages/AdminApworldRequests";
 import Play from "./pages/Play";
 import Landing from "./pages/Landing";
 import MyArea from "./pages/MyArea";
+import YamlBuilderPage from "./pages/YamlBuilderPage";
+import YamlBuilderLanding from "./pages/YamlBuilderLanding";
+import NotFound from "./pages/NotFound";
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
 import { useEffect, useState } from "react";
@@ -110,6 +113,7 @@ function NavBar() {
             YAML buttons land, they must handle anonymous users (their
             backend is session-gated). */}
         <NavLink to="/apworlds">APWorlds</NavLink>
+        <NavLink to="/yaml-builder">YAML Builder</NavLink>
         {showAdminTools && (
           <>
             <NavLink to="/market">Market</NavLink>
@@ -226,6 +230,7 @@ function RouteAnalytics() {
     let view = "other";
     if (p === "/") view = "landing";
     else if (p === "/apworlds") view = "apworlds";
+    else if (p === "/yaml-builder" || p.startsWith("/yaml-builder/")) view = "yaml_builder";
     else if (p === "/rooms") view = "rooms";
     else if (p === "/rooms/templates") view = "room_templates";
     else if (p.startsWith("/my")) view = "my_area";
@@ -265,6 +270,8 @@ function AppRoutes() {
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />
       <Route path="/servers" element={<AdminShell><RequireApproval><Servers /></RequireApproval></AdminShell>} />
       <Route path="/apworlds" element={<AdminShell><APWorlds /></AdminShell>} />
+      <Route path="/yaml-builder" element={<AdminShell><YamlBuilderLanding /></AdminShell>} />
+      <Route path="/yaml-builder/:apworld" element={<AdminShell><YamlBuilderPage /></AdminShell>} />
       <Route path="/rooms/templates" element={<Navigate to="/my/templates" replace />} />
       {/* FEAT-43: one personal area. The old single-purpose paths redirect
           so existing links and bookmarks keep working. */}
@@ -272,6 +279,7 @@ function AppRoutes() {
       <Route path="/my/:tab" element={<AdminShell><MyArea /></AdminShell>} />
       <Route path="/presets" element={<Navigate to="/my/presets" replace />} />
       <Route path="/summary" element={<AdminShell><RequireApproval><Summary /></RequireApproval></AdminShell>} />
+      <Route path="*" element={<AdminShell><NotFound /></AdminShell>} />
     </Routes>
   );
 }

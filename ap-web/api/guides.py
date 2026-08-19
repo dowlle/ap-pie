@@ -63,22 +63,43 @@ GUIDES: list[dict[str, str]] = [
     {
         "slug": "getting-started",
         "file": "getting-started.md",
-        "h1": "Getting started with Archipelago",
-        "page_title": "Getting started with Archipelago | Archipelago Pie",
+        "h1": "Getting started with the Archipelago randomizer",
+        "page_title": "Getting started with the Archipelago randomizer | Archipelago Pie",
         "meta_description": (
-            "What Archipelago multiworld randomizers are, how YAML files, rooms, "
-            "and clients fit together, and how a multiworld session gets started."
+            "Learn how the Archipelago randomizer connects game worlds, then choose "
+            "how to join a room, create a solo seed, or organize a multiworld."
         ),
         "card_title": "Getting started with Archipelago",
         "card_blurb": (
-            "New to multiworld? Start here: what Archipelago is, and how YAMLs, "
-            "rooms, and clients fit together."
+            "Learn the basics, then choose the right path for joining a group, "
+            "playing solo, or organizing a multiworld."
         ),
         "published": "2026-07-22",
-        "updated": "2026-07-22",
+        "updated": "2026-08-19",
         "project": "ap",
         "kicker": "Start here",
         "featured": True,
+        "path_tabs": True,
+    },
+    {
+        "slug": "hosting-on-archipelago-pie",
+        "file": "hosting-on-archipelago-pie.md",
+        "h1": "How to host a room on Archipelago Pie",
+        "page_title": "Hosting an Archipelago Pie collection room | Archipelago Pie",
+        "meta_description": (
+            "Create an Archipelago Pie collection room, set its rules and "
+            "APWorld versions, collect YAMLs, then close and download it for generation."
+        ),
+        "card_title": "Host a room on Archipelago Pie",
+        "card_blurb": (
+            "Create a collection room, share it with players, review submissions, "
+            "and download everything for local generation."
+        ),
+        "published": "2026-08-19",
+        "updated": "2026-08-19",
+        "project": "ap",
+        "kicker": "Archipelago Pie",
+        "featured": False,
     },
     {
         "slug": "hosting-a-multiworld",
@@ -317,6 +338,7 @@ def guide_page(slug: str) -> str:
         video_url=guide.get("video_url"),
         video_title=guide.get("video_title"),
         video_thumb=guide.get("video_thumb"),
+        path_tabs=guide.get("path_tabs", False),
     )
 
 
@@ -391,4 +413,3 @@ def llms() -> Response:
         f"- [Community APWorld index]({_canonical('/apworlds')}): browse community game integrations",
     ]
     return Response("\n".join(lines) + "\n", mimetype="text/plain")
-

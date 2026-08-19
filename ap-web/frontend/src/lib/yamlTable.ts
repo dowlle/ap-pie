@@ -20,8 +20,9 @@
 export function cleanYamlFilename(
   filename: string,
   playerName: string,
-  _game: string,
+  game: string,
 ): string {
+  void game;
   if (/[{[]['"]/.test(filename)) {
     return `${playerName}.yaml`;
   }

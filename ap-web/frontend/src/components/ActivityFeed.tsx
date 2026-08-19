@@ -100,8 +100,12 @@ export default function ActivityFeed({
   useEffect(() => {
     let cancelled = false;
     sinceRef.current = undefined;
-    setEvents([]);
-    setStatus(null);
+    const resetTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        setEvents([]);
+        setStatus(null);
+      }
+    }, 0);
 
     const tick = async () => {
       try {
@@ -133,6 +137,7 @@ export default function ActivityFeed({
     intervalRef.current = window.setInterval(tick, POLL_MS);
     return () => {
       cancelled = true;
+      window.clearTimeout(resetTimer);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [roomId, publicMode]);

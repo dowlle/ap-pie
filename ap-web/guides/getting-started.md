@@ -1,51 +1,142 @@
 ## What is Archipelago?
 
-Archipelago is a multiworld randomizer. It takes a group of games, shuffles their unlocks and items into one shared pool, and spreads that pool across every player's world. When you find an item in your game, it might be yours, or it might belong to a friend playing a completely different game. Your own progression is out there too, waiting in someone else's world.
+Archipelago connects randomized games. A location in one world can contain an item for another world, even when the two worlds use different games. Each player continues playing their own game while Archipelago sends items between everyone who is connected.
 
-You can also play solo. One game, one world, everything shuffled within it. That is a classic randomizer, and it works exactly the same way.
+You can also use Archipelago alone. A solo seed has one world, with its items rearranged inside that game.
 
-Archipelago supports hundreds of games, from Zelda and Metroid classics to modern indies. The officially supported list lives at [archipelago.gg/games](https://archipelago.gg/games), and that is only part of the picture: the community maintains many more integrations, browsable in [our APWorld index](/apworlds), including this site's own games like Crash Team Racing. Each supported game has its own "apworld": a small add-on that teaches Archipelago how that game works.
+The games included with Archipelago are listed on [archipelago.gg](https://archipelago.gg/games). People in the community make APWorlds for many more games.
 
-## Start here: your first game in five steps
+> **Want to see what you can play?**
+>
+> Find games, setup guides, downloads, and YAML builders. [Browse the APWorld index →](/apworlds)
 
-1. **Pick a game you own** from the [official games list](https://archipelago.gg/games) or [the community APWorld index](/apworlds). Good first picks are games you know well; the randomizer is more fun when the base game is familiar.
-2. **Install Archipelago.** Download the latest installer from the [official releases page](https://github.com/ArchipelagoMW/Archipelago/releases). It bundles the generator, the server, and the clients most games need.
-3. **Follow your game's setup guide.** Every game on [archipelago.gg/games](https://archipelago.gg/games) links its own guide, and the general tutorials live at [archipelago.gg/tutorial](https://archipelago.gg/tutorial). Playing Crash Team Racing? Use [our CTR guide](/guides/ctr) instead, it covers everything in one place.
-4. **Make your YAML** (your settings file, explained below), either from a template or with [the builder on this site](/apworlds), and hand it to whoever is hosting, or generate the game yourself.
-5. **Connect and play.** Your game's client connects to the room address, and from there items flow automatically.
+## Start with three ideas
 
-Stuck at any step? The [Archipelago Discord](https://discord.gg/8Z65BR2) is active and friendly, and most games have their own channel there.
+**A randomizer changes where important items are found.** An ability, key, or other useful item may appear somewhere different each time you generate a game.
 
-## YAMLs, rooms, and clients
+**A multiworld connects several randomized games.** Something you complete may give an item to another player. They may find items that belong to you.
 
-**A YAML file.** Your settings file. It says which game you are playing, what your player name (slot name) is, and how you want your game randomized. Every player brings one YAML per game they play.
+**A multi-game lets those players use different games.** One person might play a platformer while another plays a role-playing game. Archipelago sends the right items to each game.
 
-**A room.** The shared session. Someone collects everyone's YAML files, generates a seed from them, and hosts a server. The room has an address (something like `archipelago.gg:38281`) that every player connects to.
+![The common community workflow moves from a Discord announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
 
-**A client.** The program that connects your game to the room. Some games have a built-in client, others use a separate program. The game's setup guide tells you which.
+## Choose what you want to do
 
-## How a multiworld gets started
+You do not need to understand every Archipelago tool before starting. Pick the path that matches what you have now.
 
-1. One person volunteers as host and collects YAML files from all players. This site exists to make that step painless: a host creates a room here and players submit their YAML through their browser.
-2. The host generates the game. This produces one seed containing every player's world.
-3. The host starts the server, usually on [archipelago.gg](https://archipelago.gg) itself, and shares the address.
-4. Each player starts their own game with its client and connects with the address and their slot name.
-5. Play. Items you find are sent automatically, and items sent to you show up in your game.
+### Join a multiworld
 
-You do not have to bring your own group either, because open multiworlds are announced all the time. Hosts post them in the [official Archipelago Discord](https://discord.gg/8Z65BR2), and several streamer communities run big regular ones, with [360Chrism](https://www.twitch.tv/360chrism)'s community among the largest, hosting events that have crossed seven hundred players in one multiworld.
+Choose this path when a host announces a multiworld, often through Discord. It may be a sync that everyone starts together or an async that people play in their own time. The announcement should tell you which kind it is, when YAML submissions close, which Archipelago version to use, and any rules for choosing your game.
 
-## Setting up your first YAML
+Read the whole announcement before making your YAML. The host may limit how many games you can bring, ask for a certain game length, ban a few games, or set rules for hints and activity. Those are rules for that multiworld, not rules built into Archipelago.
 
-Every apworld ships a template YAML with all its options explained in comments. Open it in any text editor, set your name, adjust the options you care about, and leave the rest alone. Defaults are sensible everywhere. You can also generate a template for many games on [archipelago.gg/games](https://archipelago.gg/games) under the game's options page, and fine-tune it from there.
+#### Submit your world
 
-Two rules save the most headaches. Your slot name must match exactly between the YAML and what you type in your client when connecting. And when your host pins specific apworld versions for a room, use the same version they pinned. When you are ready to go deeper, [Setting up your YAML](/guides/setting-up-your-yaml) is the complete guide, covering weights, progression balancing, and every option all games share.
+1. Open the YAML collector shared by the host. Archipelago Pie and Ionium Lobby are examples of collectors.
+2. Check the rules, deadline, Archipelago version, and available APWorld versions before choosing your game. Some hosts also set a freeze date after which APWorld versions may no longer change.
+3. Create one YAML for your world. It contains your exact slot name and the options for your randomized game.
+4. Submit the YAML through the collector before the deadline.
+5. Install and test the client or mod required by your game. Some hosts ask you to finish a solo seed with the same YAML before joining.
 
-## Where this site fits
+> **Need to make your YAML?**
+>
+> Find the game, choose the version requested by the host, and select **Create YAML**. You can download it or send it straight to one of your Archipelago Pie rooms. [Open the YAML builder →](/apworlds)
 
-Archipelago Pie is a YAML collector and lobby manager. Hosts create a room, set a deadline, and pin apworld versions, and players submit their YAML in the browser instead of passing files around in chat. The room page also shows a live tracker once the game is running.
+![An anonymized YAML collection room highlighting the deadline and rules, version policy, submitted worlds, and the checklist for custom APWorlds.](/img/guides/collector-checklist.svg)
 
-## Ready for a specific game?
+*Collectors look different, but these are the details to find before submitting your world.*
 
-- **Crash Team Racing:** [our full setup guide](/guides/ctr) takes you from zero to racing in about five minutes.
-- **Any other game:** find it on [archipelago.gg/games](https://archipelago.gg/games) or in [the community APWorld index](/apworlds) and follow its linked setup guide; the general tutorials are at [archipelago.gg/tutorial](https://archipelago.gg/tutorial).
-- **Questions along the way:** the [Archipelago Discord](https://discord.gg/8Z65BR2) is the fastest place to get help.
+If the collector does not list your custom APWorld or version, ask the host how to send it before the deadline. Send the release or source link they request, even if you have played that APWorld with them before. Tell the host if you sent the wrong version or it changes before the freeze. They need the version your YAML was made for.
+
+You do not need the generator or server tools as a player. After submissions close, the host downloads the YAMLs, installs the required custom APWorlds, and generates the multiworld on their computer.
+
+#### Connect and follow the start rules
+
+After local generation succeeds, the host uploads the generated seed to archipelago.gg and shares the server address, your exact slot name, and a password if the room uses one.
+
+For a sync, follow the host's start instructions. You may be allowed to connect before the countdown, but do not play or send locations until the host starts the game. Some clients send a location as soon as they connect. If yours does, wait until the countdown before connecting.
+
+For an async, the host normally posts when the room is ready and shares the room and tracker links. Claim your slot if the tracker asks you to. Check the host's rules for activity, hints, updates, and what happens to slots that stop playing. There is usually no shared countdown. When in doubt, follow the latest message from the host.
+
+Trackers such as Cheese Tracker or sphere trackers are optional community tools. They can show progress, hints, activity, and whether somebody is blocked. Your game still connects with the Archipelago server address, not the tracker link.
+
+![A comparison of synchronized and asynchronous multiworlds. Synchronized games wait for a countdown, while asynchronous games use ongoing tracker and activity rules.](/img/guides/sync-vs-async.svg)
+
+*Both formats use the same generated room. The event rules determine when and how people play.*
+
+Sometimes a host gives you an existing slot in a multiworld that has already been generated. In that less common case, you can skip YAML creation and use the game files and connection details supplied by the host.
+
+### Create a solo seed
+
+Choose this path when you want to try Archipelago with one world.
+
+1. Pick a game from the [official supported games list](https://archipelago.gg/games).
+2. Open its setup and options pages and configure one world.
+3. Generate the seed on archipelago.gg when the game supports web generation, or use the local Archipelago software.
+4. Create a server room from the generated seed and connect your client.
+
+### Organize a multiworld
+
+Choose this path when you are the person bringing everyone's YAMLs together and generating the game.
+
+1. Announce whether it is a sync or async, when submissions close, which Archipelago version to use, and the rules players need before making a YAML.
+2. Create a collection room and gather one YAML for each world. Most players bring one world, so this usually means one YAML per player.
+3. Collect any custom APWorlds that the collector does not have.
+4. Close submissions, download the YAMLs, and generate the game on your computer.
+5. Upload the result to archipelago.gg and share the connection details.
+6. For a sync, run the countdown. For an async, post the room, tracker, activity, and hint information.
+
+> **Ready to organize a game?**
+>
+> Set the rules, collect YAMLs, keep APWorld versions together, and download everything for generation. [Host a room on Archipelago Pie →](/guides/hosting-on-archipelago-pie)
+
+## Words you will see
+
+**Location or check:** A place or action that can award an item. Players often call completed locations "checks."
+
+**World:** One generated copy of a game, with its own options and item placements.
+
+**Slot:** The world's identity in a room. Its slot name must match exactly when the client connects.
+
+**YAML or player-options file:** A text file that describes a world and its settings. A normal setup uses one YAML per generated world.
+
+**Seed:** The generated item placement and output files created from one or more world configurations.
+
+**Room:** An Archipelago server instance created from a seed. It provides the address that clients connect to.
+
+**Client:** Software that connects a game to the room, reports completed locations, and receives items.
+
+**APWorld:** The integration that teaches Archipelago how a game works. A `.apworld` file is an installable package for a custom APWorld.
+
+## Configure a world
+
+Every world needs a game, an exact slot name, and a set of options. Many APWorld releases include a template, Archipelago can generate templates for installed worlds, and supported games provide options pages on archipelago.gg.
+
+Start with the maintainer's documented defaults, then read the game-specific setup guide and option descriptions. Custom APWorld versions can differ, so use the version chosen by the host.
+
+Archipelago Pie can build YAMLs for games and versions listed in the index. It can catch many mistakes in the file and its options, but it cannot promise that the full multiworld will generate. The host finds that out when they generate with the chosen Archipelago and APWorld versions.
+
+## What happens after the YAMLs are ready
+
+The rest of the journey is:
+
+1. World configurations are collected.
+2. The generator creates a seed and player output files.
+3. The seed is uploaded to archipelago.gg or hosted with the local server.
+4. A server room is started.
+5. Players connect their clients with the address and exact slot names.
+6. For a synchronized game, players wait for the host's start signal before sending locations.
+
+An Archipelago Pie collection room covers the first step. It is separate from the Archipelago server room used during play.
+
+## Continue with the official documentation
+
+Use these official pages when you need a game-specific guide or more detail:
+
+- The [Archipelago FAQ](https://archipelago.gg/faq/en/) explains randomizers, multiworlds, and solo play.
+- The [Archipelago glossary](https://archipelago.gg/glossary/en/) defines the terms used by clients and servers.
+- The [official setup guide](https://archipelago.gg/tutorial/Archipelago/setup_en) covers installation, generation, hosting, and connection.
+- The [supported games list](https://archipelago.gg/games) links each bundled game's setup and options pages.
+- The [community APWorld index](/apworlds) lists more games, setup links, downloads, and the checks AP-Pie has run for each version.
+
+For Crash Team Racing, [our complete setup guide](/guides/ctr) covers the native client from download to connection. If you get stuck, ask in the [Archipelago Discord](https://discord.gg/8Z65BR2) or the support space named by your game's maintainer.
