@@ -34,6 +34,7 @@ always replaces whatever `name` the author wrote.
 
 from __future__ import annotations
 
+import json
 import threading
 import time
 from collections import defaultdict, deque
@@ -63,11 +64,41 @@ bp = Blueprint("presets", __name__)
 MAX_NAME = 80
 MAX_DESCRIPTION = 500
 MAX_YAML_BYTES = 64 * 1024
+MAX_OPTION_VALUES_BYTES = 64 * 1024
 # A generous ceiling that still stops one account filling the table.
 PRESETS_PER_USER_PER_HOUR = 20
 
 _publish_buckets: dict[int, deque] = defaultdict(deque)
 _publish_lock = threading.Lock()
+_use_buckets: dict[tuple[str, int], float] = {}
+_use_lock = threading.Lock()
+
+
+def _option_values_too_large(values: dict) -> bool:
+    try:
+        encoded = json.dumps(values, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return True
+    return len(encoded.encode("utf-8")) > MAX_OPTION_VALUES_BYTES
+
+
+def _count_use(ip: str, preset_id: int) -> bool:
+    """Count a preset at most once per client and preset per hour."""
+    now = time.time()
+    key = (ip, preset_id)
+    with _use_lock:
+        previous = _use_buckets.get(key)
+        if previous is not None and previous >= now - 3600:
+            return False
+        _use_buckets[key] = now
+        if len(_use_buckets) > 10_000:
+            cutoff = now - 3600
+            stale = [k for k, seen in _use_buckets.items() if seen < cutoff]
+            for stale_key in stale[:2_000]:
+                _use_buckets.pop(stale_key, None)
+            while len(_use_buckets) > 10_000:
+                _use_buckets.pop(next(iter(_use_buckets)))
+        return True
 
 
 def _requires_db():
@@ -246,6 +277,10 @@ def create():
         if not isinstance(raw, dict) or not raw:
             return jsonify({"error": "A simple preset needs option values"}), 400
         schema = (schema_row or {}).get("schema") if schema_row else None
+        if not schema:
+            return jsonify({
+                "error": "This version does not have a builder schema for a simple preset",
+            }), 400
         if schema:
             # Keep only keys this version declares (plus Archipelago's own),
             # so a preset can never carry a key the game does not accept.
@@ -254,6 +289,8 @@ def create():
             raw = {k: v for k, v in raw.items() if k in known}
             if not raw:
                 return jsonify({"error": "None of those options exist for this version"}), 400
+        if _option_values_too_large(raw):
+            return jsonify({"error": "Those option values are too large for a preset"}), 400
         option_values = raw
     else:
         text = body.get("yaml_content")
@@ -370,6 +407,10 @@ def use(preset_id: int):
     preset = get_preset(preset_id)
     if not preset or preset["status"] == "hidden":
         return ("", 204)
+    from request_ip import client_ip
+
+    if not _count_use(client_ip(), preset_id):
+        return ("", 204)
     record_preset_use(preset_id)
     analytics.record_event(
         "preset_applied",
@@ -414,7 +455,10 @@ def report(preset_id: int):
     preset = get_preset(preset_id)
     if not preset or preset["status"] != "published":
         return jsonify({"error": "Preset not found"}), 404
-    report_preset(preset_id)
+    from flask import g
+
+    if not report_preset(preset_id, g.user["id"]):
+        return jsonify({"status": "already_reported"})
     analytics.record_event("preset_reported", props={}, req=request)
     return jsonify({"status": "reported"})
 

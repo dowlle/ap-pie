@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh Cloudflare-only AP-Pie origin firewall rules
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ap-pie-update-cloudflare-ufw

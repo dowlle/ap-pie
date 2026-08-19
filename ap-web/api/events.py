@@ -30,6 +30,7 @@ import analytics
 import config
 from auth import requires_admin
 from db import _db_url
+from request_ip import client_ip
 
 bp = Blueprint("events", __name__)
 
@@ -42,19 +43,6 @@ _buckets_lock = threading.Lock()
 # enough that one call can never be a bulk-write primitive.
 _MAX_BATCH = 10
 _MAX_BODY_BYTES = 4096
-
-
-def _client_ip() -> str:
-    """Same trust chain as api/submit.py (SEC-09): CF-Connecting-IP first,
-    then X-Real-IP, then the socket peer. X-Forwarded-For is never trusted.
-    Used for rate-limit bucketing only and never persisted."""
-    cf = request.headers.get("CF-Connecting-IP", "").strip()
-    if cf:
-        return cf
-    real = request.headers.get("X-Real-IP", "").strip()
-    if real:
-        return real
-    return request.remote_addr or "unknown"
 
 
 def _rate_ok(ip: str) -> bool:
@@ -80,7 +68,7 @@ def post_events():
         return NO_CONTENT
     if (request.content_length or 0) > _MAX_BODY_BYTES:
         return NO_CONTENT
-    if not _rate_ok(_client_ip()):
+    if not _rate_ok(client_ip()):
         return NO_CONTENT
 
     # force=True because navigator.sendBeacon can only send CORS-safelisted

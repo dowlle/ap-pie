@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly refresh of Cloudflare origin ranges
+
+[Timer]
+OnCalendar=Mon *-*-* 03:10:00 UTC
+RandomizedDelaySec=20m
+Persistent=true
+Unit=ap-pie-origin-firewall.service
+
+[Install]
+WantedBy=timers.target
