@@ -6,7 +6,7 @@ flask-cors==6.0.0
 gunicorn==25.3.0
 psycopg2-binary==2.9.10
 pyyaml==6.0.2
-requests==2.33.0
+requests==2.34.2
 websockets==13.1
 # FEAT-39: renders the repo-controlled guide markdown to HTML server-side.
 # Pure-Python, no native deps, well-established (Python-Markdown). Pinned
