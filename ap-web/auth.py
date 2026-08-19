@@ -192,6 +192,13 @@ def apply_auth_to_app(app):
         if not request.path.startswith("/api/"):
             return None
 
+        # Flask has already routed an otherwise-unmatched /api/* request to
+        # the final frontend catch-all. Let that endpoint return its
+        # API-shaped 404 instead of turning a nonexistent protected route
+        # into a misleading authentication challenge.
+        if request.endpoint == "serve_frontend":
+            return None
+
         # Public API endpoints - accessible to everyone
         for prefix in public_prefixes:
             if request.path.startswith(prefix):

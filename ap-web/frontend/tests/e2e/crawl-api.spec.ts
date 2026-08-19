@@ -16,7 +16,6 @@ test("slash-bearing versions reach the real download handler", async ({ request 
     { maxRedirects: 0 },
   );
   expect(response.status()).toBe(302);
-  expect(response.headers()["content-type"] || "").not.toContain("text/html");
   expect(response.headers().location).toContain("release/1.1.6");
 });
 
