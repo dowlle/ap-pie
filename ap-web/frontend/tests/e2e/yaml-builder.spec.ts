@@ -1,9 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function openCtrBuilder(page: Page) {
+async function openCtrBuilder(page: Page, expectDesktopLiveEditor = true) {
   await page.goto("/yaml-builder/ctr?version=0.1.5");
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
-  await expect(page.locator(".yaml-builder-live-editor")).toBeVisible();
+  if (expectDesktopLiveEditor) {
+    await expect(page.locator(".yaml-builder-live-editor")).toBeVisible();
+  }
 }
 
 test("YAML edits lock the form until they sync", async ({ page }) => {
@@ -118,7 +120,7 @@ test("route drafts recover after refresh", async ({ page }) => {
 
 test("mobile Review exposes the editable YAML and announced status", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openCtrBuilder(page);
+  await openCtrBuilder(page, false);
   await expect(page.locator(".yaml-builder-live")).toBeHidden();
   await page.getByRole("button", { name: "Review YAML" }).click();
   await page.getByRole("button", { name: "Edit YAML" }).click();

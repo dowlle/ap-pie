@@ -638,16 +638,21 @@ export default function YamlBuilder({
   const lastGeneratedRef = useRef("");
   useEffect(() => {
     if (!generatedYaml) return;
+    // A YAML → form sync can produce the same generated string (for example
+    // when the only addition is an unsupported custom key). Clear the guard
+    // before the equality return or the visitor's next real form edit would
+    // be mistaken for the import and silently skipped.
+    if (applyingYamlRef.current) {
+      applyingYamlRef.current = false;
+      lastGeneratedRef.current = generatedYaml;
+      return;
+    }
     if (!lastGeneratedRef.current) {
       lastGeneratedRef.current = generatedYaml;
       return;
     }
     if (generatedYaml === lastGeneratedRef.current) return;
     lastGeneratedRef.current = generatedYaml;
-    if (applyingYamlRef.current) {
-      applyingYamlRef.current = false;
-      return;
-    }
     if (manualYaml === null || !entry?.schema || yamlEditPendingRef.current) return;
     const document = parseDocument(manualYaml);
     if (document.errors.length > 0) return;
