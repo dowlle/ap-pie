@@ -33,14 +33,13 @@ export default function Landing() {
           <circle cx="700" cy="110" r="6" fill="#6da8c9" /><circle cx="1120" cy="160" r="4" fill="#e8a857" />
         </svg>
         <span className="lp-kicker">Appie's Archipelago projects</span>
-        <h1 className="lp-title">One item pool. <em>Many worlds.</em> Your games.</h1>
+        <h1 className="lp-title">Your games, connected by <em>one randomizer.</em></h1>
         <p className="lp-sub">
-          Randomizers, tools, and guides for Archipelago multiworlds: race it in Crash Team
-          Racing, catch it in Pokepelago, build it in Timberborn.
+          Learn Archipelago, organize a multiworld, or explore community game integrations.
         </p>
         <div className="lp-cta">
           <button type="button" className="btn btn-primary lp-btn" onClick={() => login("/")}>
-            Host a room
+            Create a collection room
           </button>
           <a href="/guides" className="btn lp-btn lp-btn-ghost">Start with the guides</a>
         </div>
@@ -66,12 +65,38 @@ export default function Landing() {
       </section>
 
       <div className="lp-wrap">
+        <section className="lp-intro" aria-labelledby="what-is-archipelago">
+          <span className="lp-k">Start here</span>
+          <h2 id="what-is-archipelago">What is Archipelago?</h2>
+          <p>
+            <a href="https://archipelago.gg/" target="_blank" rel="noreferrer">Archipelago</a>{" "}
+            is a randomizer that connects games. A location in your game can contain an item
+            for somebody else's world, while an item you need may be waiting in theirs. Those
+            worlds can use the same game or completely different supported games.
+          </p>
+          <p>You can play alone, join a room somebody else generated, or organize a multiworld for a group.</p>
+          <div className="lp-paths">
+            <a className="lp-path" href="/guides/getting-started">
+              <span className="lp-k">New to Archipelago?</span>
+              <h3>Choose how you want to play</h3>
+              <p>Learn the basics, then follow the path for joining, playing solo, or organizing a group.</p>
+              <span className="lp-path-link">Start with Archipelago →</span>
+            </a>
+            <button type="button" className="lp-path" onClick={() => login("/rooms")}>
+              <span className="lp-k">Organizing a multiworld?</span>
+              <h3>Collect each world's settings</h3>
+              <p>Create a collection room where players can submit and check their configurations before generation.</p>
+              <span className="lp-path-link">Create a collection room →</span>
+            </button>
+          </div>
+        </section>
+
         <div className="lp-sect">Tools for every multiworld</div>
         <div className="lp-tools">
           <button type="button" className="lp-tool" onClick={() => login("/rooms")}>
             <span className="lp-k">Hosting</span>
-            <h3>Room collector</h3>
-            <p>Create a room, set a deadline, and let players submit YAMLs in the browser instead of chasing files in DMs.</p>
+            <h3>Collection rooms</h3>
+            <p>Set a deadline and let players submit world configurations in the browser instead of chasing files in DMs.</p>
           </button>
           <a className="lp-tool" href="/guides">
             <span className="lp-k">Learn</span>

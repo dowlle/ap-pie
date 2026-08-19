@@ -4024,6 +4024,32 @@ details.collapsible-section > .accordion-body {
 .lp-hint strong { color: var(--text-h); }
 .lp .landing-pending { position: relative; margin: 1.5rem auto 0; max-width: 32rem; text-align: left; }
 .lp-wrap { max-width: 64rem; margin: 0 auto; padding: 0 1.5rem 3rem; }
+.lp-intro {
+  margin: 0 0 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+}
+.lp-intro > h2 { margin: 0.25rem 0 0.65rem; color: var(--text-h); font-family: var(--lp-display); }
+.lp-intro > p { max-width: 48rem; color: var(--text-muted); }
+.lp-paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+.lp-path {
+  display: block;
+  width: 100%;
+  padding: 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.lp-path:hover, .lp-path:focus-visible { border-color: var(--accent); text-decoration: none; }
+.lp-path h3 { margin: 0.25rem 0 0.4rem; color: var(--text-h); font-family: var(--lp-display); font-size: 1.1rem; }
+.lp-path p { margin: 0; color: var(--text-muted); font-size: 0.92rem; }
+.lp-path-link { display: inline-block; margin-top: 0.8rem; color: var(--accent-light); font-weight: 600; }
 .lp-sect {
   font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.75rem;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);

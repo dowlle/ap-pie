@@ -63,19 +63,19 @@ GUIDES: list[dict[str, str]] = [
     {
         "slug": "getting-started",
         "file": "getting-started.md",
-        "h1": "Getting started with Archipelago",
-        "page_title": "Getting started with Archipelago | Archipelago Pie",
+        "h1": "Getting started with the Archipelago randomizer",
+        "page_title": "Getting started with the Archipelago randomizer | Archipelago Pie",
         "meta_description": (
-            "What Archipelago multiworld randomizers are, how YAML files, rooms, "
-            "and clients fit together, and how a multiworld session gets started."
+            "Learn how the Archipelago randomizer connects game worlds, then choose "
+            "how to join a room, create a solo seed, or organize a multiworld."
         ),
         "card_title": "Getting started with Archipelago",
         "card_blurb": (
-            "New to multiworld? Start here: what Archipelago is, and how YAMLs, "
-            "rooms, and clients fit together."
+            "Learn the basics, then choose the right path for joining a room, "
+            "playing solo, or organizing a multiworld."
         ),
         "published": "2026-07-22",
-        "updated": "2026-07-22",
+        "updated": "2026-08-19",
         "project": "ap",
         "kicker": "Start here",
         "featured": True,
@@ -391,4 +391,3 @@ def llms() -> Response:
         f"- [Community APWorld index]({_canonical('/apworlds')}): browse community game integrations",
     ]
     return Response("\n".join(lines) + "\n", mimetype="text/plain")
-
