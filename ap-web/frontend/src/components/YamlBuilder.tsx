@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { BuilderSchemaEntry, Preset, TemplateOption } from "../api";
 import { createPreset, getPresets, recordPresetUse, saveMyYaml } from "../api";
 import { dump, load } from "js-yaml";
@@ -81,6 +81,7 @@ export default function YamlBuilder({
   onGameChange?: (apworldName: string) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const liveHighlightRef = useRef<HTMLPreElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
@@ -1043,13 +1044,26 @@ export default function YamlBuilder({
               {entry && <span className="badge">v{entry.version}</span>}
             </div>
           </div>
-          <textarea
-            className="yaml-builder-live-editor"
-            value={yamlContent}
-            onChange={(event) => handleYamlEdit(event.target.value)}
-            spellCheck={false}
-            aria-label="Editable live YAML"
-          />
+          <div
+            className="yaml-builder-live-editor-shell"
+            style={{ "--yaml-lines": Math.max(1, yamlContent.split("\n").length) } as CSSProperties}
+          >
+            <pre ref={liveHighlightRef} className="yaml-builder-live-highlight" aria-hidden="true">
+              {yamlContent ? highlightYaml(yamlContent) : "Choose a game to start building."}
+            </pre>
+            <textarea
+              className="yaml-builder-live-editor"
+              value={yamlContent}
+              onChange={(event) => handleYamlEdit(event.target.value)}
+              onScroll={(event) => {
+                if (!liveHighlightRef.current) return;
+                liveHighlightRef.current.scrollTop = event.currentTarget.scrollTop;
+                liveHighlightRef.current.scrollLeft = event.currentTarget.scrollLeft;
+              }}
+              spellCheck={false}
+              aria-label="Editable live YAML"
+            />
+          </div>
           <p className={`settings-aux-note yaml-builder-live-note is-${yamlSync}`}>
             {yamlSyncMessage}
             {manualYaml !== null && (

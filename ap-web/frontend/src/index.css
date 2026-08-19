@@ -4433,25 +4433,55 @@ details.yaml-builder-group > summary .muted {
   color: var(--text-muted);
   font-size: 0.75rem;
 }
-.yaml-builder-live-editor {
-  flex: 1;
+.yaml-builder-live-editor-shell {
+  position: relative;
   width: 100%;
-  max-height: none;
-  min-height: 28rem;
+  height: min(
+    max(28rem, calc(var(--yaml-lines) * 1.154rem + 2rem)),
+    calc(100vh - 10.5rem)
+  );
+  min-height: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+.yaml-builder-live-highlight,
+.yaml-builder-live-editor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   border: 0;
   border-radius: 0;
   padding: 1rem 1.1rem;
-  resize: none;
-  color: var(--text);
-  background: var(--bg);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.78rem;
   line-height: 1.48;
   tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}
+.yaml-builder-live-highlight {
+  pointer-events: none;
+  color: var(--text);
+  background: var(--bg);
+  scrollbar-width: none;
+}
+.yaml-builder-live-highlight::-webkit-scrollbar { display: none; }
+.yaml-builder-live-editor {
+  resize: none;
+  color: transparent;
+  caret-color: var(--text-h);
+  background: transparent;
+  -webkit-text-fill-color: transparent;
 }
 .yaml-builder-live-editor:focus {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+.yaml-builder-live-editor::selection {
+  background: color-mix(in srgb, var(--accent) 42%, transparent);
+  -webkit-text-fill-color: transparent;
 }
 .yaml-builder-live-head > .yaml-builder-live-statuses {
   flex-direction: row;
