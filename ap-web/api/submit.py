@@ -39,6 +39,7 @@ from db import (
     update_yaml_validation,
 )
 from validation import classify_validation_error, extract_player_info, validate_yaml
+from request_ip import client_ip
 
 import option_check
 
@@ -72,34 +73,6 @@ _RATE_LIMIT_WINDOW_SECONDS = 3600
 
 _rate_limit_buckets: dict[str, deque] = defaultdict(deque)
 _rate_limit_lock = threading.Lock()
-
-
-def _client_ip() -> str:
-    """Resolve the submitting client IP for rate-limit bucketing.
-
-    Audit-2026-05-04 #2 fix. Previously this trusted X-Forwarded-For
-    unconditionally, which let any direct hit on port 5001 spoof the IP and
-    rotate the rate-limit key per request. Combined with binding port 5001
-    to 127.0.0.1 (docker-compose.yml), trust order is now:
-
-    1. CF-Connecting-IP - Cloudflare sets this to the real client IP and
-       sanitises it from incoming requests, so it can't be spoofed when
-       reaching us through the CF proxy. Caddy passes it through.
-    2. X-Real-IP - single-value header for non-CF proxy chains.
-    3. request.remote_addr - Caddy's local IP (same for everyone, breaks
-       per-IP rate limiting if reached, but at least not spoofable).
-
-    X-Forwarded-For is intentionally NOT consulted: it's multi-value,
-    contributor-set semantics vary across proxy chains, and any direct
-    attacker hitting an exposed port can stuff arbitrary values into it.
-    """
-    cf = request.headers.get("CF-Connecting-IP", "").strip()
-    if cf:
-        return cf
-    real = request.headers.get("X-Real-IP", "").strip()
-    if real:
-        return real
-    return request.remote_addr or "unknown"
 
 
 def _check_and_record_rate_limit(ip: str) -> tuple[bool, int]:
@@ -182,7 +155,7 @@ def submit_yaml(room_id: str):
     # banlist can attribute against; the per-IP bucket is for unidentified
     # traffic that has no other gate.
     if submitter_user_id is None:
-        ip = _client_ip()
+        ip = client_ip()
         allowed, retry_after = _check_and_record_rate_limit(ip)
         if not allowed:
             analytics.record_event(

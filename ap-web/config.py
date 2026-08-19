@@ -126,6 +126,13 @@ ANALYTICS_RETENTION_DAYS = int(os.environ.get("AP_ANALYTICS_RETENTION_DAYS", "18
 ANALYTICS_EVENTS_PER_IP_PER_HOUR = int(
     os.environ.get("AP_ANALYTICS_EVENTS_PER_IP_PER_HOUR", "600")
 )
+ANALYTICS_EVENTS_GLOBAL_PER_MINUTE = int(
+    os.environ.get("AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE", "600")
+)
+
+# SEC-41: safe default. Enable only after Caddy requires Cloudflare
+# Authenticated Origin Pulls and overwrites X-AP-Origin-Verified upstream.
+TRUST_CLOUDFLARE_HEADERS = _bool_env("AP_TRUST_CLOUDFLARE_HEADERS", False)
 
 # Templates
 from pathlib import Path as _Path

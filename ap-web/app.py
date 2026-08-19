@@ -179,6 +179,35 @@ def create_app() -> Flask:
     if config.SESSION_COOKIE_NAME:
         app.config["SESSION_COOKIE_NAME"] = config.SESSION_COOKIE_NAME
     CORS(app, origins=cors_origins, supports_credentials=True)
+
+    @app.after_request
+    def _security_headers(response: Response) -> Response:
+        """SEC-30/35: baseline browser isolation for every response."""
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; "
+            "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
+            "form-action 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data:; "
+            "connect-src 'self' wss:; "
+            "frame-src https://www.youtube-nocookie.com; "
+            "upgrade-insecure-requests",
+        )
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+        )
+        return response
+
     app.config["MAX_CONTENT_LENGTH"] = config.MAX_UPLOAD_MB * 1024 * 1024
     app.config["AP_HOST"] = config.HOST
     app.config["AP_WORLDS_DIR"] = config.WORLDS_DIR

@@ -1,0 +1,8 @@
+[Unit]
+Description=Pull and restore-test AP-Pie database backups
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/stef/.local/bin/ap-pie-backup-pull

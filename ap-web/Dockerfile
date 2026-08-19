@@ -57,7 +57,6 @@ ENV AP_OUTPUT_DIR=/data/output \
     AP_PORT_RANGE_END=38380
 
 EXPOSE 5001
-EXPOSE 38281-38380
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl -fsS http://localhost:5001/api/health >/dev/null || exit 1

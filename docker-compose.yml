@@ -24,8 +24,6 @@ services:
       # bypass Caddy's TLS, rate limits, and (when paired with arbitrary
       # X-Forwarded-For headers) the per-IP submit cap. Audit-2026-05-04 #2.
       - "127.0.0.1:5001:5001"
-      # AP-server game ports stay public - players connect from the internet.
-      - "38281-38380:38281-38380"
     volumes:
       - ./data/output:/data/output
       - ap-state:/app/.state
@@ -57,6 +55,8 @@ services:
       # (no banner). Set to "beta" on the beta stack so testers see a
       # persistent visual cue and never confuse the two.
       - AP_DEPLOYMENT_LABEL=${AP_DEPLOYMENT_LABEL:-}
+      - AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE=${AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE:-600}
+      - AP_TRUST_CLOUDFLARE_HEADERS=${AP_TRUST_CLOUDFLARE_HEADERS:-false}
       # FEAT-17 V0: real-time WebSocket tracker. Off by default; flip to
       # 1 in the server .env to enable. AP_TRACKER_WS_MAX caps connection
       # count, AP_TRACKER_WS_IDLE_MINUTES controls auto-disconnect.

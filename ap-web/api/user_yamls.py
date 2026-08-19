@@ -15,6 +15,7 @@ would be worse than not storing it at all.
 
 from __future__ import annotations
 
+import json
 import yaml
 from flask import Blueprint, g, jsonify, request
 
@@ -34,7 +35,18 @@ bp = Blueprint("user_yamls", __name__)
 
 MAX_LABEL = 120
 MAX_YAML_BYTES = 64 * 1024
+MAX_OPTION_VALUES_BYTES = 64 * 1024
 MAX_LIBRARY_ENTRIES = 200
+
+
+def _option_values_too_large(values: dict) -> bool:
+    try:
+        # Match PostgreSQL jsonb's textual separators so the API and the
+        # storage-layer CHECK enforce the same byte boundary.
+        encoded = json.dumps(values, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return True
+    return len(encoded.encode("utf-8")) > MAX_OPTION_VALUES_BYTES
 
 
 def _requires_db():
@@ -145,6 +157,8 @@ def create():
         values = body.get("values")
         if not isinstance(values, dict):
             return jsonify({"error": "A form-built YAML needs its option values"}), 400
+        if _option_values_too_large(values):
+            return jsonify({"error": "Those option values are too large to save"}), 400
         option_values = values
     else:
         text = body.get("yaml_content")
@@ -195,6 +209,8 @@ def edit(yaml_id: int):
     if "values" in body and entry["kind"] == "simple":
         if not isinstance(body["values"], dict):
             return jsonify({"error": "values must be an object"}), 400
+        if _option_values_too_large(body["values"]):
+            return jsonify({"error": "Those option values are too large to save"}), 400
         updates["option_values"] = body["values"]
     if "yaml_content" in body and entry["kind"] == "advanced":
         text = body["yaml_content"]

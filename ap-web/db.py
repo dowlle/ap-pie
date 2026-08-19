@@ -457,6 +457,25 @@ def init_db(db_url: str) -> None:
                 PRIMARY KEY (preset_id, user_id)
             )
         """)
+        # SEC-44: reporting is idempotent per signed-in user and preset.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS apworld_preset_reports (
+                preset_id  INTEGER NOT NULL REFERENCES apworld_presets(id) ON DELETE CASCADE,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (preset_id, user_id)
+            )
+        """)
+        # SEC-45: API validation gives a friendly response; these append-only
+        # migration backstops prevent later writers bypassing the same cap.
+        cur.execute("""
+            DO $$ BEGIN
+                ALTER TABLE apworld_presets
+                    ADD CONSTRAINT preset_option_values_bytes
+                    CHECK (option_values IS NULL OR octet_length(option_values::text) <= 65536);
+            EXCEPTION WHEN duplicate_object THEN NULL;
+            END $$
+        """)
 
         # FEAT-43: a player's own YAML library.
         #
@@ -494,6 +513,14 @@ def init_db(db_url: str) -> None:
             "CREATE INDEX IF NOT EXISTS idx_user_yamls_user ON user_yamls"
             "(user_id, updated_at DESC)"
         )
+        cur.execute("""
+            DO $$ BEGIN
+                ALTER TABLE user_yamls
+                    ADD CONSTRAINT user_yaml_option_values_bytes
+                    CHECK (option_values IS NULL OR octet_length(option_values::text) <= 65536);
+            EXCEPTION WHEN duplicate_object THEN NULL;
+            END $$
+        """)
         # Additive link so a submission can point back at the library row it
         # came from. Nullable: every existing submission predates the library,
         # and anonymous submits never have one.
@@ -562,6 +589,14 @@ def init_db(db_url: str) -> None:
                 kind        TEXT NOT NULL,
                 event_count INTEGER NOT NULL,
                 PRIMARY KEY (day, kind)
+            )
+        """)
+        # SEC-43: a DB-shared ceiling covers every server-side recorder and
+        # remains global if gunicorn later gains more workers.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS analytics_write_buckets (
+                minute      TIMESTAMPTZ PRIMARY KEY,
+                event_count INTEGER NOT NULL CHECK (event_count >= 0)
             )
         """)
     conn.autocommit = False
@@ -1429,14 +1464,24 @@ def has_voted(preset_ids: list[int], user_id: int | None) -> set[int]:
         return {r["preset_id"] for r in _dictrow(cur)}
 
 
-def report_preset(preset_id: int) -> None:
+def report_preset(preset_id: int, user_id: int) -> bool:
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
-            "UPDATE apworld_presets SET reports = reports + 1 WHERE id = %s",
-            (preset_id,),
+            """INSERT INTO apworld_preset_reports (preset_id, user_id)
+               VALUES (%s, %s)
+               ON CONFLICT DO NOTHING
+               RETURNING preset_id""",
+            (preset_id, user_id),
         )
+        inserted = cur.fetchone() is not None
+        if inserted:
+            cur.execute(
+                "UPDATE apworld_presets SET reports = reports + 1 WHERE id = %s",
+                (preset_id,),
+            )
     conn.commit()
+    return inserted
 
 
 def list_reported_presets(limit: int = 100) -> list[dict]:
@@ -1475,16 +1520,30 @@ def insert_event(
     visit_id: str | None = None,
     props: dict | None = None,
 ) -> None:
-    """Append one analytics event. Callers go through analytics.record_event."""
+    """Append one event under the shared, per-minute writer ceiling."""
+    import config
+
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
-            """INSERT INTO events
+            """WITH bucket AS (
+                   INSERT INTO analytics_write_buckets (minute, event_count)
+                   VALUES (date_trunc('minute', NOW()), 1)
+                   ON CONFLICT (minute) DO UPDATE
+                       SET event_count = analytics_write_buckets.event_count + 1
+                       WHERE analytics_write_buckets.event_count < %s
+                   RETURNING 1
+               )
+               INSERT INTO events
                    (kind, user_id, room_id, path, cf_country, ua_class,
                     request_id, visit_id, props)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            (kind, user_id, room_id, path, cf_country, ua_class,
+               SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s FROM bucket""",
+            (max(1, config.ANALYTICS_EVENTS_GLOBAL_PER_MINUTE),
+             kind, user_id, room_id, path, cf_country, ua_class,
              request_id, visit_id, psycopg2.extras.Json(props or {})),
+        )
+        cur.execute(
+            "DELETE FROM analytics_write_buckets WHERE minute < NOW() - INTERVAL '2 hours'"
         )
     conn.commit()
 
