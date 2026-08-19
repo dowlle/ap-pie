@@ -318,6 +318,11 @@ def create_app() -> Flask:
     def serve_frontend(path: str):
         if path and (DIST_DIR / path).is_file():
             return send_from_directory(DIST_DIR, path)
+        # A miss in the server-owned API namespace must remain an API-shaped
+        # 404. Returning the SPA document here confuses clients and produced
+        # indexable-looking HTML for malformed download URLs.
+        if path == "api" or path.startswith("api/"):
+            return jsonify({"error": "API endpoint not found"}), 404
         response = send_from_directory(DIST_DIR, "index.html")
         if not _is_spa_route(path):
             response.status_code = 404

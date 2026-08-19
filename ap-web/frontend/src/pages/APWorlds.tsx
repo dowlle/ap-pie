@@ -527,7 +527,11 @@ function WorldCard({
       <HomeAndIconRow world={world} />
 
 
-      {builtinOnly ? (
+      {world.disabled ? (
+        <p className="apworld-card-note muted">
+          This APWorld has been retired from the public catalog. Existing room records may still name it, but it cannot be downloaded or used to create a new YAML here.
+        </p>
+      ) : builtinOnly ? (
         <p className="apworld-card-note muted">
           {world.is_builtin
             ? "No external versions in the index - this APWorld ships with Archipelago itself."
