@@ -94,6 +94,8 @@ export default function YamlBuilder({
   // Non-null once the review step's YAML has been hand-edited.
   const [manualYaml, setManualYaml] = useState<string | null>(null);
   const [yamlSync, setYamlSync] = useState<"synced" | "typing" | "custom" | "error">("synced");
+  const [yamlErrorKind, setYamlErrorKind] = useState<"syntax" | "schema" | "size" | null>(null);
+  const [yamlWarningAccepted, setYamlWarningAccepted] = useState(false);
   const [yamlSyncMessage, setYamlSyncMessage] = useState("Form and YAML match.");
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -188,6 +190,8 @@ export default function YamlBuilder({
     setSuccess("");
     setManualYaml(null);
     setYamlSync("synced");
+    setYamlErrorKind(null);
+    setYamlWarningAccepted(false);
     setYamlSyncMessage("Form and YAML match.");
     setEditing(false);
     setCoreValues({});
@@ -517,7 +521,16 @@ export default function YamlBuilder({
   const handleYamlEdit = (text: string) => {
     yamlEditPendingRef.current = true;
     setManualYaml(text);
+    setYamlWarningAccepted(false);
+    if (new TextEncoder().encode(text).byteLength > MAX_EDITABLE_YAML_BYTES) {
+      yamlEditPendingRef.current = false;
+      setYamlSync("error");
+      setYamlErrorKind("size");
+      setYamlSyncMessage("This YAML is larger than 64 KiB. Shorten it before saving, downloading or submitting.");
+      return;
+    }
     setYamlSync("typing");
+    setYamlErrorKind(null);
     setYamlSyncMessage("Checking your YAML…");
   };
 
@@ -548,6 +561,8 @@ export default function YamlBuilder({
     setManualYaml(null);
     setEditing(false);
     setYamlSync("synced");
+    setYamlErrorKind(null);
+    setYamlWarningAccepted(false);
     setYamlSyncMessage("Rebuilt from valid form values.");
   };
 
@@ -558,11 +573,13 @@ export default function YamlBuilder({
   useEffect(() => {
     const syncSchema = entry?.schema;
     if (manualYaml === null || !syncSchema) return;
+    if (new TextEncoder().encode(manualYaml).byteLength > MAX_EDITABLE_YAML_BYTES) return;
     const timer = window.setTimeout(() => {
       const document = parseDocument(manualYaml);
       if (document.errors.length > 0) {
         yamlEditPendingRef.current = false;
         setYamlSync("error");
+        setYamlErrorKind("syntax");
         setYamlSyncMessage(document.errors[0]?.message.split(" at line")[0] || "Fix the YAML syntax to resume syncing.");
         return;
       }
@@ -570,6 +587,7 @@ export default function YamlBuilder({
       if (!parsed) {
         yamlEditPendingRef.current = false;
         setYamlSync("error");
+        setYamlErrorKind("syntax");
         setYamlSyncMessage("The document needs a name, game and option mapping before it can sync.");
         return;
       }
@@ -589,12 +607,15 @@ export default function YamlBuilder({
       yamlEditPendingRef.current = false;
       if (invalid.length > 0) {
         setYamlSync("error");
+        setYamlErrorKind("schema");
         setYamlSyncMessage(`${invalid.length} value${invalid.length === 1 ? " is" : "s are"} outside what this APWorld version accepts: ${invalid.slice(0, 3).join(", ")}.`);
       } else if (custom.length > 0) {
         setYamlSync("custom");
+        setYamlErrorKind(null);
         setYamlSyncMessage(`${custom.length} custom field${custom.length === 1 ? " is" : "s are"} preserved in YAML even though the form cannot fully represent ${custom.length === 1 ? "it" : "them"}.`);
       } else {
         setYamlSync("synced");
+        setYamlErrorKind(null);
         setYamlSyncMessage("Form and YAML match.");
       }
     }, 350);
@@ -633,6 +654,7 @@ export default function YamlBuilder({
     }
     setManualYaml(document.toString({ lineWidth: 0 }));
     setYamlSync("synced");
+    setYamlErrorKind(null);
     setYamlSyncMessage("Form change applied without removing your custom YAML.");
   }, [coreValues, entry, generatedYaml, manualYaml, playerName, values]);
 
@@ -661,7 +683,7 @@ export default function YamlBuilder({
   }, [manualYaml, playerName, entry]);
 
   const handleSubmit = async () => {
-    if (!submit || !yamlContent || !entry) return;
+    if (!submit || !yamlContent || !entry || !canFinalize) return;
     setBusy(true);
     setError("");
     try {
@@ -682,6 +704,9 @@ export default function YamlBuilder({
   };
 
   const schema = entry?.schema ?? null;
+  const canFinalize = yamlSync !== "typing" && (
+    yamlSync !== "error" || (yamlErrorKind === "schema" && yamlWarningAccepted)
+  );
 
   const builderContent = (
     <>
@@ -804,7 +829,12 @@ export default function YamlBuilder({
         )}
 
         {step === "options" && (
-          <>
+          <fieldset className="yaml-builder-form-fieldset" disabled={yamlSync === "typing"}>
+            {yamlSync === "typing" && (
+              <p className="yaml-builder-form-lock" role="status">
+                Checking the YAML edit before the form changes again…
+              </p>
+            )}
             <section className="settings-section">
               <h3>Player</h3>
               <div className="settings-controls yaml-builder-toprow">
@@ -864,7 +894,7 @@ export default function YamlBuilder({
                 </p>
               </section>
             )}
-          </>
+          </fieldset>
         )}
 
         {step === "review" && entry && (
@@ -876,7 +906,7 @@ export default function YamlBuilder({
                   <button
                     type="button"
                     className="btn btn-sm"
-                    disabled={busy}
+                    disabled={busy || !canFinalize}
                     onClick={handleSaveToLibrary}
                     title="Keep this YAML in your own library so you can reopen or reuse it"
                   >
@@ -885,6 +915,7 @@ export default function YamlBuilder({
                   <button
                     type="button"
                     className="btn btn-sm"
+                    disabled={!canFinalize}
                     onClick={() => { setSavingPreset((v) => !v); setPresetSaved(""); }}
                   >
                     Save as preset
@@ -919,7 +950,7 @@ export default function YamlBuilder({
                   <button
                     type="button"
                     className="btn btn-sm btn-primary"
-                    disabled={busy || !presetName.trim()}
+                    disabled={busy || !presetName.trim() || !canFinalize}
                     onClick={handleSavePreset}
                   >
                     {busy ? "Saving…" : "Save"}
@@ -970,8 +1001,22 @@ export default function YamlBuilder({
                   </button>
                 </p>
               )}
+              {yamlErrorKind === "schema" && !yamlWarningAccepted && (
+                <div className="yaml-builder-warning-gate" role="alert">
+                  <strong>Review the invalid value before finishing.</strong>
+                  <span>You can correct it in the form or explicitly keep the hand-written YAML.</span>
+                  <button type="button" className="btn btn-sm" onClick={() => setYamlWarningAccepted(true)}>
+                    Continue with this warning
+                  </button>
+                </div>
+              )}
+              {(yamlErrorKind === "syntax" || yamlErrorKind === "size") && (
+                <p className="settings-error" role="alert">
+                  Fix the YAML before downloading, saving or submitting it.
+                </p>
+              )}
             </section>
-            {reviewExtra && !success && reviewExtra(yamlContent, submittedIdentity.playerName)}
+            {reviewExtra && !success && canFinalize && reviewExtra(yamlContent, submittedIdentity.playerName)}
           </>
         )}
 
@@ -1034,7 +1079,7 @@ export default function YamlBuilder({
                 );
                 noteEmitted("download");
               }}
-              disabled={busy}
+              disabled={busy || !canFinalize}
             >
               Download .yaml
             </button>
@@ -1043,7 +1088,7 @@ export default function YamlBuilder({
                 type="button"
                 className="btn btn-sm btn-primary"
                 onClick={handleSubmit}
-                disabled={busy}
+                disabled={busy || !canFinalize}
               >
                 {busy ? "Submitting…" : submit.label}
               </button>
@@ -1070,7 +1115,7 @@ export default function YamlBuilder({
               <span>Edit here or change the form</span>
             </div>
             <div className="yaml-builder-live-statuses">
-              <span className={`yaml-builder-sync-status is-${yamlSync}`}>{yamlSync === "error" ? "Needs attention" : yamlSync === "custom" ? "Custom values" : yamlSync === "typing" ? "Typing…" : "Synced"}</span>
+              <span className={`yaml-builder-sync-status is-${yamlSync}`} role="status" aria-live="polite">{yamlSync === "error" ? "Needs attention" : yamlSync === "custom" ? "Custom values" : yamlSync === "typing" ? "Typing…" : "Synced"}</span>
               {entry && <span className="badge">v{entry.version}</span>}
             </div>
           </div>
@@ -1296,6 +1341,7 @@ const PRESET_FILTER_THRESHOLD = 8;
 
 /** Option count past which the options form earns a filter box. */
 const OPTION_FILTER_THRESHOLD = 12;
+const MAX_EDITABLE_YAML_BYTES = 64 * 1024;
 
 function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "custom" | "invalid" {
   if (value === undefined) return "form";

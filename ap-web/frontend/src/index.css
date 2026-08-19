@@ -4575,6 +4575,40 @@ details.yaml-builder-group > summary .muted {
 .yaml-builder-preset-step > p { margin: 0; }
 .yaml-builder-default-start { align-self: flex-start; }
 .yaml-builder-preset-list-wrap { display: flex; flex-direction: column; gap: 0.7rem; }
+.yaml-builder-form-fieldset {
+  display: contents;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.yaml-builder-form-lock {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text-h);
+  background: var(--accent-dim);
+  font-size: 0.78rem;
+}
+.yaml-builder-warning-gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--yellow, #e8b85a);
+  border-radius: 8px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--yellow, #e8b85a) 8%, var(--bg));
+  font-size: 0.78rem;
+}
+.yaml-builder-warning-gate strong { color: var(--text-h); }
+.yaml-builder-warning-gate .btn { margin-left: auto; }
 
 .not-found {
   max-width: 46rem;
