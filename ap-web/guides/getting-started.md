@@ -18,8 +18,6 @@ The games included with Archipelago are listed on [archipelago.gg](https://archi
 
 **A multi-game lets those players use different games.** One person might play a platformer while another plays a role-playing game. Archipelago sends the right items to each game.
 
-![The common community workflow moves from a Discord announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
-
 ## Choose what you want to do
 
 You do not need to understand every Archipelago tool before starting. Pick the path that matches what you have now.
@@ -29,10 +27,6 @@ You do not need to understand every Archipelago tool before starting. Pick the p
 Choose this path when a host announces a multiworld, often through Discord. It may be a sync that everyone starts together or an async that people play in their own time. The announcement should tell you which kind it is, when YAML submissions close, which Archipelago version to use, and any rules for choosing your game.
 
 Read the whole announcement before making your YAML. The host may limit how many games you can bring, ask for a certain game length, ban a few games, or set rules for hints and activity. Those are rules for that multiworld, not rules built into Archipelago.
-
-![An anonymized YAML collection room highlighting the deadline and rules, version policy, submitted worlds, and the checklist for custom APWorlds.](/img/guides/collector-checklist.svg)
-
-*Collectors look different, but these are the details to find before submitting your world.*
 
 #### Submit your world
 
@@ -45,6 +39,10 @@ Read the whole announcement before making your YAML. The host may limit how many
 > **Need to make your YAML?**
 >
 > Find the game, choose the version requested by the host, and select **Create YAML**. You can download it or send it straight to one of your Archipelago Pie rooms. [Open the YAML builder →](/apworlds)
+
+![An anonymized YAML collection room highlighting the deadline and rules, version policy, submitted worlds, and the checklist for custom APWorlds.](/img/guides/collector-checklist.svg)
+
+*Collectors look different, but these are the details to find before submitting your world.*
 
 If the collector does not list your custom APWorld or version, ask the host how to send it before the deadline. Send the release or source link they request, even if you have played that APWorld with them before. Tell the host if you sent the wrong version or it changes before the freeze. They need the version your YAML was made for.
 
@@ -85,6 +83,8 @@ Choose this path when you are the person bringing everyone's YAMLs together and 
 4. Close submissions, download the YAMLs, and generate the game on your computer.
 5. Upload the result to archipelago.gg and share the connection details.
 6. For a sync, run the countdown. For an async, post the room, tracker, activity, and hint information.
+
+![The common community workflow moves from a Discord announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
 
 > **Ready to organize a game?**
 >
