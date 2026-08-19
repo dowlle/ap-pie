@@ -152,3 +152,30 @@ test("editor scroll position stays synchronized with its highlight layer", async
   expect(positions.highlightTop).toBe(positions.textareaTop);
   expect(positions.highlightLeft).toBe(positions.textareaLeft);
 });
+
+test("keyboard order reaches options before final actions and editor focus stays visible", async ({ page }) => {
+  await openCtrBuilder(page);
+  const order = await page.locator(
+    'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]',
+  ).evaluateAll((elements) => elements
+    .filter((element) => (element as HTMLElement).offsetParent !== null)
+    .map((element) => ({
+      text: (element.getAttribute("aria-label") || element.textContent || "").trim(),
+      placeholder: element.getAttribute("placeholder") || "",
+    })));
+  const playerIndex = order.findIndex((item) => item.placeholder.startsWith("Your slot name"));
+  const reviewIndex = order.findIndex((item) => item.text.includes("Review YAML"));
+  expect(playerIndex).toBeGreaterThanOrEqual(0);
+  expect(reviewIndex).toBeGreaterThan(playerIndex);
+
+  const editor = page.locator(".yaml-builder-live-editor");
+  await editor.focus();
+  const colors = await editor.evaluate((element) => ({
+    caret: getComputedStyle(element).caretColor,
+    outline: getComputedStyle(element).outlineColor,
+    selection: getComputedStyle(element, "::selection").backgroundColor,
+  }));
+  expect(colors.caret).not.toBe("rgba(0, 0, 0, 0)");
+  expect(colors.outline).not.toBe("rgba(0, 0, 0, 0)");
+  expect(colors.selection).not.toBe("rgba(0, 0, 0, 0)");
+});
