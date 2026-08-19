@@ -157,12 +157,13 @@
         display: block;
         width: 100%;
         height: auto;
-        margin: 1.5rem 0 0.55rem;
+        margin: 0;
         border: 1px solid var(--border);
         border-radius: 14px;
         background: var(--bg-card);
       }
-      .guide-body img + p {
+      .guide-body p:has(> img) { margin: 1.5rem 0 0.55rem; }
+      .guide-body p:has(> img) + p {
         margin-top: 0;
         color: var(--text-muted);
         font-size: 0.9rem;
