@@ -186,15 +186,17 @@
         text-decoration: underline;
         text-underline-offset: 0.18em;
       }
-      .guide-path-tabs { margin: 1.25rem 0 2rem; }
+      .guide-path-tabs {
+        margin: 1.25rem 0 2rem;
+        padding: 0.4rem;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--bg-card);
+      }
       .guide-path-tablist {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.45rem;
-        padding: 0.35rem;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--bg-card);
       }
       .guide-path-tab {
         min-height: 3rem;
@@ -215,7 +217,11 @@
       }
       .guide-path-tab:focus-visible { outline: 2px solid var(--accent-light); outline-offset: 2px; }
       .guide-path-panel {
-        padding: 1.4rem 0.25rem 0;
+        margin-top: 0.4rem;
+        padding: 1.35rem 1.2rem 0.35rem;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg);
         outline: none;
       }
       .guide-path-panel[hidden] { display: none; }
