@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import atexit
+import html
+import json
 import re
 import threading
 from pathlib import Path
 
-from flask import Flask, g, jsonify, send_from_directory
+from flask import Flask, Response, g, jsonify, send_from_directory
 from flask_cors import CORS
 
 import config
@@ -29,6 +31,81 @@ SPA_DYNAMIC_PATHS = (
     re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
     re.compile(r"games/[^/]+(?:/market)?"),
 )
+
+PUBLIC_ROUTE_SEO = {
+    "": {
+        "title": "Archipelago Pie: Multiworld Randomizer Tools & Guides",
+        "description": "Learn how Archipelago multiworld randomizers work, build player YAMLs, browse community APWorlds, and organize games with Archipelago Pie.",
+        "canonical": "https://ap-pie.com/",
+        "heading": "Your games, connected by one randomizer.",
+        "intro": "Archipelago Pie helps beginners learn Archipelago, build player YAMLs, browse community game integrations, and organize multiworld sessions.",
+        "schema_type": "WebSite",
+    },
+    "apworlds": {
+        "title": "APWorld Downloads & YAML Builder | Archipelago Pie",
+        "description": "Browse community Archipelago APWorlds by game and version, open setup resources, download integrations, and create compatible player YAMLs.",
+        "canonical": "https://ap-pie.com/apworlds",
+        "heading": "APWorld downloads and YAML builder",
+        "intro": "An APWorld adds a game to Archipelago. Browse maintained community integrations, download the version your host expects, or create a compatible player YAML in the guided builder.",
+        "schema_type": "CollectionPage",
+    },
+}
+
+
+def _public_spa_response(path: str) -> Response:
+    """Serve meaningful route-specific HTML before React takes over."""
+    route = PUBLIC_ROUTE_SEO[path]
+    document = (DIST_DIR / "index.html").read_text(encoding="utf-8")
+    title = html.escape(route["title"])
+    description = html.escape(route["description"], quote=True)
+    canonical = html.escape(route["canonical"], quote=True)
+    document = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", document, count=1)
+    document = re.sub(
+        r'<meta name="description" content="[^"]*"\s*/>',
+        f'<meta name="description" content="{description}" />',
+        document,
+        count=1,
+    )
+    document = re.sub(
+        r'<meta property="og:title" content="[^"]*"\s*/>',
+        f'<meta property="og:title" content="{title}" />',
+        document,
+        count=1,
+    )
+    document = re.sub(
+        r'<meta property="og:description" content="[^"]*"\s*/>',
+        f'<meta property="og:description" content="{description}" />',
+        document,
+        count=1,
+    )
+    structured = {
+        "@context": "https://schema.org",
+        "@type": route["schema_type"],
+        "name": route["title"],
+        "url": route["canonical"],
+        "description": route["description"],
+        "publisher": {
+            "@type": "Organization",
+            "name": "Archipelago Pie",
+            "url": "https://ap-pie.com/",
+        },
+    }
+    route_meta = (
+        f'<link rel="canonical" href="{canonical}" />\n'
+        f'    <meta property="og:url" content="{canonical}" />\n'
+        f'    <script type="application/ld+json">'
+        f'{json.dumps(structured, separators=(",", ":")).replace("<", "\\u003c")}'
+        f'</script>'
+    )
+    fallback = (
+        '<main class="route-html-fallback">'
+        f'<h1>{html.escape(route["heading"])}</h1>'
+        f'<p>{html.escape(route["intro"])}</p>'
+        '</main>'
+    )
+    document = document.replace("<!-- ROUTE_META -->", route_meta)
+    document = document.replace("<!-- ROUTE_CONTENT -->", fallback)
+    return Response(document, mimetype="text/html")
 
 
 def _is_spa_route(path: str) -> bool:
@@ -323,6 +400,9 @@ def create_app() -> Flask:
         # indexable-looking HTML for malformed download URLs.
         if path == "api" or path.startswith("api/"):
             return jsonify({"error": "API endpoint not found"}), 404
+        normalized = path.strip("/")
+        if normalized in PUBLIC_ROUTE_SEO:
+            return _public_spa_response(normalized)
         response = send_from_directory(DIST_DIR, "index.html")
         if not _is_spa_route(path):
             response.status_code = 404

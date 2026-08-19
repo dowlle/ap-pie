@@ -350,6 +350,7 @@ def sitemap() -> Response:
 
     entries = [
         {"loc": _canonical("/"), "lastmod": None},
+        {"loc": _canonical("/apworlds"), "lastmod": "2026-08-19"},
         {"loc": _canonical("/guides"), "lastmod": max(g["updated"] for g in GUIDES)},
     ] + [
         {"loc": _canonical(f"/guides/{g['slug']}"), "lastmod": g["updated"]}
