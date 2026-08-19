@@ -81,6 +81,26 @@ GUIDES: list[dict[str, str]] = [
         "featured": True,
     },
     {
+        "slug": "hosting-on-archipelago-pie",
+        "file": "hosting-on-archipelago-pie.md",
+        "h1": "How to host a room on Archipelago Pie",
+        "page_title": "Hosting an Archipelago Pie collection room | Archipelago Pie",
+        "meta_description": (
+            "Create an Archipelago Pie collection room, set its rules and "
+            "APWorld versions, collect YAMLs, then close and download it for generation."
+        ),
+        "card_title": "Host a room on Archipelago Pie",
+        "card_blurb": (
+            "Create a collection room, share it with players, review submissions, "
+            "and download everything for local generation."
+        ),
+        "published": "2026-08-19",
+        "updated": "2026-08-19",
+        "project": "ap",
+        "kicker": "Archipelago Pie",
+        "featured": False,
+    },
+    {
         "slug": "hosting-a-multiworld",
         "file": "hosting-a-multiworld.md",
         "h1": "Hosting a multiworld",

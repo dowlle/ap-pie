@@ -80,7 +80,7 @@ Choose this path when several worlds should be generated together.
 5. Upload the successful generation to archipelago.gg, create the server room, and share its connection details.
 6. For a synchronized game, run the countdown and tell players when they may begin sending locations. For an asynchronous game, publish the room and tracker links with the ongoing activity and hint rules.
 
-Archipelago Pie helps with step 2. A host can create a collection room, pin APWorld versions, and collect configurations through the browser before generation.
+Archipelago Pie helps with step 2. A host can create a collection room, pin APWorld versions, and collect configurations through the browser before generation. [How to host a room on Archipelago Pie](/guides/hosting-on-archipelago-pie) walks through that complete collector workflow.
 
 ## Words you will see
 
