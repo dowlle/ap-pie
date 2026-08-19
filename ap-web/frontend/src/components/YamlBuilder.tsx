@@ -10,6 +10,7 @@ import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import MarkdownText from "./MarkdownText";
 import { trackBuilderAbandoned, trackBuilderEmitted, trackBuilderOpened } from "../lib/analytics";
+import type { ParseResponse } from "../workers/yamlParseWorker";
 
 /**
  * FEAT-38: guided YAML builder modal. One shared shell for all three
@@ -574,52 +575,61 @@ export default function YamlBuilder({
     const syncSchema = entry?.schema;
     if (manualYaml === null || !syncSchema) return;
     if (new TextEncoder().encode(manualYaml).byteLength > MAX_EDITABLE_YAML_BYTES) return;
+    let worker: Worker | null = null;
     const timer = window.setTimeout(() => {
-      const document = parseDocument(manualYaml);
-      if (document.errors.length > 0) {
+      worker = new Worker(new URL("../workers/yamlParseWorker.ts", import.meta.url), { type: "module" });
+      worker.onmessage = (event: MessageEvent<ParseResponse>) => {
+        worker?.terminate();
+        worker = null;
+        if (!event.data.ok) {
+          yamlEditPendingRef.current = false;
+          setYamlSync("error");
+          setYamlErrorKind("syntax");
+          setYamlSyncMessage(event.data.message);
+          return;
+        }
+        const parsed = event.data.parsed;
+        const custom: string[] = [...parsed.unknown, ...parsed.extraRootKeys];
+        const invalid: string[] = [];
+        for (const option of syncSchema.options) {
+          const issue = classifyYamlValue(option, parsed.values[option.name]);
+          if (issue === "custom") custom.push(option.name);
+          if (issue === "invalid") invalid.push(option.name);
+        }
+
+        applyingYamlRef.current = true;
+        if (parsed.playerName) setPlayerName(parsed.playerName);
+        setValues({ ...defaultValues, ...parsed.values });
+        setCoreValues(parsed.coreValues);
+        yamlEditPendingRef.current = false;
+        if (invalid.length > 0) {
+          setYamlSync("error");
+          setYamlErrorKind("schema");
+          setYamlSyncMessage(`${invalid.length} value${invalid.length === 1 ? " is" : "s are"} outside what this APWorld version accepts: ${invalid.slice(0, 3).join(", ")}.`);
+        } else if (custom.length > 0) {
+          setYamlSync("custom");
+          setYamlErrorKind(null);
+          setYamlSyncMessage(`${custom.length} custom field${custom.length === 1 ? " is" : "s are"} preserved in YAML even though the form cannot fully represent ${custom.length === 1 ? "it" : "them"}.`);
+        } else {
+          setYamlSync("synced");
+          setYamlErrorKind(null);
+          setYamlSyncMessage("Form and YAML match.");
+        }
+      };
+      worker.onerror = () => {
+        worker?.terminate();
+        worker = null;
         yamlEditPendingRef.current = false;
         setYamlSync("error");
         setYamlErrorKind("syntax");
-        setYamlSyncMessage(document.errors[0]?.message.split(" at line")[0] || "Fix the YAML syntax to resume syncing.");
-        return;
-      }
-      const parsed = importYaml(manualYaml, syncSchema);
-      if (!parsed) {
-        yamlEditPendingRef.current = false;
-        setYamlSync("error");
-        setYamlErrorKind("syntax");
-        setYamlSyncMessage("The document needs a name, game and option mapping before it can sync.");
-        return;
-      }
-
-      const custom: string[] = [...parsed.unknown, ...parsed.extraRootKeys];
-      const invalid: string[] = [];
-      for (const option of syncSchema.options) {
-        const issue = classifyYamlValue(option, parsed.values[option.name]);
-        if (issue === "custom") custom.push(option.name);
-        if (issue === "invalid") invalid.push(option.name);
-      }
-
-      applyingYamlRef.current = true;
-      if (parsed.playerName) setPlayerName(parsed.playerName);
-      setValues({ ...defaultValues, ...parsed.values });
-      setCoreValues(parsed.coreValues);
-      yamlEditPendingRef.current = false;
-      if (invalid.length > 0) {
-        setYamlSync("error");
-        setYamlErrorKind("schema");
-        setYamlSyncMessage(`${invalid.length} value${invalid.length === 1 ? " is" : "s are"} outside what this APWorld version accepts: ${invalid.slice(0, 3).join(", ")}.`);
-      } else if (custom.length > 0) {
-        setYamlSync("custom");
-        setYamlErrorKind(null);
-        setYamlSyncMessage(`${custom.length} custom field${custom.length === 1 ? " is" : "s are"} preserved in YAML even though the form cannot fully represent ${custom.length === 1 ? "it" : "them"}.`);
-      } else {
-        setYamlSync("synced");
-        setYamlErrorKind(null);
-        setYamlSyncMessage("Form and YAML match.");
-      }
+        setYamlSyncMessage("The YAML checker could not finish. Try editing the document again.");
+      };
+      worker.postMessage({ text: manualYaml, schema: syncSchema });
     }, 350);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      worker?.terminate();
+    };
   }, [defaultValues, entry, manualYaml]);
 
   // Form → YAML. The Document API changes known nodes in-place and keeps
@@ -662,25 +672,10 @@ export default function YamlBuilder({
    *  A hand-edit may have changed `name:`, and the room endpoints take the
    *  player name as its own field, so read it back rather than trusting
    *  the form. */
-  const submittedIdentity = useMemo(() => {
-    const fallback = {
+  const submittedIdentity = useMemo(() => ({
       playerName: playerName.trim() || "Player1",
       game: entry?.game ?? "",
-    };
-    if (!manualYaml) return fallback;
-    try {
-      const doc = load(manualYaml) as Record<string, unknown> | undefined;
-      if (!doc || typeof doc !== "object") return fallback;
-      return {
-        playerName: typeof doc.name === "string" && doc.name.trim() ? doc.name.trim() : fallback.playerName,
-        game: typeof doc.game === "string" && doc.game.trim() ? doc.game.trim() : fallback.game,
-      };
-    } catch {
-      // Invalid YAML: fall back to the form values. The server validates on
-      // submit and will report the real parse error.
-      return fallback;
-    }
-  }, [manualYaml, playerName, entry]);
+  }), [playerName, entry]);
 
   const handleSubmit = async () => {
     if (!submit || !yamlContent || !entry || !canFinalize) return;
@@ -976,6 +971,7 @@ export default function YamlBuilder({
                   spellCheck={false}
                   onChange={(e) => handleYamlEdit(e.target.value)}
                   rows={18}
+                  aria-label="YAML content"
                 />
               ) : presentation === "modal" ? (
                 <pre className="yaml-builder-preview">{highlightYaml(yamlContent)}</pre>
@@ -990,7 +986,7 @@ export default function YamlBuilder({
                 </>
               )}
               {manualYaml !== null && (
-                <p className="settings-aux-note yaml-builder-manual-note">
+                <p className="settings-aux-note yaml-builder-manual-note" role="status" aria-live="polite">
                   {yamlSyncMessage}{" "}
                   <button
                     type="button"

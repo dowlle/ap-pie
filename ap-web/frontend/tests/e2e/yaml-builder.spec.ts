@@ -73,3 +73,79 @@ test("highlighting and viewport sizing remain aligned with the editor", async ({
   expect(dimensions).not.toBeNull();
   expect(dimensions!.clientHeight).toBe(dimensions!.scrollHeight);
 });
+
+test("form edits update YAML without removing comments or custom values", async ({ page }) => {
+  await openCtrBuilder(page);
+  const editor = page.locator(".yaml-builder-live-editor");
+  await editor.fill(
+    (await editor.inputValue()).replace(
+      "Crash Team Racing:\n",
+      "Crash Team Racing:\n  # Keep this organizer note\n  custom_house_rule: enabled\n",
+    ),
+  );
+  await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Custom values");
+
+  await page.locator('input[placeholder^="Your slot name"]').fill("PreservedPlayer");
+  await expect(editor).toHaveValue(/name: PreservedPlayer/);
+  await expect(editor).toHaveValue(/# Keep this organizer note/);
+  await expect(editor).toHaveValue(/custom_house_rule: enabled/);
+});
+
+test("weighted YAML values remain intact when another form field changes", async ({ page }) => {
+  await openCtrBuilder(page);
+  const editor = page.locator(".yaml-builder-live-editor");
+  await editor.fill(
+    (await editor.inputValue()).replace(
+      "oxide_final_challenge_relic_count: 18",
+      "oxide_final_challenge_relic_count: {18: 50, 15: 50}",
+    ),
+  );
+  await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Custom values");
+  await page.locator('input[placeholder^="Your slot name"]').fill("WeightedPlayer");
+  await expect(editor).toHaveValue(/oxide_final_challenge_relic_count: \{18: 50, 15: 50\}/);
+});
+
+test("route drafts recover after refresh", async ({ page }) => {
+  await openCtrBuilder(page);
+  const player = page.locator('input[placeholder^="Your slot name"]');
+  await player.fill("RecoveredDraft");
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(/name: RecoveredDraft/);
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.reload();
+  await expect(player).toHaveValue("RecoveredDraft");
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(/name: RecoveredDraft/);
+});
+
+test("mobile Review exposes the editable YAML and announced status", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openCtrBuilder(page);
+  await expect(page.locator(".yaml-builder-live")).toBeHidden();
+  await page.getByRole("button", { name: "Review YAML" }).click();
+  await page.getByRole("button", { name: "Edit YAML" }).click();
+  const editor = page.getByRole("textbox", { name: "YAML content" });
+  await expect(editor).toBeVisible();
+  await editor.fill((await editor.inputValue()).replace("name: Player1", "name: MobilePlayer"));
+  await expect(page.getByRole("status")).toContainText(/Typing|Synced/);
+});
+
+test("editor scroll position stays synchronized with its highlight layer", async ({ page }) => {
+  await openCtrBuilder(page);
+  const editor = page.locator(".yaml-builder-live-editor");
+  await editor.fill(`${await editor.inputValue()}\n# ${"wide-value-".repeat(80)}\n${"# filler\n".repeat(80)}`);
+  await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Synced");
+  const positions = await page.locator(".yaml-builder-live-editor-shell").evaluate((shell) => {
+    const textarea = shell.querySelector("textarea")!;
+    const highlight = shell.querySelector("pre")!;
+    textarea.scrollTop = 240;
+    textarea.scrollLeft = 180;
+    textarea.dispatchEvent(new Event("scroll", { bubbles: true }));
+    return {
+      textareaTop: textarea.scrollTop,
+      textareaLeft: textarea.scrollLeft,
+      highlightTop: highlight.scrollTop,
+      highlightLeft: highlight.scrollLeft,
+    };
+  });
+  expect(positions.highlightTop).toBe(positions.textareaTop);
+  expect(positions.highlightLeft).toBe(positions.textareaLeft);
+});
