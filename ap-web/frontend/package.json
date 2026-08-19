@@ -22,7 +22,7 @@
     "yaml": "2.9.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "1.62.1",
     "@types/js-yaml": "4.0.9",
     "@types/node": "^24.12.0",
