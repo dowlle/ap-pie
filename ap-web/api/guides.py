@@ -71,7 +71,7 @@ GUIDES: list[dict[str, str]] = [
         ),
         "card_title": "Getting started with Archipelago",
         "card_blurb": (
-            "Learn the basics, then choose the right path for joining a room, "
+            "Learn the basics, then choose the right path for joining a group, "
             "playing solo, or organizing a multiworld."
         ),
         "published": "2026-07-22",

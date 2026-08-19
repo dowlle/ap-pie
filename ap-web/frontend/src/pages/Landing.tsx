@@ -79,7 +79,7 @@ export default function Landing() {
             <a className="lp-path" href="/guides/getting-started">
               <span className="lp-k">New to Archipelago?</span>
               <h3>Choose how you want to play</h3>
-              <p>Learn the basics, then follow the path for joining, playing solo, or organizing a group.</p>
+              <p>Learn the basics, then follow the path for joining a group, playing solo, or organizing a multiworld.</p>
               <span className="lp-path-link">Start with Archipelago →</span>
             </a>
             <button type="button" className="lp-path" onClick={() => login("/rooms")}>

@@ -18,15 +18,25 @@ Official game support and documentation live on [archipelago.gg](https://archipe
 
 You do not need to understand every Archipelago tool before starting. Pick the path that matches what you have now.
 
-### Join an existing room
+### Join a multiworld
 
-Choose this path when somebody has already generated the multiworld and given you connection details.
+Choose this path when a host invites you to take part in a multiworld. Most groups organize the game before it is generated, so the host will usually ask you to choose a game and send them a YAML.
 
-1. Follow the setup guide for your game and install the client or mod it requires.
-2. Obtain the server address, your exact slot name, and the password if the room uses one.
-3. Start the game and its client, then connect with those details.
+#### Before generation
 
-You normally do not need to create a YAML or install every host tool just to join. Follow the game-specific guide because connection steps differ between games.
+1. Ask the host which games and APWorld versions the group is using.
+2. Pick your game and follow its setup guide.
+3. Create one YAML for your world. It contains your exact slot name and the options for your randomized game.
+4. Send the YAML to the host, or submit it through the Archipelago Pie collection-room link they share.
+5. Install the client or mod required by your game while the host collects and generates the worlds.
+
+You do not need the generator or server tools for this path. The host combines everyone's world configurations and handles generation.
+
+#### After generation
+
+The host sends you the server address, your exact slot name, and a password if the room uses one. Start your game and its client, then connect with those details.
+
+Sometimes a host gives you an existing slot in a multiworld that has already been generated. In that less common case, you can skip YAML creation and use the game files and connection details supplied by the host.
 
 ### Create a solo seed
 
