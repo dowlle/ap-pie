@@ -18,6 +18,7 @@ import Landing from "./pages/Landing";
 import MyArea from "./pages/MyArea";
 import YamlBuilderPage from "./pages/YamlBuilderPage";
 import YamlBuilderLanding from "./pages/YamlBuilderLanding";
+import NotFound from "./pages/NotFound";
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
 import { useEffect, useState } from "react";
@@ -278,6 +279,7 @@ function AppRoutes() {
       <Route path="/my/:tab" element={<AdminShell><MyArea /></AdminShell>} />
       <Route path="/presets" element={<Navigate to="/my/presets" replace />} />
       <Route path="/summary" element={<AdminShell><RequireApproval><Summary /></RequireApproval></AdminShell>} />
+      <Route path="*" element={<AdminShell><NotFound /></AdminShell>} />
     </Routes>
   );
 }

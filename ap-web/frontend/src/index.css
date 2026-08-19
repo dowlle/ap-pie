@@ -4498,6 +4498,31 @@ details.yaml-builder-group > summary .muted {
 }
 .yaml-builder-steps button:disabled { opacity: 0.5; cursor: not-allowed; }
 .yaml-builder-step-line { color: var(--text-muted); font-size: 0.8rem; }
+.yaml-builder-preset-step { display: flex; flex-direction: column; gap: 0.85rem; }
+.yaml-builder-preset-step > h3,
+.yaml-builder-preset-step > p { margin: 0; }
+.yaml-builder-default-start { align-self: flex-start; }
+.yaml-builder-preset-list-wrap { display: flex; flex-direction: column; gap: 0.7rem; }
+
+.not-found {
+  max-width: 46rem;
+  margin: clamp(3rem, 10vh, 8rem) auto;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+}
+.not-found-code {
+  margin: 0;
+  color: var(--accent);
+  font-size: clamp(3.5rem, 12vw, 7rem);
+  font-weight: 800;
+  line-height: 0.9;
+}
+.not-found h1 { margin: 1rem 0 0.6rem; }
+.not-found > p:not(.not-found-code) { color: var(--text-muted); }
+.not-found-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.65rem; margin-top: 1.5rem; }
 
 /* Public YAML builder landing page. Individual workspaces stay noindex;
    this page is the stable, searchable explanation and discovery route. */
