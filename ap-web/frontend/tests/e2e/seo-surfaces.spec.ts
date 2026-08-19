@@ -24,7 +24,7 @@ for (const contract of contracts) {
     const response = await request.get(contract.path);
     expect(response.ok()).toBeTruthy();
     const html = await response.text();
-    expect(html).toContain(`<title>${contract.title}</title>`);
+    expect(html).toContain(`<title>${contract.title.replaceAll("&", "&amp;")}</title>`);
     expect(html).toContain(`name="description" content="${contract.description}"`);
     expect(html).toContain(`rel="canonical" href="${contract.canonical}"`);
     expect(html).toContain(`<h1>${contract.heading}</h1>`);
@@ -45,4 +45,26 @@ test("APWorlds appears exactly once in the sitemap", async ({ request }) => {
   expect(response.ok()).toBeTruthy();
   const xml = await response.text();
   expect(xml.match(/<loc>https:\/\/ap-pie\.com\/apworlds<\/loc>/g)).toHaveLength(1);
+});
+
+test("CTR screenshots prefer WebP and every fallback stays below 100 KB", async ({ page, request }) => {
+  const names = [
+    "checks-feed",
+    "warp-pad-hub",
+    "tutorial-thumb",
+    "warp-pad-requirements",
+    "custom-resolutions-poster",
+    "og-ctr",
+  ];
+  for (const name of names) {
+    for (const extension of ["webp", "jpg"]) {
+      const response = await request.get(`/img/ctr/${name}.${extension}`);
+      expect(response.ok()).toBeTruthy();
+      expect((await response.body()).byteLength).toBeLessThan(100_000);
+    }
+  }
+
+  await page.goto("/ctr");
+  await expect(page.locator('picture source[type="image/webp"]')).toHaveCount(3);
+  await expect(page.locator('video[poster$="custom-resolutions-poster.webp"]')).toHaveCount(1);
 });
