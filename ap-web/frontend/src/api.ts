@@ -991,7 +991,7 @@ export interface TemplateOption {
   type: "choice" | "toggle" | "range" | "list" | "dict" | "text";
   description: string;
   category: string;
-  default: any;
+  default: unknown;
   choices?: string[] | null;
   min?: number;
   max?: number;

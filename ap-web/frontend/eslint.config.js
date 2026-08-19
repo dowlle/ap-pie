@@ -20,4 +20,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/context/*Context.tsx'],
+    rules: {
+      // Context modules intentionally export their provider and consumer
+      // hooks together; splitting them adds indirection without improving
+      // Fast Refresh behavior for these stable module-level contexts.
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

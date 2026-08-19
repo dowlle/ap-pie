@@ -190,8 +190,8 @@ function DownloadIcon() {
 }
 
 function compareVersions(a: string, b: string): number {
-  const partsA = a.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
-  const partsB = b.split(/[.\-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
+  const partsA = a.split(/[.-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
+  const partsB = b.split(/[.-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
   const len = Math.max(partsA.length, partsB.length);
   for (let i = 0; i < len; i++) {
     const pa = partsA[i] ?? 0;

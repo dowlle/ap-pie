@@ -33,7 +33,6 @@ export default function RequestApworldUpdateModal({
   apworlds,
   pins,
   prefillApworldName,
-  prefillDisplayName: _prefillDisplayName,
   prefillVersion,
   onClose,
   onSubmitted,

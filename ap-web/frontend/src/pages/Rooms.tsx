@@ -59,7 +59,10 @@ export default function Rooms() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { refresh(); }, [statusFilter, asUser]);
+  useEffect(() => {
+    const timer = window.setTimeout(refresh, 0);
+    return () => window.clearTimeout(timer);
+  }, [statusFilter, asUser]);
 
   // The viewed user's display name, derived from any room's host_name when
   // possible. If the user has no rooms, we don't have it server-side from
