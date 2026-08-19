@@ -14,6 +14,10 @@ Official game support and documentation live on [archipelago.gg](https://archipe
 
 **A multi-game uses different games in the same multiworld.** One person might play a platformer while another plays a role-playing game. Archipelago handles the item exchange between their clients.
 
+![The common community workflow moves from a Discord announcement to a YAML collector, custom APWorld handoff, local generation, upload to archipelago.gg, and finally connecting to play.](/img/guides/announcement-to-play.svg)
+
+*Players prepare and submit their worlds. The host handles generation, upload, and the final start instructions.*
+
 ## Choose what you want to do
 
 You do not need to understand every Archipelago tool before starting. Pick the path that matches what you have now.
@@ -23,6 +27,10 @@ You do not need to understand every Archipelago tool before starting. Pick the p
 Choose this path when a host announces a multiworld, often through Discord. It may be a synchronized game that everyone starts together or a long-running asynchronous game that people play on their own schedule. The announcement should tell you the format, submission deadline, Archipelago version, and rules for choosing and playing your games.
 
 Read the complete announcement before making your YAML. Limits on game count, expected game length, banned games, hint settings, trackers, and activity requirements are event rules chosen by the host, not universal Archipelago rules.
+
+![An anonymized YAML collection room highlighting the deadline and rules, version policy, submitted worlds, and the checklist for custom APWorlds.](/img/guides/collector-checklist.svg)
+
+*Collectors look different, but these are the details to find before submitting your world.*
 
 #### Submit your world
 
@@ -45,6 +53,10 @@ For a synchronized game, follow the host's start instructions. You may be allowe
 For an asynchronous game, the host normally announces when generation and upload are complete, then shares the room and tracker links. Claim your slot if the chosen tracker requires it and follow the event's activity, update, hint, and release rules. There is usually no shared countdown after the room opens, but the host's announcement is authoritative.
 
 Trackers such as Cheese Tracker or sphere trackers are optional community tools. They can show progress, hints, BK status, and activity, but they do not replace the Archipelago server address used by your game client.
+
+![A comparison of synchronized and asynchronous multiworlds. Synchronized games wait for a countdown, while asynchronous games use ongoing tracker and activity rules.](/img/guides/sync-vs-async.svg)
+
+*Both formats use the same generated room. The event rules determine when and how people play.*
 
 Sometimes a host gives you an existing slot in a multiworld that has already been generated. In that less common case, you can skip YAML creation and use the game files and connection details supplied by the host.
 
