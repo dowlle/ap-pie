@@ -20,21 +20,31 @@ You do not need to understand every Archipelago tool before starting. Pick the p
 
 ### Join a multiworld
 
-Choose this path when a host invites you to take part in a multiworld. Most groups organize the game before it is generated, so the host will usually ask you to choose a game and send them a YAML.
+Choose this path when a host announces a multiworld, often through Discord. It may be a synchronized game that everyone starts together or a long-running asynchronous game that people play on their own schedule. The announcement should tell you the format, submission deadline, Archipelago version, and rules for choosing and playing your games.
 
-#### Before generation
+Read the complete announcement before making your YAML. Limits on game count, expected game length, banned games, hint settings, trackers, and activity requirements are event rules chosen by the host, not universal Archipelago rules.
 
-1. Ask the host which games and APWorld versions the group is using.
-2. Pick your game and follow its setup guide.
+#### Submit your world
+
+1. Open the YAML collector shared by the host. Archipelago Pie and Ionium Lobby are examples of collectors.
+2. Check the room rules, deadline, Archipelago version, available APWorld versions, and any APWorld freeze date before choosing your game.
 3. Create one YAML for your world. It contains your exact slot name and the options for your randomized game.
-4. Send the YAML to the host, or submit it through the Archipelago Pie collection-room link they share.
-5. Install the client or mod required by your game while the host collects and generates the worlds.
+4. Submit the YAML through the collector before the deadline.
+5. Install and test the client or mod required by your game. A host may require you to prove that the same YAML generates and completes as a solo seed before accepting it.
 
-You do not need the generator or server tools for this path. The host combines everyone's world configurations and handles generation.
+If your custom APWorld or exact version is not available through the collector or its APWorld index, follow the host's custom-world submission process before the deadline or freeze date. Send the release or source link they request and do not assume that the host already has it. If your submission was wrong or the APWorld changes before versions are frozen, tell the host. The host needs the version your configuration was made for when generating the game.
 
-#### After generation
+You do not need the generator or server tools as a player. After submissions close, the host downloads the YAMLs, installs the required custom APWorlds, and generates the multiworld on their computer.
 
-The host sends you the server address, your exact slot name, and a password if the room uses one. Start your game and its client, then connect with those details.
+#### Connect and follow the start rules
+
+After local generation succeeds, the host uploads the generated seed to archipelago.gg and shares the server address, your exact slot name, and a password if the room uses one.
+
+For a synchronized game, follow the host's start instructions. You may be allowed to connect before the countdown, but do not begin playing or send locations until the host says the game has started. Some clients send a location as soon as they connect, so wait to connect when the host or game-specific guide warns about that.
+
+For an asynchronous game, the host normally announces when generation and upload are complete, then shares the room and tracker links. Claim your slot if the chosen tracker requires it and follow the event's activity, update, hint, and release rules. There is usually no shared countdown after the room opens, but the host's announcement is authoritative.
+
+Trackers such as Cheese Tracker or sphere trackers are optional community tools. They can show progress, hints, BK status, and activity, but they do not replace the Archipelago server address used by your game client.
 
 Sometimes a host gives you an existing slot in a multiworld that has already been generated. In that less common case, you can skip YAML creation and use the game files and connection details supplied by the host.
 
@@ -51,11 +61,12 @@ Choose this path when you want to try Archipelago with one world.
 
 Choose this path when several worlds should be generated together.
 
-1. Decide which games and APWorld versions the group will use.
-2. Gather one configuration for each world. Most players bring one world, so this usually means one YAML per player.
-3. Generate all world configurations together to create one seed.
-4. Create or host an Archipelago room from that seed and share its address.
-5. Each player connects using the exact slot name assigned to their world.
+1. Announce whether the game is synchronized or asynchronous, plus the submission deadline, APWorld freeze, Archipelago version, game rules, tracker policy, activity expectations, and start procedure.
+2. Create a collection room and gather one configuration for each world. Most players bring one world, so this usually means one YAML per player.
+3. Collect any custom APWorld releases that are not available through the collector and install the exact versions required by the submitted YAMLs.
+4. Close submissions, download the YAMLs, and generate all worlds together on the host computer.
+5. Upload the successful generation to archipelago.gg, create the server room, and share its connection details.
+6. For a synchronized game, run the countdown and tell players when they may begin sending locations. For an asynchronous game, publish the room and tracker links with the ongoing activity and hint rules.
 
 Archipelago Pie helps with step 2. A host can create a collection room, pin APWorld versions, and collect configurations through the browser before generation.
 
@@ -94,6 +105,7 @@ The complete handoff is:
 3. The seed is uploaded to archipelago.gg or hosted with the local server.
 4. A server room is started.
 5. Players connect their clients with the address and exact slot names.
+6. For a synchronized game, players wait for the host's start signal before sending locations.
 
 An Archipelago Pie collection room covers the first step. It is separate from the Archipelago server room used during play.
 
