@@ -14,9 +14,11 @@ The requirement belongs to the pad you are standing in front of. The destination
 
 Hub doors remain structural. You still move between the Adventure hubs with Keys, while the pads inside each reachable area follow the generated rules.
 
-## Some pads have a second lock
+## The second phase can have its own lock
 
-A generated route can have a second requirement. When the first requirement is met but the second is not, the pad remains closed and advertises the remaining requirement. Once both stages are satisfied, it opens normally.
+A race pad has two phases. Its first phase opens the Trophy Race. The second phase contains that track's CTR Challenge and Relic Race, and a generated world can give this phase a separate requirement.
+
+When the Trophy Race phase is available but the second-phase requirement is not met, the pad remains closed for the CTR Challenge and Relic Race and advertises the remaining requirement. Once both requirements are satisfied, the second phase opens normally.
 
 This prevents the display and the server's logic from disagreeing. If a pad is closed, the symbol above it should describe the item you still need.
 
