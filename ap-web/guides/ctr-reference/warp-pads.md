@@ -16,11 +16,11 @@ Hub doors remain structural. You still move between the Adventure hubs with Keys
 
 ## The second phase can have its own lock
 
-A race pad has two phases. Its first phase opens the Trophy Race. The second phase contains that track's CTR Challenge and Relic Race, and a generated world can give this phase a separate requirement.
+A race pad has two phases. The first phase contains the Trophy Race and any custom box checks placed on that track. The second phase contains the track's CTR Challenge and Relic Race, and a generated world can give this phase a separate requirement.
 
-When the Trophy Race phase is available but the second-phase requirement is not met, the pad remains closed for the CTR Challenge and Relic Race and advertises the remaining requirement. Once both requirements are satisfied, the second phase opens normally.
+The pad does not close as soon as you win the Trophy Race. It stays available while the first phase still has unchecked locations, including custom box checks. Once every available first-phase location has been checked, the game evaluates the second-phase requirement.
 
-This prevents the display and the server's logic from disagreeing. If a pad is closed, the symbol above it should describe the item you still need.
+If that requirement is still unmet, the pad closes again and displays what you need before the CTR Challenge and Relic Race become available. If you satisfy the second-phase requirement before clearing the first phase, the pad does not close between phases. Winning the Trophy Race then gives you access to the second-phase races normally.
 
 ## Race, arena, trial, and cup pads
 
