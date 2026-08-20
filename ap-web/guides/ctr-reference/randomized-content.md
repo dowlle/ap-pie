@@ -6,7 +6,7 @@ CTR Archipelago ranges from a light Adventure Mode shuffle to a much broader ove
 
 - **Warp-pad requirements:** pads can ask for randomized counts of progression items instead of following the original Trophy order.
 - **Warp-pad destinations:** supported shuffle modes can separate the physical pad from the track or challenge it enters.
-- **Gem Cup legs:** the tracks inside a Gem Cup can be shuffled.
+- **0.2.0 preview:** the tracks inside a Gem Cup can be shuffled.
 - **Boss and final goals:** the world can finish at N. Oxide, the final Oxide race, all bosses, or all Gems, depending on the selected goal.
 
 ## Checks and rewards
@@ -22,15 +22,15 @@ The item placed at a check can belong to any player in the multiworld. Completin
 
 - **0.2.0 preview:** Progressive Boost can make ordinary boost, Sacred Fire, Ultimate Sacred Fire, and optionally Blue Fire into a received ladder.
 - **0.2.0 preview:** Progressive Stats can split Top Speed, Acceleration, and Turning into five ranks.
-- Progressive Stats can be shared across the roster or owned separately by each character.
-- Shortcut Knowledge can make advanced routes part of the world's logic at the selected difficulty.
+- **0.2.0 preview:** Progressive Stats can be shared across the roster or owned separately by each character.
+- **0.2.0 preview:** Shortcut Knowledge can make advanced routes part of the world's logic at the selected difficulty.
 
 ## Characters
 
 - **0.2.0 preview:** the starting racer can be selected or randomized.
-- Characters can become received unlock items.
-- Pads can require a particular racer when character locks are enabled.
-- Character statistics can stay original, become editable, or be controlled by Progressive Stats.
+- **0.2.0 preview:** characters can become received unlock items.
+- **0.2.0 preview:** pads can require a particular racer when character locks are enabled.
+- **0.2.0 preview:** character statistics can stay original, become editable, or be controlled by Progressive Stats.
 
 ## Traps and useful items
 
