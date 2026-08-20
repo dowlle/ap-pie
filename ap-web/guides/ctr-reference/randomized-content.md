@@ -20,7 +20,7 @@ The item placed at a check can belong to any player in the multiworld. Completin
 
 ## Kart capabilities
 
-- **0.2.0 preview:** Progressive Boost can make ordinary boost, Sacred Fire, Ultimate Sacred Fire, and optionally Blue Fire into a received ladder.
+- **0.2.0 preview:** Progressive Boost can make ordinary boost, Ultra Sacred Fire, and optionally Blue Fire into a received ladder.
 - **0.2.0 preview:** Progressive Stats can split Top Speed, Acceleration, and Turning into five ranks.
 - **0.2.0 preview:** Progressive Stats can be shared across the roster or owned separately by each character.
 - **0.2.0 preview:** Shortcut Knowledge can make advanced routes part of the world's logic at the selected difficulty.
