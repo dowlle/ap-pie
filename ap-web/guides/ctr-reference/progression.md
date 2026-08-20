@@ -12,7 +12,7 @@ When you clear a location, its item may belong to you or to somebody playing ano
 
 In 0.2.0, a seed can make boost capability progressive. Your kart starts without the full boost package and received Progressive Boost items move it up the configured ladder.
 
-The first received copy enables ordinary self-earned boost. The second raises the kart to Ultra Sacred Fire speeds. A seed can optionally add Blue Fire as its capstone. Before the first copy, ordinary turbo pads still work but powerslides and hang time do not provide self-earned boost. When Progressive Boost is disabled, CTR keeps its ordinary boost behavior and no Progressive Boost items are added.
+The first received copy enables ordinary self-earned boost. The second raises the kart to Ultimate Sacred Fire speeds. A seed can optionally add Blue Fire as its capstone. Before the first copy, ordinary turbo pads still work but powerslides and hang time do not provide self-earned boost. When Progressive Boost is disabled, CTR keeps its ordinary boost behavior and no Progressive Boost items are added.
 
 ## Progressive Stats
 
