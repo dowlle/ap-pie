@@ -1,0 +1,54 @@
+{% extends "guides/base.html" %}
+{% block head_extra %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": {{ page.title|tojson }},
+    "description": {{ meta_description|tojson }},
+    "author": {"@type": "Person", "name": "Appie", "url": {{ site_url|tojson }}},
+    "publisher": {"@type": "Organization", "name": "Archipelago Pie", "url": {{ site_url|tojson }}},
+    "datePublished": {{ page.published|tojson }},
+    "dateModified": {{ page.updated|tojson }},
+    "mainEntityOfPage": {"@type": "WebPage", "@id": {{ canonical_url|tojson }}},
+    "inLanguage": "en"
+  }
+  </script>
+  <style>
+    .reference-version {
+      display: inline-flex; gap: 0.4rem; align-items: center; margin: -0.75rem 0 1.5rem;
+      border: 1px solid var(--border-strong); border-radius: 999px; padding: 0.25rem 0.75rem;
+      color: var(--text-muted); font-family: var(--font-mono); font-size: 0.72rem;
+    }
+  </style>
+{% endblock %}
+{% block main %}
+  <nav class="section-subnav" aria-label="CTR section">
+    <a href="/ctr">Overview</a>
+    <a href="/ctr/download">Download</a>
+    <a href="/guides/ctr">Setup guide</a>
+    <a class="current" href="/ctr/reference">Reference</a>
+  </nav>
+  <div class="guide-layout">
+    {% if sections|length > 1 %}
+    <nav class="guide-toc" aria-label="On this page">
+      <div class="guide-toc-label">On this page</div>
+      {% for section in sections %}<a href="#{{ section.id }}">{{ section.name }}</a>{% endfor %}
+    </nav>
+    {% endif %}
+    <article>
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="/ctr">CTR Archipelago</a><span class="sep">/</span><a href="/ctr/reference">Reference</a><span class="sep">/</span>{{ page.short_title }}</nav>
+      <h1>{{ page.title }}</h1>
+      <div class="reference-version">{{ page.status_label }} · Verified against {{ page.verified_against }} · Updated {{ page.updated }}</div>
+      <div class="guide-body">{{ body_html|safe }}</div>
+      <div class="related-block">
+        <div class="related-label">More CTR reference pages</div>
+        <div class="guide-cards">
+          {% for item in related %}
+          <a class="guide-card" href="/ctr/reference/{{ item.slug }}"><h2>{{ item.title }}</h2><p>{{ item.blurb }}</p></a>
+          {% endfor %}
+        </div>
+      </div>
+    </article>
+  </div>
+{% endblock %}
