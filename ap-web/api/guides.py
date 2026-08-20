@@ -404,6 +404,12 @@ def llms() -> Response:
     """GEO: a compact markdown index for AI crawlers and answer engines,
     following the llms.txt convention. Generated from the guide registry so
     it never goes stale separately."""
+    analytics.record_event(
+        "machine_index_view",
+        user_id=session.get("user_id"),
+        props={"surface": "llms"},
+        req=request,
+    )
     lines = [
         "# Archipelago Pie",
         "",

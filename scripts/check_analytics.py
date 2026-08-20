@@ -84,6 +84,14 @@ typed = analytics.sanitize_props(
 )
 check("wrong-typed values are discarded", typed == {})
 
+machine_index = analytics.sanitize_props(
+    "machine_index_view", {"surface": "llms", "path": "/llms.txt"}
+)
+check(
+    "machine index event keeps only its surface",
+    machine_index == {"surface": "llms"},
+)
+
 fields = analytics.sanitize_props(
     "room_settings_changed", {"fields": ["name", "description", 7, None]}
 )
