@@ -7,7 +7,7 @@ CTR Archipelago ranges from a light Adventure Mode shuffle to a much broader ove
 - **Warp-pad requirements:** pads can ask for randomized counts of progression items instead of following the original Trophy order.
 - **Warp-pad destinations:** supported shuffle modes can separate the physical pad from the track or challenge it enters.
 - **0.2.0 preview:** the tracks inside a Gem Cup can be shuffled.
-- **Boss and final goals:** the world can finish at N. Oxide, the final Oxide race, all bosses, or all Gems, depending on the selected goal.
+- **0.2.0 preview:** the goal is composed from up to three conditions: beat N. Oxide in his Challenge or Final Challenge, win a chosen number of the four boss races, and hold a chosen number of the five Gems. Every condition you set must be met.
 
 ## Checks and rewards
 
