@@ -14,7 +14,7 @@ CTR Archipelago ranges from a light Adventure Mode shuffle to a much broader ove
 - Trophy Races, Relic Races, CTR Token Challenges, Boss Races, Gem Cups, and Crystal Challenges can send checks.
 - Optional podium checks can reward holding or finishing in selected race positions.
 - **0.2.0 preview:** Itemsanity turns using Adventure weapons into checks and makes the weapons themselves progression items.
-- **0.2.0 preview:** selected item boxes can become authored Archipelago locations.
+- **0.2.0 preview:** custom-placed boxes can be added to tracks as Archipelago checks.
 
 The item placed at a check can belong to any player in the multiworld. Completing Cortex Castle does not imply that you receive a CTR item from it.
 
