@@ -18,7 +18,7 @@ Run `ctr_native_ap.exe` (Windows) or `ctr_native_ap` (Linux) once. On a fresh st
 
 ## Step 2: drop in your disc image
 
-Copy your disc image into that `assets` folder. The filename does not matter: the game scans the folder and recognizes a valid North American disc automatically. <!-- VERIFY: confirm shipped discovery behavior --> Launch again and the game boots to the main menu.
+Copy your disc image into that `assets` folder. The filename does not matter: the game scans the folder and recognizes a valid North American disc automatically. Launch again and the game boots to the main menu.
 
 If your image is a `.chd`, or something goes wrong here, the [full setup guide](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers every variant.
 
@@ -26,7 +26,7 @@ If your image is a `.chd`, or something goes wrong here, the [full setup guide](
 
 In the game, go to **Options** and then **Connection**. Fill in three fields:
 
-- **Server**: your room address, for example `archipelago.gg:38281`. You can paste it straight from your room page. <!-- VERIFY: confirm paste ships in the current release -->
+- **Server**: your room address, for example `archipelago.gg:38281`. You can paste it straight from your room page.
 - **Slot**: your player name, spelled exactly as it appears in the room.
 - **Password**: only if your room has one.
 
@@ -42,7 +42,7 @@ If somebody already generated the multiworld for your group, you can skip this s
 
 The easiest way is the browser builder: **[open the CTR YAML builder](/apworlds?build=ctr)** and it starts right away, no searching needed. Set your name, pick your goal, and the rest of the options come filled in with sensible defaults you can adjust as you like. Review the result, download it, and hand it to your host.
 
-You can also start from the template YAML included in the release bundle and edit it by hand if you would rather; [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth. Either way, make sure your host is generating with the same CTR version you downloaded: an older apworld cannot always read a newer YAML. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) has the full details.
+You can also start from the [template YAML published as a separate release asset](/ctr/download/template) and edit it by hand if you would rather; [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth. Use the template that matches the CTR APWorld version your host is generating with. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) has the full details.
 
 ## When something goes wrong
 

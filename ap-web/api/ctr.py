@@ -42,6 +42,7 @@ STABLE: dict = {
         "windows": f"{_RELEASE_BASE}/v0.1.5/ctr-archipelago-v0.1.5-windows-x86.zip",
         "linux": f"{_RELEASE_BASE}/v0.1.5/ctr-archipelago-v0.1.5-linux-x86.tar.gz",
         "apworld": f"{_RELEASE_BASE}/v0.1.5/ctr.apworld",
+        "template": f"{_RELEASE_BASE}/v0.1.5/Crash.Team.Racing.yaml",
     },
 }
 
@@ -66,8 +67,8 @@ REFERENCE_PAGES: list[dict] = [
         "file": "warp-pads.md",
         "published": "2026-08-20",
         "updated": "2026-08-20",
-        "verified_against": "0.1.5",
-        "status_label": "Current stable",
+        "verified_against": "0.2.0 Alpha 3",
+        "status_label": "0.2.0 preview",
     },
     {
         "slug": "progression",
