@@ -199,14 +199,14 @@ def ctr_landing() -> str:
         config.PUBLIC_BASE_URL,
         "WebPage",
         canonical_url,
-        "CTR Archipelago Randomizer | Archipelago Pie",
+        "Crash Team Racing Archipelago | Archipelago Pie",
         description,
     )
     page_node["mainEntity"] = {"@id": f"{canonical_url}#software"}
     return render_template(
         "ctr/landing.html",
         stable=STABLE,
-        page_title="CTR Archipelago Randomizer | Archipelago Pie",
+        page_title="Crash Team Racing Archipelago | Archipelago Pie",
         meta_description=description,
         canonical_url=canonical_url,
         og_type="website",
