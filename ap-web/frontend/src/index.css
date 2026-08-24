@@ -3593,6 +3593,9 @@ a.btn:hover { text-decoration: none; }
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(12px);
   font-size: 0.85rem;
   color: var(--text-muted);
 }
