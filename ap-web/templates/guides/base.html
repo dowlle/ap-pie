@@ -17,7 +17,7 @@
     <meta property="og:image" content="{{ og_image }}" />
     <meta name="twitter:card" content="summary_large_image" />
     {% endif %}
-    <meta name="theme-color" content="#15131a" />
+    <meta name="theme-color" content="#121016" />
 
     {% if structured_data %}
     <script type="application/ld+json">{{ structured_data|tojson }}</script>
@@ -29,17 +29,17 @@
 
     <style>
       :root {
-        --bg: #15131a;
-        --bg-card: #1f1c25;
-        --bg-hover: #2a2630;
-        --text: #d8d4cc;
-        --text-h: #f4ecdc;
-        --text-muted: #8a8378;
-        --accent: #e8a857;
-        --accent-light: #f5c987;
-        --accent-dim: rgba(232, 168, 87, 0.15);
-        --border: #2e2935;
-        --border-strong: #3a3340;
+        --bg: #121016;
+        --bg-card: #1b181f;
+        --bg-hover: #242029;
+        --text: #a59c91;
+        --text-h: #f5f1eb;
+        --text-muted: #a59c91;
+        --accent: #f2ad55;
+        --accent-light: #f7c477;
+        --accent-dim: rgba(242, 173, 85, 0.15);
+        --border: #332d39;
+        --border-strong: #49404f;
         --font-display: "Bricolage Grotesque", "Inter Tight", system-ui, -apple-system, sans-serif;
         --font-body: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
         --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -62,6 +62,9 @@
       a:hover { text-decoration: underline; }
 
       .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -79,7 +82,7 @@
       }
       .site-brand:hover { text-decoration: none; }
       .site-nav { display: flex; align-items: center; gap: 1rem; }
-      .site-nav a { color: var(--text); padding: 0.25rem 0.5rem; border-radius: 4px; }
+      .site-nav a { color: var(--text); padding: 0.35rem 0.55rem; border-radius: 7px; }
       .site-nav a:hover { color: var(--text-h); background: var(--bg-hover); text-decoration: none; }
 
       main {
@@ -94,9 +97,9 @@
         font-family: var(--font-display);
         font-weight: 500;
         color: var(--text-h);
-        font-size: 2.2rem;
-        line-height: 1.15;
-        letter-spacing: -0.02em;
+        font-size: clamp(2.2rem, 5vw, 3rem);
+        line-height: 1.05;
+        letter-spacing: -0.045em;
         margin-bottom: 1.5rem;
       }
       @media (max-width: 640px) {

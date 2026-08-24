@@ -1,0 +1,40 @@
+schema_version = 1
+apworld_name = "animal_well"
+slug = "animal-well"
+review_state = "draft"
+publication_status = "unpublished"
+reviewed_by = "Appie"
+reviewed_at = "2026-08-24"
+next_review_at = "2026-11-22"
+
+[editorial]
+copy_status = "original_draft"
+writing_policy = "original-ap-pie-copy"
+
+[[sources]]
+id = "animal-well-release-054"
+kind = "versioned_primary"
+url = "https://github.com/ScipioWright/Archipelago-SW/releases/tag/0.5.4"
+revision = "0.5.4 / 4b760c7"
+verified_at = "2026-08-24"
+
+[[sources]]
+id = "animal-well-maintainer-setup-054"
+kind = "maintainer_documentation"
+url = "https://github.com/ScipioWright/Archipelago-SW/blob/4b760c7/worlds/animal_well/docs/setup_en.md"
+revision = "4b760c7 / 358107c979f80b8ee5eceb3b42ec8638168d8121"
+verified_at = "2026-08-24"
+
+[[sources]]
+id = "animal-well-ap-pie-operational-record"
+kind = "ap_pie_authority"
+url = "https://beta.ap-pie.com/api/apworlds"
+verified_at = "2026-08-24"
+
+[[claims]]
+id = "animal-well-draft-source-scope"
+topic = "research"
+fact = "The release and setup guide are a candidate evidence set for a future page, but the recorded 0.5.4 operational verdict conflict blocks publication and download promotion."
+source_refs = ["animal-well-release-054", "animal-well-maintainer-setup-054", "animal-well-ap-pie-operational-record"]
+applies_to_versions = ["0.5.4"]
+verified_at = "2026-08-24"

@@ -40,6 +40,7 @@ export default function YamlBuilder({
   initialYaml,
   initialValues,
   initialPlayerName,
+  defaultPlayerName,
   presentation = "modal",
   draftKey,
   onGameChange,
@@ -74,6 +75,9 @@ export default function YamlBuilder({
    *  document to parse - the values were never a file in the first place. */
   initialValues?: Record<string, unknown> | null;
   initialPlayerName?: string | null;
+  /** One-time seed for a new builder. Drafts/imports may replace it, and
+   * subsequent prop/auth refreshes must never reapply it over user edits. */
+  defaultPlayerName?: string | null;
   /** Full-page routes reuse the same builder state machine without native
    *  dialog focus, backdrop, or Escape behavior. */
   presentation?: "modal" | "page";
@@ -87,7 +91,9 @@ export default function YamlBuilder({
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   const [selected, setSelected] = useState<string>("");
-  const [playerName, setPlayerName] = useState("Player1");
+  const [playerName, setPlayerName] = useState(
+    () => defaultPlayerName?.trim().slice(0, 16) || "Player1",
+  );
   const [values, setValues] = useState<Record<string, unknown>>({});
   // Archipelago-level options. Absent key = "leave the game default".
   const [coreValues, setCoreValues] = useState<Record<string, unknown>>({});
@@ -1360,7 +1366,11 @@ function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "cu
         ? "form"
         : "invalid";
     case "list":
-      return Array.isArray(value) ? "form" : "invalid";
+      if (!Array.isArray(value)) return "invalid";
+      if (option.choices && value.some(
+        (entry) => typeof entry !== "string" || !option.choices?.includes(entry),
+      )) return "invalid";
+      return "form";
     case "dict":
       return typeof value === "object" && value !== null && !Array.isArray(value) ? "form" : "invalid";
     default:
@@ -1615,37 +1625,57 @@ function OptionControl({
       // region picker). Free-form lists fall back to a comma textarea.
       const arr = Array.isArray(value) ? (value as string[]) : [];
       if (option.choices && option.choices.length > 0) {
+        const unknown = arr.filter((entry) => !option.choices?.includes(entry));
         return (
-          <div className="yaml-builder-checkgrid">
-            {option.choices.map((c) => (
-              <label key={c} className="yaml-builder-check">
-                <input
-                  type="checkbox"
-                  checked={arr.includes(c)}
-                  onChange={(e) =>
-                    onChange(
-                      e.target.checked
-                        ? [...arr, c]
-                        : arr.filter((x) => x !== c),
-                    )
-                  }
-                />
-                <span>{c}</span>
-              </label>
-            ))}
-          </div>
+          <>
+            <div className="yaml-builder-checkgrid">
+              {option.choices.map((c) => (
+                <label key={c} className="yaml-builder-check">
+                  <input
+                    type="checkbox"
+                    checked={arr.includes(c)}
+                    onChange={(e) =>
+                      onChange(
+                        e.target.checked
+                          ? [...arr, c]
+                          : arr.filter((x) => x !== c),
+                      )
+                    }
+                  />
+                  <span>{c}</span>
+                </label>
+              ))}
+            </div>
+            {unknown.length > 0 && (
+              <p className="settings-aux-note error" role="alert">
+                Unsupported {unknown.length === 1 ? "value" : "values"}: {unknown.join(", ")}
+              </p>
+            )}
+          </>
+        );
+      }
+      const scalarList = arr.every(
+        (entry) => ["string", "number", "boolean"].includes(typeof entry),
+      );
+      if (!scalarList) {
+        return (
+          <StructuredYamlInput
+            label={option.display_name || option.name}
+            value={arr}
+            expected="list"
+            onChange={onChange}
+          />
         );
       }
       return (
-        <textarea
-          value={Array.isArray(value) ? arr.join(", ") : String(value ?? "")}
-          onChange={(e) => {
-            const text = e.target.value;
-            onChange(text ? text.split(",").map((s) => s.trim()).filter(Boolean) : []);
-          }}
-          placeholder="Comma-separated values (leave empty for default)"
-          rows={2}
-        />
+        <>
+          <FreeformListInput
+            label={option.display_name || option.name}
+            value={arr}
+            onChange={onChange}
+          />
+          <p className="settings-aux-note">Separate values with commas or put one value on each line.</p>
+        </>
       );
     }
 
@@ -1681,15 +1711,11 @@ function OptionControl({
         );
       }
       return (
-        <textarea
-          value={
-            typeof value === "string"
-              ? value
-              : Object.entries(dictVal).map(([k, v]) => `${k}: ${v}`).join("\n")
-          }
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="key: value (one per line)"
-          rows={3}
+        <StructuredYamlInput
+          label={option.display_name || option.name}
+          value={dictVal}
+          expected="mapping"
+          onChange={onChange}
         />
       );
     }
@@ -1703,4 +1729,132 @@ function OptionControl({
         />
       );
   }
+}
+
+function parseFreeformList(text: string): string[] {
+  return text
+    .split(/[,\n]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Keep the user's text draft separate from the parsed OptionList value.
+ *
+ * Writing the parsed array straight back into a controlled textarea removes
+ * a trailing comma immediately: `Kanto,` parses to `["Kanto"]`, React renders
+ * `Kanto`, and the user can never type the second entry. The local draft keeps
+ * delimiters intact while the builder still receives an updated array on
+ * every keystroke for the live YAML preview.
+ */
+function FreeformListInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: unknown[];
+  onChange: (val: unknown) => void;
+}) {
+  const formatted = value.map(String).join(", ");
+  const [draft, setDraft] = useState(formatted);
+  const [editing, setEditing] = useState(false);
+
+  return (
+    <textarea
+      value={editing ? draft : formatted}
+      aria-label={label}
+      onFocus={() => {
+        setDraft(formatted);
+        setEditing(true);
+      }}
+      onBlur={() => {
+        setEditing(false);
+        setDraft(parseFreeformList(draft).join(", "));
+      }}
+      onChange={(e) => {
+        const text = e.target.value;
+        setDraft(text);
+        onChange(parseFreeformList(text));
+      }}
+      placeholder="Comma-separated values (leave empty for default)"
+      rows={2}
+    />
+  );
+}
+
+function formatYamlFragment(value: unknown): string {
+  return dump(value, { noRefs: true, lineWidth: -1 }).trimEnd();
+}
+
+/** Edit an OptionDict or structured OptionList as a YAML fragment without
+ * ever putting a half-typed scalar into builder state. The last valid value
+ * remains in the generated document until the draft parses to the expected
+ * composite shape again. */
+function StructuredYamlInput({
+  label,
+  value,
+  expected,
+  onChange,
+}: {
+  label: string;
+  value: unknown;
+  expected: "list" | "mapping";
+  onChange: (val: unknown) => void;
+}) {
+  const formatted = formatYamlFragment(value);
+  const [draft, setDraft] = useState(formatted);
+  const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+
+  const parseDraft = (text: string): unknown | null => {
+    try {
+      const parsed = load(text || (expected === "list" ? "[]" : "{}"));
+      const valid = expected === "list"
+        ? Array.isArray(parsed)
+        : typeof parsed === "object" && parsed !== null && !Array.isArray(parsed);
+      if (!valid) {
+        setError(`Enter a YAML ${expected}.`);
+        return null;
+      }
+      setError("");
+      return parsed;
+    } catch {
+      setError(`Enter a valid YAML ${expected}.`);
+      return null;
+    }
+  };
+
+  return (
+    <>
+      <textarea
+        value={editing ? draft : formatted}
+        aria-label={label}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${label.replace(/\W+/g, "-").toLowerCase()}-error` : undefined}
+        onFocus={() => {
+          setDraft(formatted);
+          setEditing(true);
+        }}
+        onBlur={() => {
+          setEditing(false);
+          const parsed = parseDraft(draft);
+          if (parsed !== null) setDraft(formatYamlFragment(parsed));
+        }}
+        onChange={(e) => {
+          const text = e.target.value;
+          setDraft(text);
+          const parsed = parseDraft(text);
+          if (parsed !== null) onChange(parsed);
+        }}
+        placeholder={expected === "list" ? "- first value\n- second value" : "key: value"}
+        rows={Math.max(3, Math.min(8, draft.split("\n").length))}
+      />
+      {error && (
+        <p id={`${label.replace(/\W+/g, "-").toLowerCase()}-error`} className="settings-aux-note error" role="alert">
+          {error} The generated YAML still uses your last valid value.
+        </p>
+      )}
+    </>
+  );
 }

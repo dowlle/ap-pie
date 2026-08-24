@@ -12,6 +12,7 @@ import {
 } from "../api";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
+import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
 
 /**
@@ -30,8 +31,6 @@ import FuzzResultPill from "../components/FuzzResultPill";
  *     production ap-pie.com surface uses the proxy download for players
  *     to install locally instead).
  */
-
-const VERSIONS_COLLAPSED_LIMIT = 3;
 
 function isDiscordUrl(url: string): boolean {
   return /^https?:\/\/(www\.)?(discord\.com|discord\.gg|discordapp\.com)\//i.test(url);
@@ -231,27 +230,6 @@ const TAG_DESCRIPTIONS: Record<string, string> = {
  * known values as a coloured chip; anything else (or absence) renders
  * nothing — silent absence is the correct default per the design note.
  */
-function StabilityChip({ stability }: { stability: string | null }) {
-  if (!stability) return null;
-  const known = ["stable", "unstable", "alpha", "beta"];
-  const value = stability.toLowerCase();
-  if (!known.includes(value)) return null;
-  const titleMap: Record<string, string> = {
-    stable: "Marked stable by the APWorld author",
-    unstable: "Marked unstable — expect occasional issues",
-    alpha: "Marked alpha — early development, expect bugs",
-    beta: "Marked beta — feature-complete but still hardening",
-  };
-  return (
-    <span
-      className={`apworld-stability apworld-stability-${value}`}
-      title={titleMap[value]}
-    >
-      {value}
-    </span>
-  );
-}
-
 function VersionRow({
   world,
   v,
@@ -445,8 +423,8 @@ function HomeAndIconRow({ world }: { world: APWorldInfo }) {
               target="_blank"
               rel="noopener noreferrer"
               className="apworld-card-icon"
-              title={`Setup guide: ${world.setup_guide}`}
-              aria-label="Open setup guide"
+              title={`Setup link recorded in the community index; not reviewed by AP-Pie: ${world.setup_guide}`}
+              aria-label="Open unreviewed setup link recorded in the community index"
             >
               <SetupGuideIcon />
             </a>
@@ -478,6 +456,9 @@ function WorldCard({
   onRemove,
   onBuild,
   buildingVersion,
+  detailHref,
+  detailRouteKind = "spa",
+  detailLabel,
 }: {
   world: APWorldInfo;
   installed: InstalledAPWorld | undefined;
@@ -487,10 +468,10 @@ function WorldCard({
   onRemove: (name: string) => void;
   onBuild: (name: string, version: string) => void;
   buildingVersion: string | null;
+  detailHref?: string;
+  detailRouteKind?: "spa" | "server";
+  detailLabel?: string;
 }) {
-  // Always show all versions sorted descending (latest first). If the index
-  // only contained one version and that's the latest, the list is just one
-  // row - still cleaner than the old single-dropdown row layout.
   const versions = useMemo(
     () => [...world.versions].sort((a, b) => compareVersions(b.version, a.version)),
     [world.versions],
@@ -498,87 +479,131 @@ function WorldCard({
   const downloadable = versions.filter((v) => v.source === "url" || v.source === "local");
   const builtinOnly = downloadable.length === 0;
   const [showAllVersions, setShowAllVersions] = useState(false);
-  const hasMoreVersions = versions.length > VERSIONS_COLLAPSED_LIMIT;
-  const visibleVersions =
-    showAllVersions || !hasMoreVersions
-      ? versions
-      : versions.slice(0, VERSIONS_COLLAPSED_LIMIT);
+  const latestVersion = versions[0];
+  const latestDownloadable = downloadable[0];
+  const initials = world.display_name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+  const setupState = detailHref
+    ? "Reviewed details"
+    : world.setup_guide
+      ? "Recorded link"
+      : "Review required";
+
+  const detailAction = detailHref && (detailRouteKind === "server"
+    ? <a className="btn apworld-card-detail-button" href={detailHref}>{detailLabel ?? "View details"}</a>
+    : <Link className="btn apworld-card-detail-button" to={detailHref}>{detailLabel ?? "View details"}</Link>);
 
   return (
     <article className="apworld-card">
-      <header className="apworld-card-head">
-        <div className="apworld-card-title">
-          <h3>{world.display_name}</h3>
-          <code className="apworld-card-key">{world.name}</code>
+      <div className="apworld-card-badges">
+        {world.disabled && <span className="badge badge-stopped">Disabled</span>}
+        {world.is_builtin && <span className="badge badge-builtin">Built in</span>}
+        {!world.is_builtin && !world.disabled && <span className="badge badge-save">Community</span>}
+      </div>
+      <div className="apworld-card-icon-tile" aria-hidden="true">{initials || "AP"}</div>
+      <div className="apworld-card-main">
+        <header className="apworld-card-head">
+          <div className="apworld-card-title">
+            <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
+            <code className="apworld-card-key">{world.name}</code>
+          </div>
+        </header>
+
+        <div className="apworld-card-info-row">
+          <dl className="apworld-card-meta">
+            <div><dt>Versions</dt><dd>{versions.length > 0 ? `${versions.length} available` : world.is_builtin ? "Core world" : "None recorded"}</dd></div>
+            <div>
+              <dt>Latest recorded</dt>
+              <dd>
+                {latestVersion ? `v${latestVersion.version}` : world.is_builtin ? "Bundled" : "None"}
+                {latestVersion?.fuzz_result && <FuzzResultPill fuzz_result={latestVersion.fuzz_result} version={latestVersion.version} />}
+              </dd>
+            </div>
+            <div><dt>Setup</dt><dd>{setupState}</dd></div>
+          </dl>
+
+          <div className="apworld-card-primary-actions">
+            {detailAction}
+            {latestDownloadable && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => onBuild(world.name, latestDownloadable.version)}
+                disabled={buildingVersion === latestDownloadable.version}
+              >
+                {buildingVersion === latestDownloadable.version ? "Loading…" : "Create YAML"}
+              </button>
+            )}
+            {latestDownloadable && (
+              <a
+                className="btn btn-sm apworld-download-btn"
+                href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
+                download
+                title={`Download ${world.display_name} v${latestDownloadable.version}`}
+                aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
+              >
+                <DownloadIcon />
+              </a>
+            )}
+          </div>
         </div>
-        <div className="apworld-card-badges">
-          {world.disabled && <span className="badge badge-stopped">Disabled</span>}
-          {world.is_builtin && <span className="badge badge-builtin">Built-in</span>}
-          {!world.is_builtin && !world.disabled && (
-            <span className="badge badge-save">Community</span>
-          )}
-          <StabilityChip stability={world.stability} />
-          {world.tags.map((t) => (
-            <span key={t} className="tag" title={TAG_DESCRIPTIONS[t]}>{t}</span>
-          ))}
-        </div>
-      </header>
 
-      <HomeAndIconRow world={world} />
+        <HomeAndIconRow world={world} />
 
+        {world.tags.length > 0 && (
+          <div className="apworld-card-tags">
+            {world.tags.map((tag) => <span key={tag} className="tag" title={TAG_DESCRIPTIONS[tag]}>{tag}</span>)}
+          </div>
+        )}
 
-      {world.disabled ? (
-        <p className="apworld-card-note muted">
-          This APWorld has been retired from the public catalog. Existing room records may still name it, but it cannot be downloaded or used to create a new YAML here.
-        </p>
-      ) : builtinOnly ? (
-        <p className="apworld-card-note muted">
-          {world.is_builtin
-            ? "No external versions in the index - this APWorld ships with Archipelago itself."
-            : "No versions of this APWorld have passed the security audit or fuzzer at the moment."}
-        </p>
-      ) : (
-        <>
+        {world.disabled ? (
+          <p className="apworld-card-note muted">Retired from the active catalog. New download and YAML actions are unavailable.</p>
+        ) : builtinOnly ? (
+          <p className="apworld-card-note muted">
+            {world.is_builtin
+              ? "Included with Archipelago; no separate APWorld download is required."
+              : "No downloadable version is currently exposed by the index."}
+          </p>
+        ) : null}
+
+        {showAllVersions && (
           <ul className="apworld-version-list">
-            {visibleVersions.map((v) => (
+            {versions.map((version) => (
               <VersionRow
-                key={v.version}
+                key={version.version}
                 world={world}
-                v={v}
-                isLatest={v.version === versions[0]?.version}
+                v={version}
+                isLatest={version.version === latestVersion?.version}
                 installed={installed}
-                installing={installingVersion === v.version}
+                installing={installingVersion === version.version}
                 generationOn={generationOn}
                 onInstall={onInstall}
                 onBuild={onBuild}
-                building={buildingVersion === v.version}
+                building={buildingVersion === version.version}
               />
             ))}
           </ul>
-          {hasMoreVersions && (
-            <button
-              type="button"
-              className="apworld-version-toggle"
-              onClick={() => setShowAllVersions((s) => !s)}
-            >
-              {showAllVersions
-                ? "Show fewer versions"
-                : `Show ${versions.length - VERSIONS_COLLAPSED_LIMIT} more version${
-                    versions.length - VERSIONS_COLLAPSED_LIMIT === 1 ? "" : "s"
-                  }`}
-            </button>
-          )}
-        </>
-      )}
+        )}
 
-      {generationOn && installed && (
-        <div className="apworld-card-foot">
-          <span className="muted">Currently installed: v{installed.version ?? "?"}</span>
-          <button className="btn btn-sm btn-danger" onClick={() => onRemove(world.name)}>
-            Remove install
+        {versions.length > 1 && (
+          <button type="button" className="apworld-version-toggle" onClick={() => setShowAllVersions((shown) => !shown)}>
+            {showAllVersions ? "Hide version history" : `View all ${versions.length} versions`}
           </button>
-        </div>
-      )}
+        )}
+
+        {generationOn && installed && (
+          <div className="apworld-card-foot">
+            <span className="muted">Currently installed: v{installed.version ?? "?"}</span>
+            <button className="btn btn-sm btn-danger" onClick={() => onRemove(world.name)}>Remove install</button>
+          </div>
+        )}
+      </div>
+
     </article>
   );
 }
@@ -590,6 +615,7 @@ export default function APWorlds() {
   // hosts can browse the index and pin per-room versions, but the
   // global "pull from upstream" action stays with admins).
   const { user } = useAuth();
+  const deploymentLabel = useDeploymentLabel();
   const isAdmin = !!user?.is_admin;
   const [available, setAvailable] = useState<APWorldInfo[]>([]);
   const [installed, setInstalled] = useState<InstalledAPWorld[]>([]);
@@ -617,7 +643,17 @@ export default function APWorlds() {
   // server. Search stays server-side (?search=) as before.
   const [sortBy, setSortBy] = useState<"name" | "name-desc" | "stability" | "updated">("name");
   const [stabilityFilter, setStabilityFilter] = useState("");
-  const [installableOnly, setInstallableOnly] = useState(false);
+  const [catalogView, setCatalogView] = useState<
+    "all" | "downloadable" | "builtin" | "guides" | "trackers"
+  >("all");
+
+  const catalogCounts = useMemo(() => ({
+    all: available.length,
+    downloadable: available.filter((w) => w.downloadable_versions.length > 0).length,
+    builtin: available.filter((w) => w.is_builtin).length,
+    guides: available.filter((w) => Boolean(w.setup_guide)).length,
+    trackers: available.filter((w) => Boolean(w.tracker)).length,
+  }), [available]);
 
   const handleBuild = (name: string, version: string) => {
     navigate(`/yaml-builder/${encodeURIComponent(name)}?version=${encodeURIComponent(version)}`);
@@ -644,8 +680,14 @@ export default function APWorlds() {
     } else if (stabilityFilter) {
       list = list.filter((w) => w.stability === stabilityFilter);
     }
-    if (installableOnly) {
+    if (catalogView === "downloadable") {
       list = list.filter((w) => w.downloadable_versions.length > 0);
+    } else if (catalogView === "builtin") {
+      list = list.filter((w) => w.is_builtin);
+    } else if (catalogView === "guides") {
+      list = list.filter((w) => Boolean(w.setup_guide));
+    } else if (catalogView === "trackers") {
+      list = list.filter((w) => Boolean(w.tracker));
     }
     // Order the index by what people actually read. The API returns TOML
     // filename order (`sorted(toml_dir.iterdir())` in parse_index_dir), which
@@ -682,7 +724,7 @@ export default function APWorlds() {
       });
     }
     return sorted;
-  }, [available, sortBy, stabilityFilter, installableOnly]);
+  }, [available, sortBy, stabilityFilter, catalogView]);
 
   const fetchData = () => {
     setLoading(true);
@@ -772,16 +814,15 @@ export default function APWorlds() {
 
   return (
     <div className="apworlds-page">
-      <div className="page-header">
+      <div className="page-header apworlds-hero">
         <div>
-          <h1>APWorlds</h1>
-          <p className="muted apworlds-page-sub">
-            Sourced from{" "}
-            <a href="https://github.com/dowlle/Archipelago-index" target="_blank" rel="noreferrer">
-              dowlle/Archipelago-index
-            </a>
-            . Each card lists every version available for that game; click Download to grab the
-            .apworld for local install, or use a room's Settings to pin a version for your players.
+          <h1>APWorld downloads</h1>
+          <p className="apworlds-lede">
+            Find the game integration and exact version your Archipelago host expects. Built-in
+            games already ship with Archipelago and do not need a separate download.
+          </p>
+          <p className="apworlds-builder-link">
+            Need to configure your game options? <Link to="/yaml-builder">Open the YAML Builder →</Link>
           </p>
         </div>
         <div className="apworlds-header-actions">
@@ -797,16 +838,37 @@ export default function APWorlds() {
         </div>
       </div>
 
+      <aside className="apworlds-version-note">
+        <strong>Match the host's version.</strong>
+        <span>If you are unsure which APWorld version to use, ask the host before downloading.</span>
+      </aside>
+
       {error && <p className="error">{error}</p>}
 
+      <section className="apworld-catalog" aria-labelledby="apworld-catalog-heading">
+      <div className="apworld-catalog-head">
+        <div>
+          <h2 id="apworld-catalog-heading">Find your game</h2>
+        </div>
+        <p className="muted">
+          Catalog data comes from{" "}
+          <a href="https://github.com/dowlle/Archipelago-index" target="_blank" rel="noreferrer">
+            dowlle/Archipelago-index
+          </a>.
+        </p>
+      </div>
+      <div className="apworld-toolbar">
       <div className="apworld-controls">
-        <input
-          type="search"
-          placeholder="Search by game name or apworld key..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="apworld-search"
-        />
+        <label className="apworld-search-field">
+          <span>Search integrations</span>
+          <input
+            type="search"
+            placeholder="Game or APWorld name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="apworld-search"
+          />
+        </label>
         <label className="apworld-control">
           <span>Sort</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
@@ -818,7 +880,7 @@ export default function APWorlds() {
         </label>
         {stabilityValues.length > 0 && (
           <label className="apworld-control">
-            <span>Stability</span>
+            <span>Index stability</span>
             <select
               value={stabilityFilter}
               onChange={(e) => setStabilityFilter(e.target.value)}
@@ -831,14 +893,27 @@ export default function APWorlds() {
             </select>
           </label>
         )}
-        <label className="apworld-check">
-          <input
-            type="checkbox"
-            checked={installableOnly}
-            onChange={(e) => setInstallableOnly(e.target.checked)}
-          />
-          <span>Installable only</span>
-        </label>
+      </div>
+
+      <div className="apworld-view-tabs" aria-label="Catalog views">
+        {([
+          ["all", "All games"],
+          ["downloadable", "APWorld downloads"],
+          ["builtin", "Built into Archipelago"],
+          ["guides", "With recorded setup links"],
+          ["trackers", "With trackers"],
+        ] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={catalogView === value ? "is-active" : ""}
+            aria-pressed={catalogView === value}
+            onClick={() => setCatalogView(value)}
+          >
+            {label}<span>{catalogCounts[value]}</span>
+          </button>
+        ))}
+      </div>
       </div>
 
       {loading ? (
@@ -851,7 +926,7 @@ export default function APWorlds() {
           <button
             type="button"
             className="yaml-builder-desc-toggle"
-            onClick={() => { setStabilityFilter(""); setInstallableOnly(false); }}
+            onClick={() => { setStabilityFilter(""); setCatalogView("all"); }}
           >
             Clear filters
           </button>
@@ -879,12 +954,23 @@ export default function APWorlds() {
                 onRemove={handleRemove}
                 onBuild={handleBuild}
                 buildingVersion={null}
+                detailHref={
+                  w.editorial?.route_override
+                    ? w.editorial.route_override
+                    : deploymentLabel === "beta" && w.editorial?.beta_preview_only
+                    ? `/apworlds/${w.editorial.slug}`
+                    : deploymentLabel === "beta" && w.name === "animal_well"
+                    ? "/apworlds/animal-well"
+                    : undefined
+                }
+                detailLabel="View details"
+                detailRouteKind={w.editorial?.route_kind ?? "spa"}
               />
             ))}
           </div>
         </>
       )}
-
+      </section>
     </div>
   );
 }

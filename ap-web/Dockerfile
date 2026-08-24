@@ -30,6 +30,9 @@ COPY ap-web/templates/ ./templates/
 COPY ap-web/guides/ ./guides/
 # FEAT-31: /privacy renders from repo-controlled markdown the same way.
 COPY ap-web/legal/ ./legal/
+# Reviewed APWorld metadata is version-controlled alongside backend code. The
+# loader keeps it separate from the upstream index and from player YAMLs.
+COPY ap-web/apworld_content/ ./apworld_content/
 
 COPY ap-web/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

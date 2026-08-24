@@ -42,11 +42,13 @@ function PublicAuthControl() {
 }
 
 export default function PublicLayout() {
+  const { user } = useAuth();
+  const brandHref = user?.is_approved || user?.is_admin ? "/rooms" : "/";
   return (
     <div className="public-shell">
       <DeploymentBanner />
       <header className="public-shell-header">
-        <Link to="/" className="public-shell-brand" title="Archipelago Pie home">
+        <Link to={brandHref} className="public-shell-brand" title={brandHref === "/rooms" ? "Your Archipelago Pie rooms" : "Archipelago Pie home"}>
           <span className="public-shell-brand-mark" aria-hidden="true" />
           <span>Archipelago Pie</span>
         </Link>

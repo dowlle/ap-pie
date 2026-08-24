@@ -28,6 +28,7 @@ from ap_lib.apworld_index import (
 )
 
 import config
+from apworld_editorial import join_index_record, load_reviewed_apworlds
 
 bp = Blueprint("apworlds", __name__)
 
@@ -525,7 +526,10 @@ def builder_schemas_for_pins(
         get_builder_schema_by_version,
         set_builder_schema,
     )
-    from apworld_options_parser import parse_apworld_options_bytes
+    from apworld_options_parser import (
+        BUILDER_SCHEMA_FORMAT_VERSION,
+        parse_apworld_options_bytes,
+    )
 
     name_map = {w.name: w for w in _get_index_worlds()}
     deadline = time.monotonic() + fetch_budget_seconds
@@ -566,8 +570,16 @@ def builder_schemas_for_pins(
         except Exception:
             cached = None
         if cached is not None:
-            entry["schema"] = cached.get("schema")
-            continue
+            cached_schema = cached.get("schema")
+            # Parser improvements can add machine-readable controls without
+            # changing the APWorld artifact hash. Re-derive older positive
+            # schemas once instead of serving their stale shape forever.
+            if cached_schema is None or (
+                isinstance(cached_schema, dict)
+                and cached_schema.get("_format_version") == BUILDER_SCHEMA_FORMAT_VERSION
+            ):
+                entry["schema"] = cached_schema
+                continue
 
         if time.monotonic() > deadline:
             entry["pending"] = True
@@ -760,7 +772,17 @@ def list_apworlds():
     if supported_only:
         worlds = [w for w in worlds if w["supported"]]
 
-    return jsonify(worlds)
+    overlays = load_reviewed_apworlds()
+    include_beta_previews = config.DEPLOYMENT_LABEL == "beta"
+    joined_worlds = []
+    for world in worlds:
+        joined = join_index_record(world, overlays, include_beta_previews=include_beta_previews)
+        entry = dict(world)
+        entry["editorial"] = joined["editorial"]
+        entry["review_state"] = joined["review_state"]
+        joined_worlds.append(entry)
+
+    return jsonify(joined_worlds)
 
 
 @bp.route("/api/apworlds/installed")

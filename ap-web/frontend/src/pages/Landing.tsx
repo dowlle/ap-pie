@@ -32,7 +32,6 @@ export default function Landing() {
           <circle cx="900" cy="260" r="5" fill="#7fa65a" /><circle cx="150" cy="120" r="5" fill="#e05d5d" />
           <circle cx="700" cy="110" r="6" fill="#6da8c9" /><circle cx="1120" cy="160" r="4" fill="#e8a857" />
         </svg>
-        <span className="lp-kicker">Appie's Archipelago projects</span>
         <h1 className="lp-title">Your games, connected by <em>one randomizer.</em></h1>
         <p className="lp-sub">
           Learn Archipelago, organize a multiworld, or explore community game integrations.

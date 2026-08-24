@@ -19,6 +19,8 @@ import MyArea from "./pages/MyArea";
 import YamlBuilderPage from "./pages/YamlBuilderPage";
 import YamlBuilderLanding from "./pages/YamlBuilderLanding";
 import NotFound from "./pages/NotFound";
+import StyleGuide from "./pages/StyleGuide";
+import APWorldDetailPreview from "./pages/APWorldDetailPreview";
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
 import { useEffect, useState } from "react";
@@ -28,6 +30,7 @@ import { DeploymentProvider } from "./context/DeploymentContext";
 import AuthButton from "./components/AuthButton";
 import DeploymentBanner from "./components/DeploymentBanner";
 import { trackPageView } from "./lib/analytics";
+import PublicRouteHead from "./lib/PublicRouteHead";
 
 function NavBar() {
   const { user, authEnabled, loading, isOwner, viewAs, setViewAs } = useAuth();
@@ -76,7 +79,7 @@ function NavBar() {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
+      <Link to={isApproved ? "/rooms" : "/"} className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
       <button
         type="button"
         className="nav-hamburger"
@@ -270,6 +273,8 @@ function AppRoutes() {
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />
       <Route path="/servers" element={<AdminShell><RequireApproval><Servers /></RequireApproval></AdminShell>} />
       <Route path="/apworlds" element={<AdminShell><APWorlds /></AdminShell>} />
+      <Route path="/apworlds/:slug" element={<AdminShell><APWorldDetailPreview /></AdminShell>} />
+      <Route path="/style-guide" element={<AdminShell><StyleGuide /></AdminShell>} />
       <Route path="/yaml-builder" element={<AdminShell><YamlBuilderLanding /></AdminShell>} />
       <Route path="/yaml-builder/:apworld" element={<AdminShell><YamlBuilderPage /></AdminShell>} />
       <Route path="/rooms/templates" element={<Navigate to="/my/templates" replace />} />
@@ -301,6 +306,7 @@ function App() {
       <FeaturesProvider>
         <DeploymentProvider>
           <BrowserRouter>
+            <PublicRouteHead />
             <RouteAnalytics />
             <AppRoutes />
           </BrowserRouter>

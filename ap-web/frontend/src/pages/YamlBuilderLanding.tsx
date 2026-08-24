@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAPWorlds, type APWorldInfo } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { usePageTitle } from "../lib/usePageTitle";
 
 interface LocalDraft {
   key: string;
@@ -47,8 +46,6 @@ export default function YamlBuilderLanding() {
   const [error, setError] = useState("");
   const [drafts, setDrafts] = useState<LocalDraft[]>([]);
 
-  usePageTitle("YAML Builder");
-
   useEffect(() => {
     const timer = window.setTimeout(() => setDrafts(readStandaloneDrafts(user?.id)), 0);
     return () => window.clearTimeout(timer);
@@ -86,10 +83,16 @@ export default function YamlBuilderLanding() {
     navigate(`/yaml-builder/${encodeURIComponent(world.name)}?version=${encodeURIComponent(version)}`);
   };
 
+  const deleteDraft = (draft: LocalDraft) => {
+    const label = draft.apworld.replaceAll("_", " ");
+    if (!window.confirm(`Delete your ${label} v${draft.version} draft from this browser tab?`)) return;
+    sessionStorage.removeItem(draft.key);
+    setDrafts((current) => current.filter((item) => item.key !== draft.key));
+  };
+
   return (
     <div className="yaml-builder-landing">
       <header className="yaml-builder-landing-hero">
-        <p className="yaml-builder-eyebrow">Archipelago player options</p>
         <h1>Build a player YAML</h1>
         <p>
           Pick your game, choose its options, and watch the YAML update as you work.
@@ -127,12 +130,22 @@ export default function YamlBuilderLanding() {
                   <strong>{draft.apworld.replaceAll("_", " ")}</strong>
                   <span>{draft.playerName} · v{draft.version}</span>
                 </div>
-                <Link
-                  className="btn btn-sm btn-primary"
-                  to={`/yaml-builder/${encodeURIComponent(draft.apworld)}?version=${encodeURIComponent(draft.version)}`}
-                >
-                  Continue
-                </Link>
+                <div className="yaml-builder-draft-actions">
+                  <Link
+                    className="btn btn-sm btn-primary"
+                    to={`/yaml-builder/${encodeURIComponent(draft.apworld)}?version=${encodeURIComponent(draft.version)}`}
+                  >
+                    Continue
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger"
+                    aria-label={`Delete ${draft.apworld.replaceAll("_", " ")} draft`}
+                    onClick={() => deleteDraft(draft)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </article>
             ))}
           </div>
@@ -176,7 +189,6 @@ export default function YamlBuilderLanding() {
 
       <section className="yaml-builder-explainer" aria-labelledby="builder-explainer-title">
         <div>
-          <p className="yaml-builder-eyebrow">What this creates</p>
           <h2 id="builder-explainer-title">One file describing one world</h2>
           <p>
             A player YAML contains your exact slot name, game, APWorld version, and chosen randomizer options.

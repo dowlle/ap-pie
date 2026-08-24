@@ -108,6 +108,106 @@ test("weighted YAML values remain intact when another form field changes", async
   await expect(editor).toHaveValue(/oxide_final_challenge_relic_count:\n\s+"15": 50\n\s+"18": 50/);
 });
 
+test("free-form list options preserve commas while typing", async ({ page }) => {
+  await page.route("**/api/apworlds/freeform-fixture/builder-schema?*", (route) => route.fulfill({
+    json: {
+      game: "Freeform Fixture",
+      apworld_name: "freeform-fixture",
+      display_name: "Freeform Fixture",
+      version: "1.0.0",
+      schema: {
+        game: "Freeform Fixture",
+        ap_version: "0.6.7",
+        world_version: "1.0.0",
+        categories: ["Lists"],
+        options: [{
+          name: "aliases",
+          display_name: "Aliases",
+          type: "list",
+          category: "Lists",
+          description: "Ordered aliases.",
+          default: ["Kanto"],
+        }],
+      },
+    },
+  }));
+  await page.goto("/yaml-builder/freeform-fixture?version=1.0.0");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+
+  const aliases = page.getByRole("textbox", { name: "Aliases", exact: true });
+  await aliases.fill("");
+  await aliases.pressSequentially("Kanto, Johto, Hoenn");
+
+  await expect(aliases).toHaveValue("Kanto, Johto, Hoenn");
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(
+    /aliases:\n\s+- Kanto\n\s+- Johto\n\s+- Hoenn/,
+  );
+});
+
+test("machine-readable OptionSet keys render Pokepelago Regions as choices", async ({ page }) => {
+  await page.goto("/yaml-builder/pokepelago?version=0.6.3");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+
+  await expect(page.getByRole("checkbox", { name: "Kanto", exact: true })).toBeChecked();
+  const johto = page.getByRole("checkbox", { name: "Johto", exact: true });
+  await johto.check();
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(
+    /regions:\n\s+- Kanto\n\s+- Johto/,
+  );
+  await expect(page.getByText(/ONLY ignored if you set.*random_region_count/s)).toBeVisible();
+});
+
+test("structured composite options only commit valid YAML fragments", async ({ page }) => {
+  await page.route("**/api/apworlds/composite-fixture/builder-schema?*", (route) => route.fulfill({
+    json: {
+      game: "Composite Fixture",
+      apworld_name: "composite-fixture",
+      display_name: "Composite Fixture",
+      version: "1.0.0",
+      schema: {
+        game: "Composite Fixture",
+        ap_version: "0.6.7",
+        world_version: "1.0.0",
+        categories: ["Composite"],
+        options: [
+          {
+            name: "rules",
+            display_name: "Rules",
+            type: "dict",
+            category: "Composite",
+            description: "Arbitrary nested mapping.",
+            default: { mode: "safe", weights: { rare: 1 } },
+          },
+          {
+            name: "stages",
+            display_name: "Stages",
+            type: "list",
+            category: "Composite",
+            description: "Structured ordered list.",
+            default: [{ name: "first", checks: 2 }],
+          },
+        ],
+      },
+    },
+  }));
+  await page.goto("/yaml-builder/composite-fixture?version=1.0.0");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+
+  const rules = page.getByRole("textbox", { name: "Rules", exact: true });
+  const editor = page.locator(".yaml-builder-live-editor");
+  await rules.fill("mode: [");
+  await expect(page.getByText(/Enter a valid YAML mapping/)).toBeVisible();
+  await expect(editor).toHaveValue(/rules:\n\s+mode: safe/);
+
+  await rules.fill("mode: fast\nweights:\n  rare: 3");
+  await expect(page.getByText(/Enter a valid YAML mapping/)).toBeHidden();
+  await expect(editor).toHaveValue(/rules:\n\s+mode: fast\n\s+weights:\n\s+rare: 3/);
+
+  const stages = page.getByRole("textbox", { name: "Stages", exact: true });
+  await stages.fill("- name: first\n  checks: 4\n- name: final\n  checks: 8");
+  await expect(editor).toHaveValue(/stages:\n\s+- name: first\n\s+checks: 4\n\s+- name: final\n\s+checks: 8/);
+});
+
 test("route drafts recover after refresh", async ({ page }) => {
   await openCtrBuilder(page);
   const player = page.locator('input[placeholder^="Your slot name"]');

@@ -14,7 +14,7 @@ const contracts = [
     title: "APWorld Downloads & YAML Builder | Archipelago Pie",
     description: "Browse APWorld downloads by game and version, find setup guides, and build compatible player YAMLs for Archipelago multiworlds.",
     canonical: "https://ap-pie.com/apworlds",
-    heading: "APWorld downloads and YAML builder",
+    heading: "APWorld downloads",
     type: "CollectionPage",
   },
   {
@@ -41,6 +41,75 @@ for (const contract of contracts) {
     expect(html).toContain('"@id":"https://ap-pie.com/#website"');
   });
 }
+
+test("SPA navigation keeps public route metadata and canonical in sync", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('a[href="/apworlds"]').first().click();
+  await expect(page).toHaveURL(/\/apworlds$/);
+  await expect(page).toHaveTitle(contracts[1].title);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", contracts[1].description);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", contracts[1].canonical);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", contracts[1].canonical);
+
+  await page.locator('a[href="/yaml-builder"]').first().click();
+  await expect(page).toHaveURL(/\/yaml-builder$/);
+  await expect(page).toHaveTitle(contracts[2].title);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", contracts[2].canonical);
+});
+
+test("style guide is a noindex review surface", async ({ page, request }) => {
+  const response = await request.get("/style-guide");
+  const html = await response.text();
+  expect(response.ok()).toBeTruthy();
+  expect(html).toContain('name="robots" content="noindex, nofollow"');
+  expect(html).toContain("<h1>One system, different kinds of work.</h1>");
+
+  await page.goto("/style-guide");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("One system, different kinds of work.");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+});
+
+test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ page, request }) => {
+  const indexResponse = await request.get("/api/apworlds");
+  const worlds = await indexResponse.json();
+  const superMetroid = worlds.find((world: { name: string }) => world.name === "sm");
+  const animalWell = worlds.find((world: { name: string }) => world.name === "animal_well");
+  const ctr = worlds.find((world: { name: string }) => world.name === "ctr");
+  expect(superMetroid.editorial).toMatchObject({ slug: "super-metroid", beta_preview_only: true });
+  expect(animalWell.review_state).toBe("draft");
+  expect(animalWell.editorial).toBeNull();
+  expect(ctr.editorial).toMatchObject({ route_override: "/ctr", route_kind: "server" });
+
+  for (const fixture of [
+    { path: "/apworlds/super-metroid", heading: "Super Metroid Archipelago" },
+    { path: "/apworlds/animal-well", heading: "ANIMAL WELL Archipelago" },
+  ]) {
+    const response = await request.get(fixture.path);
+    const html = await response.text();
+    expect(response.ok()).toBeTruthy();
+    expect(html).toContain('name="robots" content="noindex, nofollow"');
+    expect(html).toContain(`<h1>${fixture.heading}</h1>`);
+    await page.goto(fixture.path);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(fixture.heading);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+  }
+
+  await page.goto("/apworlds/animal-well");
+  await expect(page.getByText("Fuzz warning")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Download APWorld 0.5.4/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Build ANIMAL WELL YAML/i })).toBeVisible();
+});
+
+test("server-owned APWorld routes perform a document navigation", async ({ page }) => {
+  await page.goto("/apworlds");
+  const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
+  await ctrCard.getByRole("link", { name: "Crash Team Racing", exact: true }).click();
+  await expect(page).toHaveURL(/\/ctr$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Crash Team Racing Archipelago" })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/apworlds$/);
+  await expect(page.getByRole("heading", { level: 1, name: "APWorld downloads" })).toBeVisible();
+});
 
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
   const cases = [
@@ -102,6 +171,57 @@ test("rendered public routes keep one visible H1 and their canonical", async ({ 
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", contract.canonical);
   }
+});
+
+test("APWorld catalog explains its outputs and exposes task-led views", async ({ page }) => {
+  await page.goto("/apworlds");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("APWorld downloads");
+  await expect(page.getByRole("link", { name: "Open the YAML Builder" })).toHaveAttribute("href", "/yaml-builder");
+  await expect(page.getByText("Match the host's version.")).toBeVisible();
+  for (const label of [
+    "All games",
+    "APWorld downloads",
+    "Built into Archipelago",
+    "With recorded setup links",
+    "With trackers",
+  ]) {
+    await expect(page.getByRole("button", { name: new RegExp(`^${label}`) })).toBeVisible();
+  }
+  await page.getByRole("button", { name: /^With recorded setup links/ }).click();
+  await expect(page.locator(".apworld-card").first()).toBeVisible();
+  await expect(page.locator(".apworld-card")).toHaveCount(
+    Number((await page.getByRole("button", { name: /^With recorded setup links/ }).locator("span").textContent()) || 0),
+  );
+});
+
+test("APWorld cards use the style-guide comparison hierarchy", async ({ page }) => {
+  await page.goto("/apworlds");
+  const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
+  await expect(ctrCard.locator(".apworld-card-icon-tile")).toHaveText("CT");
+  await expect(ctrCard.getByText("Versions", { exact: true })).toBeVisible();
+  await expect(ctrCard.getByText("Latest recorded", { exact: true })).toBeVisible();
+  await expect(ctrCard.getByText("Setup", { exact: true })).toBeVisible();
+  await expect(ctrCard.locator(".apworld-version-list")).toHaveCount(0);
+  await ctrCard.getByRole("button", { name: /View all \d+ versions/ }).click();
+  await expect(ctrCard.locator(".apworld-version-list")).toBeVisible();
+});
+
+test("navigation stays visible and the signed-in brand opens Rooms", async ({ page }) => {
+  await page.route("**/api/auth/me", (route) => route.fulfill({
+    json: {
+      id: 42,
+      discord_id: "nav-test",
+      discord_username: "Navigation Test",
+      is_admin: true,
+      is_approved: true,
+      created_at: "2026-08-24T00:00:00Z",
+    },
+  }));
+  await page.goto("/apworlds");
+  const nav = page.locator(".navbar");
+  await expect(nav).toHaveCSS("position", "sticky");
+  const brand = page.getByRole("link", { name: "Archipelago Pie" });
+  await expect(brand).toHaveAttribute("href", "/rooms");
 });
 
 test("public SPA search surfaces appear exactly once in the sitemap", async ({ request }) => {

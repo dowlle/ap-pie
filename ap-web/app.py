@@ -26,7 +26,7 @@ STATE_DIR = Path(__file__).parent / ".state"
 SPA_STATIC_PATHS = {
     "", "market", "admin", "admin/apworld-requests", "rooms", "tracker",
     "servers", "apworlds", "yaml-builder", "rooms/templates", "my",
-    "presets", "summary",
+    "presets", "summary", "style-guide",
 }
 SPA_DYNAMIC_PATHS = (
     re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
@@ -46,7 +46,7 @@ PUBLIC_ROUTE_SEO = {
         "title": "APWorld Downloads & YAML Builder | Archipelago Pie",
         "description": "Browse APWorld downloads by game and version, find setup guides, and build compatible player YAMLs for Archipelago multiworlds.",
         "canonical": "https://ap-pie.com/apworlds",
-        "heading": "APWorld downloads and YAML builder",
+        "heading": "APWorld downloads",
         "intro": "An APWorld adds a game to Archipelago. Browse maintained community integrations, download the version your host expects, or create a compatible player YAML in the guided builder.",
         "schema_type": "CollectionPage",
     },
@@ -57,6 +57,36 @@ PUBLIC_ROUTE_SEO = {
         "heading": "Build an Archipelago player YAML",
         "intro": "Choose a supported game, configure its options in a guided form, review the generated YAML, and download a player file ready to share with your host.",
         "schema_type": "WebPage",
+    },
+    "style-guide": {
+        "title": "AP-Pie Visual Style Guide",
+        "description": "A private beta review surface for AP-Pie's proposed shared visual system.",
+        "canonical": "https://ap-pie.com/style-guide",
+        "heading": "One system, different kinds of work.",
+        "intro": "Review the proposed typography, color, components and page-family patterns for AP-Pie.",
+        "schema_type": "WebPage",
+        "robots": "noindex, nofollow",
+        "beta_only": True,
+    },
+    "apworlds/super-metroid": {
+        "title": "Super Metroid Archipelago Setup | AP-Pie Beta",
+        "description": "Review the built-in Super Metroid integration, official setup source, requirements, YAML role, and Archipelago 0.6.7 scope.",
+        "canonical": "https://ap-pie.com/apworlds/super-metroid",
+        "heading": "Super Metroid Archipelago",
+        "intro": "A noindex beta preview of AP-Pie's reviewed APWorld detail-page model.",
+        "schema_type": "WebPage",
+        "robots": "noindex, nofollow",
+        "beta_only": True,
+    },
+    "apworlds/animal-well": {
+        "title": "ANIMAL WELL Archipelago Review | AP-Pie Beta",
+        "description": "Review the ANIMAL WELL APWorld evidence, unresolved fuzz verdict, version scope, setup source, and missing compatibility facts.",
+        "canonical": "https://ap-pie.com/apworlds/animal-well",
+        "heading": "ANIMAL WELL Archipelago",
+        "intro": "A noindex beta fixture demonstrating an APWorld that is not ready for publication or download promotion.",
+        "schema_type": "WebPage",
+        "robots": "noindex, nofollow",
+        "beta_only": True,
     },
 }
 
@@ -110,9 +140,14 @@ def _public_spa_response(path: str) -> Response:
             "publisher": {"@id": seo.organization_id(config.PUBLIC_BASE_URL)},
         })
     structured = seo.graph(config.PUBLIC_BASE_URL, *nodes)
+    robots_meta = ""
+    if route.get("robots"):
+        robots = html.escape(route["robots"], quote=True)
+        robots_meta = f'<meta name="robots" content="{robots}" />'
     route_meta = (
         f'<link rel="canonical" href="{canonical}" />\n'
         f'    <meta property="og:url" content="{canonical}" />\n'
+        f'    {robots_meta}\n'
         f'    <script type="application/ld+json">'
         f'{json.dumps(structured, separators=(",", ":")).replace("<", "\\u003c")}'
         f'</script>'
@@ -451,6 +486,10 @@ def create_app() -> Flask:
             return jsonify({"error": "API endpoint not found"}), 404
         normalized = path.strip("/")
         if normalized in PUBLIC_ROUTE_SEO:
+            if PUBLIC_ROUTE_SEO[normalized].get("beta_only") and config.DEPLOYMENT_LABEL != "beta":
+                response = send_from_directory(DIST_DIR, "index.html")
+                response.status_code = 404
+                return response
             return _public_spa_response(normalized)
         response = send_from_directory(DIST_DIR, "index.html")
         if not _is_spa_route(path):
