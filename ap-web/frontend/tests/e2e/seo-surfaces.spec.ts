@@ -104,6 +104,27 @@ test("rendered public routes keep one visible H1 and their canonical", async ({ 
   }
 });
 
+test("APWorld catalog explains its outputs and exposes task-led views", async ({ page }) => {
+  await page.goto("/apworlds");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("APWorld downloads and YAML builder");
+  await expect(page.getByText("Three related jobs, three different outputs")).toBeVisible();
+  await expect(page.getByText("The YAML stores your name and options. It does not install the APWorld.")).toBeVisible();
+  for (const label of [
+    "All games",
+    "APWorld downloads",
+    "Built into Archipelago",
+    "With setup guides",
+    "With trackers",
+  ]) {
+    await expect(page.getByRole("button", { name: new RegExp(`^${label}`) })).toBeVisible();
+  }
+  await page.getByRole("button", { name: /^With setup guides/ }).click();
+  await expect(page.locator(".apworld-card").first()).toBeVisible();
+  await expect(page.locator(".apworld-card")).toHaveCount(
+    Number((await page.getByRole("button", { name: /^With setup guides/ }).locator("span").textContent()) || 0),
+  );
+});
+
 test("public SPA search surfaces appear exactly once in the sitemap", async ({ request }) => {
   const response = await request.get("/sitemap.xml");
   expect(response.ok()).toBeTruthy();

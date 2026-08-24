@@ -2454,6 +2454,153 @@ a.btn:hover { text-decoration: none; }
 }
 .apworlds-page-sub a { color: var(--accent); }
 .apworlds-count { font-size: 0.8rem; margin: 0 0 0.6rem; }
+.apworlds-hero {
+  align-items: flex-start;
+  padding: 1.25rem 0 1.5rem;
+  margin-bottom: 0;
+}
+.apworlds-hero > div:first-child { max-width: 56rem; }
+.apworlds-eyebrow {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.apworlds-hero h1 { margin-bottom: 0.75rem; }
+.apworlds-lede {
+  max-width: 52rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.apworlds-hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}
+.apworlds-explainer {
+  margin: 0 0 2rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bg-card), rgba(232, 168, 87, 0.06));
+}
+.apworlds-explainer-head {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.8fr) minmax(20rem, 1.2fr);
+  gap: 1rem 2rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+.apworlds-explainer h2,
+.apworld-catalog-head h2 {
+  margin: 0;
+  color: var(--text-h);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.apworlds-explainer-head p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+.apworlds-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.apworlds-steps li {
+  display: flex;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.apworlds-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 1.65rem;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent-light);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+.apworlds-steps strong,
+.apworlds-steps span { display: block; }
+.apworlds-steps strong { margin-bottom: 0.2rem; color: var(--text-h); font-size: 0.86rem; }
+.apworlds-steps div > span { color: var(--text-muted); font-size: 0.77rem; line-height: 1.45; }
+.apworld-catalog-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+.apworld-catalog-head p { margin: 0; font-size: 0.76rem; }
+.apworld-catalog-head a { color: var(--accent); }
+.apworld-view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+}
+.apworld-view-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.62rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+.apworld-view-tabs button:hover,
+.apworld-view-tabs button:focus-visible {
+  color: var(--text-h);
+  border-color: var(--border-strong);
+}
+.apworld-view-tabs button.is-active {
+  color: #1a1410;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.apworld-view-tabs button span {
+  min-width: 1.35rem;
+  padding: 0.02rem 0.3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-align: center;
+}
+.apworld-view-tabs button.is-active span { background: rgba(26, 20, 16, 0.12); }
+
+@media (max-width: 760px) {
+  .apworlds-explainer-head { grid-template-columns: 1fr; }
+  .apworlds-steps { grid-template-columns: 1fr; }
+  .apworld-catalog-head { align-items: flex-start; flex-direction: column; }
+}
 
 /* UX-20: sort + filter row above the card grid. The search box keeps its
    own width and the controls sit beside it, wrapping onto their own line

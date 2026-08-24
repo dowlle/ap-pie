@@ -617,7 +617,17 @@ export default function APWorlds() {
   // server. Search stays server-side (?search=) as before.
   const [sortBy, setSortBy] = useState<"name" | "name-desc" | "stability" | "updated">("name");
   const [stabilityFilter, setStabilityFilter] = useState("");
-  const [installableOnly, setInstallableOnly] = useState(false);
+  const [catalogView, setCatalogView] = useState<
+    "all" | "downloadable" | "builtin" | "guides" | "trackers"
+  >("all");
+
+  const catalogCounts = useMemo(() => ({
+    all: available.length,
+    downloadable: available.filter((w) => w.downloadable_versions.length > 0).length,
+    builtin: available.filter((w) => w.is_builtin).length,
+    guides: available.filter((w) => Boolean(w.setup_guide)).length,
+    trackers: available.filter((w) => Boolean(w.tracker)).length,
+  }), [available]);
 
   const handleBuild = (name: string, version: string) => {
     navigate(`/yaml-builder/${encodeURIComponent(name)}?version=${encodeURIComponent(version)}`);
@@ -644,8 +654,14 @@ export default function APWorlds() {
     } else if (stabilityFilter) {
       list = list.filter((w) => w.stability === stabilityFilter);
     }
-    if (installableOnly) {
+    if (catalogView === "downloadable") {
       list = list.filter((w) => w.downloadable_versions.length > 0);
+    } else if (catalogView === "builtin") {
+      list = list.filter((w) => w.is_builtin);
+    } else if (catalogView === "guides") {
+      list = list.filter((w) => Boolean(w.setup_guide));
+    } else if (catalogView === "trackers") {
+      list = list.filter((w) => Boolean(w.tracker));
     }
     // Order the index by what people actually read. The API returns TOML
     // filename order (`sorted(toml_dir.iterdir())` in parse_index_dir), which
@@ -682,7 +698,7 @@ export default function APWorlds() {
       });
     }
     return sorted;
-  }, [available, sortBy, stabilityFilter, installableOnly]);
+  }, [available, sortBy, stabilityFilter, catalogView]);
 
   const fetchData = () => {
     setLoading(true);
@@ -772,17 +788,19 @@ export default function APWorlds() {
 
   return (
     <div className="apworlds-page">
-      <div className="page-header">
+      <div className="page-header apworlds-hero">
         <div>
-          <h1>APWorlds</h1>
-          <p className="muted apworlds-page-sub">
-            Sourced from{" "}
-            <a href="https://github.com/dowlle/Archipelago-index" target="_blank" rel="noreferrer">
-              dowlle/Archipelago-index
-            </a>
-            . Each card lists every version available for that game; click Download to grab the
-            .apworld for local install, or use a room's Settings to pin a version for your players.
+          <span className="apworlds-eyebrow">Archipelago game integrations</span>
+          <h1>APWorld downloads and YAML builder</h1>
+          <p className="apworlds-lede">
+            An APWorld adds a game to Archipelago. Find the exact version your host expects,
+            download the integration when the game is not already built in, or create a player
+            YAML that configures your world for generation.
           </p>
+          <div className="apworlds-hero-links">
+            <Link to="/yaml-builder" className="btn btn-primary">Build a player YAML</Link>
+            <Link to="/guides/setting-up-your-yaml" className="btn">How player YAMLs work</Link>
+          </div>
         </div>
         <div className="apworlds-header-actions">
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's
@@ -797,12 +815,53 @@ export default function APWorlds() {
         </div>
       </div>
 
+      <section className="apworlds-explainer" aria-labelledby="apworlds-how-heading">
+        <div className="apworlds-explainer-head">
+          <div>
+            <span className="apworlds-eyebrow">Before you download</span>
+            <h2 id="apworlds-how-heading">Three related jobs, three different outputs</h2>
+          </div>
+          <p>
+            Versions must match the host's generation setup. If you are unsure which version to
+            use, ask the host before downloading or building your YAML.
+          </p>
+        </div>
+        <ol className="apworlds-steps">
+          <li>
+            <span className="apworlds-step-num">1</span>
+            <div><strong>Choose the integration</strong><span>The APWorld teaches Archipelago how a game works.</span></div>
+          </li>
+          <li>
+            <span className="apworlds-step-num">2</span>
+            <div><strong>Download when needed</strong><span>A <code>.apworld</code> installs the integration locally. Built-in games already ship with Archipelago.</span></div>
+          </li>
+          <li>
+            <span className="apworlds-step-num">3</span>
+            <div><strong>Create your player YAML</strong><span>The YAML stores your name and options. It does not install the APWorld.</span></div>
+          </li>
+        </ol>
+      </section>
+
       {error && <p className="error">{error}</p>}
 
+      <section className="apworld-catalog" aria-labelledby="apworld-catalog-heading">
+      <div className="apworld-catalog-head">
+        <div>
+          <span className="apworlds-eyebrow">Browse the index</span>
+          <h2 id="apworld-catalog-heading">Find your game</h2>
+        </div>
+        <p className="muted">
+          Catalog data comes from{" "}
+          <a href="https://github.com/dowlle/Archipelago-index" target="_blank" rel="noreferrer">
+            dowlle/Archipelago-index
+          </a>.
+        </p>
+      </div>
       <div className="apworld-controls">
         <input
           type="search"
-          placeholder="Search by game name or apworld key..."
+          placeholder="Search by game or APWorld name..."
+          aria-label="Search APWorlds by game or APWorld name"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="apworld-search"
@@ -831,14 +890,26 @@ export default function APWorlds() {
             </select>
           </label>
         )}
-        <label className="apworld-check">
-          <input
-            type="checkbox"
-            checked={installableOnly}
-            onChange={(e) => setInstallableOnly(e.target.checked)}
-          />
-          <span>Installable only</span>
-        </label>
+      </div>
+
+      <div className="apworld-view-tabs" aria-label="Catalog views">
+        {([
+          ["all", "All games"],
+          ["downloadable", "APWorld downloads"],
+          ["builtin", "Built into Archipelago"],
+          ["guides", "With setup guides"],
+          ["trackers", "With trackers"],
+        ] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={catalogView === value ? "is-active" : ""}
+            aria-pressed={catalogView === value}
+            onClick={() => setCatalogView(value)}
+          >
+            {label}<span>{catalogCounts[value]}</span>
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -851,7 +922,7 @@ export default function APWorlds() {
           <button
             type="button"
             className="yaml-builder-desc-toggle"
-            onClick={() => { setStabilityFilter(""); setInstallableOnly(false); }}
+            onClick={() => { setStabilityFilter(""); setCatalogView("all"); }}
           >
             Clear filters
           </button>
@@ -884,7 +955,7 @@ export default function APWorlds() {
           </div>
         </>
       )}
-
+      </section>
     </div>
   );
 }
