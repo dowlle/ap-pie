@@ -17,6 +17,14 @@ const contracts = [
     heading: "APWorld downloads and YAML builder",
     type: "CollectionPage",
   },
+  {
+    path: "/yaml-builder",
+    title: "Archipelago YAML Builder | Archipelago Pie",
+    description: "Build an Archipelago player YAML from guided game options, review the generated file, and download it for your host or multiworld.",
+    canonical: "https://ap-pie.com/yaml-builder",
+    heading: "Build an Archipelago player YAML",
+    type: "WebApplication",
+  },
 ];
 
 for (const contract of contracts) {
@@ -40,11 +48,12 @@ test("rendered public routes keep one visible H1 and their canonical", async ({ 
   }
 });
 
-test("APWorlds appears exactly once in the sitemap", async ({ request }) => {
+test("public SPA search surfaces appear exactly once in the sitemap", async ({ request }) => {
   const response = await request.get("/sitemap.xml");
   expect(response.ok()).toBeTruthy();
   const xml = await response.text();
   expect(xml.match(/<loc>https:\/\/ap-pie\.com\/apworlds<\/loc>/g)).toHaveLength(1);
+  expect(xml.match(/<loc>https:\/\/ap-pie\.com\/yaml-builder<\/loc>/g)).toHaveLength(1);
 });
 
 test("CTR screenshots prefer WebP and every fallback stays below 100 KB", async ({ page, request }) => {

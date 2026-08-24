@@ -49,6 +49,14 @@ PUBLIC_ROUTE_SEO = {
         "intro": "An APWorld adds a game to Archipelago. Browse maintained community integrations, download the version your host expects, or create a compatible player YAML in the guided builder.",
         "schema_type": "CollectionPage",
     },
+    "yaml-builder": {
+        "title": "Archipelago YAML Builder | Archipelago Pie",
+        "description": "Build an Archipelago player YAML from guided game options, review the generated file, and download it for your host or multiworld.",
+        "canonical": "https://ap-pie.com/yaml-builder",
+        "heading": "Build an Archipelago player YAML",
+        "intro": "Choose a supported game, configure its options in a guided form, review the generated YAML, and download a player file ready to share with your host.",
+        "schema_type": "WebApplication",
+    },
 }
 
 
