@@ -791,16 +791,14 @@ export default function APWorlds() {
       <div className="page-header apworlds-hero">
         <div>
           <span className="apworlds-eyebrow">Archipelago game integrations</span>
-          <h1>APWorld downloads and YAML builder</h1>
+          <h1>APWorld downloads</h1>
           <p className="apworlds-lede">
-            An APWorld adds a game to Archipelago. Find the exact version your host expects,
-            download the integration when the game is not already built in, or create a player
-            YAML that configures your world for generation.
+            Find the game integration and exact version your Archipelago host expects. Built-in
+            games already ship with Archipelago and do not need a separate download.
           </p>
-          <div className="apworlds-hero-links">
-            <Link to="/yaml-builder" className="btn btn-primary">Build a player YAML</Link>
-            <Link to="/guides/setting-up-your-yaml" className="btn">How player YAMLs work</Link>
-          </div>
+          <p className="apworlds-builder-link">
+            Need to configure your game options? <Link to="/yaml-builder">Open the YAML Builder →</Link>
+          </p>
         </div>
         <div className="apworlds-header-actions">
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's
@@ -815,32 +813,10 @@ export default function APWorlds() {
         </div>
       </div>
 
-      <section className="apworlds-explainer" aria-labelledby="apworlds-how-heading">
-        <div className="apworlds-explainer-head">
-          <div>
-            <span className="apworlds-eyebrow">Before you download</span>
-            <h2 id="apworlds-how-heading">Three related jobs, three different outputs</h2>
-          </div>
-          <p>
-            Versions must match the host's generation setup. If you are unsure which version to
-            use, ask the host before downloading or building your YAML.
-          </p>
-        </div>
-        <ol className="apworlds-steps">
-          <li>
-            <span className="apworlds-step-num">1</span>
-            <div><strong>Choose the integration</strong><span>The APWorld teaches Archipelago how a game works.</span></div>
-          </li>
-          <li>
-            <span className="apworlds-step-num">2</span>
-            <div><strong>Download when needed</strong><span>A <code>.apworld</code> installs the integration locally. Built-in games already ship with Archipelago.</span></div>
-          </li>
-          <li>
-            <span className="apworlds-step-num">3</span>
-            <div><strong>Create your player YAML</strong><span>The YAML stores your name and options. It does not install the APWorld.</span></div>
-          </li>
-        </ol>
-      </section>
+      <aside className="apworlds-version-note">
+        <strong>Match the host's version.</strong>
+        <span>If you are unsure which APWorld version to use, ask the host before downloading.</span>
+      </aside>
 
       {error && <p className="error">{error}</p>}
 

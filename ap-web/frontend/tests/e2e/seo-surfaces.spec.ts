@@ -14,7 +14,7 @@ const contracts = [
     title: "APWorld Downloads & YAML Builder | Archipelago Pie",
     description: "Browse APWorld downloads by game and version, find setup guides, and build compatible player YAMLs for Archipelago multiworlds.",
     canonical: "https://ap-pie.com/apworlds",
-    heading: "APWorld downloads and YAML builder",
+    heading: "APWorld downloads",
     type: "CollectionPage",
   },
   {
@@ -121,9 +121,9 @@ test("rendered public routes keep one visible H1 and their canonical", async ({ 
 
 test("APWorld catalog explains its outputs and exposes task-led views", async ({ page }) => {
   await page.goto("/apworlds");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("APWorld downloads and YAML builder");
-  await expect(page.getByText("Three related jobs, three different outputs")).toBeVisible();
-  await expect(page.getByText("The YAML stores your name and options. It does not install the APWorld.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("APWorld downloads");
+  await expect(page.getByRole("link", { name: "Open the YAML Builder" })).toHaveAttribute("href", "/yaml-builder");
+  await expect(page.getByText("Match the host's version.")).toBeVisible();
   for (const label of [
     "All games",
     "APWorld downloads",

@@ -2478,27 +2478,25 @@ a.btn:hover { text-decoration: none; }
   font-size: 1.05rem;
   line-height: 1.6;
 }
-.apworlds-hero-links {
+.apworlds-builder-link {
+  margin: 0.65rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+.apworlds-builder-link a { color: var(--accent); font-weight: 600; }
+.apworlds-version-note {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 1.1rem;
-}
-.apworlds-explainer {
-  margin: 0 0 2rem;
-  padding: 1.1rem 1.2rem 1.2rem;
+  gap: 0.45rem;
+  margin: 0 0 1.4rem;
+  padding: 0.7rem 0.85rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--bg-card), rgba(232, 168, 87, 0.06));
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
-.apworlds-explainer-head {
-  display: grid;
-  grid-template-columns: minmax(16rem, 0.8fr) minmax(20rem, 1.2fr);
-  gap: 1rem 2rem;
-  align-items: end;
-  margin-bottom: 1rem;
-}
-.apworlds-explainer h2,
+.apworlds-version-note strong { color: var(--text-h); white-space: nowrap; }
 .apworld-catalog-head h2 {
   margin: 0;
   color: var(--text-h);
@@ -2506,46 +2504,6 @@ a.btn:hover { text-decoration: none; }
   font-size: 1.25rem;
   font-weight: 600;
 }
-.apworlds-explainer-head p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-.apworlds-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.7rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.apworlds-steps li {
-  display: flex;
-  gap: 0.65rem;
-  min-width: 0;
-  padding: 0.8rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-}
-.apworlds-step-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.65rem;
-  height: 1.65rem;
-  flex: 0 0 1.65rem;
-  border-radius: 50%;
-  background: var(--accent-dim);
-  color: var(--accent-light);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-}
-.apworlds-steps strong,
-.apworlds-steps span { display: block; }
-.apworlds-steps strong { margin-bottom: 0.2rem; color: var(--text-h); font-size: 0.86rem; }
-.apworlds-steps div > span { color: var(--text-muted); font-size: 0.77rem; line-height: 1.45; }
 .apworld-catalog-head {
   display: flex;
   align-items: end;
@@ -2600,31 +2558,7 @@ a.btn:hover { text-decoration: none; }
   .apworlds-hero { padding: 0.8rem 0 1.1rem; }
   .apworlds-hero h1 { margin-bottom: 0.55rem; }
   .apworlds-lede { font-size: 0.94rem; line-height: 1.5; }
-  .apworlds-hero-links { margin-top: 0.8rem; }
-  .apworlds-explainer { margin-bottom: 1.35rem; padding: 0.85rem 0.9rem; }
-  .apworlds-explainer-head {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-    margin-bottom: 0.55rem;
-  }
-  .apworlds-explainer h2 { font-size: 1.08rem; }
-  .apworlds-explainer-head p { font-size: 0.76rem; line-height: 1.4; }
-  .apworlds-steps { grid-template-columns: 1fr; gap: 0; }
-  .apworlds-steps li {
-    gap: 0.55rem;
-    padding: 0.55rem 0;
-    border: 0;
-    border-top: 1px solid var(--border);
-    border-radius: 0;
-    background: transparent;
-  }
-  .apworlds-step-num {
-    width: 1.4rem;
-    height: 1.4rem;
-    flex-basis: 1.4rem;
-  }
-  .apworlds-steps strong { margin-bottom: 0.1rem; font-size: 0.82rem; }
-  .apworlds-steps div > span { font-size: 0.73rem; line-height: 1.35; }
+  .apworlds-version-note { align-items: flex-start; flex-direction: column; gap: 0.15rem; }
   .apworld-catalog-head { align-items: flex-start; flex-direction: column; }
 }
 

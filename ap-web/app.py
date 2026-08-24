@@ -46,7 +46,7 @@ PUBLIC_ROUTE_SEO = {
         "title": "APWorld Downloads & YAML Builder | Archipelago Pie",
         "description": "Browse APWorld downloads by game and version, find setup guides, and build compatible player YAMLs for Archipelago multiworlds.",
         "canonical": "https://ap-pie.com/apworlds",
-        "heading": "APWorld downloads and YAML builder",
+        "heading": "APWorld downloads",
         "intro": "An APWorld adds a game to Archipelago. Browse maintained community integrations, download the version your host expects, or create a compatible player YAML in the guided builder.",
         "schema_type": "CollectionPage",
     },
