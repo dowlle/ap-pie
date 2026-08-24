@@ -66,6 +66,27 @@ PUBLIC_ROUTE_SEO = {
         "intro": "Review the proposed typography, color, components and page-family patterns for AP-Pie.",
         "schema_type": "WebPage",
         "robots": "noindex, nofollow",
+        "beta_only": True,
+    },
+    "apworlds/super-metroid": {
+        "title": "Super Metroid Archipelago Setup | AP-Pie Beta",
+        "description": "Review the built-in Super Metroid integration, official setup source, requirements, YAML role, and Archipelago 0.6.7 scope.",
+        "canonical": "https://ap-pie.com/apworlds/super-metroid",
+        "heading": "Super Metroid Archipelago",
+        "intro": "A noindex beta preview of AP-Pie's reviewed APWorld detail-page model.",
+        "schema_type": "WebPage",
+        "robots": "noindex, nofollow",
+        "beta_only": True,
+    },
+    "apworlds/animal-well": {
+        "title": "ANIMAL WELL Archipelago Review | AP-Pie Beta",
+        "description": "Review the ANIMAL WELL APWorld evidence, unresolved fuzz verdict, version scope, setup source, and missing compatibility facts.",
+        "canonical": "https://ap-pie.com/apworlds/animal-well",
+        "heading": "ANIMAL WELL Archipelago",
+        "intro": "A noindex beta fixture demonstrating an APWorld that is not ready for publication or download promotion.",
+        "schema_type": "WebPage",
+        "robots": "noindex, nofollow",
+        "beta_only": True,
     },
 }
 
@@ -465,6 +486,10 @@ def create_app() -> Flask:
             return jsonify({"error": "API endpoint not found"}), 404
         normalized = path.strip("/")
         if normalized in PUBLIC_ROUTE_SEO:
+            if PUBLIC_ROUTE_SEO[normalized].get("beta_only") and config.DEPLOYMENT_LABEL != "beta":
+                response = send_from_directory(DIST_DIR, "index.html")
+                response.status_code = 404
+                return response
             return _public_spa_response(normalized)
         response = send_from_directory(DIST_DIR, "index.html")
         if not _is_spa_route(path):

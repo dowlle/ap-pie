@@ -1,30 +1,61 @@
 :root {
+  /* Shared visual-foundation roles. Legacy aliases below keep existing
+     surfaces working while representative pages migrate to semantic names. */
+  --color-canvas: #121016;
+  --color-surface: #1b181f;
+  --color-surface-raised: #242029;
+  --color-border: #332d39;
+  --color-border-strong: #49404f;
+  --color-text: #f5f1eb;
+  --color-text-muted: #a59c91;
+  --color-text-subtle: #746d68;
+  --color-accent: #f2ad55;
+  --color-accent-strong: #f7c477;
+  --color-info: #72a7d8;
+  --color-success: #69c99d;
+  --color-warning: #e9b95f;
+  --color-danger: #e57c78;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --radius-control: 0.45rem;
+  --radius-card: 0.65rem;
+  --radius-feature: 0.8rem;
+
   /* Warm dark base - pie crust on a black plate. The previous indigo/lilac
      palette was the SaaS template default; we're committing to a single
      warm amber accent so Archipelago Pie has a face. */
-  --bg: #15131a;
-  --bg-card: #1f1c25;
-  --bg-hover: #2a2630;
-  --bg-elevated: #27232d;
-  --text: #d8d4cc;
-  --text-h: #f4ecdc;
-  --text-muted: #8a8378;
-  --accent: #e8a857;
-  --accent-light: #f5c987;
-  --accent-dim: rgba(232, 168, 87, 0.15);
-  --accent-glow: rgba(232, 168, 87, 0.35);
-  --green: #6fcc73;
-  --yellow: #f0c54a;
-  --blue: #6a9fd4;
-  --red: #e07b5a;
-  --red-soft: rgba(224, 123, 90, 0.15);
-  --border: #2e2935;
-  --border-strong: #3a3340;
+  --bg: var(--color-canvas);
+  --bg-card: var(--color-surface);
+  --bg-hover: var(--color-surface-raised);
+  --bg-elevated: var(--color-surface-raised);
+  --text: var(--color-text-muted);
+  --text-h: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --accent-light: var(--color-accent-strong);
+  --accent-dim: rgba(242, 173, 85, 0.15);
+  --accent-glow: rgba(242, 173, 85, 0.35);
+  --green: var(--color-success);
+  --yellow: var(--color-warning);
+  --blue: var(--color-info);
+  --red: var(--color-danger);
+  --red-soft: rgba(229, 124, 120, 0.15);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
 
   /* Fonts. Loaded in index.html. Single clean sans-serif identity -
      Inter Tight does double duty for display and body, with size and
      letter-spacing carrying the visual hierarchy. */
-  --font-display: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Bricolage Grotesque", "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
   --font-body: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
@@ -2454,6 +2485,7 @@ a.btn:hover { text-decoration: none; }
 }
 .apworlds-page-sub a { color: var(--accent); }
 .apworlds-count { font-size: 0.8rem; margin: 0 0 0.6rem; }
+.apworlds-page { width: min(94rem, 100%); margin: 0 auto; }
 .apworlds-hero {
   align-items: flex-start;
   padding: 1.25rem 0 1.5rem;
@@ -2470,7 +2502,12 @@ a.btn:hover { text-decoration: none; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.apworlds-hero h1 { margin-bottom: 0.75rem; }
+.apworlds-hero h1 {
+  margin-bottom: 0.75rem;
+  font-size: clamp(2.1rem, 4vw, 3.1rem);
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
 .apworlds-lede {
   max-width: 52rem;
   margin: 0;
@@ -2760,6 +2797,8 @@ a.btn:hover { text-decoration: none; }
   font-family: var(--font-display);
   word-break: break-word;
 }
+.apworld-card-title h3 a { color: inherit; text-decoration: none; }
+.apworld-card-title h3 a:hover { color: var(--accent-light); }
 .apworld-card-key {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -2781,6 +2820,12 @@ a.btn:hover { text-decoration: none; }
   gap: 0.3rem;
   flex-wrap: wrap;
   align-items: center;
+}
+.apworld-card-detail-link {
+  align-self: flex-start;
+  color: var(--accent-light);
+  font-size: 0.76rem;
+  font-weight: 650;
 }
 .apworld-card-icon {
   display: inline-flex;
@@ -4110,11 +4155,6 @@ details.collapsible-section > .accordion-body {
   background: radial-gradient(ellipse 70% 60% at 50% -20%, rgba(232, 168, 87, 0.12), transparent);
 }
 .lp-islands { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.5; pointer-events: none; }
-.lp-kicker {
-  font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.78rem;
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
-  position: relative;
-}
 .lp-title {
   font-family: var(--lp-display); font-weight: 800;
   font-size: clamp(2.4rem, 6vw, 4.2rem); color: var(--text-h);
@@ -4753,16 +4793,8 @@ details.yaml-builder-group > summary .muted {
     radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 38%),
     var(--bg-card);
 }
-.yaml-builder-eyebrow {
-  margin: 0 0 0.35rem;
-  color: var(--accent-light);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 .yaml-builder-landing-hero h1 { margin: 0 0 0.55rem; font-size: clamp(2rem, 5vw, 3.4rem); }
-.yaml-builder-landing-hero > p:not(.yaml-builder-eyebrow) {
+.yaml-builder-landing-hero > p {
   max-width: 48rem;
   margin: 0;
   color: var(--text-muted);
@@ -4856,7 +4888,7 @@ details.yaml-builder-group > summary .muted {
   background: var(--bg-card);
 }
 .yaml-builder-explainer h2 { margin: 0 0 0.5rem; }
-.yaml-builder-explainer p:not(.yaml-builder-eyebrow) { margin: 0; color: var(--text-muted); line-height: 1.6; }
+.yaml-builder-explainer p { margin: 0; color: var(--text-muted); line-height: 1.6; }
 .yaml-builder-explainer ol { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; margin: 0; padding: 0; counter-reset: builder-step; }
 .yaml-builder-explainer li { position: relative; display: flex; flex-direction: column; gap: 0.12rem; padding-left: 2.3rem; counter-increment: builder-step; }
 .yaml-builder-explainer li::before {
@@ -5048,4 +5080,66 @@ details.yaml-builder-group > summary .muted {
   .sg-field-pair { grid-template-columns: 1fr; }
   .sg-apworld-card { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
   .sg-apworld-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+/* == Reviewed APWorld detail beta slice ========================= */
+.apworld-detail-page {
+  width: min(72rem, 100%);
+  margin: 0 auto;
+  padding: var(--space-10) 0 var(--space-20);
+}
+.apworld-detail-hero { padding-bottom: var(--space-10); }
+.apworld-detail-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-6); }
+.apworld-detail-title-row h1 {
+  margin: 0 0 var(--space-2);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+.apworld-detail-title-row code { color: var(--text-muted); font: 0.78rem var(--font-mono); }
+.apworld-detail-statuses { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+.review-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.review-badge-reviewed { border-color: rgba(105,201,157,.4); background: rgba(105,201,157,.12); color: var(--color-success); }
+.review-badge-blocked { border-color: rgba(233,185,95,.4); background: rgba(233,185,95,.12); color: var(--color-warning); }
+.apworld-detail-answer { max-width: 52rem; margin: var(--space-6) 0 0; color: var(--text); font-size: 1.12rem; line-height: 1.65; }
+.apworld-detail-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); }
+.apworld-detail-actions .btn { min-height: 2.75rem; padding-inline: var(--space-4); }
+.apworld-detail-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin: 0 0 var(--space-8); }
+.apworld-detail-facts > div { padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-card); }
+.apworld-detail-facts dt,
+.apworld-detail-provenance dt { margin-bottom: var(--space-1); color: var(--text-muted); font-size: 0.7rem; }
+.apworld-detail-facts dd { color: var(--text-h); font-size: 0.9rem; font-weight: 650; }
+.review-notice { margin-bottom: var(--space-8); padding: var(--space-4); border: 1px solid var(--border); border-left-width: 2px; border-radius: var(--radius-card); background: var(--bg-card); }
+.review-notice-warning { border-left-color: var(--color-warning); }
+.review-notice strong { color: var(--text-h); }
+.review-notice p { margin: var(--space-1) 0 0; color: var(--text); font-size: 0.84rem; line-height: 1.5; }
+.apworld-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: var(--space-10); align-items: start; }
+.apworld-detail-content { max-width: 46rem; }
+.apworld-detail-content section + section { margin-top: var(--space-10); padding-top: var(--space-10); border-top: 1px solid var(--border); }
+.apworld-detail-content h2 { margin-bottom: var(--space-4); font-size: 1.65rem; letter-spacing: -0.035em; }
+.apworld-detail-content p { color: var(--text); line-height: 1.7; }
+.apworld-detail-content p + p { margin-top: var(--space-4); }
+.apworld-detail-provenance { position: sticky; top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-card); }
+.apworld-detail-provenance h2 { margin-bottom: var(--space-4); font-size: 1rem; }
+.apworld-detail-provenance dl { display: grid; gap: var(--space-3); }
+.apworld-detail-provenance dd { color: var(--text-h); font-size: 0.78rem; }
+.apworld-detail-provenance > a { display: inline-block; margin-top: var(--space-4); font-size: 0.78rem; font-weight: 650; }
+.apworld-detail-provenance > p { margin: var(--space-4) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.72rem; line-height: 1.5; }
+
+@media (max-width: 760px) {
+  .apworld-detail-page { padding-top: var(--space-8); }
+  .apworld-detail-title-row { flex-direction: column; }
+  .apworld-detail-statuses { justify-content: flex-start; }
+  .apworld-detail-facts { grid-template-columns: 1fr; }
+  .apworld-detail-layout { grid-template-columns: 1fr; gap: var(--space-8); }
+  .apworld-detail-provenance { position: static; }
 }

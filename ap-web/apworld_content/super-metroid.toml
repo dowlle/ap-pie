@@ -1,0 +1,43 @@
+schema_version = 1
+apworld_name = "sm"
+slug = "super-metroid"
+review_state = "reviewed"
+publication_status = "beta_preview"
+reviewed_by = "Appie"
+reviewed_at = "2026-08-24"
+next_review_at = "2027-02-20"
+
+[editorial]
+copy_status = "approved_original"
+writing_policy = "original-ap-pie-copy"
+copy_reviewed_by = "Appie"
+copy_reviewed_at = "2026-08-24"
+
+[[sources]]
+id = "super-metroid-release-067"
+kind = "versioned_primary"
+url = "https://github.com/ArchipelagoMW/Archipelago/releases/tag/0.6.7"
+revision = "0.6.7 / debe4cf035c15efe6fb95f72343af0d420c68c"
+verified_at = "2026-08-24"
+
+[[sources]]
+id = "super-metroid-world-source-067"
+kind = "versioned_primary"
+url = "https://github.com/ArchipelagoMW/Archipelago/blob/0.6.7/worlds/sm/__init__.py"
+revision = "0.6.7 / cdb58b72fbd9bc8356b3940d32c4ea7cdb47484a"
+verified_at = "2026-08-24"
+
+[[sources]]
+id = "super-metroid-official-setup-067"
+kind = "official_archipelago_guide"
+url = "https://github.com/ArchipelagoMW/Archipelago/blob/0.6.7/worlds/sm/docs/multiworld_en.md"
+revision = "0.6.7 / 2fa8207acc4d0558ae110ad48799ba62f31be2bc"
+verified_at = "2026-08-24"
+
+[[claims]]
+id = "super-metroid-builtin-installation"
+topic = "installation"
+fact = "Archipelago 0.6.7 includes the Super Metroid integration, so this release path does not require a separate Super Metroid APWorld package."
+source_refs = ["super-metroid-release-067", "super-metroid-world-source-067", "super-metroid-official-setup-067"]
+applies_to_versions = ["0.6.7"]
+verified_at = "2026-08-24"

@@ -30,6 +30,18 @@ const PUBLIC_ROUTE_HEAD: Record<string, {
     canonical: `${PROD_ORIGIN}/style-guide`,
     robots: "noindex, nofollow",
   },
+  "/apworlds/super-metroid": {
+    title: "Super Metroid Archipelago Setup | AP-Pie Beta",
+    description: "Review the built-in Super Metroid integration, official setup source, requirements, YAML role, and Archipelago 0.6.7 scope.",
+    canonical: `${PROD_ORIGIN}/apworlds/super-metroid`,
+    robots: "noindex, nofollow",
+  },
+  "/apworlds/animal-well": {
+    title: "ANIMAL WELL Archipelago Review | AP-Pie Beta",
+    description: "Review the ANIMAL WELL APWorld evidence, unresolved fuzz verdict, version scope, setup source, and missing compatibility facts.",
+    canonical: `${PROD_ORIGIN}/apworlds/animal-well`,
+    robots: "noindex, nofollow",
+  },
 };
 
 function setMeta(selector: string, attribute: "name" | "property", key: string, content: string) {

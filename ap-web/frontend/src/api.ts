@@ -210,6 +210,16 @@ export interface APWorldInfo {
    *  derived from the index repo's git history. Null when the history is
    *  unavailable. This is not the upstream release date. */
   updated_at: string | null;
+  /** AP-Pie's reviewed overlay. Draft/stale records never expose claims here. */
+  editorial: {
+    slug: string;
+    review_state: "reviewed";
+    reviewed_at: string;
+    next_review_at: string;
+    route_override?: string;
+    beta_preview_only?: boolean;
+  } | null;
+  review_state: "absent" | "draft" | "reviewed" | "stale" | "retired";
 }
 
 export interface InstalledAPWorld {

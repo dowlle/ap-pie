@@ -12,6 +12,7 @@ import {
 } from "../api";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
+import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
 
 /**
@@ -231,27 +232,6 @@ const TAG_DESCRIPTIONS: Record<string, string> = {
  * known values as a coloured chip; anything else (or absence) renders
  * nothing — silent absence is the correct default per the design note.
  */
-function StabilityChip({ stability }: { stability: string | null }) {
-  if (!stability) return null;
-  const known = ["stable", "unstable", "alpha", "beta"];
-  const value = stability.toLowerCase();
-  if (!known.includes(value)) return null;
-  const titleMap: Record<string, string> = {
-    stable: "Marked stable by the APWorld author",
-    unstable: "Marked unstable — expect occasional issues",
-    alpha: "Marked alpha — early development, expect bugs",
-    beta: "Marked beta — feature-complete but still hardening",
-  };
-  return (
-    <span
-      className={`apworld-stability apworld-stability-${value}`}
-      title={titleMap[value]}
-    >
-      {value}
-    </span>
-  );
-}
-
 function VersionRow({
   world,
   v,
@@ -445,8 +425,8 @@ function HomeAndIconRow({ world }: { world: APWorldInfo }) {
               target="_blank"
               rel="noopener noreferrer"
               className="apworld-card-icon"
-              title={`Setup guide: ${world.setup_guide}`}
-              aria-label="Open setup guide"
+              title={`Setup link recorded in the community index; not reviewed by AP-Pie: ${world.setup_guide}`}
+              aria-label="Open unreviewed setup link recorded in the community index"
             >
               <SetupGuideIcon />
             </a>
@@ -478,6 +458,8 @@ function WorldCard({
   onRemove,
   onBuild,
   buildingVersion,
+  detailHref,
+  detailLabel,
 }: {
   world: APWorldInfo;
   installed: InstalledAPWorld | undefined;
@@ -487,6 +469,8 @@ function WorldCard({
   onRemove: (name: string) => void;
   onBuild: (name: string, version: string) => void;
   buildingVersion: string | null;
+  detailHref?: string;
+  detailLabel?: string;
 }) {
   // Always show all versions sorted descending (latest first). If the index
   // only contained one version and that's the latest, the list is just one
@@ -508,7 +492,7 @@ function WorldCard({
     <article className="apworld-card">
       <header className="apworld-card-head">
         <div className="apworld-card-title">
-          <h3>{world.display_name}</h3>
+          <h3>{detailHref ? <Link to={detailHref}>{world.display_name}</Link> : world.display_name}</h3>
           <code className="apworld-card-key">{world.name}</code>
         </div>
         <div className="apworld-card-badges">
@@ -517,7 +501,6 @@ function WorldCard({
           {!world.is_builtin && !world.disabled && (
             <span className="badge badge-save">Community</span>
           )}
-          <StabilityChip stability={world.stability} />
           {world.tags.map((t) => (
             <span key={t} className="tag" title={TAG_DESCRIPTIONS[t]}>{t}</span>
           ))}
@@ -525,6 +508,8 @@ function WorldCard({
       </header>
 
       <HomeAndIconRow world={world} />
+
+      {detailHref && <Link className="apworld-card-detail-link" to={detailHref}>{detailLabel ?? "View reviewed details"} →</Link>}
 
 
       {world.disabled ? (
@@ -590,6 +575,7 @@ export default function APWorlds() {
   // hosts can browse the index and pin per-room versions, but the
   // global "pull from upstream" action stays with admins).
   const { user } = useAuth();
+  const deploymentLabel = useDeploymentLabel();
   const isAdmin = !!user?.is_admin;
   const [available, setAvailable] = useState<APWorldInfo[]>([]);
   const [installed, setInstalled] = useState<InstalledAPWorld[]>([]);
@@ -790,7 +776,6 @@ export default function APWorlds() {
     <div className="apworlds-page">
       <div className="page-header apworlds-hero">
         <div>
-          <span className="apworlds-eyebrow">Archipelago game integrations</span>
           <h1>APWorld downloads</h1>
           <p className="apworlds-lede">
             Find the game integration and exact version your Archipelago host expects. Built-in
@@ -823,7 +808,6 @@ export default function APWorlds() {
       <section className="apworld-catalog" aria-labelledby="apworld-catalog-heading">
       <div className="apworld-catalog-head">
         <div>
-          <span className="apworlds-eyebrow">Browse the index</span>
           <h2 id="apworld-catalog-heading">Find your game</h2>
         </div>
         <p className="muted">
@@ -853,7 +837,7 @@ export default function APWorlds() {
         </label>
         {stabilityValues.length > 0 && (
           <label className="apworld-control">
-            <span>Stability</span>
+            <span>Index stability</span>
             <select
               value={stabilityFilter}
               onChange={(e) => setStabilityFilter(e.target.value)}
@@ -873,7 +857,7 @@ export default function APWorlds() {
           ["all", "All games"],
           ["downloadable", "APWorld downloads"],
           ["builtin", "Built into Archipelago"],
-          ["guides", "With setup guides"],
+          ["guides", "With recorded setup links"],
           ["trackers", "With trackers"],
         ] as const).map(([value, label]) => (
           <button
@@ -926,6 +910,16 @@ export default function APWorlds() {
                 onRemove={handleRemove}
                 onBuild={handleBuild}
                 buildingVersion={null}
+                detailHref={
+                  w.editorial?.route_override
+                    ? w.editorial.route_override
+                    : deploymentLabel === "beta" && w.editorial?.beta_preview_only
+                    ? `/apworlds/${w.editorial.slug}`
+                    : deploymentLabel === "beta" && w.name === "animal_well"
+                    ? "/apworlds/animal-well"
+                    : undefined
+                }
+                detailLabel={w.name === "animal_well" ? "View review blockers" : undefined}
               />
             ))}
           </div>

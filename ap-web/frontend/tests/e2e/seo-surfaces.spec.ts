@@ -69,6 +69,37 @@ test("style guide is a noindex review surface", async ({ page, request }) => {
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
 });
 
+test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ page, request }) => {
+  const indexResponse = await request.get("/api/apworlds");
+  const worlds = await indexResponse.json();
+  const superMetroid = worlds.find((world: { name: string }) => world.name === "sm");
+  const animalWell = worlds.find((world: { name: string }) => world.name === "animal_well");
+  const ctr = worlds.find((world: { name: string }) => world.name === "ctr");
+  expect(superMetroid.editorial).toMatchObject({ slug: "super-metroid", beta_preview_only: true });
+  expect(animalWell.review_state).toBe("draft");
+  expect(animalWell.editorial).toBeNull();
+  expect(ctr.editorial.route_override).toBe("/ctr");
+
+  for (const fixture of [
+    { path: "/apworlds/super-metroid", heading: "Super Metroid Archipelago" },
+    { path: "/apworlds/animal-well", heading: "ANIMAL WELL Archipelago" },
+  ]) {
+    const response = await request.get(fixture.path);
+    const html = await response.text();
+    expect(response.ok()).toBeTruthy();
+    expect(html).toContain('name="robots" content="noindex, nofollow"');
+    expect(html).toContain(`<h1>${fixture.heading}</h1>`);
+    await page.goto(fixture.path);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(fixture.heading);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+  }
+
+  await page.goto("/apworlds/animal-well");
+  await expect(page.getByText("Download recommendation withheld")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Download APWorld/i })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Build ANIMAL WELL YAML/i })).toHaveCount(0);
+});
+
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
   const cases = [
     { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },
@@ -140,15 +171,15 @@ test("APWorld catalog explains its outputs and exposes task-led views", async ({
     "All games",
     "APWorld downloads",
     "Built into Archipelago",
-    "With setup guides",
+    "With recorded setup links",
     "With trackers",
   ]) {
     await expect(page.getByRole("button", { name: new RegExp(`^${label}`) })).toBeVisible();
   }
-  await page.getByRole("button", { name: /^With setup guides/ }).click();
+  await page.getByRole("button", { name: /^With recorded setup links/ }).click();
   await expect(page.locator(".apworld-card").first()).toBeVisible();
   await expect(page.locator(".apworld-card")).toHaveCount(
-    Number((await page.getByRole("button", { name: /^With setup guides/ }).locator("span").textContent()) || 0),
+    Number((await page.getByRole("button", { name: /^With recorded setup links/ }).locator("span").textContent()) || 0),
   );
 });
 

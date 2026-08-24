@@ -1,0 +1,32 @@
+schema_version = 1
+apworld_name = "ctr"
+slug = "crash-team-racing"
+review_state = "reviewed"
+publication_status = "published"
+reviewed_by = "Appie"
+reviewed_at = "2026-08-24"
+next_review_at = "2026-11-22"
+
+[editorial]
+copy_status = "approved_original"
+writing_policy = "original-ap-pie-copy"
+copy_reviewed_by = "Appie"
+copy_reviewed_at = "2026-08-24"
+
+[[sources]]
+id = "ctr-ap-pie-authority"
+kind = "ap_pie_authority"
+url = "https://ap-pie.com/ctr"
+verified_at = "2026-08-24"
+
+[[claims]]
+id = "ctr-established-route"
+topic = "routing"
+fact = "Crash Team Racing already has a dedicated AP-Pie authority section, so a second APWorld detail page would duplicate that route's purpose."
+source_refs = ["ctr-ap-pie-authority"]
+applies_to_versions = ["*"]
+verified_at = "2026-08-24"
+
+[route]
+action = "replace_detail_route"
+path = "/ctr"

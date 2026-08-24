@@ -26,6 +26,7 @@ from ap_lib.apworld_index import (
 )
 
 import config
+from apworld_editorial import join_index_record, load_reviewed_apworlds
 
 bp = Blueprint("apworlds", __name__)
 
@@ -757,7 +758,17 @@ def list_apworlds():
     if supported_only:
         worlds = [w for w in worlds if w["supported"]]
 
-    return jsonify(worlds)
+    overlays = load_reviewed_apworlds()
+    include_beta_previews = config.DEPLOYMENT_LABEL == "beta"
+    joined_worlds = []
+    for world in worlds:
+        joined = join_index_record(world, overlays, include_beta_previews=include_beta_previews)
+        entry = dict(world)
+        entry["editorial"] = joined["editorial"]
+        entry["review_state"] = joined["review_state"]
+        joined_worlds.append(entry)
+
+    return jsonify(joined_worlds)
 
 
 @bp.route("/api/apworlds/installed")

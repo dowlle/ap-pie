@@ -86,7 +86,6 @@ export default function YamlBuilderLanding() {
   return (
     <div className="yaml-builder-landing">
       <header className="yaml-builder-landing-hero">
-        <p className="yaml-builder-eyebrow">Archipelago player options</p>
         <h1>Build a player YAML</h1>
         <p>
           Pick your game, choose its options, and watch the YAML update as you work.
@@ -173,7 +172,6 @@ export default function YamlBuilderLanding() {
 
       <section className="yaml-builder-explainer" aria-labelledby="builder-explainer-title">
         <div>
-          <p className="yaml-builder-eyebrow">What this creates</p>
           <h2 id="builder-explainer-title">One file describing one world</h2>
           <p>
             A player YAML contains your exact slot name, game, APWorld version, and chosen randomizer options.
