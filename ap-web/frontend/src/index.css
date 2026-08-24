@@ -2874,6 +2874,7 @@ a.btn:hover { text-decoration: none; }
   justify-content: flex-end;
   gap: var(--space-2);
   flex-wrap: wrap;
+  width: 11rem;
   max-width: 12rem;
 }
 .apworld-card-primary-actions .btn { min-height: 2.25rem; white-space: nowrap; }
@@ -3084,7 +3085,7 @@ a.btn:hover { text-decoration: none; }
 }
 @media (max-width: 640px) {
   .apworld-card { grid-template-columns: auto minmax(0, 1fr); }
-  .apworld-card-primary-actions { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
+  .apworld-card-primary-actions { grid-column: 1 / -1; justify-content: flex-start; width: auto; max-width: none; }
   .apworld-card-head { flex-direction: column; }
   .apworld-card-meta { gap: var(--space-3) var(--space-5); }
   .apworld-toolbar { padding: var(--space-3); }

@@ -515,11 +515,11 @@ function WorldCard({
         </header>
 
         <dl className="apworld-card-meta">
-          <div><dt>Versions</dt><dd>{versions.length} available</dd></div>
+          <div><dt>Versions</dt><dd>{versions.length > 0 ? `${versions.length} available` : world.is_builtin ? "Core world" : "None recorded"}</dd></div>
           <div>
             <dt>Latest recorded</dt>
             <dd>
-              {latestVersion ? `v${latestVersion.version}` : "None"}
+              {latestVersion ? `v${latestVersion.version}` : world.is_builtin ? "Bundled" : "None"}
               {latestVersion?.fuzz_result && <FuzzResultPill fuzz_result={latestVersion.fuzz_result} version={latestVersion.version} />}
             </dd>
           </div>
