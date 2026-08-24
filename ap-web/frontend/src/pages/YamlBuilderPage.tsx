@@ -54,18 +54,14 @@ export default function YamlBuilderPage() {
   const [initialYaml, setInitialYaml] = useState<string | null>(null);
   const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(null);
   const [initialPlayerName, setInitialPlayerName] = useState<string | null>(null);
-  const [defaultPlayerName, setDefaultPlayerName] = useState<string | null>(null);
-  const [identityReady, setIdentityReady] = useState(false);
+  const identityReady = !authLoading;
+  const defaultPlayerName = identityReady
+    ? user?.discord_username?.trim().slice(0, 16) || null
+    : null;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [pendingYaml, setPendingYaml] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (authLoading || identityReady) return;
-    setDefaultPlayerName(user?.discord_username?.trim().slice(0, 16) || null);
-    setIdentityReady(true);
-  }, [authLoading, identityReady, user?.discord_username]);
 
   const returnPath = useMemo(() => {
     if (context === "public-room" && roomId) return `/r/${roomId}`;
