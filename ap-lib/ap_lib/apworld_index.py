@@ -325,21 +325,53 @@ def parse_lock_file(index_dir: Path) -> dict[str, dict[str, str]]:
         return {}
 
 
+def index_head_sha(dest_dir: Path) -> str | None:
+    """Current commit of the index clone, or None if it isn't a clone yet."""
+    if not (dest_dir / ".git").is_dir():
+        return None
+    proc = subprocess.run(
+        ["git", "-C", str(dest_dir), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    return proc.stdout.strip() if proc.returncode == 0 else None
+
+
 def fetch_index(dest_dir: Path, repo_url: str = DEFAULT_INDEX_REPO) -> Path:
-    """Clone or pull the Archipelago-index repo."""
+    """Clone or hard-sync the Archipelago-index repo to the remote's default branch.
+
+    Raises RuntimeError if the sync fails. Every git call here used to
+    discard its return code, so a failed pull left the old clone in place
+    while callers reported a successful refresh - which is how the prod
+    clone repeatedly went stale without anyone noticing.
+
+    The existing clone is `fetch` + `reset --hard` rather than `pull
+    --ff-only` because the clone is created shallow: a rewritten or
+    force-pushed remote makes a fast-forward pull fail permanently, and
+    this clone is a read-only mirror with nothing local worth keeping.
+    """
+
+    def _run(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        if proc.returncode != 0:
+            # git puts the useful message on stderr; keep it, drop the rest.
+            detail = (proc.stderr or proc.stdout or "").strip().splitlines()
+            raise RuntimeError(
+                f"{' '.join(cmd[:3])} failed (exit {proc.returncode}): "
+                f"{detail[-1] if detail else 'no output'}"
+            )
+        return proc
+
     if (dest_dir / ".git").is_dir():
-        subprocess.run(
-            ["git", "-C", str(dest_dir), "pull", "--ff-only"],
-            capture_output=True,
-            timeout=60,
-        )
+        _run(["git", "-C", str(dest_dir), "fetch", "--depth", "1", "origin"], 120)
+        head = _run(
+            ["git", "-C", str(dest_dir), "rev-parse", "FETCH_HEAD"], 30
+        ).stdout.strip()
+        _run(["git", "-C", str(dest_dir), "reset", "--hard", head], 60)
     else:
         dest_dir.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            ["git", "clone", "--depth", "1", repo_url, str(dest_dir)],
-            capture_output=True,
-            timeout=120,
-        )
+        _run(["git", "clone", "--depth", "1", repo_url, str(dest_dir)], 180)
     return dest_dir
 
 

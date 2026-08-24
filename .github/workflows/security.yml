@@ -68,3 +68,7 @@ jobs:
           cache-dependency-path: ap-web/requirements.txt
       - run: python -m pip install -r ap-web/requirements.txt ./ap-lib
       - run: python scripts/test_security_controls.py
+      # OPS-21 refresh endpoint: auth fails closed, and a failed git sync
+      # can't report success. Needs no database, but rides along here so
+      # there is one place that runs the backend checks.
+      - run: python scripts/test_index_refresh.py
