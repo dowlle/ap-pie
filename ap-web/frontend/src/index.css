@@ -4918,10 +4918,7 @@ details.yaml-builder-group > summary .muted {
   color: var(--sg-text);
 }
 .sg-hero { max-width: 850px; padding-bottom: 3.5rem; }
-.sg-kicker,
-.sg-label,
-.sg-section-heading > span,
-.sg-family > span {
+.sg-label {
   color: var(--sg-amber);
   font-family: var(--font-mono);
   font-size: 0.7rem;
@@ -4931,7 +4928,7 @@ details.yaml-builder-group > summary .muted {
 }
 .sg-hero h1 {
   max-width: 790px;
-  margin: 0.7rem 0 1rem;
+  margin: 0 0 1rem;
   color: var(--sg-text);
   font-family: "Bricolage Grotesque", var(--font-display);
   font-size: clamp(2.8rem, 6vw, 5.4rem);
@@ -4973,7 +4970,7 @@ details.yaml-builder-group > summary .muted {
 .sg-local-nav a { padding: 0.4rem 0.65rem; border-radius: 6px; color: var(--sg-muted); font-size: 0.8rem; text-decoration: none; }
 .sg-local-nav a:hover { background: var(--sg-raised); color: var(--sg-text); }
 .sg-section { padding: 4.2rem 0; border-top: 1px solid var(--sg-border); scroll-margin-top: 5rem; }
-.sg-section-heading { display: grid; grid-template-columns: 10rem 1fr; gap: 2rem; margin-bottom: 2rem; }
+.sg-section-heading { max-width: 760px; margin-bottom: 2rem; }
 .sg-section-heading h2 { margin: -0.2rem 0 0.35rem; color: var(--sg-text); font-family: "Bricolage Grotesque", var(--font-display); font-size: clamp(1.8rem, 3vw, 2.7rem); font-weight: 500; letter-spacing: -0.035em; }
 .sg-section-heading p { margin: 0; color: var(--sg-muted); line-height: 1.55; }
 .sg-color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.65rem; }
@@ -5014,7 +5011,7 @@ details.yaml-builder-group > summary .muted {
 .sg-notice-warning { border-left: 2px solid var(--sg-amber); }
 .sg-family-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
 .sg-family { min-height: 14rem; padding: 1.2rem; border: 1px solid var(--sg-border); border-radius: 12px; background: var(--sg-surface); }
-.sg-family h3 { margin: 2.7rem 0 0.6rem; color: var(--sg-text); font-family: "Bricolage Grotesque", var(--font-display); font-size: 1.35rem; font-weight: 500; letter-spacing: -0.025em; }
+.sg-family h3 { margin: 0 0 0.6rem; color: var(--sg-text); font-family: "Bricolage Grotesque", var(--font-display); font-size: 1.35rem; font-weight: 500; letter-spacing: -0.025em; }
 .sg-family p { margin: 0; color: var(--sg-muted); font-size: 0.8rem; line-height: 1.5; }
 .sg-family-orientation { background: radial-gradient(circle at 85% 0, rgba(242,173,85,.12), transparent 45%), var(--sg-surface); }
 .sg-family-catalog { box-shadow: 0 12px 35px rgba(0,0,0,.16); }
@@ -5039,7 +5036,6 @@ details.yaml-builder-group > summary .muted {
   .sg-color-grid { grid-template-columns: repeat(2, 1fr); }
   .sg-component-grid,
   .sg-family-grid { grid-template-columns: repeat(2, 1fr); }
-  .sg-section-heading { grid-template-columns: 1fr; gap: 0.65rem; }
 }
 @media (max-width: 620px) {
   .sg-page { padding-bottom: 4rem; }

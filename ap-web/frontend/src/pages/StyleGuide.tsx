@@ -15,7 +15,6 @@ export default function StyleGuide() {
   return (
     <div className="sg-page">
       <header className="sg-hero">
-        <span className="sg-kicker">AP-Pie visual foundation · beta proposal</span>
         <h1>One system, different kinds of work.</h1>
         <p>
           A warm, game-oriented interpretation of Raycast: calm surfaces, strong typography,
@@ -37,7 +36,6 @@ export default function StyleGuide() {
 
       <section id="foundation" className="sg-section">
         <div className="sg-section-heading">
-          <span>01 · Foundation</span>
           <div><h2>Familiar, warm and deliberate</h2><p>Consistent roles replace page-specific color and spacing choices.</p></div>
         </div>
 
@@ -69,7 +67,6 @@ export default function StyleGuide() {
 
       <section id="components" className="sg-section">
         <div className="sg-section-heading">
-          <span>02 · Components</span>
           <div><h2>A compact shared vocabulary</h2><p>The same controls and feedback patterns across public and signed-in pages.</p></div>
         </div>
 
@@ -118,20 +115,18 @@ export default function StyleGuide() {
 
       <section id="density" className="sg-section">
         <div className="sg-section-heading">
-          <span>03 · Page families</span>
           <div><h2>Shared language, appropriate density</h2><p>Consistency does not mean forcing guides and workspaces into the same layout.</p></div>
         </div>
         <div className="sg-family-grid">
-          <article className="sg-family sg-family-orientation"><span>Orientation</span><h3>Clear story, few actions</h3><p>Homepage and project landing pages use generous rhythm and a strong next step.</p></article>
-          <article className="sg-family sg-family-catalog"><span>Discovery</span><h3>Fast scanning and comparison</h3><p>Catalog pages use compact filters, repeatable cards and predictable metadata.</p></article>
-          <article className="sg-family sg-family-docs"><span>Documentation</span><h3>Comfortable, source-backed reading</h3><p>Guides use a narrow measure, local navigation, callouts and provenance.</p></article>
-          <article className="sg-family sg-family-workspace"><span>Workspace</span><h3>Dense, responsive tools</h3><p>Builders and rooms prioritize state, controls and immediate feedback.</p></article>
+          <article className="sg-family sg-family-orientation"><h3>Clear story, few actions</h3><p>Homepage and project landing pages use generous rhythm and a strong next step.</p></article>
+          <article className="sg-family sg-family-catalog"><h3>Fast scanning and comparison</h3><p>Catalog pages use compact filters, repeatable cards and predictable metadata.</p></article>
+          <article className="sg-family sg-family-docs"><h3>Comfortable, source-backed reading</h3><p>Guides use a narrow measure, local navigation, callouts and provenance.</p></article>
+          <article className="sg-family sg-family-workspace"><h3>Dense, responsive tools</h3><p>Builders and rooms prioritize state, controls and immediate feedback.</p></article>
         </div>
       </section>
 
       <section id="apworld" className="sg-section">
         <div className="sg-section-heading">
-          <span>04 · APWorld example</span>
           <div><h2>Enough information, no invented certainty</h2><p>A visual hypothesis using only the narrow set of currently defensible fields.</p></div>
         </div>
         <article className="sg-apworld-card">
