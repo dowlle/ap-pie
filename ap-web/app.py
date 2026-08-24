@@ -35,8 +35,8 @@ SPA_DYNAMIC_PATHS = (
 
 PUBLIC_ROUTE_SEO = {
     "": {
-        "title": "Archipelago Pie: Multiworld Randomizer Tools & Guides",
-        "description": "Learn how Archipelago multiworld randomizers work, build player YAMLs, browse community APWorlds, and organize games with Archipelago Pie.",
+        "title": "Archipelago Multiworld Tools & Guides | Archipelago Pie",
+        "description": "Build player YAMLs, browse community APWorlds, and learn how to join, host, and play Archipelago multiworld randomizers.",
         "canonical": "https://ap-pie.com/",
         "heading": "Your games, connected by one randomizer.",
         "intro": "Archipelago Pie helps beginners learn Archipelago, build player YAMLs, browse community game integrations, and organize multiworld sessions.",
@@ -44,7 +44,7 @@ PUBLIC_ROUTE_SEO = {
     },
     "apworlds": {
         "title": "APWorld Downloads & YAML Builder | Archipelago Pie",
-        "description": "Browse community Archipelago APWorlds by game and version, open setup resources, download integrations, and create compatible player YAMLs.",
+        "description": "Browse APWorld downloads by game and version, find setup guides, and build compatible player YAMLs for Archipelago multiworlds.",
         "canonical": "https://ap-pie.com/apworlds",
         "heading": "APWorld downloads and YAML builder",
         "intro": "An APWorld adds a game to Archipelago. Browse maintained community integrations, download the version your host expects, or create a compatible player YAML in the guided builder.",

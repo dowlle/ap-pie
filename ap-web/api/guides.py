@@ -65,10 +65,10 @@ GUIDES: list[dict[str, str]] = [
         "slug": "getting-started",
         "file": "getting-started.md",
         "h1": "Getting started with the Archipelago randomizer",
-        "page_title": "Getting started with the Archipelago randomizer | Archipelago Pie",
+        "page_title": "Archipelago Randomizer: Getting Started | Archipelago Pie",
         "meta_description": (
             "Learn how the Archipelago randomizer connects game worlds, then choose "
-            "how to join a room, create a solo seed, or organize a multiworld."
+            "how to join a room, play solo, or organize a multiworld."
         ),
         "card_title": "Getting started with Archipelago",
         "card_blurb": (
@@ -86,10 +86,10 @@ GUIDES: list[dict[str, str]] = [
         "slug": "hosting-on-archipelago-pie",
         "file": "hosting-on-archipelago-pie.md",
         "h1": "How to host a room on Archipelago Pie",
-        "page_title": "Hosting an Archipelago Pie collection room | Archipelago Pie",
+        "page_title": "Host a Collection Room | Archipelago Pie",
         "meta_description": (
-            "Create an Archipelago Pie collection room, set its rules and "
-            "APWorld versions, collect YAMLs, then close and download it for generation."
+            "Create an Archipelago Pie collection room, choose APWorld versions, "
+            "collect player YAMLs, then download everything for generation."
         ),
         "card_title": "Host a room on Archipelago Pie",
         "card_blurb": (
@@ -106,11 +106,10 @@ GUIDES: list[dict[str, str]] = [
         "slug": "hosting-a-multiworld",
         "file": "hosting-a-multiworld.md",
         "h1": "Hosting a multiworld",
-        "page_title": "Hosting an Archipelago multiworld | Archipelago Pie",
+        "page_title": "How to Host an Archipelago Multiworld | Archipelago Pie",
         "meta_description": (
-            "How to host an Archipelago multiworld: collect player YAMLs, "
-            "generate the game, put the server online via archipelago.gg or "
-            "your own machine, and run the session."
+            "Collect player YAMLs, generate the game, bring the Archipelago server "
+            "online, and run a synchronized or asynchronous multiworld."
         ),
         "card_title": "Hosting a multiworld",
         "card_blurb": (
@@ -127,11 +126,10 @@ GUIDES: list[dict[str, str]] = [
         "slug": "setting-up-your-yaml",
         "file": "setting-up-your-yaml.md",
         "h1": "Setting up your YAML",
-        "page_title": "Setting up your Archipelago YAML | Archipelago Pie",
+        "page_title": "Set Up an Archipelago YAML | Archipelago Pie",
         "meta_description": (
-            "How Archipelago YAML files work: getting a template from the "
-            "website or the Launcher, reading the option shapes and weights, "
-            "validating the file, and handing it to your host."
+            "Get an Archipelago YAML template, understand options and weights, "
+            "validate your player file, and send it to your multiworld host."
         ),
         "card_title": "Setting up your YAML",
         "card_blurb": (
@@ -148,10 +146,10 @@ GUIDES: list[dict[str, str]] = [
         "slug": "setting-up-a-game-client",
         "file": "setting-up-a-game-client.md",
         "h1": "Setting up an Archipelago game client",
-        "page_title": "Setting up an Archipelago game client | Archipelago Pie",
+        "page_title": "Set Up an Archipelago Game Client | Archipelago Pie",
         "meta_description": (
-            "Learn what an Archipelago client or connector does, which files and "
-            "room details you need, the common setup patterns, and how to troubleshoot."
+            "Learn what an Archipelago game client does, which files and room details "
+            "you need, setup patterns, and troubleshooting steps."
         ),
         "card_title": "Set up your game client",
         "card_blurb": (
@@ -190,9 +188,8 @@ GUIDES: list[dict[str, str]] = [
         "h1": "Play Crash Team Racing on PC",
         "page_title": "Play Crash Team Racing on PC | Archipelago Pie",
         "meta_description": (
-            "Crash Team Racing runs natively on PC through a community "
-            "decompilation. No emulator needed: download the ctr-native port, "
-            "add your own disc image, and play."
+            "Run Crash Team Racing natively on PC with ctr-native. Add a disc image "
+            "from your own copy and play without an emulator."
         ),
         "card_title": "Play Crash Team Racing on PC",
         "card_blurb": (
@@ -209,10 +206,10 @@ GUIDES: list[dict[str, str]] = [
         "slug": "ctr",
         "file": "ctr.md",
         "h1": "Crash Team Racing setup guide",
-        "page_title": "Crash Team Racing Archipelago setup | Archipelago Pie",
+        "page_title": "CTR Archipelago Setup Guide | Archipelago Pie",
         "meta_description": (
-            "Set up the native Crash Team Racing Archipelago client: what you need, "
-            "first launch, adding your disc image, and connecting to your room."
+            "Set up CTR Archipelago: install the client, add your own disc image, "
+            "configure a player YAML, and connect to a multiworld room."
         ),
         "card_title": "Crash Team Racing setup",
         "card_blurb": (
@@ -302,20 +299,20 @@ def guides_index() -> str:
         config.PUBLIC_BASE_URL,
         "CollectionPage",
         canonical_url,
-        "Guides | Archipelago Pie",
+        "Archipelago Guides | Archipelago Pie",
         (
-            "Setup guides for Archipelago multiworld randomizers: start with the "
-            "basics, then follow a guide for your game to get connected and playing."
+            "Follow Archipelago setup guides for multiworld basics, game clients, "
+            "player YAMLs, hosting, PopTracker, and Crash Team Racing."
         ),
     )
     collection["mainEntity"] = {"@id": item_list_id}
     return render_template(
         "guides/index.html",
         shelves=shelves,
-        page_title="Guides | Archipelago Pie",
+        page_title="Archipelago Guides | Archipelago Pie",
         meta_description=(
-            "Setup guides for Archipelago multiworld randomizers: start with the "
-            "basics, then follow a guide for your game to get connected and playing."
+            "Follow Archipelago setup guides for multiworld basics, game clients, "
+            "player YAMLs, hosting, PopTracker, and Crash Team Racing."
         ),
         canonical_url=canonical_url,
         og_type="website",

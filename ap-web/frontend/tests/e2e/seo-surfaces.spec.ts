@@ -3,8 +3,8 @@ import { expect, test } from "@playwright/test";
 const contracts = [
   {
     path: "/",
-    title: "Archipelago Pie: Multiworld Randomizer Tools & Guides",
-    description: "Learn how Archipelago multiworld randomizers work, build player YAMLs, browse community APWorlds, and organize games with Archipelago Pie.",
+    title: "Archipelago Multiworld Tools & Guides | Archipelago Pie",
+    description: "Build player YAMLs, browse community APWorlds, and learn how to join, host, and play Archipelago multiworld randomizers.",
     canonical: "https://ap-pie.com/",
     heading: "Your games, connected by one randomizer.",
     type: "WebSite",
@@ -12,7 +12,7 @@ const contracts = [
   {
     path: "/apworlds",
     title: "APWorld Downloads & YAML Builder | Archipelago Pie",
-    description: "Browse community Archipelago APWorlds by game and version, open setup resources, download integrations, and create compatible player YAMLs.",
+    description: "Browse APWorld downloads by game and version, find setup guides, and build compatible player YAMLs for Archipelago multiworlds.",
     canonical: "https://ap-pie.com/apworlds",
     heading: "APWorld downloads and YAML builder",
     type: "CollectionPage",
@@ -104,6 +104,42 @@ test("public SPA search surfaces appear exactly once in the sitemap", async ({ r
   const xml = await response.text();
   expect(xml.match(/<loc>https:\/\/ap-pie\.com\/apworlds<\/loc>/g)).toHaveLength(1);
   expect(xml.match(/<loc>https:\/\/ap-pie\.com\/yaml-builder<\/loc>/g)).toHaveLength(1);
+});
+
+test("all sitemap metadata fits the Stef Appelhof SERP simulator", async ({ page, request }) => {
+  // Contract from https://stefappelhof.com/seo-tools/serp-simulator/:
+  // Arial 20px titles under 600px; Arial 14px descriptions under 960px.
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  const paths = [...sitemap.matchAll(/<loc>https:\/\/ap-pie\.com([^<]*)<\/loc>/g)]
+    .map((match) => match[1] || "/");
+  const titles = new Set<string>();
+  const descriptions = new Set<string>();
+
+  for (const path of paths) {
+    const response = await request.get(path);
+    expect(response.ok(), `${path} should be available`).toBeTruthy();
+    const metadata = await page.evaluate((html) => {
+      const document = new DOMParser().parseFromString(html, "text/html");
+      const title = document.title.trim();
+      const description = document.querySelector('meta[name="description"]')?.getAttribute("content")?.trim() || "";
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d")!;
+      context.font = "20px Arial";
+      const titlePixels = Math.round(context.measureText(title).width);
+      context.font = "14px Arial";
+      const descriptionPixels = Math.round(context.measureText(description).width);
+      return { title, description, titlePixels, descriptionPixels };
+    }, await response.text());
+
+    expect(metadata.title, `${path} needs a title`).not.toBe("");
+    expect(metadata.description, `${path} needs a description`).not.toBe("");
+    expect(metadata.titlePixels, `${path} title: ${metadata.title}`).toBeLessThan(600);
+    expect(metadata.descriptionPixels, `${path} description: ${metadata.description}`).toBeLessThan(960);
+    expect(titles.has(metadata.title), `${path} title must be unique`).toBeFalsy();
+    expect(descriptions.has(metadata.description), `${path} description must be unique`).toBeFalsy();
+    titles.add(metadata.title);
+    descriptions.add(metadata.description);
+  }
 });
 
 test("CTR screenshots prefer WebP and every fallback stays below 100 KB", async ({ page, request }) => {

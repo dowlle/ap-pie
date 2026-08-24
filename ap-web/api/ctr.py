@@ -192,22 +192,21 @@ def ctr_landing() -> str:
     )
     canonical_url = _canonical("/ctr")
     description = (
-        "Play Crash Team Racing as an Archipelago multiworld randomizer. "
-        "Race for progression, send items between games, and play CTR "
-        "natively on Windows, Linux, or Steam Deck. No emulator needed."
+        "Play Crash Team Racing in an Archipelago multiworld. Race for progression, "
+        "exchange items with other games, and skip the emulator."
     )
     page_node = seo.page(
         config.PUBLIC_BASE_URL,
         "WebPage",
         canonical_url,
-        "CTR Archipelago, the Crash Team Racing randomizer | Archipelago Pie",
+        "CTR Archipelago Randomizer | Archipelago Pie",
         description,
     )
     page_node["mainEntity"] = {"@id": f"{canonical_url}#software"}
     return render_template(
         "ctr/landing.html",
         stable=STABLE,
-        page_title="CTR Archipelago, the Crash Team Racing randomizer | Archipelago Pie",
+        page_title="CTR Archipelago Randomizer | Archipelago Pie",
         meta_description=description,
         canonical_url=canonical_url,
         og_type="website",
@@ -232,8 +231,8 @@ def ctr_download() -> str:
     )
     canonical_url = _canonical("/ctr/download")
     description = (
-        "Download the latest stable CTR Archipelago client for Windows or "
-        "Linux and start playing Crash Team Racing in an Archipelago multiworld."
+        "Download the latest CTR Archipelago client for Windows, Linux, or Steam Deck, "
+        "then follow the setup guide to join a multiworld."
     )
     page_node = seo.page(
         config.PUBLIC_BASE_URL,
