@@ -42,6 +42,21 @@ for (const contract of contracts) {
   });
 }
 
+test("SPA navigation keeps public route metadata and canonical in sync", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('a[href="/apworlds"]').first().click();
+  await expect(page).toHaveURL(/\/apworlds$/);
+  await expect(page).toHaveTitle(contracts[1].title);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", contracts[1].description);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", contracts[1].canonical);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", contracts[1].canonical);
+
+  await page.locator('a[href="/yaml-builder"]').first().click();
+  await expect(page).toHaveURL(/\/yaml-builder$/);
+  await expect(page).toHaveTitle(contracts[2].title);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", contracts[2].canonical);
+});
+
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
   const cases = [
     { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },

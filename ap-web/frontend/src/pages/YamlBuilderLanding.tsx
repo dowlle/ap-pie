@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAPWorlds, type APWorldInfo } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { usePageTitle } from "../lib/usePageTitle";
 
 interface LocalDraft {
   key: string;
@@ -46,8 +45,6 @@ export default function YamlBuilderLanding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [drafts, setDrafts] = useState<LocalDraft[]>([]);
-
-  usePageTitle("YAML Builder");
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDrafts(readStandaloneDrafts(user?.id)), 0);

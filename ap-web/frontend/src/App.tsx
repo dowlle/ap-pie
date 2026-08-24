@@ -28,6 +28,7 @@ import { DeploymentProvider } from "./context/DeploymentContext";
 import AuthButton from "./components/AuthButton";
 import DeploymentBanner from "./components/DeploymentBanner";
 import { trackPageView } from "./lib/analytics";
+import PublicRouteHead from "./lib/PublicRouteHead";
 
 function NavBar() {
   const { user, authEnabled, loading, isOwner, viewAs, setViewAs } = useAuth();
@@ -301,6 +302,7 @@ function App() {
       <FeaturesProvider>
         <DeploymentProvider>
           <BrowserRouter>
+            <PublicRouteHead />
             <RouteAnalytics />
             <AppRoutes />
           </BrowserRouter>
