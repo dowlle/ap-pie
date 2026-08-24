@@ -83,6 +83,13 @@ export default function YamlBuilderLanding() {
     navigate(`/yaml-builder/${encodeURIComponent(world.name)}?version=${encodeURIComponent(version)}`);
   };
 
+  const deleteDraft = (draft: LocalDraft) => {
+    const label = draft.apworld.replaceAll("_", " ");
+    if (!window.confirm(`Delete your ${label} v${draft.version} draft from this browser tab?`)) return;
+    sessionStorage.removeItem(draft.key);
+    setDrafts((current) => current.filter((item) => item.key !== draft.key));
+  };
+
   return (
     <div className="yaml-builder-landing">
       <header className="yaml-builder-landing-hero">
@@ -123,12 +130,22 @@ export default function YamlBuilderLanding() {
                   <strong>{draft.apworld.replaceAll("_", " ")}</strong>
                   <span>{draft.playerName} · v{draft.version}</span>
                 </div>
-                <Link
-                  className="btn btn-sm btn-primary"
-                  to={`/yaml-builder/${encodeURIComponent(draft.apworld)}?version=${encodeURIComponent(draft.version)}`}
-                >
-                  Continue
-                </Link>
+                <div className="yaml-builder-draft-actions">
+                  <Link
+                    className="btn btn-sm btn-primary"
+                    to={`/yaml-builder/${encodeURIComponent(draft.apworld)}?version=${encodeURIComponent(draft.version)}`}
+                  >
+                    Continue
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger"
+                    aria-label={`Delete ${draft.apworld.replaceAll("_", " ")} draft`}
+                    onClick={() => deleteDraft(draft)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </article>
             ))}
           </div>

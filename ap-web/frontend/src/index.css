@@ -4967,6 +4967,12 @@ details.yaml-builder-group > summary .muted {
 .yaml-builder-draft-card > div { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 .yaml-builder-draft-card strong { color: var(--text-h); text-transform: capitalize; }
 .yaml-builder-draft-card span { color: var(--text-muted); font-size: 0.78rem; }
+.yaml-builder-draft-card > .yaml-builder-draft-actions {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
 .yaml-builder-empty { margin: 0; padding: 1.5rem; border: 1px dashed var(--border); border-radius: 9px; color: var(--text-muted); text-align: center; }
 .yaml-builder-explainer {
   display: grid;

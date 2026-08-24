@@ -53,6 +53,24 @@ test("new builder seeds the player name from Discord once", async ({ page }) => 
   await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(/name: EditedByPlayer/);
 });
 
+test("builder landing can delete one browser-tab draft", async ({ page }) => {
+  const draftKey = "ap-pie:yaml-builder:anonymous:standalone:standalone:pokepelago:0.6.3";
+  await page.goto("/yaml-builder");
+  await page.evaluate(([key]) => {
+    sessionStorage.setItem(key, JSON.stringify({ playerName: "Draft Player" }));
+  }, [draftKey]);
+  await page.reload();
+
+  await expect(page.getByRole("heading", { name: "Continue your draft" })).toBeVisible();
+  await expect(page.getByText("Draft Player · v0.6.3")).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Delete pokepelago draft" }).click();
+
+  await expect(page.getByText("Draft Player · v0.6.3")).toBeHidden();
+  await expect(page.getByRole("heading", { name: "Continue your draft" })).toBeHidden();
+  expect(await page.evaluate(([key]) => sessionStorage.getItem(key), [draftKey])).toBeNull();
+});
+
 test("anonymous public-room context submits the generated YAML", async ({ page }) => {
   const roomId = "public-builder-test";
   await mockRoomSchema(page, roomId);
