@@ -32,8 +32,6 @@ import FuzzResultPill from "../components/FuzzResultPill";
  *     to install locally instead).
  */
 
-const VERSIONS_COLLAPSED_LIMIT = 3;
-
 function isDiscordUrl(url: string): boolean {
   return /^https?:\/\/(www\.)?(discord\.com|discord\.gg|discordapp\.com)\//i.test(url);
 }
@@ -474,9 +472,6 @@ function WorldCard({
   detailRouteKind?: "spa" | "server";
   detailLabel?: string;
 }) {
-  // Always show all versions sorted descending (latest first). If the index
-  // only contained one version and that's the latest, the list is just one
-  // row - still cleaner than the old single-dropdown row layout.
   const versions = useMemo(
     () => [...world.versions].sort((a, b) => compareVersions(b.version, a.version)),
     [world.versions],
@@ -484,90 +479,128 @@ function WorldCard({
   const downloadable = versions.filter((v) => v.source === "url" || v.source === "local");
   const builtinOnly = downloadable.length === 0;
   const [showAllVersions, setShowAllVersions] = useState(false);
-  const hasMoreVersions = versions.length > VERSIONS_COLLAPSED_LIMIT;
-  const visibleVersions =
-    showAllVersions || !hasMoreVersions
-      ? versions
-      : versions.slice(0, VERSIONS_COLLAPSED_LIMIT);
+  const latestVersion = versions[0];
+  const latestDownloadable = downloadable[0];
+  const initials = world.display_name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+  const setupState = detailHref
+    ? "Reviewed details"
+    : world.setup_guide
+      ? "Recorded link"
+      : "Review required";
+
+  const detailAction = detailHref && (detailRouteKind === "server"
+    ? <a className="btn apworld-card-detail-button" href={detailHref}>{detailLabel ?? "View details"}</a>
+    : <Link className="btn apworld-card-detail-button" to={detailHref}>{detailLabel ?? "View details"}</Link>);
 
   return (
     <article className="apworld-card">
-      <header className="apworld-card-head">
-        <div className="apworld-card-title">
-          <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
-          <code className="apworld-card-key">{world.name}</code>
-        </div>
-        <div className="apworld-card-badges">
-          {world.disabled && <span className="badge badge-stopped">Disabled</span>}
-          {world.is_builtin && <span className="badge badge-builtin">Built-in</span>}
-          {!world.is_builtin && !world.disabled && (
-            <span className="badge badge-save">Community</span>
-          )}
-          {world.tags.map((t) => (
-            <span key={t} className="tag" title={TAG_DESCRIPTIONS[t]}>{t}</span>
-          ))}
-        </div>
-      </header>
+      <div className="apworld-card-icon-tile" aria-hidden="true">{initials || "AP"}</div>
+      <div className="apworld-card-main">
+        <header className="apworld-card-head">
+          <div className="apworld-card-title">
+            <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
+            <code className="apworld-card-key">{world.name}</code>
+          </div>
+          <div className="apworld-card-badges">
+            {world.disabled && <span className="badge badge-stopped">Disabled</span>}
+            {world.is_builtin && <span className="badge badge-builtin">Built in</span>}
+            {!world.is_builtin && !world.disabled && <span className="badge badge-save">Community</span>}
+          </div>
+        </header>
 
-      <HomeAndIconRow world={world} />
+        <dl className="apworld-card-meta">
+          <div><dt>Versions</dt><dd>{versions.length} available</dd></div>
+          <div>
+            <dt>Latest recorded</dt>
+            <dd>
+              {latestVersion ? `v${latestVersion.version}` : "None"}
+              {latestVersion?.fuzz_result && <FuzzResultPill fuzz_result={latestVersion.fuzz_result} version={latestVersion.version} />}
+            </dd>
+          </div>
+          <div><dt>Setup</dt><dd>{setupState}</dd></div>
+        </dl>
 
-      {detailHref && (detailRouteKind === "server"
-        ? <a className="apworld-card-detail-link" href={detailHref}>{detailLabel ?? "View reviewed details"} →</a>
-        : <Link className="apworld-card-detail-link" to={detailHref}>{detailLabel ?? "View reviewed details"} →</Link>)}
+        <HomeAndIconRow world={world} />
 
+        {world.tags.length > 0 && (
+          <div className="apworld-card-tags">
+            {world.tags.map((tag) => <span key={tag} className="tag" title={TAG_DESCRIPTIONS[tag]}>{tag}</span>)}
+          </div>
+        )}
 
-      {world.disabled ? (
-        <p className="apworld-card-note muted">
-          This APWorld has been retired from the public catalog. Existing room records may still name it, but it cannot be downloaded or used to create a new YAML here.
-        </p>
-      ) : builtinOnly ? (
-        <p className="apworld-card-note muted">
-          {world.is_builtin
-            ? "No external versions in the index - this APWorld ships with Archipelago itself."
-            : "No versions of this APWorld have passed the security audit or fuzzer at the moment."}
-        </p>
-      ) : (
-        <>
+        {world.disabled ? (
+          <p className="apworld-card-note muted">Retired from the active catalog. New download and YAML actions are unavailable.</p>
+        ) : builtinOnly ? (
+          <p className="apworld-card-note muted">
+            {world.is_builtin
+              ? "Included with Archipelago; no separate APWorld download is required."
+              : "No downloadable version is currently exposed by the index."}
+          </p>
+        ) : null}
+
+        {showAllVersions && (
           <ul className="apworld-version-list">
-            {visibleVersions.map((v) => (
+            {versions.map((version) => (
               <VersionRow
-                key={v.version}
+                key={version.version}
                 world={world}
-                v={v}
-                isLatest={v.version === versions[0]?.version}
+                v={version}
+                isLatest={version.version === latestVersion?.version}
                 installed={installed}
-                installing={installingVersion === v.version}
+                installing={installingVersion === version.version}
                 generationOn={generationOn}
                 onInstall={onInstall}
                 onBuild={onBuild}
-                building={buildingVersion === v.version}
+                building={buildingVersion === version.version}
               />
             ))}
           </ul>
-          {hasMoreVersions && (
-            <button
-              type="button"
-              className="apworld-version-toggle"
-              onClick={() => setShowAllVersions((s) => !s)}
-            >
-              {showAllVersions
-                ? "Show fewer versions"
-                : `Show ${versions.length - VERSIONS_COLLAPSED_LIMIT} more version${
-                    versions.length - VERSIONS_COLLAPSED_LIMIT === 1 ? "" : "s"
-                  }`}
-            </button>
-          )}
-        </>
-      )}
+        )}
 
-      {generationOn && installed && (
-        <div className="apworld-card-foot">
-          <span className="muted">Currently installed: v{installed.version ?? "?"}</span>
-          <button className="btn btn-sm btn-danger" onClick={() => onRemove(world.name)}>
-            Remove install
+        {versions.length > 1 && (
+          <button type="button" className="apworld-version-toggle" onClick={() => setShowAllVersions((shown) => !shown)}>
+            {showAllVersions ? "Hide version history" : `View all ${versions.length} versions`}
           </button>
-        </div>
-      )}
+        )}
+
+        {generationOn && installed && (
+          <div className="apworld-card-foot">
+            <span className="muted">Currently installed: v{installed.version ?? "?"}</span>
+            <button className="btn btn-sm btn-danger" onClick={() => onRemove(world.name)}>Remove install</button>
+          </div>
+        )}
+      </div>
+
+      <div className="apworld-card-primary-actions">
+        {detailAction}
+        {latestDownloadable && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => onBuild(world.name, latestDownloadable.version)}
+            disabled={buildingVersion === latestDownloadable.version}
+          >
+            {buildingVersion === latestDownloadable.version ? "Loading…" : "Create YAML"}
+          </button>
+        )}
+        {latestDownloadable && (
+          <a
+            className="btn btn-sm apworld-download-btn"
+            href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
+            download
+            title={`Download ${world.display_name} v${latestDownloadable.version}`}
+            aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
+          >
+            <DownloadIcon />
+          </a>
+        )}
+      </div>
     </article>
   );
 }
@@ -821,15 +854,18 @@ export default function APWorlds() {
           </a>.
         </p>
       </div>
+      <div className="apworld-toolbar">
       <div className="apworld-controls">
-        <input
-          type="search"
-          placeholder="Search by game or APWorld name..."
-          aria-label="Search APWorlds by game or APWorld name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="apworld-search"
-        />
+        <label className="apworld-search-field">
+          <span>Search integrations</span>
+          <input
+            type="search"
+            placeholder="Game or APWorld name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="apworld-search"
+          />
+        </label>
         <label className="apworld-control">
           <span>Sort</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
@@ -874,6 +910,7 @@ export default function APWorlds() {
             {label}<span>{catalogCounts[value]}</span>
           </button>
         ))}
+      </div>
       </div>
 
       {loading ? (
@@ -923,7 +960,7 @@ export default function APWorlds() {
                     ? "/apworlds/animal-well"
                     : undefined
                 }
-                detailLabel={w.name === "animal_well" ? "View review blockers" : undefined}
+                detailLabel="View details"
                 detailRouteKind={w.editorial?.route_kind ?? "spa"}
               />
             ))}

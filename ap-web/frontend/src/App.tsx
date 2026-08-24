@@ -79,7 +79,7 @@ function NavBar() {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
+      <Link to={isApproved ? "/rooms" : "/"} className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
       <button
         type="button"
         className="nav-hamburger"

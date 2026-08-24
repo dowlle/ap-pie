@@ -123,6 +123,9 @@ h3 { font-size: 1rem; margin-bottom: 0.5rem; }
 
 /* Navbar */
 .navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2554,7 +2557,7 @@ a.btn:hover { text-decoration: none; }
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin: 0 0 0.75rem;
+  margin: var(--space-3) 0 0;
 }
 .apworld-view-tabs button {
   display: inline-flex;
@@ -2605,22 +2608,39 @@ a.btn:hover { text-decoration: none; }
 .apworld-controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.6rem 0.9rem;
-  margin-bottom: 0.9rem;
+  margin-bottom: 0;
 }
-.apworld-controls .apworld-search { flex: 1 1 18rem; margin-bottom: 0; }
+.apworld-toolbar {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+}
+.apworld-search-field {
+  display: flex;
+  flex: 1 1 22rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+.apworld-controls .apworld-search { max-width: none; margin-bottom: 0; }
 .apworld-control {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: 0.74rem;
   color: var(--text-muted);
 }
 .apworld-control select {
   font-family: inherit;
   font-size: 0.82rem;
-  padding: 0.35rem 0.55rem;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
@@ -2748,6 +2768,7 @@ a.btn:hover { text-decoration: none; }
   max-width: 28rem;
   font-family: inherit;
   font-size: 0.9rem;
+  min-height: 2.4rem;
   padding: 0.45rem 0.7rem;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -2763,24 +2784,38 @@ a.btn:hover { text-decoration: none; }
 }
 .apworlds-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
 }
 .apworld-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-4);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.85rem 1rem;
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
   background: var(--bg-card);
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  transition: border-color 150ms ease, background 150ms ease;
 }
+.apworld-card:hover { border-color: var(--border-strong); }
+.apworld-card-icon-tile {
+  display: grid;
+  place-items: center;
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: var(--radius-control);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--color-info) 12%, transparent));
+  color: var(--accent-light);
+  font: 700 0.78rem var(--font-mono);
+}
+.apworld-card-main { min-width: 0; }
 .apworld-card-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .apworld-card-title {
   display: flex;
@@ -2810,6 +2845,18 @@ a.btn:hover { text-decoration: none; }
   flex-wrap: wrap;
   align-items: center;
 }
+.apworld-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-3);
+}
+.apworld-card-meta div,
+.apworld-card-meta dt,
+.apworld-card-meta dd { display: block; }
+.apworld-card-meta dt { margin-bottom: 0.12rem; color: var(--text-muted); font-size: 0.64rem; }
+.apworld-card-meta dd { display: flex; align-items: center; gap: var(--space-2); color: var(--text-h); font-size: 0.76rem; font-weight: 650; }
+.apworld-card-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
 .apworld-card-home {
   font-size: 0.78rem;
   color: var(--accent);
@@ -2821,6 +2868,16 @@ a.btn:hover { text-decoration: none; }
   flex-wrap: wrap;
   align-items: center;
 }
+.apworld-card-main > .apworld-card-icons { margin-top: var(--space-2); }
+.apworld-card-primary-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  max-width: 12rem;
+}
+.apworld-card-primary-actions .btn { min-height: 2.25rem; white-space: nowrap; }
+.apworld-card-detail-button { color: var(--text-h); }
 .apworld-card-detail-link {
   align-self: flex-start;
   color: var(--accent-light);
@@ -2941,13 +2998,13 @@ a.btn:hover { text-decoration: none; }
 }
 
 .apworld-card-note {
-  margin: 0;
+  margin: var(--space-3) 0 0;
   font-size: 0.8rem;
   font-style: italic;
 }
 .apworld-version-list {
   list-style: none;
-  margin: 0;
+  margin: var(--space-3) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -3020,6 +3077,18 @@ a.btn:hover { text-decoration: none; }
   border-top: 1px solid var(--border);
   font-size: 0.8rem;
   flex-wrap: wrap;
+}
+
+@media (max-width: 1100px) {
+  .apworlds-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .apworld-card { grid-template-columns: auto minmax(0, 1fr); }
+  .apworld-card-primary-actions { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
+  .apworld-card-head { flex-direction: column; }
+  .apworld-card-meta { gap: var(--space-3) var(--space-5); }
+  .apworld-toolbar { padding: var(--space-3); }
+  .apworld-control, .apworld-control select { width: 100%; }
 }
 
 /* == Per-room APWorld pin picker (in RoomSettingsModal) ==========
@@ -3517,6 +3586,9 @@ a.btn:hover { text-decoration: none; }
     var(--bg);
 }
 .public-shell-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;

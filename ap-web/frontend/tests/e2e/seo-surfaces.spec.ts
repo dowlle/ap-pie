@@ -194,6 +194,36 @@ test("APWorld catalog explains its outputs and exposes task-led views", async ({
   );
 });
 
+test("APWorld cards use the style-guide comparison hierarchy", async ({ page }) => {
+  await page.goto("/apworlds");
+  const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
+  await expect(ctrCard.locator(".apworld-card-icon-tile")).toHaveText("CT");
+  await expect(ctrCard.getByText("Versions", { exact: true })).toBeVisible();
+  await expect(ctrCard.getByText("Latest recorded", { exact: true })).toBeVisible();
+  await expect(ctrCard.getByText("Setup", { exact: true })).toBeVisible();
+  await expect(ctrCard.locator(".apworld-version-list")).toHaveCount(0);
+  await ctrCard.getByRole("button", { name: /View all \d+ versions/ }).click();
+  await expect(ctrCard.locator(".apworld-version-list")).toBeVisible();
+});
+
+test("navigation stays visible and the signed-in brand opens Rooms", async ({ page }) => {
+  await page.route("**/api/auth/me", (route) => route.fulfill({
+    json: {
+      id: 42,
+      discord_id: "nav-test",
+      discord_username: "Navigation Test",
+      is_admin: true,
+      is_approved: true,
+      created_at: "2026-08-24T00:00:00Z",
+    },
+  }));
+  await page.goto("/apworlds");
+  const nav = page.locator(".navbar");
+  await expect(nav).toHaveCSS("position", "sticky");
+  const brand = page.getByRole("link", { name: "Archipelago Pie" });
+  await expect(brand).toHaveAttribute("href", "/rooms");
+});
+
 test("public SPA search surfaces appear exactly once in the sitemap", async ({ request }) => {
   const response = await request.get("/sitemap.xml");
   expect(response.ok()).toBeTruthy();
