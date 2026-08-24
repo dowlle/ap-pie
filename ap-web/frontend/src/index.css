@@ -2788,8 +2788,9 @@ a.btn:hover { text-decoration: none; }
   gap: var(--space-3);
 }
 .apworld-card {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 11rem;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: var(--space-4);
   border: 1px solid var(--border);
@@ -2823,6 +2824,7 @@ a.btn:hover { text-decoration: none; }
   gap: 0.15rem;
   min-width: 0;
   flex: 1;
+  padding-right: 7.5rem;
 }
 .apworld-card-title h3 {
   margin: 0;
@@ -2840,16 +2842,28 @@ a.btn:hover { text-decoration: none; }
   color: var(--text-muted);
 }
 .apworld-card-badges {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
   display: flex;
   gap: 0.3rem;
   flex-wrap: wrap;
   align-items: center;
 }
+.apworld-card-info-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
 .apworld-card-meta {
   display: flex;
+  flex: 1 1 17rem;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-6);
-  margin-top: var(--space-3);
+  margin: 0;
 }
 .apworld-card-meta div,
 .apworld-card-meta dt,
@@ -2874,8 +2888,7 @@ a.btn:hover { text-decoration: none; }
   justify-content: flex-end;
   gap: var(--space-2);
   flex-wrap: wrap;
-  width: 100%;
-  max-width: 12rem;
+  flex: 0 0 auto;
 }
 .apworld-card-primary-actions .btn { min-height: 2.25rem; white-space: nowrap; }
 .apworld-card-detail-button { color: var(--text-h); }
@@ -3085,8 +3098,9 @@ a.btn:hover { text-decoration: none; }
 }
 @media (max-width: 640px) {
   .apworld-card { grid-template-columns: auto minmax(0, 1fr); }
-  .apworld-card-primary-actions { grid-column: 1 / -1; justify-content: flex-start; width: auto; max-width: none; }
-  .apworld-card-head { flex-direction: column; }
+  .apworld-card-primary-actions { justify-content: flex-start; }
+  .apworld-card-title { padding-right: 0; }
+  .apworld-card-head { padding-top: 2rem; }
   .apworld-card-meta { gap: var(--space-3) var(--space-5); }
   .apworld-toolbar { padding: var(--space-3); }
   .apworld-control, .apworld-control select { width: 100%; }

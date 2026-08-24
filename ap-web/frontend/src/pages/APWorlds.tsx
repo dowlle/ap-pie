@@ -500,6 +500,11 @@ function WorldCard({
 
   return (
     <article className="apworld-card">
+      <div className="apworld-card-badges">
+        {world.disabled && <span className="badge badge-stopped">Disabled</span>}
+        {world.is_builtin && <span className="badge badge-builtin">Built in</span>}
+        {!world.is_builtin && !world.disabled && <span className="badge badge-save">Community</span>}
+      </div>
       <div className="apworld-card-icon-tile" aria-hidden="true">{initials || "AP"}</div>
       <div className="apworld-card-main">
         <header className="apworld-card-head">
@@ -507,24 +512,46 @@ function WorldCard({
             <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
             <code className="apworld-card-key">{world.name}</code>
           </div>
-          <div className="apworld-card-badges">
-            {world.disabled && <span className="badge badge-stopped">Disabled</span>}
-            {world.is_builtin && <span className="badge badge-builtin">Built in</span>}
-            {!world.is_builtin && !world.disabled && <span className="badge badge-save">Community</span>}
-          </div>
         </header>
 
-        <dl className="apworld-card-meta">
-          <div><dt>Versions</dt><dd>{versions.length > 0 ? `${versions.length} available` : world.is_builtin ? "Core world" : "None recorded"}</dd></div>
-          <div>
-            <dt>Latest recorded</dt>
-            <dd>
-              {latestVersion ? `v${latestVersion.version}` : world.is_builtin ? "Bundled" : "None"}
-              {latestVersion?.fuzz_result && <FuzzResultPill fuzz_result={latestVersion.fuzz_result} version={latestVersion.version} />}
-            </dd>
+        <div className="apworld-card-info-row">
+          <dl className="apworld-card-meta">
+            <div><dt>Versions</dt><dd>{versions.length > 0 ? `${versions.length} available` : world.is_builtin ? "Core world" : "None recorded"}</dd></div>
+            <div>
+              <dt>Latest recorded</dt>
+              <dd>
+                {latestVersion ? `v${latestVersion.version}` : world.is_builtin ? "Bundled" : "None"}
+                {latestVersion?.fuzz_result && <FuzzResultPill fuzz_result={latestVersion.fuzz_result} version={latestVersion.version} />}
+              </dd>
+            </div>
+            <div><dt>Setup</dt><dd>{setupState}</dd></div>
+          </dl>
+
+          <div className="apworld-card-primary-actions">
+            {detailAction}
+            {latestDownloadable && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => onBuild(world.name, latestDownloadable.version)}
+                disabled={buildingVersion === latestDownloadable.version}
+              >
+                {buildingVersion === latestDownloadable.version ? "Loading…" : "Create YAML"}
+              </button>
+            )}
+            {latestDownloadable && (
+              <a
+                className="btn btn-sm apworld-download-btn"
+                href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
+                download
+                title={`Download ${world.display_name} v${latestDownloadable.version}`}
+                aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
+              >
+                <DownloadIcon />
+              </a>
+            )}
           </div>
-          <div><dt>Setup</dt><dd>{setupState}</dd></div>
-        </dl>
+        </div>
 
         <HomeAndIconRow world={world} />
 
@@ -577,30 +604,6 @@ function WorldCard({
         )}
       </div>
 
-      <div className="apworld-card-primary-actions">
-        {detailAction}
-        {latestDownloadable && (
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => onBuild(world.name, latestDownloadable.version)}
-            disabled={buildingVersion === latestDownloadable.version}
-          >
-            {buildingVersion === latestDownloadable.version ? "Loading…" : "Create YAML"}
-          </button>
-        )}
-        {latestDownloadable && (
-          <a
-            className="btn btn-sm apworld-download-btn"
-            href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
-            download
-            title={`Download ${world.display_name} v${latestDownloadable.version}`}
-            aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
-          >
-            <DownloadIcon />
-          </a>
-        )}
-      </div>
     </article>
   );
 }
