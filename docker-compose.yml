@@ -55,6 +55,12 @@ services:
       # (no banner). Set to "beta" on the beta stack so testers see a
       # persistent visual cue and never confuse the two.
       - AP_DEPLOYMENT_LABEL=${AP_DEPLOYMENT_LABEL:-}
+      # OPS-21: lets the index-merge pipeline POST /api/apworlds/refresh so a
+      # merged world appears without the manual in-container refresh. Empty
+      # by default = admin-session-only, i.e. today's behaviour. Generate
+      # with `python3 -c 'import secrets; print(secrets.token_hex(32))'`;
+      # values under 32 chars are refused at request time.
+      - AP_INDEX_REFRESH_TOKEN=${AP_INDEX_REFRESH_TOKEN:-}
       - AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE=${AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE:-600}
       - AP_TRUST_CLOUDFLARE_HEADERS=${AP_TRUST_CLOUDFLARE_HEADERS:-false}
       # FEAT-17 V0: real-time WebSocket tracker. Off by default; flip to
