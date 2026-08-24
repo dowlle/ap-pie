@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import subprocess
 import threading
 from datetime import datetime, timezone
@@ -20,6 +21,7 @@ from ap_lib.apworld_index import (
     build_game_lookup,
     download_apworld,
     fetch_index,
+    index_head_sha,
     list_installed,
     parse_index_dir,
     resolve_local_path,
@@ -52,6 +54,7 @@ _index_cache: list | None = None
 _index_worlds_cache: list | None = None  # raw APWorldInfo objects, parallel to _index_cache
 _index_lookup_cache: dict | None = None  # game_name -> APWorldInfo
 _index_lock = threading.Lock()
+_index_refresh_lock = threading.Lock()
 
 
 def _get_index_dir() -> Path:
@@ -956,32 +959,87 @@ def remove_apworld(name: str):
     return jsonify({"status": "removed", "name": name})
 
 
+def _has_refresh_token() -> bool:
+    """True when the request carries the OPS-21 machine refresh token.
+
+    Fails closed: no configured token, a token below the minimum length, or
+    a missing/!malformed header all return False, and the caller then falls
+    back to requiring an admin session. Comparison is constant-time so a
+    wrong token leaks nothing about the right one through timing.
+    """
+    expected = getattr(config, "INDEX_REFRESH_TOKEN", "") or ""
+    if len(expected) < getattr(config, "INDEX_REFRESH_TOKEN_MIN_LEN", 32):
+        return False
+
+    header = request.headers.get("Authorization", "")
+    scheme, _, presented = header.partition(" ")
+    if scheme.lower() != "bearer" or not presented:
+        return False
+
+    return hmac.compare_digest(presented.strip(), expected)
+
+
 @bp.route("/api/apworlds/refresh", methods=["POST"])
-@requires_admin
 def refresh_index():
     """Pull the latest index from the configured repo. NOT gated on
     the generation feature - the per-room picker (FEAT-21) needs a
     fresh index even when this server doesn't run AP itself.
 
-    Admin-only because the refresh is global state and any approved
-    user could otherwise spam pulls or sync in untrusted upstream
-    state if the host hasn't reviewed it yet (2026-05-03 policy).
-    The /apworlds page itself stays visible to all approved hosts;
-    only the Refresh button hides for non-admins (gated client-side
-    via FeaturesContext / AuthContext - see APWorlds.tsx)."""
+    Two ways in. An admin session (the Refresh button, unchanged since
+    2026-05-03): the refresh is global state, and any approved user could
+    otherwise spam pulls or sync in upstream state the host hasn't
+    reviewed. Or the OPS-21 bearer token, so the index-merge pipeline can
+    refresh straight after a merge instead of a human remembering the
+    manual step. The token is scoped to this one route and is not an admin
+    credential - see the note in config.py.
+
+    The /apworlds page itself stays visible to all approved hosts; only the
+    Refresh button hides for non-admins (gated client-side via
+    FeaturesContext / AuthContext - see APWorlds.tsx)."""
     global _index_cache, _index_worlds_cache, _index_lookup_cache
+
+    if not _has_refresh_token():
+        # Run the real decorator rather than re-implementing its checks, so
+        # session refusals keep returning exactly what they returned before
+        # (401 unauthenticated vs 403 non-admin) and stay in step if the
+        # decorator changes. It returns a response on refusal and None on
+        # success, having set g.user.
+        refusal = requires_admin(lambda: None)()
+        if refusal is not None:
+            return refusal
+
+    if not _index_refresh_lock.acquire(blocking=False):
+        return jsonify({"error": "An index refresh is already in progress"}), 409
+
     index_dir = _get_index_dir()
     repo_url = current_app.config.get("AP_INDEX_REPO", "https://github.com/dowlle/Archipelago-index.git")
-
     try:
-        fetch_index(index_dir, repo_url)
+        # Readers use this same lock. They continue serving the old in-memory
+        # snapshot until the candidate clone has passed strict parsing and is
+        # atomically promoted, then all three caches are replaced together.
+        with _index_lock:
+            before = index_head_sha(index_dir)
+            fetch_index(
+                index_dir,
+                repo_url,
+                validate=lambda candidate: parse_index_dir(candidate, strict=True),
+            )
+            _index_cache = None
+            _index_worlds_cache = None
+            _index_lookup_cache = None
+            _load_index_into_cache()
+            worlds = _index_cache or []
+            after = index_head_sha(index_dir)
     except Exception as e:
-        return jsonify({"error": f"Failed to fetch index: {e}"}), 500
+        return jsonify({"error": f"Failed to refresh index: {e}"}), 500
+    finally:
+        _index_refresh_lock.release()
 
-    with _index_lock:
-        _index_cache = None  # Force re-parse on next request
-        _index_worlds_cache = None
-        _index_lookup_cache = None
-
-    worlds = _get_index()
-    return jsonify({"status": "refreshed", "count": len(worlds)})
+    # Report the commit so a caller can prove the clone actually moved. A
+    # refresh that lands on the same sha is a valid no-op, not a failure.
+    return jsonify({
+        "status": "refreshed",
+        "count": len(worlds),
+        "commit": after,
+        "changed": bool(after and after != before),
+    })

@@ -287,8 +287,19 @@ export async function removeAPWorld(name: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to remove APWorld");
 }
 
-export async function refreshAPWorldIndex(): Promise<{ status: string; count: number }> {
+export interface APWorldIndexRefreshResult {
+  status: string;
+  count: number;
+  commit: string | null;
+  changed: boolean;
+}
+
+export async function refreshAPWorldIndex(): Promise<APWorldIndexRefreshResult> {
   const res = await fetch(`${BASE}/apworlds/refresh`, { method: "POST" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null) as { error?: string } | null;
+    throw new Error(body?.error || `Index refresh failed (${res.status} ${res.statusText})`);
+  }
   return res.json();
 }
 

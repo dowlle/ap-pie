@@ -83,6 +83,23 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
 SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", "")
 SESSION_COOKIE_NAME = os.environ.get("SESSION_COOKIE_NAME", "")
 
+# OPS-21: machine access to POST /api/apworlds/refresh, so the index-merge
+# pipeline can refresh the in-container clone itself instead of a human
+# remembering the manual step after every merge.
+#
+# The endpoint still accepts an admin session (the Refresh button is
+# unchanged); this token is a second, narrower door for one caller. It grants
+# exactly one action - re-sync a public read-only git mirror and drop a cache
+# - so a leak is a nuisance, not an escalation. It is NOT an admin credential
+# and must never be accepted by any other route.
+#
+# Unset (the default) disables token auth entirely, so every deploy that
+# doesn't opt in keeps admin-session-only behaviour. A value shorter than 32
+# characters is refused at request time rather than silently accepted, so a
+# placeholder can't become a live credential.
+INDEX_REFRESH_TOKEN = os.environ.get("AP_INDEX_REFRESH_TOKEN", "")
+INDEX_REFRESH_TOKEN_MIN_LEN = 32
+
 # Tracker
 TRACKER_CACHE_TTL = int(os.environ.get("AP_TRACKER_CACHE_TTL", "30"))
 # FEAT-14 follow-up 2026-05-02: per-slot detail (items / locations / hints)
