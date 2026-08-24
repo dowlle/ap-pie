@@ -103,7 +103,7 @@ test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ p
 test("server-owned APWorld routes perform a document navigation", async ({ page }) => {
   await page.goto("/apworlds");
   const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
-  await ctrCard.getByRole("link", { name: "Crash Team Racing" }).click();
+  await ctrCard.getByRole("link", { name: "Crash Team Racing", exact: true }).click();
   await expect(page).toHaveURL(/\/ctr$/);
   await expect(page.getByRole("heading", { level: 1, name: "Crash Team Racing Archipelago" })).toBeVisible();
   await page.goBack();
