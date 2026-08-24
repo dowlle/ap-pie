@@ -40,6 +40,7 @@ export default function YamlBuilder({
   initialYaml,
   initialValues,
   initialPlayerName,
+  defaultPlayerName,
   presentation = "modal",
   draftKey,
   onGameChange,
@@ -74,6 +75,9 @@ export default function YamlBuilder({
    *  document to parse - the values were never a file in the first place. */
   initialValues?: Record<string, unknown> | null;
   initialPlayerName?: string | null;
+  /** One-time seed for a new builder. Drafts/imports may replace it, and
+   * subsequent prop/auth refreshes must never reapply it over user edits. */
+  defaultPlayerName?: string | null;
   /** Full-page routes reuse the same builder state machine without native
    *  dialog focus, backdrop, or Escape behavior. */
   presentation?: "modal" | "page";
@@ -87,7 +91,9 @@ export default function YamlBuilder({
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   const [selected, setSelected] = useState<string>("");
-  const [playerName, setPlayerName] = useState("Player1");
+  const [playerName, setPlayerName] = useState(
+    () => defaultPlayerName?.trim().slice(0, 16) || "Player1",
+  );
   const [values, setValues] = useState<Record<string, unknown>>({});
   // Archipelago-level options. Absent key = "leave the game default".
   const [coreValues, setCoreValues] = useState<Record<string, unknown>>({});

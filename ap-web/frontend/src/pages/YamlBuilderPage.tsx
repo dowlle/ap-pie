@@ -43,7 +43,7 @@ export default function YamlBuilderPage() {
   const { apworld = "" } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const context = contextFrom(searchParams.get("context"));
   const roomId = searchParams.get("room") ?? "";
   const version = searchParams.get("version") ?? undefined;
@@ -54,10 +54,18 @@ export default function YamlBuilderPage() {
   const [initialYaml, setInitialYaml] = useState<string | null>(null);
   const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(null);
   const [initialPlayerName, setInitialPlayerName] = useState<string | null>(null);
+  const [defaultPlayerName, setDefaultPlayerName] = useState<string | null>(null);
+  const [identityReady, setIdentityReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [pendingYaml, setPendingYaml] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (authLoading || identityReady) return;
+    setDefaultPlayerName(user?.discord_username?.trim().slice(0, 16) || null);
+    setIdentityReady(true);
+  }, [authLoading, identityReady, user?.discord_username]);
 
   const returnPath = useMemo(() => {
     if (context === "public-room" && roomId) return `/r/${roomId}`;
@@ -85,6 +93,7 @@ export default function YamlBuilderPage() {
   }, []);
 
   useEffect(() => {
+    if (!identityReady) return;
     let cancelled = false;
 
     const run = async () => {
@@ -127,7 +136,7 @@ export default function YamlBuilderPage() {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [apworld, choosing, context, roomId, sourceId, version]);
+  }, [apworld, choosing, context, identityReady, roomId, sourceId, version]);
 
   const handleRoomCreated = async (room: Room) => {
     setCreateRoomOpen(false);
@@ -209,6 +218,7 @@ export default function YamlBuilderPage() {
         initialYaml={initialYaml}
         initialValues={initialValues}
         initialPlayerName={initialPlayerName}
+        defaultPlayerName={defaultPlayerName}
         draftKey={draftKey}
         submit={submit}
         reviewExtra={context === "standalone" ? (yamlContent) => (

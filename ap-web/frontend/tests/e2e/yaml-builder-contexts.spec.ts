@@ -40,6 +40,19 @@ test("standalone builder downloads its finalized YAML", async ({ page }) => {
   expect(download.suggestedFilename()).toMatch(/\.yaml$/);
 });
 
+test("new builder seeds the player name from Discord once", async ({ page }) => {
+  await mockSignedInUser(page);
+  await page.goto("/yaml-builder/ctr?version=0.1.5");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  const playerName = page.locator('input[placeholder^="Your slot name"]');
+  await expect(playerName).toHaveValue("Builder Test");
+  await playerName.fill("EditedByPlayer");
+  await page.getByRole("button", { name: "Review YAML" }).click();
+  await page.getByRole("button", { name: "Back to options" }).click();
+  await expect(playerName).toHaveValue("EditedByPlayer");
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(/name: EditedByPlayer/);
+});
+
 test("anonymous public-room context submits the generated YAML", async ({ page }) => {
   const roomId = "public-builder-test";
   await mockRoomSchema(page, roomId);
