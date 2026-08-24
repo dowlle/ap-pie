@@ -22,6 +22,7 @@ from flask import Blueprint, abort, redirect, render_template, request, session
 
 import analytics
 import config
+import seo
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 _REFERENCE_DIR = Path(__file__).resolve().parent.parent / "guides" / "ctr-reference"
@@ -143,6 +144,44 @@ def _render_reference_markdown(md_path: Path) -> tuple[str, list[dict]]:
     return html, sections
 
 
+def _software_node() -> dict:
+    return {
+        "@type": "SoftwareApplication",
+        "@id": f"{_canonical('/ctr')}#software",
+        "name": "CTR Archipelago",
+        "description": (
+            "A native Crash Team Racing client and randomizer integration for "
+            "Archipelago multiworld games."
+        ),
+        "url": _canonical("/ctr"),
+        "applicationCategory": "GameApplication",
+        "operatingSystem": ["Windows", "Linux", "SteamOS"],
+        "softwareVersion": STABLE["version"],
+        "datePublished": STABLE["released"],
+        "image": _canonical("/img/ctr/og-ctr.jpg"),
+        "downloadUrl": [
+            _canonical("/ctr/download/windows"),
+            _canonical("/ctr/download/linux"),
+        ],
+        "publisher": {"@id": seo.organization_id(config.PUBLIC_BASE_URL)},
+        "isPartOf": {"@id": seo.website_id(config.PUBLIC_BASE_URL)},
+    }
+
+
+def _breadcrumb(path: str, name: str, include_download: bool = False) -> dict:
+    items = [
+        {"@type": "ListItem", "position": 1, "name": "Archipelago Pie", "item": _canonical("/")},
+        {"@type": "ListItem", "position": 2, "name": "CTR Archipelago", "item": _canonical("/ctr")},
+    ]
+    if include_download:
+        items.append({"@type": "ListItem", "position": 3, "name": name, "item": _canonical(path)})
+    return {
+        "@type": "BreadcrumbList",
+        "@id": f"{_canonical(path)}#breadcrumb",
+        "itemListElement": items,
+    }
+
+
 @bp.route("/ctr", strict_slashes=False)
 def ctr_landing() -> str:
     analytics.record_event(
@@ -151,19 +190,35 @@ def ctr_landing() -> str:
         props={"page": "landing", "from_path": analytics.entry_path(request)},
         req=request,
     )
+    canonical_url = _canonical("/ctr")
+    description = (
+        "Play Crash Team Racing as an Archipelago multiworld randomizer. "
+        "Race for progression, send items between games, and play CTR "
+        "natively on Windows, Linux, or Steam Deck. No emulator needed."
+    )
+    page_node = seo.page(
+        config.PUBLIC_BASE_URL,
+        "WebPage",
+        canonical_url,
+        "CTR Archipelago, the Crash Team Racing randomizer | Archipelago Pie",
+        description,
+    )
+    page_node["mainEntity"] = {"@id": f"{canonical_url}#software"}
     return render_template(
         "ctr/landing.html",
         stable=STABLE,
         page_title="CTR Archipelago, the Crash Team Racing randomizer | Archipelago Pie",
-        meta_description=(
-            "Play Crash Team Racing as an Archipelago multiworld randomizer. "
-            "Race for progression, send items between games, and play CTR "
-            "natively on Windows, Linux, or Steam Deck. No emulator needed."
-        ),
-        canonical_url=_canonical("/ctr"),
+        meta_description=description,
+        canonical_url=canonical_url,
         og_type="website",
         og_image=_canonical("/img/ctr/og-ctr.jpg"),
         site_url=_canonical("/"),
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            page_node,
+            _software_node(),
+            _breadcrumb("/ctr", "CTR Archipelago"),
+        ),
     )
 
 
@@ -175,20 +230,35 @@ def ctr_download() -> str:
         props={"page": "download", "from_path": analytics.entry_path(request)},
         req=request,
     )
+    canonical_url = _canonical("/ctr/download")
+    description = (
+        "Download the latest stable CTR Archipelago client for Windows or "
+        "Linux and start playing Crash Team Racing in an Archipelago multiworld."
+    )
+    page_node = seo.page(
+        config.PUBLIC_BASE_URL,
+        "WebPage",
+        canonical_url,
+        "Download CTR Archipelago | Archipelago Pie",
+        description,
+    )
+    page_node["mainEntity"] = {"@id": f"{_canonical('/ctr')}#software"}
     return render_template(
         "ctr/download.html",
         stable=STABLE,
         prerelease=PRERELEASE,
         page_title="Download CTR Archipelago | Archipelago Pie",
-        meta_description=(
-            "Download the latest stable CTR Archipelago client for Windows or "
-            "Linux and start playing Crash Team Racing in an Archipelago "
-            "multiworld."
-        ),
-        canonical_url=_canonical("/ctr/download"),
+        meta_description=description,
+        canonical_url=canonical_url,
         og_type="website",
         og_image=_canonical("/img/ctr/og-ctr.jpg"),
         site_url=_canonical("/"),
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            page_node,
+            _software_node(),
+            _breadcrumb("/ctr/download", "Download CTR Archipelago", include_download=True),
+        ),
     )
 
 

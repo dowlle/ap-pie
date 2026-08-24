@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Archipelago Pie guides</title>
+  <desc id="desc">A connected multiworld diagram beside the Archipelago Pie guides title.</desc>
+  <rect width="1200" height="630" fill="#15131a"/>
+  <circle cx="960" cy="112" r="220" fill="#211d27"/>
+  <circle cx="1070" cy="560" r="280" fill="#1f1c25"/>
+  <g fill="none" stroke="#e8a857" stroke-width="8" stroke-linecap="round" opacity=".75">
+    <path d="M770 210 920 128 1060 230 930 340 1080 450"/>
+    <path d="M920 128 930 340 770 420"/>
+  </g>
+  <g stroke="#f5c987" stroke-width="7">
+    <circle cx="770" cy="210" r="25" fill="#6da8c9"/>
+    <circle cx="920" cy="128" r="25" fill="#e8a857"/>
+    <circle cx="1060" cy="230" r="25" fill="#e05d5d"/>
+    <circle cx="930" cy="340" r="25" fill="#7fa65a"/>
+    <circle cx="770" cy="420" r="25" fill="#8e72bd"/>
+    <circle cx="1080" cy="450" r="25" fill="#6da8c9"/>
+  </g>
+  <text x="86" y="205" fill="#e8a857" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="30" letter-spacing="5">ARCHIPELAGO PIE</text>
+  <text x="80" y="326" fill="#f4ecdc" font-family="system-ui, -apple-system, sans-serif" font-size="100" font-weight="700">Guides</text>
+  <text x="86" y="395" fill="#b8b1a6" font-family="system-ui, -apple-system, sans-serif" font-size="34">From first setup to connected and playing.</text>
+</svg>

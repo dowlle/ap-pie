@@ -37,8 +37,58 @@ for (const contract of contracts) {
     expect(html).toContain(`rel="canonical" href="${contract.canonical}"`);
     expect(html).toContain(`<h1>${contract.heading}</h1>`);
     expect(html).toContain(`"@type":"${contract.type}"`);
+    expect(html).toContain('"@id":"https://ap-pie.com/#organization"');
+    expect(html).toContain('"@id":"https://ap-pie.com/#website"');
   });
 }
+
+test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
+  const cases = [
+    { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },
+    { path: "/guides/getting-started", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
+    { path: "/privacy", types: ["WebPage", "BreadcrumbList"], absent: "TechArticle" },
+    { path: "/ctr", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },
+    { path: "/ctr/download", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },
+  ];
+
+  for (const entry of cases) {
+    const response = await request.get(entry.path);
+    expect(response.ok()).toBeTruthy();
+    const html = await response.text();
+    const match = html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/);
+    expect(match, `${entry.path} should contain JSON-LD`).not.toBeNull();
+    const data = JSON.parse(match![1]);
+    expect(data["@context"]).toBe("https://schema.org");
+    expect(data["@graph"]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ "@id": "https://ap-pie.com/#organization", "@type": "Organization" }),
+      expect.objectContaining({ "@id": "https://ap-pie.com/#website", "@type": "WebSite" }),
+    ]));
+    const types = data["@graph"].flatMap((node: { "@type": string | string[] }) => node["@type"]);
+    for (const type of entry.types) expect(types).toContain(type);
+    expect(types).not.toContain(entry.absent);
+  }
+});
+
+test("guide collection lists every published guide exactly once", async ({ request }) => {
+  const response = await request.get("/guides");
+  const html = await response.text();
+  const data = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)![1]);
+  const itemList = data["@graph"].find((node: { "@type": string }) => node["@type"] === "ItemList");
+  expect(itemList.numberOfItems).toBe(itemList.itemListElement.length);
+  expect(new Set(itemList.itemListElement.map((item: { url: string }) => item.url)).size).toBe(itemList.numberOfItems);
+});
+
+test("CTR software data stays aligned with the visible stable release", async ({ request }) => {
+  const response = await request.get("/ctr/download");
+  const html = await response.text();
+  const data = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)![1]);
+  const software = data["@graph"].find((node: { "@type": string }) => node["@type"] === "SoftwareApplication");
+  expect(html).toContain(`latest stable release is <strong>${software.softwareVersion}</strong>`);
+  expect(software.downloadUrl).toEqual([
+    "https://ap-pie.com/ctr/download/windows",
+    "https://ap-pie.com/ctr/download/linux",
+  ]);
+});
 
 test("rendered public routes keep one visible H1 and their canonical", async ({ page }) => {
   for (const contract of contracts) {

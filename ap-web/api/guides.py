@@ -22,6 +22,7 @@ from flask import Blueprint, Response, abort, render_template, request, session
 
 import analytics
 import config
+import seo
 
 _GUIDES_DIR = Path(__file__).resolve().parent.parent / "guides"
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
@@ -286,6 +287,28 @@ def guides_index() -> str:
             "soon": p.get("soon"),
             "count": len(cards) + (1 if p.get("soon") else 0),
         })
+    canonical_url = _canonical("/guides")
+    item_list_id = f"{canonical_url}#guide-list"
+    guide_items = [
+        {
+            "@type": "ListItem",
+            "position": position,
+            "name": guide["card_title"],
+            "url": _canonical(f"/guides/{guide['slug']}"),
+        }
+        for position, guide in enumerate(GUIDES, start=1)
+    ]
+    collection = seo.page(
+        config.PUBLIC_BASE_URL,
+        "CollectionPage",
+        canonical_url,
+        "Guides | Archipelago Pie",
+        (
+            "Setup guides for Archipelago multiworld randomizers: start with the "
+            "basics, then follow a guide for your game to get connected and playing."
+        ),
+    )
+    collection["mainEntity"] = {"@id": item_list_id}
     return render_template(
         "guides/index.html",
         shelves=shelves,
@@ -294,8 +317,19 @@ def guides_index() -> str:
             "Setup guides for Archipelago multiworld randomizers: start with the "
             "basics, then follow a guide for your game to get connected and playing."
         ),
-        canonical_url=_canonical("/guides"),
+        canonical_url=canonical_url,
         og_type="website",
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            collection,
+            {
+                "@type": "ItemList",
+                "@id": item_list_id,
+                "name": "Archipelago Pie guides",
+                "numberOfItems": len(guide_items),
+                "itemListElement": guide_items,
+            },
+        ),
     )
 
 
@@ -339,6 +373,43 @@ def guide_page(slug: str) -> str:
         for g in GUIDES
         if g.get("project") == guide.get("project") and g["slug"] != slug
     ]
+    canonical_url = _canonical(f"/guides/{slug}")
+    article = {
+        "@type": "TechArticle",
+        "@id": f"{canonical_url}#article",
+        "headline": guide["h1"],
+        "description": guide["meta_description"],
+        "author": {"@id": seo.author_id(config.PUBLIC_BASE_URL)},
+        "publisher": {"@id": seo.organization_id(config.PUBLIC_BASE_URL)},
+        "datePublished": guide["published"],
+        "dateModified": guide["updated"],
+        "mainEntityOfPage": {"@id": f"{canonical_url}#page"},
+        "isPartOf": {"@id": seo.website_id(config.PUBLIC_BASE_URL)},
+        "inLanguage": "en",
+    }
+    og_image = None
+    article_image = _canonical("/img/guides/og-guides.svg")
+    if guide.get("project") == "ctr":
+        og_image = _canonical("/img/ctr/og-ctr.jpg")
+        article_image = og_image
+    article["image"] = article_image
+    page_node = seo.page(
+        config.PUBLIC_BASE_URL,
+        "WebPage",
+        canonical_url,
+        guide["page_title"],
+        guide["meta_description"],
+    )
+    page_node["mainEntity"] = {"@id": f"{canonical_url}#article"}
+    breadcrumb = {
+        "@type": "BreadcrumbList",
+        "@id": f"{canonical_url}#breadcrumb",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Archipelago Pie", "item": _canonical("/")},
+            {"@type": "ListItem", "position": 2, "name": "Guides", "item": _canonical("/guides")},
+            {"@type": "ListItem", "position": 3, "name": guide["h1"], "item": canonical_url},
+        ],
+    }
     return render_template(
         "guides/guide.html",
         project_name=project["name"] if project else None,
@@ -348,13 +419,20 @@ def guide_page(slug: str) -> str:
         sections=sections,
         page_title=guide["page_title"],
         meta_description=guide["meta_description"],
-        canonical_url=_canonical(f"/guides/{slug}"),
+        canonical_url=canonical_url,
         og_type="article",
+        og_image=og_image,
         date_published=guide["published"],
         date_modified=guide["updated"],
-        author_url=_canonical("/"),
         site_url=_canonical("/"),
         guides_url=_canonical("/guides"),
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            seo.author(config.PUBLIC_BASE_URL),
+            page_node,
+            article,
+            breadcrumb,
+        ),
         video_url=guide.get("video_url"),
         video_title=guide.get("video_title"),
         video_thumb=guide.get("video_thumb"),

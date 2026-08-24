@@ -11,6 +11,7 @@ from flask import Flask, Response, g, jsonify, send_from_directory
 from flask_cors import CORS
 
 import config
+import seo
 from ap_lib import GameRecord, scan_output_dir
 from auth import apply_auth_to_app
 from server_manager import ServerManager
@@ -39,7 +40,7 @@ PUBLIC_ROUTE_SEO = {
         "canonical": "https://ap-pie.com/",
         "heading": "Your games, connected by one randomizer.",
         "intro": "Archipelago Pie helps beginners learn Archipelago, build player YAMLs, browse community game integrations, and organize multiworld sessions.",
-        "schema_type": "WebSite",
+        "schema_type": "WebPage",
     },
     "apworlds": {
         "title": "APWorld Downloads & YAML Builder | Archipelago Pie",
@@ -55,7 +56,7 @@ PUBLIC_ROUTE_SEO = {
         "canonical": "https://ap-pie.com/yaml-builder",
         "heading": "Build an Archipelago player YAML",
         "intro": "Choose a supported game, configure its options in a guided form, review the generated YAML, and download a player file ready to share with your host.",
-        "schema_type": "WebApplication",
+        "schema_type": "WebPage",
     },
 }
 
@@ -86,18 +87,29 @@ def _public_spa_response(path: str) -> Response:
         document,
         count=1,
     )
-    structured = {
-        "@context": "https://schema.org",
-        "@type": route["schema_type"],
-        "name": route["title"],
-        "url": route["canonical"],
-        "description": route["description"],
-        "publisher": {
-            "@type": "Organization",
-            "name": "Archipelago Pie",
-            "url": "https://ap-pie.com/",
-        },
-    }
+    page_node = seo.page(
+        config.PUBLIC_BASE_URL,
+        route["schema_type"],
+        route["canonical"],
+        route["title"],
+        route["description"],
+    )
+    nodes = [page_node]
+    if path == "yaml-builder":
+        application_id = f'{route["canonical"]}#application'
+        page_node["mainEntity"] = {"@id": application_id}
+        nodes.append({
+            "@type": "WebApplication",
+            "@id": application_id,
+            "name": route["title"],
+            "url": route["canonical"],
+            "description": route["description"],
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Any operating system with a web browser",
+            "isPartOf": {"@id": seo.website_id(config.PUBLIC_BASE_URL)},
+            "publisher": {"@id": seo.organization_id(config.PUBLIC_BASE_URL)},
+        })
+    structured = seo.graph(config.PUBLIC_BASE_URL, *nodes)
     route_meta = (
         f'<link rel="canonical" href="{canonical}" />\n'
         f'    <meta property="og:url" content="{canonical}" />\n'

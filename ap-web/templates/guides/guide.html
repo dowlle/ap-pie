@@ -1,42 +1,4 @@
 {% extends "guides/base.html" %}
-{% block head_extra %}
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "TechArticle",
-    "headline": {{ h1|tojson }},
-    "description": {{ meta_description|tojson }},
-    "author": {
-      "@type": "Person",
-      "name": "Appie",
-      "url": {{ author_url|tojson }}
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Archipelago Pie",
-      "url": {{ site_url|tojson }}
-    },
-    "datePublished": {{ date_published|tojson }},
-    "dateModified": {{ date_modified|tojson }},
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": {{ canonical_url|tojson }}
-    },
-    "inLanguage": "en"
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {"@type": "ListItem", "position": 1, "name": "Archipelago Pie", "item": {{ site_url|tojson }}},
-      {"@type": "ListItem", "position": 2, "name": "Guides", "item": {{ guides_url|tojson }}},
-      {"@type": "ListItem", "position": 3, "name": {{ h1|tojson }}, "item": {{ canonical_url|tojson }}}
-    ]
-  }
-  </script>
-{% endblock %}
 {% block main %}
   <div class="guide-layout">
     {% if sections|length > 1 %}

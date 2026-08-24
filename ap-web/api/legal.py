@@ -18,6 +18,7 @@ from pathlib import Path
 from flask import Blueprint, abort, render_template
 
 import config
+import seo
 
 _LEGAL_DIR = Path(__file__).resolve().parent.parent / "legal"
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
@@ -44,6 +45,23 @@ def privacy() -> str:
     # Deliberately not recorded as an analytics event: measuring who reads the
     # privacy statement would be a poor look, and it answers no question worth
     # asking. The page still counts in Cloudflare's edge pageviews.
+    canonical_url = _canonical(PRIVACY_PATH)
+    description = (
+        "What Archipelago Pie records, what it deliberately does not "
+        "record, how long it is kept, and how to ask for it to be removed."
+    )
+    page_node = seo.page(
+        config.PUBLIC_BASE_URL,
+        "WebPage",
+        canonical_url,
+        "Privacy | Archipelago Pie",
+        description,
+    )
+    page_node.update({
+        "datePublished": "2026-08-17",
+        "dateModified": PRIVACY_UPDATED,
+        "about": "Archipelago Pie privacy and analytics practices",
+    })
     return render_template(
         "guides/guide.html",
         project_name=None,
@@ -52,17 +70,25 @@ def privacy() -> str:
         body_html=body_html,
         sections=sections,
         page_title="Privacy | Archipelago Pie",
-        meta_description=(
-            "What Archipelago Pie records, what it deliberately does not "
-            "record, how long it is kept, and how to ask for it to be removed."
-        ),
-        canonical_url=_canonical(PRIVACY_PATH),
-        og_type="article",
+        meta_description=description,
+        canonical_url=canonical_url,
+        og_type="website",
         date_published="2026-08-17",
         date_modified=PRIVACY_UPDATED,
-        author_url=_canonical("/"),
         site_url=_canonical("/"),
         guides_url=_canonical("/guides"),
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            page_node,
+            {
+                "@type": "BreadcrumbList",
+                "@id": f"{canonical_url}#breadcrumb",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Archipelago Pie", "item": _canonical("/")},
+                    {"@type": "ListItem", "position": 2, "name": "Privacy", "item": canonical_url},
+                ],
+            },
+        ),
         video_url=None,
         video_title=None,
         video_thumb=None,
