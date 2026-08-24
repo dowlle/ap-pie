@@ -2597,8 +2597,34 @@ a.btn:hover { text-decoration: none; }
 .apworld-view-tabs button.is-active span { background: rgba(26, 20, 16, 0.12); }
 
 @media (max-width: 760px) {
-  .apworlds-explainer-head { grid-template-columns: 1fr; }
-  .apworlds-steps { grid-template-columns: 1fr; }
+  .apworlds-hero { padding: 0.8rem 0 1.1rem; }
+  .apworlds-hero h1 { margin-bottom: 0.55rem; }
+  .apworlds-lede { font-size: 0.94rem; line-height: 1.5; }
+  .apworlds-hero-links { margin-top: 0.8rem; }
+  .apworlds-explainer { margin-bottom: 1.35rem; padding: 0.85rem 0.9rem; }
+  .apworlds-explainer-head {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+  }
+  .apworlds-explainer h2 { font-size: 1.08rem; }
+  .apworlds-explainer-head p { font-size: 0.76rem; line-height: 1.4; }
+  .apworlds-steps { grid-template-columns: 1fr; gap: 0; }
+  .apworlds-steps li {
+    gap: 0.55rem;
+    padding: 0.55rem 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  .apworlds-step-num {
+    width: 1.4rem;
+    height: 1.4rem;
+    flex-basis: 1.4rem;
+  }
+  .apworlds-steps strong { margin-bottom: 0.1rem; font-size: 0.82rem; }
+  .apworlds-steps div > span { font-size: 0.73rem; line-height: 1.35; }
   .apworld-catalog-head { align-items: flex-start; flex-direction: column; }
 }
 
