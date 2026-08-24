@@ -78,7 +78,7 @@ test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ p
   expect(superMetroid.editorial).toMatchObject({ slug: "super-metroid", beta_preview_only: true });
   expect(animalWell.review_state).toBe("draft");
   expect(animalWell.editorial).toBeNull();
-  expect(ctr.editorial.route_override).toBe("/ctr");
+  expect(ctr.editorial).toMatchObject({ route_override: "/ctr", route_kind: "server" });
 
   for (const fixture of [
     { path: "/apworlds/super-metroid", heading: "Super Metroid Archipelago" },
@@ -95,9 +95,20 @@ test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ p
   }
 
   await page.goto("/apworlds/animal-well");
-  await expect(page.getByText("Download recommendation withheld")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Download APWorld/i })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Build ANIMAL WELL YAML/i })).toHaveCount(0);
+  await expect(page.getByText("Fuzz warning")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Download APWorld 0.5.4/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Build ANIMAL WELL YAML/i })).toBeVisible();
+});
+
+test("server-owned APWorld routes perform a document navigation", async ({ page }) => {
+  await page.goto("/apworlds");
+  const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
+  await ctrCard.getByRole("link", { name: "Crash Team Racing" }).click();
+  await expect(page).toHaveURL(/\/ctr$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Crash Team Racing Archipelago" })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/apworlds$/);
+  await expect(page.getByRole("heading", { level: 1, name: "APWorld downloads" })).toBeVisible();
 });
 
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {

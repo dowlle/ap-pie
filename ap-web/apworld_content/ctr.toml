@@ -30,3 +30,4 @@ verified_at = "2026-08-24"
 [route]
 action = "replace_detail_route"
 path = "/ctr"
+kind = "server"

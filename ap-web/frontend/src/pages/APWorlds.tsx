@@ -459,6 +459,7 @@ function WorldCard({
   onBuild,
   buildingVersion,
   detailHref,
+  detailRouteKind = "spa",
   detailLabel,
 }: {
   world: APWorldInfo;
@@ -470,6 +471,7 @@ function WorldCard({
   onBuild: (name: string, version: string) => void;
   buildingVersion: string | null;
   detailHref?: string;
+  detailRouteKind?: "spa" | "server";
   detailLabel?: string;
 }) {
   // Always show all versions sorted descending (latest first). If the index
@@ -492,7 +494,7 @@ function WorldCard({
     <article className="apworld-card">
       <header className="apworld-card-head">
         <div className="apworld-card-title">
-          <h3>{detailHref ? <Link to={detailHref}>{world.display_name}</Link> : world.display_name}</h3>
+          <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
           <code className="apworld-card-key">{world.name}</code>
         </div>
         <div className="apworld-card-badges">
@@ -509,7 +511,9 @@ function WorldCard({
 
       <HomeAndIconRow world={world} />
 
-      {detailHref && <Link className="apworld-card-detail-link" to={detailHref}>{detailLabel ?? "View reviewed details"} →</Link>}
+      {detailHref && (detailRouteKind === "server"
+        ? <a className="apworld-card-detail-link" href={detailHref}>{detailLabel ?? "View reviewed details"} →</a>
+        : <Link className="apworld-card-detail-link" to={detailHref}>{detailLabel ?? "View reviewed details"} →</Link>)}
 
 
       {world.disabled ? (
@@ -920,6 +924,7 @@ export default function APWorlds() {
                     : undefined
                 }
                 detailLabel={w.name === "animal_well" ? "View review blockers" : undefined}
+                detailRouteKind={w.editorial?.route_kind ?? "spa"}
               />
             ))}
           </div>

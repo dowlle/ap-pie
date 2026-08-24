@@ -38,6 +38,7 @@ SOURCE_KINDS = frozenset({
     "ap_pie_authority",
 })
 ROUTE_ACTIONS = frozenset({"replace_detail_route"})
+ROUTE_KINDS = frozenset({"spa", "server"})
 _SLUG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 
 _ROOT_KEYS = frozenset({
@@ -57,7 +58,7 @@ _ROOT_KEYS = frozenset({
 _EDITORIAL_KEYS = frozenset({"copy_status", "writing_policy", "copy_reviewed_by", "copy_reviewed_at"})
 _SOURCE_KEYS = frozenset({"id", "kind", "url", "revision", "verified_at"})
 _CLAIM_KEYS = frozenset({"id", "topic", "fact", "source_refs", "applies_to_versions", "verified_at"})
-_ROUTE_KEYS = frozenset({"action", "path"})
+_ROUTE_KEYS = frozenset({"action", "path", "kind"})
 
 
 class EditorialValidationError(ValueError):
@@ -91,6 +92,7 @@ class EditorialClaim:
 class RouteOverride:
     action: str
     path: str
+    kind: str
 
 
 @dataclass(frozen=True)
@@ -151,6 +153,7 @@ class EditorialRecord:
         }
         if self.route:
             overlay["route_override"] = self.route.path
+            overlay["route_kind"] = self.route.kind
         return overlay
 
 
@@ -323,8 +326,11 @@ def _record_from_data(data: Any, path: Path) -> EditorialRecord:
             route_path = _text(route_raw.get("path"), f"{route_label}.path", errors)
             if route_path and (not route_path.startswith("/") or "?" in route_path or "#" in route_path):
                 errors.append(f"{route_label}.path: use an absolute site path without query or fragment")
-            if action and route_path:
-                route = RouteOverride(action, route_path)
+            route_kind = _text(route_raw.get("kind"), f"{route_label}.kind", errors)
+            if route_kind and route_kind not in ROUTE_KINDS:
+                errors.append(f"{route_label}.kind: expected 'spa' or 'server'")
+            if action and route_path and route_kind:
+                route = RouteOverride(action, route_path, route_kind)
 
     if review_state == "reviewed" and publication_status in {"published", "beta_preview"}:
         if copy_status != "approved_original":

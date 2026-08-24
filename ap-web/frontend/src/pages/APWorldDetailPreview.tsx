@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import { getAPWorlds, type APWorldInfo } from "../api";
 
 type Preview = {
   name: string;
@@ -14,6 +16,7 @@ type Preview = {
   sourceLabel: string;
   reviewed: string;
   nextReview: string;
+  reviewedVersion: string;
 };
 
 const PREVIEWS: Record<string, Preview> = {
@@ -49,6 +52,7 @@ const PREVIEWS: Record<string, Preview> = {
     sourceLabel: "Open the official Super Metroid setup guide",
     reviewed: "24 August 2026",
     nextReview: "Next Archipelago release or 20 February 2027",
+    reviewedVersion: "0.6.7",
   },
   "animal-well": {
     name: "ANIMAL WELL Archipelago",
@@ -56,15 +60,15 @@ const PREVIEWS: Record<string, Preview> = {
     type: "Community integration",
     status: "Review blocked",
     statusTone: "blocked",
-    answer: "ANIMAL WELL uses a community APWorld rather than an integration bundled with Archipelago. Version 0.5.4 has source-controlled setup material, but AP-Pie is not recommending the package while its recorded fuzz verdict and base-game compatibility remain unresolved.",
+    answer: "ANIMAL WELL uses a community APWorld rather than an integration bundled with Archipelago. Version 0.5.4 has source-controlled setup material. Its red fuzz result remains an important warning, but does not by itself remove an APWorld that the active index still makes available.",
     facts: [
       { label: "Reviewed package", value: "APWorld 0.5.4" },
       { label: "Minimum AP version", value: "0.6.4" },
       { label: "Base-game build", value: "Not source-stated" },
     ],
     notice: {
-      title: "Download recommendation withheld",
-      body: "The active catalog labels this integration stable while its 0.5.4 fuzz record says broken after 5,000 seeds. This preview keeps both signals visible instead of selecting the more convenient one.",
+      title: "Fuzz warning",
+      body: "The active catalog labels this integration stable while its 0.5.4 fuzz record says broken after 5,000 seeds. AP-Pie keeps the warning visible without silently overriding the index's availability decision.",
     },
     sections: [
       {
@@ -78,7 +82,7 @@ const PREVIEWS: Record<string, Preview> = {
         title: "What remains unresolved",
         paragraphs: [
           "The reviewed manifest does not state a compatible ANIMAL WELL base-game build. A minimum Archipelago version is also not proof that every later release has been tested.",
-          "Download and YAML Builder actions remain unavailable in this preview until the operational verdict, game-build scope and builder mapping have been reviewed.",
+          "The indexed APWorld and YAML Builder remain available while the integration remains enabled in the active index. The warning and missing game-build scope stay visible so availability is not mistaken for AP-Pie verification.",
         ],
       },
     ],
@@ -86,13 +90,30 @@ const PREVIEWS: Record<string, Preview> = {
     sourceLabel: "Open the maintainer setup source",
     reviewed: "24 August 2026",
     nextReview: "On release or operational-verdict change",
+    reviewedVersion: "0.5.4",
   },
 };
 
 export default function APWorldDetailPreview() {
   const { slug = "" } = useParams();
   const preview = PREVIEWS[slug];
+  const [worlds, setWorlds] = useState<APWorldInfo[]>([]);
+  useEffect(() => {
+    getAPWorlds().then(setWorlds).catch(() => setWorlds([]));
+  }, []);
+  const indexedWorld = useMemo(
+    () => preview ? worlds.find((world) => world.name === preview.identifier) : undefined,
+    [preview, worlds],
+  );
   if (!preview) return <Navigate to="/apworlds" replace />;
+
+  const indexedVersion = indexedWorld?.versions.find((version) => version.version === preview.reviewedVersion);
+  const builderHref = indexedVersion
+    ? `/yaml-builder/${encodeURIComponent(preview.identifier)}?version=${encodeURIComponent(indexedVersion.version)}`
+    : undefined;
+  const downloadHref = indexedVersion && (indexedVersion.source === "url" || indexedVersion.source === "local")
+    ? `/api/apworlds/${encodeURIComponent(preview.identifier)}/${encodeURIComponent(indexedVersion.version)}/download`
+    : undefined;
 
   return (
     <article className="apworld-detail-page">
@@ -110,6 +131,8 @@ export default function APWorldDetailPreview() {
         <p className="apworld-detail-answer">{preview.answer}</p>
         <div className="apworld-detail-actions">
           <a className="btn btn-primary" href={preview.sourceHref} target="_blank" rel="noreferrer">{preview.sourceLabel}</a>
+          {downloadHref && <a className="btn" href={downloadHref} download>Download APWorld {preview.reviewedVersion}</a>}
+          {builderHref && <Link className="btn" to={builderHref}>Build {preview.name.replace(" Archipelago", "")} YAML</Link>}
           <Link className="btn" to="/apworlds">Browse all APWorlds</Link>
         </div>
       </header>

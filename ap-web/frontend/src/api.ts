@@ -217,6 +217,7 @@ export interface APWorldInfo {
     reviewed_at: string;
     next_review_at: string;
     route_override?: string;
+    route_kind?: "spa" | "server";
     beta_preview_only?: boolean;
   } | null;
   review_state: "absent" | "draft" | "reviewed" | "stale" | "retired";

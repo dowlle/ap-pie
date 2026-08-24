@@ -110,6 +110,16 @@ class ReviewedAPWorldMetadataTests(unittest.TestCase):
         with self.assertRaisesRegex(EditorialValidationError, "route overrides require a reviewed published record"):
             _record_from_data(data, Path("bad.toml"))
 
+    def test_route_overrides_require_explicit_route_kind(self) -> None:
+        data = tomllib.loads((CONTENT_DIR / "ctr.toml").read_text(encoding="utf-8"))
+        del data["route"]["kind"]
+        with self.assertRaisesRegex(EditorialValidationError, "expected a non-empty string"):
+            _record_from_data(data, Path("missing-kind.toml"))
+
+        data["route"]["kind"] = "external"
+        with self.assertRaisesRegex(EditorialValidationError, "expected 'spa' or 'server'"):
+            _record_from_data(data, Path("bad-kind.toml"))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
