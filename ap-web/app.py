@@ -26,7 +26,7 @@ STATE_DIR = Path(__file__).parent / ".state"
 SPA_STATIC_PATHS = {
     "", "market", "admin", "admin/apworld-requests", "rooms", "tracker",
     "servers", "apworlds", "yaml-builder", "rooms/templates", "my",
-    "presets", "summary",
+    "presets", "summary", "style-guide",
 }
 SPA_DYNAMIC_PATHS = (
     re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
@@ -57,6 +57,15 @@ PUBLIC_ROUTE_SEO = {
         "heading": "Build an Archipelago player YAML",
         "intro": "Choose a supported game, configure its options in a guided form, review the generated YAML, and download a player file ready to share with your host.",
         "schema_type": "WebPage",
+    },
+    "style-guide": {
+        "title": "AP-Pie Visual Style Guide",
+        "description": "A private beta review surface for AP-Pie's proposed shared visual system.",
+        "canonical": "https://ap-pie.com/style-guide",
+        "heading": "One system, different kinds of work.",
+        "intro": "Review the proposed typography, color, components and page-family patterns for AP-Pie.",
+        "schema_type": "WebPage",
+        "robots": "noindex, nofollow",
     },
 }
 
@@ -110,9 +119,14 @@ def _public_spa_response(path: str) -> Response:
             "publisher": {"@id": seo.organization_id(config.PUBLIC_BASE_URL)},
         })
     structured = seo.graph(config.PUBLIC_BASE_URL, *nodes)
+    robots_meta = ""
+    if route.get("robots"):
+        robots = html.escape(route["robots"], quote=True)
+        robots_meta = f'<meta name="robots" content="{robots}" />'
     route_meta = (
         f'<link rel="canonical" href="{canonical}" />\n'
         f'    <meta property="og:url" content="{canonical}" />\n'
+        f'    {robots_meta}\n'
         f'    <script type="application/ld+json">'
         f'{json.dumps(structured, separators=(",", ":")).replace("<", "\\u003c")}'
         f'</script>'

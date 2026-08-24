@@ -57,6 +57,18 @@ test("SPA navigation keeps public route metadata and canonical in sync", async (
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", contracts[2].canonical);
 });
 
+test("style guide is a noindex review surface", async ({ page, request }) => {
+  const response = await request.get("/style-guide");
+  const html = await response.text();
+  expect(response.ok()).toBeTruthy();
+  expect(html).toContain('name="robots" content="noindex, nofollow"');
+  expect(html).toContain("<h1>One system, different kinds of work.</h1>");
+
+  await page.goto("/style-guide");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("One system, different kinds of work.");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+});
+
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
   const cases = [
     { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },

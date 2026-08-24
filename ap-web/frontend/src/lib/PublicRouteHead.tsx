@@ -7,6 +7,7 @@ const PUBLIC_ROUTE_HEAD: Record<string, {
   title: string;
   description: string;
   canonical: string;
+  robots?: string;
 }> = {
   "/": {
     title: "Archipelago Multiworld Tools & Guides | Archipelago Pie",
@@ -22,6 +23,12 @@ const PUBLIC_ROUTE_HEAD: Record<string, {
     title: "Archipelago YAML Builder | Archipelago Pie",
     description: "Build an Archipelago player YAML from guided game options, review the generated file, and download it for your host or multiworld.",
     canonical: `${PROD_ORIGIN}/yaml-builder`,
+  },
+  "/style-guide": {
+    title: "AP-Pie Visual Style Guide",
+    description: "A private beta review surface for AP-Pie's proposed shared visual system.",
+    canonical: `${PROD_ORIGIN}/style-guide`,
+    robots: "noindex, nofollow",
   },
 };
 
@@ -56,6 +63,13 @@ export default function PublicRouteHead() {
       document.head.appendChild(canonical);
     }
     canonical.href = route.canonical;
+
+    const existingRobots = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (route.robots) {
+      setMeta('meta[name="robots"]', "name", "robots", route.robots);
+    } else {
+      existingRobots?.remove();
+    }
   }, [pathname]);
 
   return null;
