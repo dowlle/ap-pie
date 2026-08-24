@@ -1643,14 +1643,10 @@ function OptionControl({
         );
       }
       return (
-        <textarea
-          value={Array.isArray(value) ? arr.join(", ") : String(value ?? "")}
-          onChange={(e) => {
-            const text = e.target.value;
-            onChange(text ? text.split(",").map((s) => s.trim()).filter(Boolean) : []);
-          }}
-          placeholder="Comma-separated values (leave empty for default)"
-          rows={2}
+        <FreeformListInput
+          label={option.display_name || option.name}
+          value={arr}
+          onChange={onChange}
         />
       );
     }
@@ -1709,4 +1705,57 @@ function OptionControl({
         />
       );
   }
+}
+
+function parseFreeformList(text: string): string[] {
+  return text
+    .split(/[,\n]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Keep the user's text draft separate from the parsed OptionList value.
+ *
+ * Writing the parsed array straight back into a controlled textarea removes
+ * a trailing comma immediately: `Kanto,` parses to `["Kanto"]`, React renders
+ * `Kanto`, and the user can never type the second entry. The local draft keeps
+ * delimiters intact while the builder still receives an updated array on
+ * every keystroke for the live YAML preview.
+ */
+function FreeformListInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string[];
+  onChange: (val: unknown) => void;
+}) {
+  const formatted = value.join(", ");
+  const [draft, setDraft] = useState(formatted);
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (!focused.current) setDraft(formatted);
+  }, [formatted]);
+
+  return (
+    <textarea
+      value={draft}
+      aria-label={label}
+      onFocus={() => { focused.current = true; }}
+      onBlur={() => {
+        focused.current = false;
+        setDraft(parseFreeformList(draft).join(", "));
+      }}
+      onChange={(e) => {
+        const text = e.target.value;
+        setDraft(text);
+        onChange(parseFreeformList(text));
+      }}
+      placeholder="Comma-separated values (leave empty for default)"
+      rows={2}
+    />
+  );
 }

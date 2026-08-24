@@ -108,6 +108,20 @@ test("weighted YAML values remain intact when another form field changes", async
   await expect(editor).toHaveValue(/oxide_final_challenge_relic_count:\n\s+"15": 50\n\s+"18": 50/);
 });
 
+test("free-form list options preserve commas while typing", async ({ page }) => {
+  await page.goto("/yaml-builder/pokepelago?version=0.6.3");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+
+  const regions = page.getByRole("textbox", { name: "Regions", exact: true });
+  await regions.fill("");
+  await regions.pressSequentially("Kanto, Johto, Hoenn");
+
+  await expect(regions).toHaveValue("Kanto, Johto, Hoenn");
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(
+    /regions:\n\s+- Kanto\n\s+- Johto\n\s+- Hoenn/,
+  );
+});
+
 test("route drafts recover after refresh", async ({ page }) => {
   await openCtrBuilder(page);
   const player = page.locator('input[placeholder^="Your slot name"]');
