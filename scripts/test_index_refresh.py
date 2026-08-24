@@ -23,6 +23,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -35,7 +36,7 @@ if os.path.isdir(repo_lib):
 from flask import Flask
 
 import config
-from ap_lib.apworld_index import fetch_index, index_head_sha
+from ap_lib.apworld_index import fetch_index, index_head_sha, parse_index_dir
 
 TOKEN = "o" * 40
 
@@ -61,7 +62,8 @@ def _make_upstream(root: Path) -> Path:
 
 class IndexRefresh(unittest.TestCase):
     def setUp(self) -> None:
-        self.root = Path(tempfile.mkdtemp())
+        self._temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self._temp_dir.name)
         self.up = _make_upstream(self.root)
         self.clone = self.root / "clone"
         _git("clone", "-q", "--depth", "1", str(self.up), str(self.clone), cwd=self.root)
@@ -90,6 +92,7 @@ class IndexRefresh(unittest.TestCase):
 
     def tearDown(self) -> None:
         config.INDEX_REFRESH_TOKEN = self._saved_token
+        self._temp_dir.cleanup()
 
     def _post(self, token: str | None = None, header: str | None = None):
         headers = {}
@@ -183,10 +186,69 @@ class IndexRefresh(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             fetch_index(self.clone, str(self.root / "gone"))
 
+        self.client.application.config["AP_INDEX_REPO"] = str(self.root / "gone")
         self.assertEqual(self._post(TOKEN).status_code, 500)
         self.assertEqual(
             index_head_sha(self.clone), before, "a failed sync must not move the clone"
         )
+
+    def test_partial_destination_is_recovered(self) -> None:
+        broken = self.root / "partial-clone"
+        broken.mkdir()
+        (broken / "leftover").write_text("partial")
+
+        fetch_index(broken, str(self.up), validate=lambda p: parse_index_dir(p, strict=True))
+
+        self.assertEqual(index_head_sha(broken), index_head_sha(self.up))
+        self.assertFalse((broken / "leftover").exists())
+
+    def test_changed_repo_url_retargets_existing_clone(self) -> None:
+        replacement = _make_upstream(self.root / "replacement-root")
+        (replacement / "index" / "bar.toml").write_text(
+            'name = "Bar"\n\n[versions]\n"2.0" = {}\n'
+        )
+        _git("add", "-A", cwd=replacement)
+        _git("commit", "-qm", "replacement", cwd=replacement)
+
+        fetch_index(self.clone, str(replacement))
+
+        self.assertEqual(index_head_sha(self.clone), index_head_sha(replacement))
+
+    def test_invalid_candidate_does_not_replace_live_clone(self) -> None:
+        before = index_head_sha(self.clone)
+        (self.up / "index" / "broken.toml").write_text("not = [valid")
+        _git("add", "-A", cwd=self.up)
+        _git("commit", "-qm", "broken index", cwd=self.up)
+
+        res = self._post(TOKEN)
+
+        self.assertEqual(res.status_code, 500)
+        self.assertEqual(index_head_sha(self.clone), before)
+        self.assertEqual(len(parse_index_dir(self.clone, strict=True)), 1)
+
+    def test_concurrent_refresh_is_refused(self) -> None:
+        entered = threading.Event()
+        release = threading.Event()
+        original = self.apworlds.fetch_index
+
+        def slow_fetch(*args, **kwargs):
+            entered.set()
+            release.wait(timeout=5)
+            return original(*args, **kwargs)
+
+        self.apworlds.fetch_index = slow_fetch
+        first_result = []
+        try:
+            worker = threading.Thread(target=lambda: first_result.append(self._post(TOKEN)))
+            worker.start()
+            self.assertTrue(entered.wait(timeout=2))
+            self.assertEqual(self._post(TOKEN).status_code, 409)
+            release.set()
+            worker.join(timeout=5)
+            self.assertEqual(first_result[0].status_code, 200)
+        finally:
+            release.set()
+            self.apworlds.fetch_index = original
 
 
 if __name__ == "__main__":

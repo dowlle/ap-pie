@@ -54,6 +54,7 @@ _index_cache: list | None = None
 _index_worlds_cache: list | None = None  # raw APWorldInfo objects, parallel to _index_cache
 _index_lookup_cache: dict | None = None  # game_name -> APWorldInfo
 _index_lock = threading.Lock()
+_index_refresh_lock = threading.Lock()
 
 
 def _get_index_dir() -> Path:
@@ -1007,22 +1008,33 @@ def refresh_index():
         if refusal is not None:
             return refusal
 
+    if not _index_refresh_lock.acquire(blocking=False):
+        return jsonify({"error": "An index refresh is already in progress"}), 409
+
     index_dir = _get_index_dir()
     repo_url = current_app.config.get("AP_INDEX_REPO", "https://github.com/dowlle/Archipelago-index.git")
-    before = index_head_sha(index_dir)
-
     try:
-        fetch_index(index_dir, repo_url)
+        # Readers use this same lock. They continue serving the old in-memory
+        # snapshot until the candidate clone has passed strict parsing and is
+        # atomically promoted, then all three caches are replaced together.
+        with _index_lock:
+            before = index_head_sha(index_dir)
+            fetch_index(
+                index_dir,
+                repo_url,
+                validate=lambda candidate: parse_index_dir(candidate, strict=True),
+            )
+            _index_cache = None
+            _index_worlds_cache = None
+            _index_lookup_cache = None
+            _load_index_into_cache()
+            worlds = _index_cache or []
+            after = index_head_sha(index_dir)
     except Exception as e:
-        return jsonify({"error": f"Failed to fetch index: {e}"}), 500
+        return jsonify({"error": f"Failed to refresh index: {e}"}), 500
+    finally:
+        _index_refresh_lock.release()
 
-    with _index_lock:
-        _index_cache = None  # Force re-parse on next request
-        _index_worlds_cache = None
-        _index_lookup_cache = None
-
-    worlds = _get_index()
-    after = index_head_sha(index_dir)
     # Report the commit so a caller can prove the clone actually moved. A
     # refresh that lands on the same sha is a valid no-op, not a failure.
     return jsonify({

@@ -6,10 +6,14 @@ import hashlib
 import logging
 import os
 import re
+import shutil
 import subprocess
+import tempfile
+import threading
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 from urllib.request import urlopen, Request
 
 logger = logging.getLogger(__name__)
@@ -249,7 +253,7 @@ def parse_world_toml(key: str, data: dict) -> APWorldInfo:
     )
 
 
-def parse_index_dir(index_dir: Path) -> list[APWorldInfo]:
+def parse_index_dir(index_dir: Path, *, strict: bool = False) -> list[APWorldInfo]:
     """Parse all TOML files in an index directory.
 
     Side effect: for any world whose name appears in `index.lock`, fills
@@ -260,13 +264,16 @@ def parse_index_dir(index_dir: Path) -> list[APWorldInfo]:
     worlds = []
     toml_dir = index_dir / "index"
     if not toml_dir.is_dir():
+        if strict:
+            raise ValueError(f"Index directory is missing: {toml_dir}")
         return worlds
 
-    lock = parse_lock_file(index_dir)
+    lock = parse_lock_file(index_dir, strict=strict)
+    toml_files = [f for f in sorted(toml_dir.iterdir()) if f.suffix == ".toml"]
+    if strict and not toml_files:
+        raise ValueError(f"Index contains no TOML entries: {toml_dir}")
 
-    for f in sorted(toml_dir.iterdir()):
-        if f.suffix != ".toml":
-            continue
+    for f in toml_files:
         try:
             data = tomllib.loads(f.read_text(encoding="utf-8"))
             key = f.stem
@@ -276,6 +283,8 @@ def parse_index_dir(index_dir: Path) -> list[APWorldInfo]:
                 v.sha256 = ver_shas.get(v.version)
             worlds.append(world)
         except Exception as exc:
+            if strict:
+                raise ValueError(f"Failed to parse index entry {f.name}: {exc}") from exc
             # OPS-18 hid behind a bare `continue` here for hours -- 99 TOMLs
             # silently dropped from /api/apworlds after PR #113's nested
             # fuzz_result shape failed `tomllib.loads`. Surface the parse
@@ -314,7 +323,9 @@ def resolve_local_path(index_dir: Path, world: APWorldInfo, version: APWorldVers
     return None
 
 
-def parse_lock_file(index_dir: Path) -> dict[str, dict[str, str]]:
+def parse_lock_file(
+    index_dir: Path, *, strict: bool = False
+) -> dict[str, dict[str, str]]:
     """Parse index.lock → {display_name: {version: sha256}}."""
     lock_file = index_dir / "index.lock"
     if not lock_file.exists():
@@ -322,6 +333,8 @@ def parse_lock_file(index_dir: Path) -> dict[str, dict[str, str]]:
     try:
         return tomllib.loads(lock_file.read_text(encoding="utf-8"))
     except Exception:
+        if strict:
+            raise
         return {}
 
 
@@ -338,7 +351,15 @@ def index_head_sha(dest_dir: Path) -> str | None:
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
-def fetch_index(dest_dir: Path, repo_url: str = DEFAULT_INDEX_REPO) -> Path:
+_fetch_index_lock = threading.Lock()
+
+
+def fetch_index(
+    dest_dir: Path,
+    repo_url: str = DEFAULT_INDEX_REPO,
+    *,
+    validate: Callable[[Path], object] | None = None,
+) -> Path:
     """Clone or hard-sync the Archipelago-index repo to the remote's default branch.
 
     Raises RuntimeError if the sync fails. Every git call here used to
@@ -346,10 +367,11 @@ def fetch_index(dest_dir: Path, repo_url: str = DEFAULT_INDEX_REPO) -> Path:
     while callers reported a successful refresh - which is how the prod
     clone repeatedly went stale without anyone noticing.
 
-    The existing clone is `fetch` + `reset --hard` rather than `pull
-    --ff-only` because the clone is created shallow: a rewritten or
-    force-pushed remote makes a fast-forward pull fail permanently, and
-    this clone is a read-only mirror with nothing local worth keeping.
+    A new shallow clone is prepared and optionally validated beside the live
+    clone, then swapped into place. The live checkout is therefore never
+    partially cloned, reset while readers are using it, or left on a commit
+    that failed validation. Re-cloning also makes a changed ``repo_url`` take
+    effect instead of silently continuing to fetch the old ``origin``.
     """
 
     def _run(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
@@ -363,15 +385,51 @@ def fetch_index(dest_dir: Path, repo_url: str = DEFAULT_INDEX_REPO) -> Path:
             )
         return proc
 
-    if (dest_dir / ".git").is_dir():
-        _run(["git", "-C", str(dest_dir), "fetch", "--depth", "1", "origin"], 120)
-        head = _run(
-            ["git", "-C", str(dest_dir), "rev-parse", "FETCH_HEAD"], 30
-        ).stdout.strip()
-        _run(["git", "-C", str(dest_dir), "reset", "--hard", head], 60)
-    else:
+    with _fetch_index_lock:
         dest_dir.parent.mkdir(parents=True, exist_ok=True)
-        _run(["git", "clone", "--depth", "1", repo_url, str(dest_dir)], 180)
+        temp_root = Path(tempfile.mkdtemp(
+            prefix=f".{dest_dir.name}.refresh-", dir=dest_dir.parent
+        ))
+        candidate = temp_root / "candidate"
+        previous = temp_root / "previous"
+        try:
+            if (dest_dir / ".git").is_dir():
+                # Seed the candidate from the current local snapshot, then
+                # fetch only the upstream delta. ``--no-local`` keeps the
+                # candidate self-contained so removing the old clone after
+                # promotion cannot break object references.
+                _run([
+                    "git", "clone", "--quiet", "--depth", "1", "--no-local",
+                    str(dest_dir), str(candidate),
+                ], 180)
+                _run([
+                    "git", "-C", str(candidate), "remote", "set-url", "origin", repo_url,
+                ], 30)
+                _run([
+                    "git", "-C", str(candidate), "fetch", "--depth", "1", "origin",
+                ], 120)
+                head = _run([
+                    "git", "-C", str(candidate), "rev-parse", "FETCH_HEAD",
+                ], 30).stdout.strip()
+                _run([
+                    "git", "-C", str(candidate), "reset", "--hard", head,
+                ], 60)
+            else:
+                _run(["git", "clone", "--depth", "1", repo_url, str(candidate)], 180)
+            if validate is not None:
+                validate(candidate)
+
+            had_previous = dest_dir.exists()
+            if had_previous:
+                os.replace(dest_dir, previous)
+            try:
+                os.replace(candidate, dest_dir)
+            except Exception:
+                if had_previous and previous.exists() and not dest_dir.exists():
+                    os.replace(previous, dest_dir)
+                raise
+        finally:
+            shutil.rmtree(temp_root, ignore_errors=True)
     return dest_dir
 
 
