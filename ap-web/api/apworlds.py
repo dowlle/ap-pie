@@ -523,7 +523,10 @@ def builder_schemas_for_pins(
         get_builder_schema_by_version,
         set_builder_schema,
     )
-    from apworld_options_parser import parse_apworld_options_bytes
+    from apworld_options_parser import (
+        BUILDER_SCHEMA_FORMAT_VERSION,
+        parse_apworld_options_bytes,
+    )
 
     name_map = {w.name: w for w in _get_index_worlds()}
     deadline = time.monotonic() + fetch_budget_seconds
@@ -564,8 +567,16 @@ def builder_schemas_for_pins(
         except Exception:
             cached = None
         if cached is not None:
-            entry["schema"] = cached.get("schema")
-            continue
+            cached_schema = cached.get("schema")
+            # Parser improvements can add machine-readable controls without
+            # changing the APWorld artifact hash. Re-derive older positive
+            # schemas once instead of serving their stale shape forever.
+            if cached_schema is None or (
+                isinstance(cached_schema, dict)
+                and cached_schema.get("_format_version") == BUILDER_SCHEMA_FORMAT_VERSION
+            ):
+                entry["schema"] = cached_schema
+                continue
 
         if time.monotonic() > deadline:
             entry["pending"] = True

@@ -68,3 +68,4 @@ jobs:
           cache-dependency-path: ap-web/requirements.txt
       - run: python -m pip install -r ap-web/requirements.txt ./ap-lib
       - run: python scripts/test_security_controls.py
+      - run: python scripts/test_apworld_options_parser.py

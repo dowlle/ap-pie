@@ -109,17 +109,52 @@ test("weighted YAML values remain intact when another form field changes", async
 });
 
 test("free-form list options preserve commas while typing", async ({ page }) => {
+  await page.route("**/api/apworlds/freeform-fixture/builder-schema?*", (route) => route.fulfill({
+    json: {
+      game: "Freeform Fixture",
+      apworld_name: "freeform-fixture",
+      display_name: "Freeform Fixture",
+      version: "1.0.0",
+      schema: {
+        game: "Freeform Fixture",
+        ap_version: "0.6.7",
+        world_version: "1.0.0",
+        categories: ["Lists"],
+        options: [{
+          name: "aliases",
+          display_name: "Aliases",
+          type: "list",
+          category: "Lists",
+          description: "Ordered aliases.",
+          default: ["Kanto"],
+        }],
+      },
+    },
+  }));
+  await page.goto("/yaml-builder/freeform-fixture?version=1.0.0");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+
+  const aliases = page.getByRole("textbox", { name: "Aliases", exact: true });
+  await aliases.fill("");
+  await aliases.pressSequentially("Kanto, Johto, Hoenn");
+
+  await expect(aliases).toHaveValue("Kanto, Johto, Hoenn");
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(
+    /aliases:\n\s+- Kanto\n\s+- Johto\n\s+- Hoenn/,
+  );
+});
+
+test("machine-readable OptionSet keys render Pokepelago Regions as choices", async ({ page }) => {
   await page.goto("/yaml-builder/pokepelago?version=0.6.3");
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
 
-  const regions = page.getByRole("textbox", { name: "Regions", exact: true });
-  await regions.fill("");
-  await regions.pressSequentially("Kanto, Johto, Hoenn");
-
-  await expect(regions).toHaveValue("Kanto, Johto, Hoenn");
+  await expect(page.getByRole("checkbox", { name: "Kanto", exact: true })).toBeChecked();
+  const johto = page.getByRole("checkbox", { name: "Johto", exact: true });
+  await johto.check();
   await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(
-    /regions:\n\s+- Kanto\n\s+- Johto\n\s+- Hoenn/,
+    /regions:\n\s+- Kanto\n\s+- Johto/,
   );
+  await expect(page.getByText(/ONLY ignored if you set.*random_region_count/s)).toBeVisible();
 });
 
 test("structured composite options only commit valid YAML fragments", async ({ page }) => {

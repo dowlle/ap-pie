@@ -9,6 +9,9 @@ import zipfile
 from pathlib import Path
 
 
+BUILDER_SCHEMA_FORMAT_VERSION = 2
+
+
 def parse_apworld_options(apworld_path: Path) -> dict | None:
     """Parse an .apworld zip on disk and extract game options.
 
@@ -72,7 +75,8 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
     # Option groups may live in either file; scan both for the class->group map
     group_map = _parse_option_groups([s for s in (options_src, init_src) if s])
 
-    options = _parse_options_source(options_src, group_map)
+    literal_names = _collect_module_literals(zf, stem)
+    options = _parse_options_source(options_src, group_map, literal_names)
     # An empty option list is a real answer, not a failure. A world can
     # legitimately declare no options of its own (or only ones we
     # deliberately do not render), and a YAML with name / game / requires
@@ -88,6 +92,7 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
             categories.append(opt["category"])
 
     return {
+        "_format_version": BUILDER_SCHEMA_FORMAT_VERSION,
         "game": game_name,
         "ap_version": "",
         "world_version": "",
@@ -296,7 +301,11 @@ def _parse_option_groups(sources: list[str]) -> dict[str, str]:
     return groups
 
 
-def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> list[dict]:
+def _parse_options_source(
+    src: str,
+    group_map: dict[str, str] | None = None,
+    literal_names: dict[str, object] | None = None,
+) -> list[dict]:
     """Parse option class definitions from Python source code using AST."""
     group_map = group_map or {}
     try:
@@ -435,17 +444,17 @@ def _parse_options_source(src: str, group_map: dict[str, str] | None = None) -> 
             if isinstance(vis, ast.Constant) and vis.value == 0:
                 continue
 
-        display_name = _get_literal(raw.get("display_name"))
+        display_name = _get_literal(raw.get("display_name"), literal_names)
         description = (ast.get_docstring(node) or "").strip()
-        default = _get_literal(raw.get("default"))
-        range_start = _get_literal(raw.get("range_start"))
-        range_end = _get_literal(raw.get("range_end"))
-        valid_keys = _get_literal(raw.get("valid_keys"))
-        special_range_names = _get_literal(raw.get("special_range_names"))
+        default = _get_literal(raw.get("default"), literal_names)
+        range_start = _get_literal(raw.get("range_start"), literal_names)
+        range_end = _get_literal(raw.get("range_end"), literal_names)
+        valid_keys = _get_literal(raw.get("valid_keys"), literal_names)
+        special_range_names = _get_literal(raw.get("special_range_names"), literal_names)
         option_values = {}
         for fname, fvalue in raw.items():
             if fname.startswith("option_"):
-                option_values[fname[7:]] = _get_literal(fvalue)
+                option_values[fname[7:]] = _get_literal(fvalue, literal_names)
 
         category = group_map.get(cls_name, "Game Options")
         base = {
@@ -565,7 +574,10 @@ _LITERAL_CONSTRUCTORS = {
 }
 
 
-def _get_literal(node: ast.AST | None):
+def _get_literal(
+    node: ast.AST | None,
+    literal_names: dict[str, object] | None = None,
+):
     """Safely evaluate a constant/literal AST node.
 
     Also evaluates single-argument calls to the builtin container
@@ -575,6 +587,8 @@ def _get_literal(node: ast.AST | None):
     2026-07-22)."""
     if node is None:
         return None
+    if isinstance(node, ast.Name) and literal_names is not None:
+        return literal_names.get(node.id)
     try:
         return ast.literal_eval(node)
     except (ValueError, TypeError, SyntaxError):
@@ -585,13 +599,67 @@ def _get_literal(node: ast.AST | None):
         if ctor is not None:
             if not node.args:
                 return ctor()
-            inner = _get_literal(node.args[0])
+            inner = _get_literal(node.args[0], literal_names)
             if inner is not None:
                 try:
                     return ctor(inner)
                 except (ValueError, TypeError):
                     return None
+        if (
+            isinstance(node.func, ast.Attribute)
+            and node.func.attr in {"keys", "values"}
+            and not node.args
+        ):
+            owner = _get_literal(node.func.value, literal_names)
+            if isinstance(owner, dict):
+                return owner.keys() if node.func.attr == "keys" else owner.values()
     return None
+
+
+def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object]:
+    """Resolve safe module constants used by option metadata.
+
+    APWorlds commonly import a literal collection into Options.py and wrap
+    it in ``frozenset(...)`` for ``valid_keys``. Pokepelago is one example:
+    ``GAME_REGIONS = list(REGION_DATA.keys())`` lives in data.py. No module
+    code is executed here; only AST literals, safe container constructors,
+    and ``dict.keys()/values()`` are evaluated.
+    """
+    assignments: list[tuple[str, ast.AST]] = []
+    for member in _module_py_files(zf, stem):
+        source = _read_member(zf, member)
+        if not source:
+            continue
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and len(node.targets) == 1:
+                name = _get_name(node.targets[0])
+                if name:
+                    assignments.append((name, node.value))
+            elif isinstance(node, ast.AnnAssign):
+                name = _get_name(node.target)
+                if name and node.value is not None:
+                    assignments.append((name, node.value))
+
+    resolved: dict[str, object] = {}
+    pending = assignments
+    for _ in range(8):
+        next_pending: list[tuple[str, ast.AST]] = []
+        progressed = False
+        for name, value_node in pending:
+            value = _get_literal(value_node, resolved)
+            if value is None:
+                next_pending.append((name, value_node))
+                continue
+            resolved[name] = value
+            progressed = True
+        pending = next_pending
+        if not progressed:
+            break
+    return resolved
 
 
 def _camel_to_snake(name: str) -> str:
