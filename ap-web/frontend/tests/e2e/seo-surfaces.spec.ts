@@ -90,6 +90,12 @@ test("CTR software data stays aligned with the visible stable release", async ({
   ]);
 });
 
+test("CTR landing leads with the primary search phrase", async ({ request }) => {
+  const response = await request.get("/ctr");
+  const html = await response.text();
+  expect(html).toContain("<h1>Crash Team Racing Archipelago</h1>");
+});
+
 test("rendered public routes keep one visible H1 and their canonical", async ({ page }) => {
   for (const contract of contracts) {
     await page.goto(contract.path);
