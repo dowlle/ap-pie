@@ -53,12 +53,27 @@ STABLE: dict = {
 # and the card renders with the client/seed compatibility warning. Testing
 # builds deliberately get no stable redirect aliases: stable URLs are for
 # tutorials, and tutorials only ever reference the stable channel.
-PRERELEASE: dict | None = None
+PRERELEASE: dict | None = {
+    "version": "0.2.0 Alpha 4",
+    "url": "https://github.com/dowlle/ctr-archipelago-apworld/releases/tag/v0.2.0-alpha4",
+}
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-08-20"
+PAGES_UPDATED = "2026-08-25"
 
 REFERENCE_PAGES: list[dict] = [
+    {
+        "slug": "0-2-0-release-notes",
+        "title": "What changed in 0.2.0?",
+        "short_title": "0.2.0 release notes",
+        "blurb": "The complete player-facing changelog from 0.1.5 through the current 0.2.0 Alpha 4 preview.",
+        "description": "Read the complete CTR Archipelago 0.2.0 preview release notes, covering every major change since version 0.1.5.",
+        "file": "0-2-0-release-notes.md",
+        "published": "2026-08-25",
+        "updated": "2026-08-25",
+        "verified_against": "0.2.0 Alpha 4",
+        "status_label": "Full release notes",
+    },
     {
         "slug": "warp-pads",
         "title": "Warp pads and requirements",
@@ -68,7 +83,7 @@ REFERENCE_PAGES: list[dict] = [
         "file": "warp-pads.md",
         "published": "2026-08-20",
         "updated": "2026-08-20",
-        "verified_against": "0.2.0 Alpha 3",
+        "verified_against": "0.2.0 Alpha 4",
         "status_label": "0.2.0 preview",
     },
     {
@@ -80,7 +95,7 @@ REFERENCE_PAGES: list[dict] = [
         "file": "progression.md",
         "published": "2026-08-20",
         "updated": "2026-08-20",
-        "verified_against": "0.2.0 Alpha 3",
+        "verified_against": "0.2.0 Alpha 4",
         "status_label": "0.2.0 preview",
     },
     {
@@ -92,7 +107,7 @@ REFERENCE_PAGES: list[dict] = [
         "file": "randomized-content.md",
         "published": "2026-08-20",
         "updated": "2026-08-20",
-        "verified_against": "0.2.0 Alpha 3",
+        "verified_against": "0.2.0 Alpha 4",
         "status_label": "0.2.0 preview",
     },
 ]
