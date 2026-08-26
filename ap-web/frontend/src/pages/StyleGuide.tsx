@@ -21,8 +21,8 @@ export default function StyleGuide() {
           compact controls and enough density for catalogs and multiworld tools.
         </p>
         <div className="sg-hero-actions">
-          <button className="sg-button sg-button-primary">Primary action</button>
-          <button className="sg-button sg-button-secondary">Secondary action</button>
+          <button className="btn btn-primary">Primary action</button>
+          <button className="btn">Secondary action</button>
           <a href="#components" className="sg-text-link">Explore components →</a>
         </div>
       </header>
@@ -48,7 +48,7 @@ export default function StyleGuide() {
           ))}
         </div>
 
-        <div className="sg-type-specimen sg-surface">
+        <div className="sg-type-specimen surface surface-spacious">
           <div className="sg-type-display">
             <span>Display · Bricolage Grotesque</span>
             <h2>Every world has a place.</h2>
@@ -71,44 +71,44 @@ export default function StyleGuide() {
         </div>
 
         <div className="sg-component-grid">
-          <article className="sg-surface">
+          <article className="surface">
             <span className="sg-label">Actions</span>
             <div className="sg-row">
-              <button className="sg-button sg-button-primary">Create room</button>
-              <button className="sg-button sg-button-secondary">View details</button>
-              <button className="sg-button sg-button-quiet">Cancel</button>
+              <button className="btn btn-primary">Create room</button>
+              <button className="btn">View details</button>
+              <button className="btn btn-quiet">Cancel</button>
             </div>
             <div className="sg-row">
-              <button className="sg-icon-button" aria-label="Download example">↓</button>
+              <button className="btn btn-icon" aria-label="Download example">↓</button>
               <a className="sg-text-link" href="#components">Read the setup guide →</a>
             </div>
           </article>
 
-          <article className="sg-surface">
+          <article className="surface">
             <span className="sg-label">Status and provenance</span>
             <div className="sg-row">
-              <span className="sg-badge sg-badge-blue">Community</span>
-              <span className="sg-badge sg-badge-green">Verified</span>
-              <span className="sg-badge sg-badge-amber">Review due</span>
-              <span className="sg-badge">Built in</span>
+              <span className="badge badge-save">Community</span>
+              <span className="badge badge-done">Verified</span>
+              <span className="badge badge-progress">Review due</span>
+              <span className="badge">Built in</span>
             </div>
             <p className="sg-provenance"><span>Reviewed 24 Aug 2026</span><span>Primary source</span><span>APWorld 1.2.3</span></p>
           </article>
 
-          <article className="sg-surface">
+          <article className="surface">
             <span className="sg-label">Fields</span>
-            <label className="sg-field"><span>Search integrations</span><input placeholder="Game or APWorld name…" /></label>
-            <div className="sg-field-pair">
-              <label className="sg-field"><span>Type</span><select defaultValue="all"><option value="all">All integrations</option><option>Built in</option><option>Community</option></select></label>
-              <label className="sg-field"><span>Version</span><input defaultValue="1.2.3" /></label>
+            <label className="field"><span>Search integrations</span><input placeholder="Game or APWorld name…" /></label>
+            <div className="field-pair">
+              <label className="field"><span>Type</span><select defaultValue="all"><option value="all">All integrations</option><option>Built in</option><option>Community</option></select></label>
+              <label className="field"><span>Version</span><input defaultValue="1.2.3" /></label>
             </div>
           </article>
 
-          <article className="sg-surface">
+          <article className="surface">
             <span className="sg-label">Feedback</span>
-            <div className="sg-notice sg-notice-info"><strong>Version matters.</strong><span>Use the version selected by your host.</span></div>
-            <div className="sg-notice sg-notice-success"><strong>Ready.</strong><span>Your player YAML is valid.</span></div>
-            <div className="sg-notice sg-notice-warning"><strong>Not verified yet.</strong><span>No reviewed setup guide is recorded.</span></div>
+            <div className="notice notice-info"><strong>Version matters.</strong><span>Use the version selected by your host.</span></div>
+            <div className="notice notice-success"><strong>Ready.</strong><span>Your player YAML is valid.</span></div>
+            <div className="notice notice-warning"><strong>Not verified yet.</strong><span>No reviewed setup guide is recorded.</span></div>
           </article>
         </div>
       </section>

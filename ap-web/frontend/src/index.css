@@ -207,13 +207,15 @@ h3 { font-size: 1rem; margin-bottom: 0.5rem; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.4rem 0.75rem;
+  min-height: 2.35rem;
+  padding: 0.58rem 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-card);
-  color: var(--text);
+  border-radius: 8px;
+  background: var(--bg-hover);
+  color: var(--text-h);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
+  font-weight: 600;
   font-family: inherit;
   line-height: 1.2;
   text-decoration: none;
@@ -226,11 +228,66 @@ a.btn:hover { text-decoration: none; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: #21170d;
+  border-color: var(--accent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset;
+}
+.btn-primary:hover { background: var(--accent-light); color: #21170d; }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--text-muted); }
+.btn-quiet:hover { background: var(--bg-hover); color: var(--text-h); }
+.btn-icon { width: 2.35rem; padding: 0; }
+.btn-sm { min-height: 2rem; padding: 0.35rem 0.65rem; font-size: 0.78rem; }
+
+/* Approved shared visual-foundation primitives. Page families may change
+   density, but keep the same surface, focus, radius and semantic roles. */
+.surface {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-feature);
+  background: var(--bg-card);
+}
+.surface-spacious { padding: var(--space-8); }
+.field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.field > span { color: var(--text-muted); font-size: 0.72rem; font-weight: 600; }
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-hover);
+  color: var(--text-h);
+  font: 0.82rem var(--font-body);
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--accent-glow);
+  outline-offset: 1px;
   border-color: var(--accent);
 }
-.btn-primary:hover { background: var(--accent-light); }
-.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.field-compact { gap: var(--space-1); }
+.field-compact input,
+.field-compact select { min-height: 2.4rem; padding-block: 0.45rem; }
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.notice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+.notice strong { color: var(--text-h); }
+.notice-info { border-left: 2px solid var(--color-info); }
+.notice-success { border-left: 2px solid var(--color-success); }
+.notice-warning { border-left: 2px solid var(--color-warning); }
+.notice-danger { border-left: 2px solid var(--color-danger); }
 
 /* Filter bar */
 .filter-bar {
@@ -416,19 +473,23 @@ a.btn:hover { text-decoration: none; }
    failed+unsupported+unknown to the same grey, which threw away the
    information. */
 .badge {
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  padding: 0.18rem 0.48rem;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.66rem;
+  font-weight: 650;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  border: 1px solid transparent;
   white-space: nowrap;
 }
-.badge-done { background: rgba(111, 204, 115, 0.15); color: var(--green); border-color: rgba(111, 204, 115, 0.3); }
-.badge-progress { background: rgba(240, 197, 74, 0.15); color: var(--yellow); border-color: rgba(240, 197, 74, 0.3); }
-.badge-save { background: rgba(106, 159, 212, 0.15); color: var(--blue); border-color: rgba(106, 159, 212, 0.3); }
+.badge-done { background: rgba(105, 201, 157, 0.12); color: var(--green); border-color: rgba(105, 201, 157, 0.4); }
+.badge-progress { background: rgba(242, 173, 85, 0.12); color: var(--yellow); border-color: rgba(242, 173, 85, 0.4); }
+.badge-save { background: rgba(114, 167, 216, 0.12); color: var(--blue); border-color: rgba(114, 167, 216, 0.4); }
 
 /* New variants for the 5-state validation enum + room status. */
 .badge-error {
@@ -2525,15 +2586,7 @@ a.btn:hover { text-decoration: none; }
 }
 .apworlds-builder-link a { color: var(--accent); font-weight: 600; }
 .apworlds-version-note {
-  display: flex;
-  gap: 0.45rem;
   margin: 0 0 1.4rem;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-card);
-  color: var(--text-muted);
-  font-size: 0.8rem;
   line-height: 1.4;
 }
 .apworlds-version-note strong { color: var(--text-h); white-space: nowrap; }
@@ -2637,20 +2690,11 @@ a.btn:hover { text-decoration: none; }
   color: var(--text-muted);
 }
 .apworld-control select {
-  font-family: inherit;
-  font-size: 0.82rem;
-  min-height: 2.4rem;
-  padding: 0.45rem 0.65rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--text);
   cursor: pointer;
 }
 .apworld-control select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  outline: 2px solid var(--accent-glow);
+  outline-offset: 1px;
 }
 .apworlds-header-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 
@@ -2764,23 +2808,13 @@ a.btn:hover { text-decoration: none; }
   cursor: pointer;
 }
 .apworld-search {
-  width: 100%;
   max-width: 28rem;
-  font-family: inherit;
-  font-size: 0.9rem;
-  min-height: 2.4rem;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-card);
-  color: var(--text);
   margin-bottom: 0.75rem;
   color-scheme: dark;
 }
 .apworld-search:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  outline: 2px solid var(--accent-glow);
+  outline-offset: 1px;
 }
 .apworlds-grid {
   display: grid;
@@ -4210,8 +4244,9 @@ details.collapsible-section > .accordion-body {
   /* UX-15: button touch targets. Default .btn was ~30px tall; bump to
      ~40px so finger taps don't miss. .btn-sm stays compact for inline
      row clusters but its font and padding still grow slightly. */
-  .btn { min-height: 2.5rem; padding: 0.5rem 0.85rem; font-size: 0.9rem; }
-  .btn-sm { min-height: 2.1rem; padding: 0.35rem 0.6rem; font-size: 0.85rem; }
+  .btn, .btn-sm { min-height: 2.75rem; }
+  .btn { padding: 0.5rem 0.85rem; font-size: 0.9rem; }
+  .btn-sm { padding: 0.35rem 0.6rem; font-size: 0.85rem; }
 
   /* UX-15: form inputs (filter bar, search boxes, dropdowns) get a real
      touch height too. The 0.85rem font was readable but the 28px height
@@ -5068,19 +5103,6 @@ details.yaml-builder-group > summary .muted {
 .sg-hero-actions,
 .sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
 .sg-hero-actions { margin-top: 1.6rem; }
-.sg-button,
-.sg-icon-button {
-  min-height: 2.35rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  font: 600 0.84rem var(--font-body);
-  cursor: pointer;
-}
-.sg-button { padding: 0.58rem 0.9rem; }
-.sg-button-primary { background: var(--sg-amber); color: #21170d; box-shadow: 0 1px 0 rgba(255,255,255,.18) inset; }
-.sg-button-secondary { border-color: var(--sg-border); background: var(--sg-raised); color: var(--sg-text); }
-.sg-button-quiet { background: transparent; color: var(--sg-muted); }
-.sg-icon-button { width: 2.35rem; padding: 0; border-color: var(--sg-border); background: var(--sg-raised); color: var(--sg-text); }
 .sg-text-link { color: var(--sg-amber); font-size: 0.86rem; font-weight: 650; text-decoration: none; }
 .sg-local-nav {
   position: sticky;
@@ -5110,7 +5132,6 @@ details.yaml-builder-group > summary .muted {
 .sg-color strong { font-size: 0.82rem; }
 .sg-color code { margin: 0.14rem 0 0.3rem; color: var(--sg-muted); font-size: 0.68rem; }
 .sg-color small { color: var(--sg-muted); font-size: 0.7rem; }
-.sg-surface { padding: 1.15rem; border: 1px solid var(--sg-border); border-radius: 12px; background: var(--sg-surface); }
 .sg-type-specimen { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.6rem 2.5rem; margin-top: 0.8rem; padding: 2rem; }
 .sg-type-specimen span { display: block; margin-bottom: 0.75rem; color: var(--sg-muted); font: 0.68rem var(--font-mono); }
 .sg-type-display h2 { margin: 0; font-family: "Bricolage Grotesque", var(--font-display); font-size: clamp(2rem, 4vw, 3.6rem); font-weight: 500; letter-spacing: -0.045em; line-height: 1; }
@@ -5119,24 +5140,8 @@ details.yaml-builder-group > summary .muted {
 .sg-type-mono { grid-column: 1 / -1; padding-top: 1.2rem; border-top: 1px solid var(--sg-border); }
 .sg-type-mono code { color: var(--sg-blue); font-family: var(--font-mono); }
 .sg-component-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
-.sg-component-grid .sg-surface { display: flex; flex-direction: column; gap: 1rem; min-height: 12rem; }
-.sg-badge { display: inline-flex; align-items: center; min-height: 1.45rem; padding: 0.18rem 0.48rem; border: 1px solid var(--sg-border); border-radius: 999px; background: var(--sg-raised); color: var(--sg-muted); font: 650 0.66rem var(--font-body); text-transform: uppercase; }
-.sg-badge-blue { border-color: rgba(114,167,216,.4); background: rgba(114,167,216,.12); color: var(--sg-blue); }
-.sg-badge-green { border-color: rgba(105,201,157,.4); background: rgba(105,201,157,.12); color: var(--sg-green); }
-.sg-badge-amber { border-color: rgba(242,173,85,.4); background: rgba(242,173,85,.12); color: var(--sg-amber); }
+.sg-component-grid .surface { display: flex; flex-direction: column; gap: 1rem; min-height: 12rem; }
 .sg-provenance { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0; color: var(--sg-muted); font: 0.7rem var(--font-mono); }
-.sg-field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
-.sg-field > span { color: var(--sg-muted); font-size: 0.72rem; font-weight: 600; }
-.sg-field input,
-.sg-field select { width: 100%; min-height: 2.5rem; padding: 0.55rem 0.7rem; border: 1px solid var(--sg-border); border-radius: 8px; background: var(--sg-raised); color: var(--sg-text); font: 0.82rem var(--font-body); }
-.sg-field input:focus,
-.sg-field select:focus { outline: 2px solid rgba(242,173,85,.35); border-color: var(--sg-amber); }
-.sg-field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
-.sg-notice { display: flex; align-items: baseline; gap: 0.45rem; padding: 0.65rem 0.75rem; border: 1px solid var(--sg-border); border-radius: 8px; background: var(--sg-raised); color: var(--sg-muted); font-size: 0.76rem; }
-.sg-notice strong { color: var(--sg-text); }
-.sg-notice-info { border-left: 2px solid var(--sg-blue); }
-.sg-notice-success { border-left: 2px solid var(--sg-green); }
-.sg-notice-warning { border-left: 2px solid var(--sg-amber); }
 .sg-family-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
 .sg-family { min-height: 14rem; padding: 1.2rem; border: 1px solid var(--sg-border); border-radius: 12px; background: var(--sg-surface); }
 .sg-family h3 { margin: 0 0 0.6rem; color: var(--sg-text); font-family: "Bricolage Grotesque", var(--font-display); font-size: 1.35rem; font-weight: 500; letter-spacing: -0.025em; }
@@ -5163,7 +5168,7 @@ details.yaml-builder-group > summary .muted {
   .sg-component-grid,
   .sg-family-grid { grid-template-columns: 1fr; }
   .sg-type-mono { grid-column: auto; }
-  .sg-field-pair { grid-template-columns: 1fr; }
+  .field-pair { grid-template-columns: 1fr; }
 }
 
 /* == Reviewed APWorld detail beta slice ========================= */

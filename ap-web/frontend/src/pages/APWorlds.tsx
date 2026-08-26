@@ -838,7 +838,7 @@ export default function APWorlds() {
         </div>
       </div>
 
-      <aside className="apworlds-version-note">
+      <aside className="apworlds-version-note notice notice-info">
         <strong>Match the host's version.</strong>
         <span>If you are unsure which APWorld version to use, ask the host before downloading.</span>
       </aside>
@@ -859,7 +859,7 @@ export default function APWorlds() {
       </div>
       <div className="apworld-toolbar">
       <div className="apworld-controls">
-        <label className="apworld-search-field">
+        <label className="apworld-search-field field field-compact">
           <span>Search integrations</span>
           <input
             type="search"
@@ -869,7 +869,7 @@ export default function APWorlds() {
             className="apworld-search"
           />
         </label>
-        <label className="apworld-control">
+        <label className="apworld-control field field-compact">
           <span>Sort</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
             <option value="name">Name (A to Z)</option>
@@ -879,7 +879,7 @@ export default function APWorlds() {
           </select>
         </label>
         {stabilityValues.length > 0 && (
-          <label className="apworld-control">
+          <label className="apworld-control field field-compact">
             <span>Index stability</span>
             <select
               value={stabilityFilter}

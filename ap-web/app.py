@@ -487,9 +487,9 @@ def create_app() -> Flask:
         normalized = path.strip("/")
         if normalized in PUBLIC_ROUTE_SEO:
             if PUBLIC_ROUTE_SEO[normalized].get("beta_only") and config.DEPLOYMENT_LABEL != "beta":
-                response = send_from_directory(DIST_DIR, "index.html")
-                response.status_code = 404
-                return response
+                # Do not return the SPA shell here. Its client router would
+                # hydrate a nominal 404 and expose the beta-only page anyway.
+                return Response("Not found\n", status=404, mimetype="text/plain")
             return _public_spa_response(normalized)
         response = send_from_directory(DIST_DIR, "index.html")
         if not _is_spa_route(path):
