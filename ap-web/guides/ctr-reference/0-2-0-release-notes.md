@@ -2,7 +2,7 @@ CTR Archipelago 0.2.0 adds many new ways to build a seed. Item boxes and CTR let
 
 > **0.2.0 is still a preview.** Alpha 4 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
 
-**[Download Alpha 4](https://github.com/dowlle/ctr-archipelago-apworld/releases/tag/v0.2.0-alpha4)** · **[Build a CTR YAML](/apworlds?build=ctr)**
+**[Download Alpha 4](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha4)** · **[Build a CTR YAML](/apworlds?build=ctr)**
 
 ## At a glance
 
@@ -159,4 +159,4 @@ The matched Alpha 4 pair passed fresh 32-bit Archipelago and vanilla Linux build
 
 This does not make it a stable release. The upstream engine sync still needs broader runtime coverage, the racer-ownership reload repair is not included, and the remaining 0.2.0 acceptance work continues before the stable release.
 
-Download the current test build from the [0.2.0 Alpha 4 GitHub release](https://github.com/dowlle/ctr-archipelago-apworld/releases/tag/v0.2.0-alpha4). If a problem appears, include the platform, seed or YAML, exact build version, what happened, and the generated support bundle.
+Download the current test build from the [0.2.0 Alpha 4 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha4). If a problem appears, include the platform, seed or YAML, exact build version, what happened, and the generated support bundle.

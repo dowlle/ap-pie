@@ -55,7 +55,7 @@ STABLE: dict = {
 # tutorials, and tutorials only ever reference the stable channel.
 PRERELEASE: dict | None = {
     "version": "0.2.0 Alpha 4",
-    "url": "https://github.com/dowlle/ctr-archipelago-apworld/releases/tag/v0.2.0-alpha4",
+    "url": "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha4",
 }
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
