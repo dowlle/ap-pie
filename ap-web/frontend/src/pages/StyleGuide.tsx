@@ -127,17 +127,35 @@ export default function StyleGuide() {
 
       <section id="apworld" className="sg-section">
         <div className="sg-section-heading">
-          <div><h2>Enough information, no invented certainty</h2><p>A visual hypothesis using only the narrow set of currently defensible fields.</p></div>
+          <div><h2>Current APWorld catalog item</h2><p>The live catalog pattern: compact identity, evidence-backed metadata and the actions available for the selected APWorld.</p></div>
         </div>
-        <article className="sg-apworld-card">
-          <div className="sg-apworld-icon">AW</div>
-          <div className="sg-apworld-main">
-            <div className="sg-apworld-title"><div><h3>ANIMAL WELL</h3><code>animal_well</code></div><span className="sg-badge sg-badge-blue">Community</span></div>
-            <div className="sg-apworld-meta"><span><small>Versions</small><strong>5 available</strong></span><span><small>Latest recorded</small><strong>v1.2.3</strong></span><span><small>Setup</small><strong>Review required</strong></span></div>
+        <article className="apworld-card sg-apworld-example">
+          <div className="apworld-card-badges"><span className="badge badge-save">Community</span></div>
+          <div className="apworld-card-icon-tile" aria-hidden="true">AW</div>
+          <div className="apworld-card-main">
+            <header className="apworld-card-head">
+              <div className="apworld-card-title"><h3>ANIMAL WELL</h3><code className="apworld-card-key">animal_well</code></div>
+            </header>
+            <div className="apworld-card-info-row">
+              <dl className="apworld-card-meta">
+                <div><dt>Versions</dt><dd>5 available</dd></div>
+                <div><dt>Latest recorded</dt><dd>v0.5.4 <span className="fuzz-pill fuzz-pill-broken" title="Broken fuzz verdict"><span className="fuzz-pill-dot" /></span></dd></div>
+                <div><dt>Setup</dt><dd>Reviewed details</dd></div>
+              </dl>
+              <div className="apworld-card-primary-actions">
+                <button className="btn apworld-card-detail-button">View details</button>
+                <button className="btn btn-sm">Create YAML</button>
+                <button className="btn btn-sm apworld-download-btn" aria-label="Download example APWorld">↓</button>
+              </div>
+            </div>
+            <div className="apworld-card-icons" aria-label="Recorded links">
+              <a className="apworld-card-home" href="#apworld">github.com/ArchipelagoMW/Archipelago-ANIMAL-WELL</a>
+            </div>
+            <div className="apworld-card-tags"><span className="tag">adventure</span><span className="tag">metroidvania</span></div>
+            <button type="button" className="apworld-version-toggle">View all 5 versions</button>
           </div>
-          <div className="sg-apworld-actions"><button className="sg-button sg-button-secondary">View details</button><button className="sg-icon-button" aria-label="Download example APWorld">↓</button></div>
         </article>
-        <p className="sg-caption">The final card fields remain subject to the APWorld information contract and evidence review.</p>
+        <p className="sg-caption">This specimen uses the same structure and classes as the live `/apworlds` cards.</p>
       </section>
     </div>
   );

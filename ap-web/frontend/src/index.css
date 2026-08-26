@@ -5145,18 +5145,8 @@ details.yaml-builder-group > summary .muted {
 .sg-family-catalog { box-shadow: 0 12px 35px rgba(0,0,0,.16); }
 .sg-family-docs { border-left: 2px solid var(--sg-amber); }
 .sg-family-workspace { background-image: linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px); background-size: 20px 20px; }
-.sg-apworld-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1rem; border: 1px solid var(--sg-border); border-radius: 12px; background: var(--sg-surface); }
-.sg-apworld-icon { display: grid; place-items: center; width: 3.1rem; height: 3.1rem; border-radius: 10px; background: linear-gradient(145deg, rgba(242,173,85,.22), rgba(114,167,216,.12)); color: var(--sg-amber); font: 700 0.82rem var(--font-mono); }
-.sg-apworld-title { display: flex; justify-content: space-between; gap: 1rem; }
-.sg-apworld-title h3 { margin: 0; color: var(--sg-text); font-size: 1rem; }
-.sg-apworld-title code { color: var(--sg-muted); font-size: 0.68rem; }
-.sg-apworld-meta { display: flex; flex-wrap: wrap; gap: 0.7rem 1.5rem; margin-top: 0.75rem; }
-.sg-apworld-meta span,
-.sg-apworld-meta small,
-.sg-apworld-meta strong { display: block; }
-.sg-apworld-meta small { margin-bottom: 0.14rem; color: var(--sg-muted); font-size: 0.64rem; }
-.sg-apworld-meta strong { color: var(--sg-text); font-size: 0.75rem; }
-.sg-apworld-actions { display: flex; gap: 0.4rem; }
+.sg-apworld-example { max-width: 46rem; }
+.sg-apworld-example button { font-family: inherit; }
 .sg-caption { margin: 0.65rem 0 0; color: var(--sg-muted); font-size: 0.72rem; }
 
 @media (max-width: 900px) {
@@ -5174,8 +5164,6 @@ details.yaml-builder-group > summary .muted {
   .sg-family-grid { grid-template-columns: 1fr; }
   .sg-type-mono { grid-column: auto; }
   .sg-field-pair { grid-template-columns: 1fr; }
-  .sg-apworld-card { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
-  .sg-apworld-actions { grid-column: 1 / -1; justify-content: flex-end; }
 }
 
 /* == Reviewed APWorld detail beta slice ========================= */
