@@ -1,8 +1,8 @@
 CTR Archipelago 0.2.0 adds many new ways to build a seed. Item boxes and CTR letters can become checks, racers and weapons can enter the item pool, and received items can unlock your kart's boost and stats. Gem Cup tracks can also be randomized, and several victory conditions can be combined. Every major addition is optional and configured per YAML.
 
-> **0.2.0 is still a preview.** Alpha 4 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
+> **0.2.0 is still a preview.** Alpha 5 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
 
-**[Download Alpha 4](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha4)** · **[Build a CTR YAML](/apworlds?build=ctr)**
+**[Download Alpha 5](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha5)** · **[Build a CTR YAML](/apworlds?build=ctr)**
 
 ## At a glance
 
@@ -11,7 +11,7 @@ CTR Archipelago 0.2.0 adds many new ways to build a seed. Item boxes and CTR let
 - **More places to check:** up to 241 authored AP boxes, Itemsanity weapon checks, CTR Letter locations and Wumpa progression.
 - **More things to receive:** racers, weapons, Progressive Boost, Progressive Stats, traps and comfort items.
 - **More ways through Adventure Mode:** randomized Gem Cup legs, racer-locked pads, capability-aware logic and goals that can be combined.
-- **A clearer client:** a race-friendly item feed, richer warp-pad displays, widescreen and fullscreen controls, improved recovery and optional AI lap recording.
+- **A clearer client:** a race-friendly item feed, richer warp-pad displays, widescreen and fullscreen controls, render scaling up to 4X or Native, improved recovery and optional AI lap recording.
 
 Most systems are optional. You choose them in your YAML, and the option help in the YAML Builder explains the available values.
 
@@ -74,6 +74,8 @@ Progressive Top Speed, Acceleration, and Turning raise each stat from Very Low t
 
 Each Gem Cup leg can be drawn independently from the 16 Trophy Race tracks, including repeated tracks. The ordinary warp pad for a drawn track remains a separate route, so a cup cannot lock away that track's checks. The client loads the randomized legs and reports the cup summary.
 
+AP boxes inside a randomized Gem Cup leg follow the physical warp-pad access of the track assigned to that leg. They do not inherit an unrelated cup entrance's requirements.
+
 ### Composable goals
 
 The old single goal choice is replaced by three conditions that can be combined:
@@ -83,6 +85,8 @@ The old single goal choice is replaced by three conditions that can be combined:
 - hold a chosen number of the five Gems.
 
 Every enabled condition must be met. The final Oxide unlock can separately require configured relic types and counts, and the Final Challenge location now follows the selected unlock mode.
+
+Alpha 5 fixes the Oxide garage and Final Challenge presentation so neither appears before every configured goal requirement is complete. This changes the premature boss presentation only. It does not add automatic hub or boss-door teleports.
 
 ### Capability-aware logic
 
@@ -109,7 +113,7 @@ The trap names were cleaned up for 0.2.0. Existing item ids did not move:
 - Reverse Controls Trap is now Reverse Steering;
 - the `Trap` suffix was removed from the whole family.
 
-Additional names are reserved in the datapackage for future effects, including Wumpa Wipeout, Flatten, Item Reroll, Forced Use, Empty Crates, Weakened Kart, Boost Blocker, Wireframe, Nitro, Reverse Steering, Red Potion, Upside Down, Mirror Mode, and Warpball Ambush. They are not drawn into Alpha 4 seeds because their effects are not yet part of the complete shipped pair.
+Additional names are reserved in the datapackage for future effects, including Wumpa Wipeout, Flatten, Item Reroll, Forced Use, Empty Crates, Weakened Kart, Boost Blocker, Wireframe, Nitro, Reverse Steering, Red Potion, Upside Down, Mirror Mode, and Warpball Ambush. They are not drawn into current preview seeds because their effects are not yet part of the complete shipped pair.
 
 The working effects were rebuilt around a scheduler with corrected activation, pause, reconnect, ownership, and race-transition behavior. Received traps can arm during a race and wait for a safe moment when necessary. Timers suspend while paused, and trap state resets on a new connection so stale effects do not leak between sessions.
 
@@ -123,11 +127,15 @@ Warp pads can split waiting items by reward type, show remaining AP boxes, displ
 
 The client now offers 4:3, 16:9, 16:10, and 21:9 aspect ratios with matching field-of-view and HUD scaling. Fullscreen persists and can be toggled with F11 or Alt+Enter. A dithering option is included. The race feed, picker HUD, portraits, credits, lighting, menus, vehicle behavior, and renderer received additional alignment and cleanup.
 
+Alpha 5 adds player-facing Render Scale choices for Original, 2X, 3X, 4X, and Native, plus Smooth Scaling and Texture Filtering options. Text remains at the original UI resolution and can look soft beside the sharper game rendering at 4X or Native. Higher-resolution text is future work.
+
 ## Reliability and recovery
 
 Checks earned while disconnected are retained and sent after reconnecting to the same seed and slot. Already-settled checks are suppressed instead of being resent. Connect-time scouting now requests only locations the server declared for the current slot, preventing an old reconnect loop and keeping peer-bound box items visible in the feed.
 
 Alpha 4 fixes the Ripper Roo zero-Key return freeze. Returning after the first boss no longer waits forever for a Key when that seed does not award one there.
+
+Alpha 5 repairs shuffled warp-pad access for seeds whose configuration does not require all four Keys. It also fixes Blue Fire U-turns so the forced-cross input works while reserves are active.
 
 The client also includes safer object-pool rollback, spawn-pointer invalidation, per-player scratch storage, crate-model fallbacks, trap and box reset corrections, racer-lock cleanup on title transitions, and protection against character state leaking between slots.
 
@@ -137,7 +145,7 @@ AI lap recording is an optional tool for capturing routes that computer-controll
 
 `Save AI Lap Recordings` writes completed AI navigation laps to a local collection for the selected difficulty levels. `Use Recorded AI Laps` allows compatible local recordings to be used for AI navigation playback. Both options are off by default, and the pause menu shows a read-only status row.
 
-The recorder stores versioned lap data with driver, character, difficulty, timing, cleanliness and shortcut metadata. A built-in library of shared recordings, automatic importing, named AI drivers and pace control are not shipped in Alpha 4.
+The recorder stores versioned lap data with driver, character, difficulty, timing, cleanliness and shortcut metadata. A built-in library of shared recordings, automatic importing, named AI drivers and pace control are not shipped in the current preview.
 
 ## Native engine update
 
@@ -149,14 +157,14 @@ This upstream sync is compile-tested in the exact Alpha 4 package. It remains on
 
 A 0.2.0 client can open 0.1.5 seeds using compatibility fallbacks. A 0.1.5 client cannot understand a 0.2.0 seed and may make it impossible to finish.
 
-Use the same version when generating and playing a seed. Install the client and APWorld from the same release, back up an existing folder before replacing it, and do not mix Alpha 4 with an earlier 0.2.0 preview.
+Use the same version when generating and playing a seed. Install the client and APWorld from the same release, back up an existing folder before replacing it, and do not mix Alpha 5 with an earlier 0.2.0 preview.
 
 The client still requires a disc image made from your own North American Crash Team Racing disc. No game data is included.
 
-## Alpha 4 testing status
+## Alpha 5 testing status
 
-The matched Alpha 4 pair passed fresh 32-bit Archipelago and vanilla Linux builds, a fresh Windows Archipelago build, the full APWorld fuzz workflow, and focused harnesses for trap scheduling, the first-Key freeze, transition diagnostics, podium parsing, and diagnostic deduplication.
+The matched Alpha 5 pair passed fresh 32-bit Archipelago and vanilla Linux builds, a fresh Windows Archipelago build, all ten CTR APWorld fuzz jobs, focused correctness and graphics harnesses, and an integrated Steam runtime pass. The runtime pass covered the graphics options, Blue Fire U-turn repair, composed Oxide gating, and Gem Cup AP-box access.
 
 This does not make it a stable release. The upstream engine sync still needs broader runtime coverage, the racer-ownership reload repair is not included, and the remaining 0.2.0 acceptance work continues before the stable release.
 
-Download the current test build from the [0.2.0 Alpha 4 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha4). If a problem appears, include the platform, seed or YAML, exact build version, what happened, and the generated support bundle.
+Download the current test build from the [0.2.0 Alpha 5 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha5). If a problem appears, include the platform, seed or YAML, exact build version, what happened, and the generated support bundle.
