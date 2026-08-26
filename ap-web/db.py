@@ -314,6 +314,72 @@ def init_db(db_url: str) -> None:
         # "not yet extracted" (predates this column or save) and is
         # backfilled lazily by the room-wide auto-pin button.
         cur.execute("ALTER TABLE room_yamls ADD COLUMN IF NOT EXISTS apworld_versions JSONB DEFAULT NULL")
+        # Room coordination slices A+B: bind a collection room to its generated
+        # tracker roster, then keep ownership and self-reported state against
+        # stable Archipelago (team, slot) coordinates. Display names remain
+        # mutable labels and are deliberately not part of any primary key.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS room_generated_rooms (
+                room_id TEXT PRIMARY KEY REFERENCES rooms(id) ON DELETE CASCADE,
+                tracker_url TEXT NOT NULL,
+                tracker_room_id TEXT,
+                associated_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                associated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT generated_room_tracker_url_length CHECK (length(tracker_url) <= 1024)
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS room_slots (
+                room_id TEXT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+                team INTEGER NOT NULL DEFAULT 0 CHECK (team >= 0),
+                slot INTEGER NOT NULL CHECK (slot > 0),
+                player_name TEXT NOT NULL,
+                game TEXT NOT NULL DEFAULT '',
+                source_yaml_id INTEGER REFERENCES room_yamls(id) ON DELETE SET NULL,
+                owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                owner_source TEXT CHECK (owner_source IN ('yaml', 'claim', 'host') OR owner_source IS NULL),
+                ownership_locked BOOLEAN NOT NULL DEFAULT FALSE,
+                claimed_at TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (room_id, team, slot),
+                CONSTRAINT room_slots_player_name_length CHECK (length(player_name) <= 64),
+                CONSTRAINT room_slots_game_length CHECK (length(game) <= 200)
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_room_slots_owner ON room_slots(room_id, owner_user_id)")
+        cur.execute("ALTER TABLE room_slots ADD COLUMN IF NOT EXISTS ownership_locked BOOLEAN NOT NULL DEFAULT FALSE")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS room_slot_ownership_events (
+                id BIGSERIAL PRIMARY KEY,
+                room_id TEXT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+                team INTEGER NOT NULL,
+                slot INTEGER NOT NULL,
+                event_type TEXT NOT NULL CHECK (event_type IN ('yaml_bound', 'claimed', 'released', 'host_assigned', 'host_cleared')),
+                previous_owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_room_slot_events ON room_slot_ownership_events(room_id, team, slot, created_at DESC)")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS room_slot_state (
+                room_id TEXT NOT NULL,
+                team INTEGER NOT NULL,
+                slot INTEGER NOT NULL,
+                bk_since TIMESTAMPTZ,
+                bk_confirmed_at TIMESTAMPTZ,
+                go_mode_since TIMESTAMPTZ,
+                slot_note TEXT NOT NULL DEFAULT '',
+                updated_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (room_id, team, slot),
+                FOREIGN KEY (room_id, team, slot) REFERENCES room_slots(room_id, team, slot) ON DELETE CASCADE,
+                CONSTRAINT room_slot_note_length CHECK (length(slot_note) <= 280)
+            )
+        """)
         # SEC-21: schema-level CHECK constraints on the `rooms` string columns.
         # Caps match the server-side validation in `api/rooms.py`
         # (_ROOM_STRING_LIMITS). The validation rejects with a clean 400; this
@@ -1154,6 +1220,249 @@ def get_activity(room_id: str, limit: int = 50) -> list[dict]:
         )
         rows = _dictrow(cur)
     return [_serialize(r) for r in rows]
+
+
+# ── Generated-room slots and coordination state ─────────────────
+
+
+def get_generated_room(room_id: str) -> dict | None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM room_generated_rooms WHERE room_id = %s", (room_id,))
+        rows = _dictrow(cur)
+    return _serialize(rows[0]) if rows else None
+
+
+def list_room_slots(room_id: str) -> list[dict]:
+    """Return the generated roster with owner display data and state."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT s.*, u.discord_username AS owner_username,
+                      st.bk_since, st.bk_confirmed_at, st.go_mode_since,
+                      COALESCE(st.slot_note, '') AS slot_note, st.updated_at AS state_updated_at
+               FROM room_slots s
+               LEFT JOIN users u ON u.id = s.owner_user_id
+               LEFT JOIN room_slot_state st
+                 ON st.room_id = s.room_id AND st.team = s.team AND st.slot = s.slot
+               WHERE s.room_id = %s
+               ORDER BY s.team, s.slot""",
+            (room_id,),
+        )
+        rows = _dictrow(cur)
+    return [_serialize(r) for r in rows]
+
+
+def get_room_slot(room_id: str, team: int, slot: int) -> dict | None:
+    rows = [s for s in list_room_slots(room_id) if s["team"] == team and s["slot"] == slot]
+    return rows[0] if rows else None
+
+
+def associate_generated_room(
+    room_id: str,
+    tracker_url: str,
+    tracker_room_id: str | None,
+    actor_user_id: int | None,
+    slots: list[dict],
+) -> list[dict]:
+    """Persist a reviewed generated roster without overwriting explicit claims.
+
+    Each slot dict contains team, slot, player_name, game and optional yaml_id,
+    yaml_owner_user_id. Existing claim/host ownership wins over a refreshed
+    automatic YAML mapping. YAML ownership initializes only an unowned row.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO room_generated_rooms
+                 (room_id, tracker_url, tracker_room_id, associated_by_user_id)
+               VALUES (%s, %s, %s, %s)
+               ON CONFLICT (room_id) DO UPDATE SET
+                 tracker_url = EXCLUDED.tracker_url,
+                 tracker_room_id = EXCLUDED.tracker_room_id,
+                 associated_by_user_id = EXCLUDED.associated_by_user_id,
+                 updated_at = NOW()""",
+            (room_id, tracker_url, tracker_room_id, actor_user_id),
+        )
+        seen: set[tuple[int, int]] = set()
+        for item in slots:
+            team = int(item.get("team", 0))
+            slot = int(item["slot"])
+            seen.add((team, slot))
+            yaml_owner = item.get("yaml_owner_user_id")
+            cur.execute(
+                """INSERT INTO room_slots
+                     (room_id, team, slot, player_name, game, source_yaml_id,
+                      owner_user_id, owner_source, claimed_at)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s,
+                           CASE WHEN %s IS NULL THEN NULL ELSE 'yaml' END,
+                           CASE WHEN %s IS NULL THEN NULL ELSE NOW() END)
+                   ON CONFLICT (room_id, team, slot) DO UPDATE SET
+                     player_name = EXCLUDED.player_name,
+                     game = EXCLUDED.game,
+                     source_yaml_id = EXCLUDED.source_yaml_id,
+                     owner_user_id = CASE
+                       WHEN NOT room_slots.ownership_locked THEN EXCLUDED.owner_user_id
+                       ELSE room_slots.owner_user_id END,
+                     owner_source = CASE
+                       WHEN NOT room_slots.ownership_locked THEN EXCLUDED.owner_source
+                       ELSE room_slots.owner_source END,
+                     claimed_at = CASE
+                       WHEN NOT room_slots.ownership_locked THEN EXCLUDED.claimed_at
+                       ELSE room_slots.claimed_at END,
+                     updated_at = NOW()
+                   RETURNING owner_user_id, owner_source""",
+                (
+                    room_id, team, slot, item["player_name"], item.get("game", ""),
+                    item.get("yaml_id"), yaml_owner, yaml_owner, yaml_owner,
+                ),
+            )
+            persisted = cur.fetchone()
+            if yaml_owner is not None and persisted and persisted[1] == "yaml":
+                cur.execute(
+                    """INSERT INTO room_slot_ownership_events
+                         (room_id, team, slot, event_type, owner_user_id, actor_user_id)
+                       SELECT %s, %s, %s, 'yaml_bound', %s, %s
+                       WHERE NOT EXISTS (
+                         SELECT 1 FROM room_slot_ownership_events
+                         WHERE room_id = %s AND team = %s AND slot = %s
+                           AND event_type = 'yaml_bound' AND owner_user_id = %s
+                       )""",
+                    (room_id, team, slot, yaml_owner, actor_user_id,
+                     room_id, team, slot, yaml_owner),
+                )
+        # Drop roster entries no longer present only when they have no explicit
+        # owner/state. Claimed or coordinated historical slots stay reviewable.
+        cur.execute("SELECT team, slot FROM room_slots WHERE room_id = %s", (room_id,))
+        for team, slot in cur.fetchall():
+            if (team, slot) not in seen:
+                cur.execute(
+                    """DELETE FROM room_slots s
+                       WHERE s.room_id = %s AND s.team = %s AND s.slot = %s
+                         AND s.owner_user_id IS NULL
+                         AND NOT EXISTS (
+                           SELECT 1 FROM room_slot_state st
+                           WHERE st.room_id=s.room_id AND st.team=s.team AND st.slot=s.slot
+                         )""",
+                    (room_id, team, slot),
+                )
+    conn.commit()
+    return list_room_slots(room_id)
+
+
+def claim_room_slot(room_id: str, team: int, slot: int, user_id: int) -> dict | None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE room_slots SET owner_user_id=%s, owner_source='claim', ownership_locked=TRUE,
+                      claimed_at=NOW(), updated_at=NOW()
+               WHERE room_id=%s AND team=%s AND slot=%s AND owner_user_id IS NULL
+               RETURNING *""",
+            (user_id, room_id, team, slot),
+        )
+        rows = _dictrow(cur)
+        if rows:
+            cur.execute(
+                """INSERT INTO room_slot_ownership_events
+                     (room_id, team, slot, event_type, owner_user_id, actor_user_id)
+                   VALUES (%s, %s, %s, 'claimed', %s, %s)""",
+                (room_id, team, slot, user_id, user_id),
+            )
+    conn.commit()
+    return _serialize(rows[0]) if rows else None
+
+
+def release_room_slot(room_id: str, team: int, slot: int, user_id: int) -> dict | None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE room_slots SET owner_user_id=NULL, owner_source=NULL, ownership_locked=TRUE,
+                      claimed_at=NULL, updated_at=NOW()
+               WHERE room_id=%s AND team=%s AND slot=%s AND owner_user_id=%s
+               RETURNING *""",
+            (room_id, team, slot, user_id),
+        )
+        rows = _dictrow(cur)
+        if rows:
+            cur.execute(
+                """INSERT INTO room_slot_ownership_events
+                     (room_id, team, slot, event_type, previous_owner_user_id, actor_user_id)
+                   VALUES (%s, %s, %s, 'released', %s, %s)""",
+                (room_id, team, slot, user_id, user_id),
+            )
+    conn.commit()
+    return _serialize(rows[0]) if rows else None
+
+
+def assign_room_slot_owner(
+    room_id: str, team: int, slot: int, owner_user_id: int | None, actor_user_id: int | None,
+) -> dict | None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT owner_user_id FROM room_slots WHERE room_id=%s AND team=%s AND slot=%s FOR UPDATE",
+            (room_id, team, slot),
+        )
+        prior = cur.fetchone()
+        if not prior:
+            conn.commit()
+            return None
+        cur.execute(
+            """UPDATE room_slots SET owner_user_id=%s, ownership_locked=TRUE,
+                      owner_source=CASE WHEN %s IS NULL THEN NULL ELSE 'host' END,
+                      claimed_at=CASE WHEN %s IS NULL THEN NULL ELSE NOW() END,
+                      updated_at=NOW()
+               WHERE room_id=%s AND team=%s AND slot=%s RETURNING *""",
+            (owner_user_id, owner_user_id, owner_user_id, room_id, team, slot),
+        )
+        rows = _dictrow(cur)
+        cur.execute(
+            """INSERT INTO room_slot_ownership_events
+                 (room_id, team, slot, event_type, previous_owner_user_id, owner_user_id, actor_user_id)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (room_id, team, slot, "host_assigned" if owner_user_id else "host_cleared",
+             prior[0], owner_user_id, actor_user_id),
+        )
+    conn.commit()
+    return _serialize(rows[0]) if rows else None
+
+
+def update_room_slot_state(
+    room_id: str, team: int, slot: int, actor_user_id: int,
+    *, bk_action: str | None = None, go_mode: bool | None = None,
+    slot_note: str | None = None,
+) -> dict:
+    """Apply a partial self-state update. BK actions are set/confirm/clear."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO room_slot_state (room_id, team, slot, updated_by_user_id)
+               VALUES (%s, %s, %s, %s)
+               ON CONFLICT (room_id, team, slot) DO NOTHING""",
+            (room_id, team, slot, actor_user_id),
+        )
+        updates = ["updated_by_user_id=%s", "updated_at=NOW()"]
+        values: list = [actor_user_id]
+        if bk_action == "set":
+            updates += ["bk_since=COALESCE(bk_since, NOW())", "bk_confirmed_at=NOW()"]
+        elif bk_action == "confirm":
+            updates += ["bk_since=COALESCE(bk_since, NOW())", "bk_confirmed_at=NOW()"]
+        elif bk_action == "clear":
+            updates += ["bk_since=NULL", "bk_confirmed_at=NULL"]
+        if go_mode is not None:
+            updates.append("go_mode_since=CASE WHEN %s THEN COALESCE(go_mode_since, NOW()) ELSE NULL END")
+            values.append(go_mode)
+        if slot_note is not None:
+            updates.append("slot_note=%s")
+            values.append(slot_note)
+        values += [room_id, team, slot]
+        cur.execute(
+            f"""UPDATE room_slot_state SET {', '.join(updates)}
+                WHERE room_id=%s AND team=%s AND slot=%s""",
+            values,
+        )
+    conn.commit()
+    return get_room_slot(room_id, team, slot) or {}
 
 
 # ── FEAT-43 personal YAML library ────────────────────────────────

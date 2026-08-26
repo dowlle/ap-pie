@@ -5260,6 +5260,8 @@ details.yaml-builder-group > summary .muted {
   .yaml-modal[open],
   .slot-modal[open] { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); }
   .yaml-builder-option { grid-template-columns: 1fr; }
+  .slot-coordination-summary { grid-template-columns: 1fr; }
+  .coordination-mapping-table select { min-width: 10rem; }
 }
 
 /* == AP-Pie visual style guide ===================================
@@ -5355,6 +5357,28 @@ details.yaml-builder-group > summary .muted {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.sg-review-flag.is-proposed {
+  border-color: color-mix(in srgb, var(--color-warning) 48%, var(--border));
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+}
+.coordination-preview-actions { margin-top: var(--space-3); }
+.coordination-mapping-table { margin-top: var(--space-3); }
+.coordination-mapping-table td:first-child strong,
+.coordination-mapping-table td:first-child small { display: block; }
+.coordination-mapping-table td:first-child small { margin-top: var(--space-1); color: var(--text-muted); font: 0.68rem var(--font-mono); }
+.coordination-mapping-table select { width: 100%; min-width: 12rem; }
+.coordination-confirm-notice { margin-top: var(--space-3); }
+.tracker-card-coordination { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+.slot-coordination { display: flex; flex-direction: column; gap: var(--space-4); }
+.slot-coordination-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); padding: var(--space-4); }
+.slot-coordination-summary span,
+.slot-coordination-summary strong { display: block; }
+.slot-coordination-summary span { margin-bottom: var(--space-1); font-size: 0.72rem; }
+.slot-coordination-summary strong { color: var(--text-h); font-size: 0.84rem; }
+.slot-coordination-controls { display: flex; flex-direction: column; gap: var(--space-3); }
+.slot-coordination-action-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.slot-note-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .sg-review-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .sg-review-card { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 .sg-review-card-wide { grid-column: 1 / -1; }

@@ -288,6 +288,153 @@ def public_yaml_download(room_id: str, yaml_id: int):
     )
 
 
+def _serialize_generated_slot(slot_row: dict, user: dict | None) -> dict:
+    """Public-safe slot overlay. Discord identity is session-gated."""
+    is_mine = bool(user and slot_row.get("owner_user_id") == user.get("id"))
+    out = {
+        "team": slot_row["team"],
+        "slot": slot_row["slot"],
+        "player_name": slot_row["player_name"],
+        "game": slot_row.get("game") or "",
+        "claimed": slot_row.get("owner_user_id") is not None,
+        "is_mine": is_mine,
+        "owner_username": slot_row.get("owner_username") if user else None,
+        "bk_since": slot_row.get("bk_since"),
+        "bk_confirmed_at": slot_row.get("bk_confirmed_at"),
+        "go_mode_since": slot_row.get("go_mode_since"),
+        "slot_note": slot_row.get("slot_note") or "",
+        "state_updated_at": slot_row.get("state_updated_at"),
+    }
+    return out
+
+
+@bp.route("/api/public/rooms/<room_id>/slots")
+def public_generated_slots(room_id: str):
+    db_err = _requires_db()
+    if db_err:
+        return db_err
+    room = get_room(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    from db import get_generated_room, list_room_slots
+    association = get_generated_room(room_id)
+    user = _current_session_user()
+    return jsonify({
+        "associated": association is not None,
+        "slots": [_serialize_generated_slot(row, user) for row in list_room_slots(room_id)],
+    })
+
+
+@bp.route("/api/public/rooms/<room_id>/slots/<int:team>/<int:slot>/claim", methods=["POST"])
+def public_generated_slot_claim(room_id: str, team: int, slot: int):
+    db_err = _requires_db()
+    if db_err:
+        return db_err
+    user = _current_session_user()
+    if not user:
+        return jsonify({"error": "Log in with Discord to claim this generated slot"}), 401
+    room = get_room(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    from db import claim_room_slot, get_generated_room, get_room_slot
+    if not get_generated_room(room_id):
+        return jsonify({"error": "This room is not attached to a generated room"}), 409
+    current = get_room_slot(room_id, team, slot)
+    if not current:
+        return jsonify({"error": "Generated slot not found"}), 404
+    if current.get("owner_user_id") is not None:
+        return jsonify({"error": "This generated slot is already claimed"}), 409
+    claimed = claim_room_slot(room_id, team, slot, int(user["id"]))
+    if not claimed:
+        return jsonify({"error": "This generated slot was just claimed by someone else"}), 409
+    add_activity(
+        room_id, "generated_slot_claimed",
+        f"{user.get('discord_username') or 'Player'} claimed generated slot {current['player_name']}",
+    )
+    return jsonify({"status": "claimed", "team": team, "slot": slot})
+
+
+@bp.route("/api/public/rooms/<room_id>/slots/<int:team>/<int:slot>/release", methods=["POST"])
+def public_generated_slot_release(room_id: str, team: int, slot: int):
+    db_err = _requires_db()
+    if db_err:
+        return db_err
+    user = _current_session_user()
+    if not user:
+        return jsonify({"error": "Log in with Discord to release this generated slot"}), 401
+    from db import release_room_slot
+    released = release_room_slot(room_id, team, slot, int(user["id"]))
+    if not released:
+        return jsonify({"error": "You do not own this generated slot"}), 403
+    add_activity(
+        room_id, "generated_slot_released",
+        f"{user.get('discord_username') or 'Player'} released generated slot {released['player_name']}",
+    )
+    return jsonify({"status": "released", "team": team, "slot": slot})
+
+
+@bp.route("/api/public/rooms/<room_id>/slots/<int:team>/<int:slot>/state", methods=["PATCH"])
+def public_generated_slot_state(room_id: str, team: int, slot: int):
+    db_err = _requires_db()
+    if db_err:
+        return db_err
+    user = _current_session_user()
+    if not user:
+        return jsonify({"error": "Log in with Discord to update slot coordination"}), 401
+    room = get_room(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    from db import get_room_slot, update_room_slot_state
+    current = get_room_slot(room_id, team, slot)
+    if not current:
+        return jsonify({"error": "Generated slot not found"}), 404
+    may_edit = (
+        current.get("owner_user_id") == user.get("id")
+        or room.get("host_user_id") == user.get("id")
+        or bool(user.get("is_admin"))
+    )
+    if not may_edit:
+        return jsonify({"error": "Only the slot owner or room host can update coordination state"}), 403
+    data = request.get_json() or {}
+    allowed = {"bk_action", "go_mode", "slot_note"}
+    if any(key not in allowed for key in data):
+        return jsonify({"error": "Unknown coordination field"}), 400
+    bk_action = data.get("bk_action")
+    if bk_action is not None and bk_action not in ("set", "confirm", "clear"):
+        return jsonify({"error": "bk_action must be set, confirm, or clear"}), 400
+    go_mode = data.get("go_mode")
+    if go_mode is not None and not isinstance(go_mode, bool):
+        return jsonify({"error": "go_mode must be true or false"}), 400
+    note = data.get("slot_note")
+    if note is not None:
+        if not isinstance(note, str):
+            return jsonify({"error": "slot_note must be text"}), 400
+        note = note.strip()
+        if len(note) > 280:
+            return jsonify({"error": "slot_note is too long (maximum 280 characters)"}), 400
+    updated = update_room_slot_state(
+        room_id, team, slot, int(user["id"]),
+        bk_action=bk_action, go_mode=go_mode, slot_note=note,
+    )
+    action_parts = []
+    # Still-BK confirmations update bk_confirmed_at but deliberately do not
+    # append a fresh room-activity row every time. This is the coalescing
+    # boundary for large asyncs: the current timestamp stays visible on the
+    # slot while the shared feed remains readable.
+    if bk_action and bk_action != "confirm":
+        action_parts.append({"set": "marked BK", "confirm": "confirmed Still BK", "clear": "cleared BK"}[bk_action])
+    if go_mode is not None:
+        action_parts.append("entered go mode" if go_mode else "left go mode")
+    if note is not None:
+        action_parts.append("updated their slot note")
+    if action_parts:
+        add_activity(
+            room_id, "slot_coordination_updated",
+            f"{user.get('discord_username') or 'Player'} {'; '.join(action_parts)} for {current['player_name']}",
+        )
+    return jsonify(_serialize_generated_slot(updated, user))
+
+
 @bp.route("/api/public/rooms/<room_id>/tracker")
 def public_room_tracker(room_id: str):
     """FEAT-08: public mirror of /api/rooms/<id>/tracker. Returns tracker
@@ -347,8 +494,22 @@ def public_room_tracker_slot(room_id: str, slot: int):
     data = fetch_slot_data(tracker_url, team, slot)
     if "error" not in data:
         user = _current_session_user()
-        if user is not None:
-            from api.rooms import _attribute_slot_to_submitter
+        from api.rooms import _attribute_slot_to_submitter, _coordination_slot_overlay
+        coordination = _coordination_slot_overlay(room_id, team, slot)
+        if coordination:
+            safe_coordination = {
+                key: value for key, value in coordination.items()
+                if key not in ("owner_user_id", "owner_source")
+            }
+            safe_coordination["is_mine"] = bool(
+                user and coordination.get("owner_user_id") == user.get("id")
+            )
+            if user is None:
+                safe_coordination["owner_username"] = None
+            data["coordination"] = safe_coordination
+            data["submitter_user_id"] = coordination.get("owner_user_id") if user else None
+            data["submitter_username"] = coordination.get("owner_username") if user else None
+        elif user is not None:
             data.update(_attribute_slot_to_submitter(room_id, data.get("name")))
         else:
             # FEAT-13 rule: anonymous visitors don't see Discord identities.

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import {
   autoPinAllAPWorlds,
+  confirmGeneratedRoom,
   getRoomAPWorlds,
+  previewGeneratedRoom,
   setRoomAPWorld,
   updateRoom,
   type AutoPinAllResult,
+  type GeneratedRoomPreview,
   type Room,
   type RoomAPWorldEntry,
 } from "../api";
@@ -132,6 +135,7 @@ export default function RoomSettingsModal({
         {tab === "tracker" && (
           <>
             <TrackerUrlSection room={room} onUpdate={onUpdate} />
+            <GeneratedRoomSection room={room} onUpdate={onUpdate} />
             <TrackerSlotOverrideSection room={room} onUpdate={onUpdate} />
           </>
         )}
@@ -141,6 +145,131 @@ export default function RoomSettingsModal({
         <button type="button" className="btn btn-sm btn-primary" onClick={onClose}>Done</button>
       </footer>
     </dialog>
+  );
+}
+
+function GeneratedRoomSection({ room, onUpdate }: { room: Room; onUpdate: () => void }) {
+  const [trackerUrl, setTrackerUrl] = useState(room.tracker_url ?? "");
+  const [preview, setPreview] = useState<GeneratedRoomPreview | null>(null);
+  const [mappings, setMappings] = useState<Record<string, number | null>>({});
+  const [working, setWorking] = useState(false);
+  const [err, setErr] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  const inspect = async () => {
+    setWorking(true);
+    setErr("");
+    setSaved(false);
+    try {
+      const result = await previewGeneratedRoom(room.id, trackerUrl.trim());
+      setPreview(result);
+      setMappings(Object.fromEntries(result.roster.map((row) => [
+        `${row.team}:${row.slot}`, row.suggested_yaml_id,
+      ])));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to inspect generated room");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const confirm = async () => {
+    if (!preview) return;
+    setWorking(true);
+    setErr("");
+    try {
+      await confirmGeneratedRoom(
+        room.id,
+        preview.tracker_url,
+        preview.roster.map((row) => ({
+          team: row.team,
+          slot: row.slot,
+          yaml_id: mappings[`${row.team}:${row.slot}`] ?? null,
+        })),
+      );
+      setSaved(true);
+      onUpdate();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to attach generated room");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  return (
+    <section className="settings-section">
+      <SectionHeader
+        title="Generated room identity"
+        hint="Review how the generated Archipelago slots map back to submitted YAMLs. Exact names are suggested automatically; every other slot stays unassigned until you choose. Confirming starts the room's playing phase."
+      />
+      <label className="field field-compact">
+        <span>archipelago.gg tracker URL</span>
+        <input
+          type="url"
+          value={trackerUrl}
+          onChange={(e) => setTrackerUrl(e.target.value)}
+          placeholder="https://archipelago.gg/tracker/..."
+          disabled={working}
+        />
+      </label>
+      <div className="settings-controls coordination-preview-actions">
+        <button type="button" className="btn" onClick={inspect} disabled={working || !trackerUrl.trim()}>
+          {working && !preview ? "Inspecting…" : "Preview slot mapping"}
+        </button>
+        {preview && <span className="muted">{preview.roster.length} generated slots</span>}
+      </div>
+      {preview && (
+        <div className="table-wrapper coordination-mapping-table">
+          <table className="game-table">
+            <thead><tr><th>Generated slot</th><th>Game</th><th>YAML owner</th><th>Status</th></tr></thead>
+            <tbody>
+              {preview.roster.map((row) => {
+                const key = `${row.team}:${row.slot}`;
+                return (
+                  <tr key={key}>
+                    <td><strong>{row.player_name}</strong><small>team {row.team}, slot {row.slot}</small></td>
+                    <td>{row.game}</td>
+                    <td>
+                      <select
+                        aria-label={`YAML mapping for ${row.player_name}`}
+                        value={mappings[key] ?? ""}
+                        onChange={(e) => setMappings((current) => ({
+                          ...current, [key]: e.target.value ? Number(e.target.value) : null,
+                        }))}
+                        disabled={working}
+                      >
+                        <option value="">Unassigned</option>
+                        {preview.yamls.map((yaml) => (
+                          <option key={yaml.id} value={yaml.id}>
+                            {yaml.player_name} · {yaml.game}{yaml.submitter_username ? ` · @${yaml.submitter_username}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td><span className={`badge ${row.match_status === "exact" ? "badge-done" : "badge-progress"}`}>{row.match_status}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {preview && (
+        <div className="notice notice-warning coordination-confirm-notice">
+          <strong>Review before confirming.</strong>
+          <span>Existing player claims survive later roster refreshes. Confirming changes the room status to playing.</span>
+        </div>
+      )}
+      {preview && (
+        <div className="settings-controls">
+          <button type="button" className="btn btn-primary" onClick={confirm} disabled={working}>
+            {working ? "Attaching…" : "Attach generated room"}
+          </button>
+          <SavedHint visible={saved} />
+        </div>
+      )}
+      {err && <p className="settings-error">{err}</p>}
+    </section>
   );
 }
 

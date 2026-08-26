@@ -32,6 +32,7 @@ export interface PlayerInfo {
   client_status: number;
   status_label: string;
   goal_completed: boolean;
+  coordination?: GeneratedSlot;
 }
 
 export interface GameRecord {
@@ -841,6 +842,102 @@ export interface RoomTrackerData {
   source?: string;
 }
 
+export interface GeneratedSlot {
+  team: number;
+  slot: number;
+  player_name: string;
+  game: string;
+  claimed: boolean;
+  is_mine: boolean;
+  owner_username: string | null;
+  bk_since: string | null;
+  bk_confirmed_at: string | null;
+  go_mode_since: string | null;
+  slot_note: string;
+  state_updated_at: string | null;
+}
+
+export interface GeneratedRosterRow {
+  team: number;
+  slot: number;
+  player_name: string;
+  game: string;
+  match_status: "exact" | "ambiguous" | "unmatched";
+  suggested_yaml_id: number | null;
+}
+
+export interface GeneratedRoomPreview {
+  tracker_url: string;
+  tracker_room_id: string | null;
+  roster: GeneratedRosterRow[];
+  yamls: Array<{
+    id: number;
+    player_name: string;
+    game: string;
+    submitter_username: string | null;
+    has_owner: boolean;
+  }>;
+}
+
+export async function previewGeneratedRoom(roomId: string, trackerUrl: string): Promise<GeneratedRoomPreview> {
+  const res = await fetch(`${BASE}/rooms/${roomId}/generated-room/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tracker_url: trackerUrl }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || "Failed to inspect generated room");
+  return body;
+}
+
+export async function confirmGeneratedRoom(
+  roomId: string,
+  trackerUrl: string,
+  mappings: Array<{ team: number; slot: number; yaml_id: number | null }>,
+): Promise<{ room: Room; slots: GeneratedSlot[] }> {
+  const res = await fetch(`${BASE}/rooms/${roomId}/generated-room`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tracker_url: trackerUrl, mappings }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || "Failed to attach generated room");
+  return body;
+}
+
+export async function getGeneratedSlots(roomId: string): Promise<{ associated: boolean; slots: GeneratedSlot[] }> {
+  return fetchJson(`${BASE}/public/rooms/${roomId}/slots`);
+}
+
+async function generatedSlotMutation(
+  roomId: string, team: number, slot: number, action: "claim" | "release",
+): Promise<void> {
+  const res = await fetch(`${BASE}/public/rooms/${roomId}/slots/${team}/${slot}/${action}`, { method: "POST" });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to ${action} slot`);
+}
+
+export const claimGeneratedSlot = (roomId: string, team: number, slot: number) =>
+  generatedSlotMutation(roomId, team, slot, "claim");
+export const releaseGeneratedSlot = (roomId: string, team: number, slot: number) =>
+  generatedSlotMutation(roomId, team, slot, "release");
+
+export async function updateGeneratedSlotState(
+  roomId: string,
+  team: number,
+  slot: number,
+  update: { bk_action?: "set" | "confirm" | "clear"; go_mode?: boolean; slot_note?: string },
+): Promise<GeneratedSlot> {
+  const res = await fetch(`${BASE}/public/rooms/${roomId}/slots/${team}/${slot}/state`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || "Failed to update slot coordination");
+  return body;
+}
+
 export async function getRoomTracker(roomId: string): Promise<RoomTrackerData> {
   return fetchJson(`${BASE}/rooms/${roomId}/tracker`);
 }
@@ -893,6 +990,7 @@ export interface SlotDetail {
    *  SetNotify, real-time), "html" when fell back to the archipelago.gg
    *  HTML scrape (60s TTL). Absent when WS not connected at all. */
   hints_source?: "ws" | "html";
+  coordination?: GeneratedSlot;
 }
 export type SlotDetailResponse = SlotDetail | { error: string };
 
