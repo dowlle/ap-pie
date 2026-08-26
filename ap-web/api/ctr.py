@@ -54,8 +54,8 @@ STABLE: dict = {
 # builds deliberately get no stable redirect aliases: stable URLs are for
 # tutorials, and tutorials only ever reference the stable channel.
 PRERELEASE: dict | None = {
-    "version": "0.2.0 Alpha 4",
-    "url": "https://github.com/dowlle/ctr-archipelago-apworld/releases/tag/v0.2.0-alpha4",
+    "version": "0.2.0 Alpha 5",
+    "url": "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha5",
 }
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
@@ -66,12 +66,12 @@ REFERENCE_PAGES: list[dict] = [
         "slug": "0-2-0-release-notes",
         "title": "What changed in 0.2.0?",
         "short_title": "0.2.0 release notes",
-        "blurb": "The complete player-facing changelog from 0.1.5 through the current 0.2.0 Alpha 4 preview.",
-        "description": "A player-first guide to every major CTR Archipelago change since 0.1.5, including new checks, racers, kart progression, goals and Alpha 4 testing.",
+        "blurb": "The complete player-facing changelog from 0.1.5 through the current 0.2.0 Alpha 5 preview.",
+        "description": "A player-first guide to every major CTR Archipelago change since 0.1.5, including new checks, racers, kart progression, goals and Alpha 5 testing.",
         "file": "0-2-0-release-notes.md",
         "published": "2026-08-25",
         "updated": "2026-08-26",
-        "verified_against": "0.2.0 Alpha 4",
+        "verified_against": "0.2.0 Alpha 5",
         "status_label": "Full release notes",
     },
     {
