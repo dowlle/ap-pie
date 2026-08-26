@@ -30,7 +30,7 @@ export default function StyleGuide() {
       <nav className="sg-local-nav" aria-label="Style guide sections">
         <a href="#foundation">Foundation</a>
         <a href="#components">Components</a>
-        <a href="#review">Review proposals</a>
+        <a href="#review">Module patterns</a>
         <a href="#density">Page families</a>
         <a href="#apworld">APWorld example</a>
       </nav>
@@ -116,13 +116,13 @@ export default function StyleGuide() {
 
       <section id="review" className="sg-section sg-review-section">
         <div className="sg-section-heading">
-          <span className="sg-review-flag">Needs review</span>
-          <div><h2>Modules to approve before migration</h2><p>These four groups are visual proposals only. They are not shared production components yet.</p></div>
+          <span className="sg-review-flag is-approved">Approved</span>
+          <div><h2>Shared patterns for complex modules</h2><p>These patterns now guide navigation, structured content, workspaces, feedback and status across the product.</p></div>
         </div>
 
         <div className="sg-review-grid">
           <article className="surface sg-review-card">
-            <header className="sg-review-card-head"><div><span className="sg-label">01 · Navigation</span><h3>Tabs, filters and drawers</h3></div><span className="badge badge-progress">Proposal</span></header>
+            <header className="sg-review-card-head"><div><span className="sg-label">01 · Navigation</span><h3>Tabs, filters and drawers</h3></div><span className="badge badge-done">Approved</span></header>
             <div className="sg-review-tabs" role="tablist" aria-label="Room sections">
               <button type="button" className="is-active" role="tab" aria-selected="true">Overview</button>
               <button type="button" role="tab" aria-selected="false">Players <span>12</span></button>
@@ -140,7 +140,7 @@ export default function StyleGuide() {
           </article>
 
           <article className="surface sg-review-card">
-            <header className="sg-review-card-head"><div><span className="sg-label">02 · Structured content</span><h3>Tables, grids and accordions</h3></div><span className="badge badge-progress">Proposal</span></header>
+            <header className="sg-review-card-head"><div><span className="sg-label">02 · Structured content</span><h3>Tables, grids and accordions</h3></div><span className="badge badge-done">Approved</span></header>
             <div className="sg-review-table-wrap">
               <table className="sg-review-table"><thead><tr><th>Player</th><th>Game</th><th>Status</th></tr></thead><tbody><tr><td>Appletini</td><td>Super Metroid</td><td><span className="badge badge-done">Ready</span></td></tr><tr><td>Berry</td><td>ANIMAL WELL</td><td><span className="badge badge-progress">Review</span></td></tr></tbody></table>
             </div>
@@ -149,7 +149,7 @@ export default function StyleGuide() {
           </article>
 
           <article className="surface sg-review-card sg-review-card-wide">
-            <header className="sg-review-card-head"><div><span className="sg-label">03 · Workspaces</span><h3>Dialogs, steppers and live tools</h3></div><span className="badge badge-progress">Proposal</span></header>
+            <header className="sg-review-card-head"><div><span className="sg-label">03 · Workspaces</span><h3>Dialogs, steppers and live tools</h3></div><span className="badge badge-done">Approved</span></header>
             <div className="sg-review-workspace">
               <div className="sg-review-dialog">
                 <header><div><strong>Create player YAML</strong><small>Super Metroid · AP 0.6.7</small></div><button type="button" className="btn btn-icon" aria-label="Close example dialog">×</button></header>
@@ -162,7 +162,7 @@ export default function StyleGuide() {
           </article>
 
           <article className="surface sg-review-card sg-review-card-wide">
-            <header className="sg-review-card-head"><div><span className="sg-label">04 · Feedback and status</span><h3>Uploads, trackers, progress and toasts</h3></div><span className="badge badge-progress">Proposal</span></header>
+            <header className="sg-review-card-head"><div><span className="sg-label">04 · Feedback and status</span><h3>Uploads, trackers, progress and toasts</h3></div><span className="badge badge-done">Approved</span></header>
             <div className="sg-review-feedback-grid">
               <button type="button" className="sg-review-dropzone"><strong>Drop a player YAML here</strong><span>or choose a file · YAML only · 8 MB maximum</span></button>
               <div className="sg-review-tracker"><div><span className="sg-review-player-mark">AP</span><div><strong>Appletini</strong><small>Super Metroid · Playing</small></div><span className="badge badge-done">Connected</span></div><div className="sg-review-progress"><span style={{ width: "68%" }} /></div><small>68 of 100 checks</small></div>

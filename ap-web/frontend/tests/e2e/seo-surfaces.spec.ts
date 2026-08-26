@@ -82,11 +82,11 @@ test("style guide renders the shared production primitives", async ({ page }) =>
   expect((await primary.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 });
 
-test("style guide keeps unapproved modules in a proposal-only review section", async ({ page }) => {
+test("style guide documents the approved complex module patterns", async ({ page }) => {
   await page.goto("/style-guide");
   const review = page.locator("#review");
-  await expect(review.getByText("Needs review", { exact: true })).toBeVisible();
-  await expect(review.getByText("These four groups are visual proposals only.", { exact: false })).toBeVisible();
+  await expect(review.getByText("Approved", { exact: true }).first()).toBeVisible();
+  await expect(review.getByText("These patterns now guide navigation", { exact: false })).toBeVisible();
   for (const heading of [
     "Tabs, filters and drawers",
     "Tables, grids and accordions",
@@ -95,7 +95,7 @@ test("style guide keeps unapproved modules in a proposal-only review section", a
   ]) {
     await expect(review.getByRole("heading", { name: heading })).toBeVisible();
   }
-  await expect(review.getByText("Proposal", { exact: true })).toHaveCount(4);
+  await expect(review.getByText("Approved", { exact: true })).toHaveCount(5);
 });
 
 test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ page, request }) => {

@@ -5062,6 +5062,206 @@ details.yaml-builder-group > summary .muted {
   .yaml-builder-section-head { align-items: flex-start; flex-direction: column; }
 }
 
+/* == Approved complex module patterns ===========================
+   Shared visual contract for navigation, structured content,
+   workspaces, uploads, trackers and transient feedback. Existing
+   page components retain their behavior and consume this contract. */
+.market-tabs,
+.my-tabs,
+.yaml-modal-tabs,
+.slot-modal-tabs,
+.settings-modal-tabs {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+.market-tabs button,
+.my-tab,
+.yaml-modal-tab,
+.slot-modal-tab,
+.settings-tab {
+  min-height: 2.4rem;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: 600 0.78rem var(--font-body);
+  white-space: nowrap;
+}
+.market-tabs button:hover,
+.my-tab:hover,
+.yaml-modal-tab:hover:not(:disabled),
+.slot-modal-tab:hover,
+.settings-tab:hover { color: var(--text-h); background: transparent; }
+.market-tabs .btn-primary,
+.my-tab.is-active,
+.yaml-modal-tab.is-active,
+.slot-modal-tab.is-active,
+.settings-tab.active {
+  border-bottom-color: var(--accent);
+  background: transparent;
+  color: var(--text-h);
+}
+
+.table-wrapper {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+.game-table th {
+  padding: 0.6rem 0.7rem;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+}
+.game-table td { padding: 0.65rem 0.7rem; border-bottom-color: var(--border); color: var(--text); }
+.game-table tbody tr:hover { background: color-mix(in srgb, var(--color-surface-raised) 55%, transparent); }
+
+.collapsible-section {
+  overflow: clip;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+.collapsible-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
+  gap: var(--space-3);
+  padding: 0.7rem 0.8rem;
+  color: var(--text-h);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.collapsible-section > summary::-webkit-details-marker { display: none; }
+.collapsible-section > summary::after { content: "+"; color: var(--text-muted); font: 500 1rem var(--font-mono); }
+.collapsible-section[open] > summary::after { content: "−"; }
+.collapsible-section > .accordion-body { padding: 0 var(--space-4) var(--space-4); border-top: 1px solid var(--border); }
+
+.settings-modal[open],
+.yaml-modal[open],
+.slot-modal[open],
+.share-dialog[open] {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-feature);
+  background: var(--bg);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.52);
+}
+.settings-modal::backdrop,
+.yaml-modal::backdrop,
+.slot-modal::backdrop,
+.share-dialog::backdrop { background: rgba(8, 7, 10, 0.72); backdrop-filter: blur(3px); }
+.settings-modal-header,
+.yaml-modal-header,
+.slot-modal-header,
+.share-dialog-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.settings-modal-body,
+.yaml-modal-body,
+.slot-modal-body,
+.share-dialog-body { background: var(--bg); }
+.settings-modal-footer,
+.yaml-modal-footer,
+.slot-modal-footer {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.yaml-builder-steps {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.yaml-builder-steps button {
+  color: var(--text-subtle);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.yaml-builder-steps button > span {
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--text-muted);
+}
+.yaml-builder-steps button.is-active { color: var(--text-h); }
+.yaml-builder-steps button.is-active > span { border-color: var(--accent); background: transparent; color: var(--accent); }
+.yaml-builder-option {
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+}
+.yaml-builder-option + .yaml-builder-option { margin-top: var(--space-2); }
+.yaml-builder-option:last-child { padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.yaml-builder-preview { border-color: var(--border); border-radius: var(--radius-control); background: var(--color-surface-raised); color: var(--color-info); }
+
+.upload-area,
+.dropzone {
+  min-height: 8rem;
+  padding: var(--space-5);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  color: var(--text-h);
+}
+.upload-area:hover,
+.upload-area:focus-visible,
+.dropzone:hover,
+.dropzone:focus-visible { border-color: var(--accent); background: var(--accent-dim); }
+.dropzone-icon { color: var(--accent); }
+.dropzone-headline { color: var(--text-h); font-weight: 650; }
+.dropzone-hint { color: var(--text-muted); }
+
+.tracker-panel { border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-card); }
+.tracker-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  box-shadow: none;
+}
+.tracker-card:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+.tracker-card-completed { border-color: color-mix(in srgb, var(--color-success) 42%, var(--border)); }
+.completion-bar { height: 1.25rem; border: 1px solid var(--border); border-radius: 999px; background: var(--color-surface-raised); }
+.completion-bar-lg { height: 1.75rem; }
+.completion-fill { border-radius: inherit; background: var(--color-success); }
+.completion-text { color: var(--text-h); font-size: 0.68rem; text-shadow: 0 1px 2px var(--bg); }
+.activity-feed { border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg); }
+.activity-feed-list { border-color: var(--border); border-radius: var(--radius-control); }
+.activity-feed-item { border-bottom-color: var(--border); }
+
+.approval-toast,
+.public-toast {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  color: var(--text-h);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 768px) {
+  .market-tabs button,
+  .my-tab,
+  .yaml-modal-tab,
+  .slot-modal-tab,
+  .settings-tab { min-height: 2.75rem; }
+  .settings-modal[open],
+  .yaml-modal[open],
+  .slot-modal[open] { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); }
+  .yaml-builder-option { grid-template-columns: 1fr; }
+}
+
 /* == AP-Pie visual style guide ===================================
    Private review surface for the proposed shared product language. */
 .sg-page {
