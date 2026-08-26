@@ -1,34 +1,41 @@
-CTR Archipelago 0.2.0 is the largest update so far. This page covers the player-facing changes since the current stable release, 0.1.5, through the 0.2.0 Alpha 4 test build.
+CTR Archipelago 0.2.0 adds many new ways to build a seed. Item boxes and CTR letters can become checks, racers and weapons can enter the item pool, and received items can unlock your kart's boost and stats. Gem Cup tracks can also be randomized, and several victory conditions can be combined. Every major addition is optional and configured per YAML.
 
 > **0.2.0 is still a preview.** Alpha 4 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
 
+**[Download Alpha 4](https://github.com/dowlle/ctr-archipelago-apworld/releases/tag/v0.2.0-alpha4)** · **[Build a CTR YAML](/apworlds?build=ctr)**
+
 ## At a glance
 
-0.2.0 greatly expands what a seed can randomize. Tracks can contain authored AP item boxes, weapons and CTR letters can become checks and items, racers can join the item pool, kart abilities can be progressive, Gem Cup legs can change, and several goal conditions can be combined. The client also gains a new item feed, richer warp-pad displays, graphics controls, expanded traps, offline check recovery, optional AI lap recording, and many fixes.
+0.2.0 adds new checks, items and ways to progress through Adventure Mode:
 
-Most new systems are optional. A host can keep a seed close to the 0.1.5 rules or turn on a much denser game.
+- **More places to check:** up to 241 authored AP boxes, Itemsanity weapon checks, CTR Letter locations and Wumpa progression.
+- **More things to receive:** racers, weapons, Progressive Boost, Progressive Stats, traps and comfort items.
+- **More ways through Adventure Mode:** randomized Gem Cup legs, racer-locked pads, capability-aware logic and goals that can be combined.
+- **A clearer client:** a race-friendly item feed, richer warp-pad displays, widescreen and fullscreen controls, improved recovery and optional AI lap recording.
+
+Most systems are optional. You choose them in your YAML, and the option help in the YAML Builder explains the available values.
 
 ## New checks and item families
 
 ### Item Box Locations
 
-The `box_locations` option adds authored AP crates across the 18 race tracks. There are up to 241 possible positions, with `shortcut_knowledge` controlling whether easy, medium, or hard routes may be required. These are extra scavenger-hunt checks, not retail boxes converted into locations.
+The `box_locations` option adds authored AP crates across the 18 race tracks. Numbered names distinguish boxes on the same track. There are up to 241 possible positions, with `shortcut_knowledge` controlling whether easy, medium, or hard routes may be required. These are extra scavenger-hunt checks, not retail boxes converted into locations.
 
-Only the local player can break an AP crate. Once checked, it stays gone for that seed. Remaining AP boxes are shown below the warp-pad title. A tracker or reference map is strongly recommended when this mode is enabled.
+Only the local player can break an AP crate. Once checked, it stays gone for that seed. Remaining AP boxes are shown below the warp-pad title. The complete 0.2.0 PopTracker mapping and per-track AP-box maps are still in development, so not every numbered box has a published visual reference yet.
 
 ### Itemsanity
 
-The `itemsanity` option moves 11 Adventure weapons into the multiworld item pool and adds use-time checks for firing them. Each weapon has a normal check and a juiced check that requires at least ten Wumpa Fruit when fired, for up to 22 checks.
+The `itemsanity` option can move CTR's 11 Adventure weapons into the multiworld item pool, add checks for using them, or enable both. Each weapon has a normal use check and a juiced check that requires at least ten Wumpa Fruit when fired, for up to 22 use checks.
 
 Roulette results respect the weapons you own. An unavailable weapon is not silently replaced using the retail race-position table, and arena weapons are gated by ownership too.
 
 ### Lettersanity
 
-The C, T, and R letters on the 16 CTR Token Challenge tracks can become locations, items, or both. This can add up to 48 letter locations and 48 letter items. A letter you have not received is shown translucently and cannot be collected.
+The C, T, and R letters on the 16 CTR Token Challenge tracks can remain vanilla, become locations, become received items that gate collection, or use both halves together. The full form adds up to 48 letter locations and 48 letter items. A letter you have not received is shown translucently and cannot be collected.
 
 ### Wumpa progression
 
-0.2.0 adds a configurable Wumpa family: starting-Wumpa progression, bundle filler items, and a `Reach 10 Wumpa` check. Starting Wumpa is restored after a pause-menu restart and the world protects required Wumpa items when fitting a large item pool.
+0.2.0 adds a configurable Wumpa family: starting-Wumpa progression, bundle filler items, and a `Reach 10 Wumpa` check. Alpha 4 uses one global check rather than a separate check for each track. Starting Wumpa is restored after a pause-menu restart and the world protects required Wumpa items when fitting a large item pool.
 
 ### Turbo Grant and Tizi Helper
 
@@ -38,21 +45,28 @@ The optional `Tizi Helper` makes the first four boxes after the Papu's Pyramid s
 
 ## Characters and kart progression
 
-### Character unlocks and the hub picker
+### Unlock every CTR racer
 
-With `character_unlocks`, the other 15 racers enter the item pool. A `SELECT CHARACTER` row in the Adventure pause menu opens the hub character picker. Older seeds without the character phase can still use the picker in browse mode.
+With `character_unlocks`, all other CTR racers can enter the item pool. A `SELECT CHARACTER` row in the Adventure pause menu opens the character screen. You may only drive a racer you have received. Older seeds without the character phase can still use the screen in browse mode.
 
-The selected racer is stored per server slot. Racer-locked pads can require a particular racer and now load the race as that racer. Locked pads show the demanded character portrait and refuse entry without silently seating an unowned racer.
+The selected racer is stored for the current Archipelago server slot. `racer_locked_pads` can require a particular racer at selected warp pads. The pad shows the requested portrait, refuses entry until that racer has been received and loads the race with the correct racer once unlocked.
 
-The character phase also adds `starting_character`, `starting_stat_class`, `editable_stats`, and `penta_stats`. Editable stats use the Garage interface and persist with the AP slot.
+`starting_character` chooses the opening racer. `starting_stat_class` chooses the starting driving class, `editable_stats` enables manual stat editing through the pause-menu character interface, and `penta_stats` controls Penta Penguin's stat profile. Stat editing is not a Garage feature.
 
 ### Progressive Boost
 
-Progressive Boost can gate self-earned boost behind an item chain. The first copy enables ordinary powerslide and hang-time boosts. The second unlocks Ultimate Sacred Fire speeds. An optional third tier unlocks Blue Fire, with the appropriate exhaust and reserve behavior. Retail turbo pads continue to work before the first copy.
+Progressive Boost controls the boost your kart can create for itself:
+
+- With no copies, powerslide, hang-time and similar self-earned boosts are locked. Ordinary retail turbo pads still work.
+- The first copy enables ordinary self-earned boost.
+- The second copy enables Ultimate Sacred Fire speeds where the route supports them.
+- An optional third copy enables Blue Fire, with blue exhaust and stronger reserve behavior. U-turning retains those reserves.
+
+The option can be off, shared by the full roster or received separately for each character. The Blue Fire tier can be disabled, in which case the chain ends at Ultimate Sacred Fire.
 
 ### Progressive Stats
 
-Progressive Top Speed, Acceleration, and Turning raise each stat from Very Low through Very High. The Garage and hub picker show the effective ranks. The ladders can be shared by the whole roster or owned separately by each character. When Progressive Stats is active, its values take priority over manual stat editing.
+Progressive Top Speed, Acceleration, and Turning raise each stat from Very Low through Very High. The pause-menu character interface shows the effective ranks. The ladders can be disabled, shared by the full roster or received separately for each character. When Progressive Stats is active, its values take priority over manual stat editing.
 
 ## Routes, logic, and goals
 
@@ -78,7 +92,9 @@ The two-stage fill probe now mirrors the real multiworld and companion pre-fill 
 
 ### Relic behavior
 
-Relic requirements no longer depend on an exact count that can become impossible after receiving a higher tier. Removed Time Trial relics are granted locally, relic races use the AP box gate, and the award ceremony can cycle through multiple distinct award lines. Relic-tier logic and the client verifier use the same boost rules.
+Relic tiers are counted independently. A better result still satisfies a lower-tier gate without making the higher-tier count incorrect. For example, earning a Gold relic cannot make a requirement for one Sapphire-tier result impossible.
+
+Removed Time Trial relics are granted locally, relic races use the AP box gate, and the award ceremony can cycle through multiple distinct award lines. Relic-tier logic and the client verifier use the same boost rules.
 
 ## Traps and comfort items
 
@@ -117,7 +133,11 @@ The client also includes safer object-pool rollback, spawn-pointer invalidation,
 
 ## Optional AI lap recording
 
-An experimental lap recorder can collect AI laps into a versioned local container. Separate options select which AI difficulties are recorded, and the pause menu shows a read-only status row. Recording is off by default. Playback against named community laps, matchmaking, and pace control are planned for a later release.
+AI lap recording is an optional tool for capturing routes that computer-controlled racers can use later.
+
+`Save AI Lap Recordings` writes completed AI navigation laps to a local collection for the selected difficulty levels. `Use Recorded AI Laps` allows compatible local recordings to be used for AI navigation playback. Both options are off by default, and the pause menu shows a read-only status row.
+
+The recorder stores versioned lap data with driver, character, difficulty, timing, cleanliness and shortcut metadata. A built-in library of shared recordings, automatic importing, named AI drivers and pace control are not shipped in Alpha 4.
 
 ## Native engine update
 
@@ -129,7 +149,7 @@ This upstream sync is compile-tested in the exact Alpha 4 package. It remains on
 
 A 0.2.0 client can open 0.1.5 seeds using compatibility fallbacks. A 0.1.5 client cannot understand a 0.2.0 seed and may make it impossible to finish.
 
-Hosts and players should agree on the version before generation. Install the client and APWorld from the same release, back up an existing folder before replacing it, and do not mix Alpha 4 with an earlier 0.2.0 preview.
+Use the same version when generating and playing a seed. Install the client and APWorld from the same release, back up an existing folder before replacing it, and do not mix Alpha 4 with an earlier 0.2.0 preview.
 
 The client still requires a disc image made from your own North American Crash Team Racing disc. No game data is included.
 

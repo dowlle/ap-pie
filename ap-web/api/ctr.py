@@ -59,7 +59,7 @@ PRERELEASE: dict | None = {
 }
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-08-25"
+PAGES_UPDATED = "2026-08-26"
 
 REFERENCE_PAGES: list[dict] = [
     {
@@ -67,10 +67,10 @@ REFERENCE_PAGES: list[dict] = [
         "title": "What changed in 0.2.0?",
         "short_title": "0.2.0 release notes",
         "blurb": "The complete player-facing changelog from 0.1.5 through the current 0.2.0 Alpha 4 preview.",
-        "description": "Read the complete CTR Archipelago 0.2.0 preview release notes, covering every major change since version 0.1.5.",
+        "description": "A player-first guide to every major CTR Archipelago change since 0.1.5, including new checks, racers, kart progression, goals and Alpha 4 testing.",
         "file": "0-2-0-release-notes.md",
         "published": "2026-08-25",
-        "updated": "2026-08-25",
+        "updated": "2026-08-26",
         "verified_against": "0.2.0 Alpha 4",
         "status_label": "Full release notes",
     },

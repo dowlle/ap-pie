@@ -308,8 +308,15 @@
       .guide-body h2, .guide-body h3 { scroll-margin-top: 2rem; }
       @media (max-width: 860px) {
         .guide-layout { grid-template-columns: 1fr; gap: 1.25rem; }
-        .guide-toc { position: static; }
-        .guide-toc a { display: inline-block; border-left: none; border: 1px solid var(--border-strong); border-radius: 999px; padding: 0.25rem 0.8rem; margin: 0 0.3rem 0.4rem 0; font-size: 0.82rem; }
+        .guide-toc {
+          position: static; display: flex; gap: 0.4rem; overflow-x: auto;
+          padding-bottom: 0.35rem; scrollbar-width: thin;
+        }
+        .guide-toc-label { display: none; }
+        .guide-toc a {
+          display: block; flex: none; border-left: none; border: 1px solid var(--border-strong);
+          border-radius: 999px; padding: 0.25rem 0.8rem; margin: 0; font-size: 0.82rem;
+        }
       }
       .guides-layout { display: grid; grid-template-columns: 13rem 1fr; gap: 3rem; }
       .guides-rail { position: sticky; top: 2rem; align-self: start; font-size: 0.92rem; }
