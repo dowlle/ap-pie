@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  claimGeneratedSlot,
   getRoomSlotTracker,
   getPublicRoomSlotTracker,
+  releaseGeneratedSlot,
+  updateGeneratedSlotState,
   type SlotDetail,
   type SlotDetailResponse,
   type PlayerInfo,
@@ -22,10 +25,11 @@ import {
  * "This is your slot" when the viewer matches.
  */
 
-type TabKey = "overview" | "items" | "locations" | "hints";
+type TabKey = "overview" | "coordination" | "items" | "locations" | "hints";
 
 const TABS: Array<[TabKey, string]> = [
   ["overview", "Overview"],
+  ["coordination", "Coordination"],
   ["items", "Items received"],
   ["locations", "Locations"],
   ["hints", "Hints"],
@@ -40,6 +44,7 @@ export default function SlotDetailModal({
   player,
   publicMode,
   viewerUserId,
+  onCoordinationChanged,
   onClose,
 }: {
   roomId: string;
@@ -49,6 +54,7 @@ export default function SlotDetailModal({
   /** Logged-in viewer's user id, or null/undefined for anonymous. Used to
    *  flip the attribution label to "This is your slot". */
   viewerUserId?: number | null;
+  onCoordinationChanged?: () => void;
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -59,6 +65,9 @@ export default function SlotDetailModal({
   const [search, setSearch] = useState("");
   const [refreshTick, setRefreshTick] = useState(0);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [coordinationError, setCoordinationError] = useState("");
+  const [coordinationSaving, setCoordinationSaving] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +82,7 @@ export default function SlotDetailModal({
         if (!cancelled) {
           setResponse(r);
           setLastFetched(new Date());
+          if (!isError(r)) setNoteDraft(r.coordination?.slot_note ?? "");
         }
       })
       .catch((e) => {
@@ -148,6 +158,39 @@ export default function SlotDetailModal({
     viewerUserId !== null &&
     detail.submitter_user_id === viewerUserId
   );
+  const coordination = detail?.coordination;
+  const canEditCoordination = !!detail && (!!coordination?.is_mine || isYourSlot || !publicMode);
+
+  const mutateCoordination = async (
+    update: { bk_action?: "set" | "confirm" | "clear"; go_mode?: boolean; slot_note?: string },
+  ) => {
+    setCoordinationSaving(true);
+    setCoordinationError("");
+    try {
+      await updateGeneratedSlotState(roomId, detail?.team ?? 0, player.slot, update);
+      setRefreshTick((tick) => tick + 1);
+      onCoordinationChanged?.();
+    } catch (e) {
+      setCoordinationError(e instanceof Error ? e.message : "Failed to update coordination state");
+    } finally {
+      setCoordinationSaving(false);
+    }
+  };
+
+  const mutateClaim = async (action: "claim" | "release") => {
+    setCoordinationSaving(true);
+    setCoordinationError("");
+    try {
+      if (action === "claim") await claimGeneratedSlot(roomId, detail?.team ?? 0, player.slot);
+      else await releaseGeneratedSlot(roomId, detail?.team ?? 0, player.slot);
+      setRefreshTick((tick) => tick + 1);
+      onCoordinationChanged?.();
+    } catch (e) {
+      setCoordinationError(e instanceof Error ? e.message : `Failed to ${action} slot`);
+    } finally {
+      setCoordinationSaving(false);
+    }
+  };
 
   return (
     <dialog ref={dialogRef} onClick={onBackdropClick} className="slot-modal">
@@ -230,7 +273,86 @@ export default function SlotDetailModal({
           </div>
         )}
 
-        {detail && tab !== "overview" && (
+        {detail && tab === "coordination" && (
+          <div className="slot-coordination">
+            {!coordination ? (
+              <div className="notice notice-info">
+                <strong>Not attached yet.</strong>
+                <span>The room host must attach the generated roster before slots can be claimed or update their state.</span>
+              </div>
+            ) : (
+              <>
+                <div className="slot-coordination-summary surface">
+                  <div>
+                    <span className="muted">Ownership</span>
+                    <strong>{coordination.claimed ? (coordination.owner_username ? `@${coordination.owner_username}` : "Claimed") : "Unclaimed"}</strong>
+                  </div>
+                  <div>
+                    <span className="muted">BK</span>
+                    <strong>{coordination.bk_since ? `Since ${new Date(coordination.bk_since).toLocaleString()}` : "Clear"}</strong>
+                  </div>
+                  <div>
+                    <span className="muted">Go mode</span>
+                    <strong>{coordination.go_mode_since ? "Active" : "Not set"}</strong>
+                  </div>
+                </div>
+
+                {viewerUserId && !coordination.claimed && (
+                  <button type="button" className="btn btn-primary" disabled={coordinationSaving} onClick={() => mutateClaim("claim")}>
+                    Claim this generated slot
+                  </button>
+                )}
+                {viewerUserId && (coordination.is_mine || isYourSlot) && (
+                  <button type="button" className="btn btn-quiet" disabled={coordinationSaving} onClick={() => mutateClaim("release")}>
+                    Release slot
+                  </button>
+                )}
+
+                {canEditCoordination ? (
+                  <div className="slot-coordination-controls">
+                    <div className="slot-coordination-action-row">
+                      {!coordination.bk_since ? (
+                        <button type="button" className="btn" disabled={coordinationSaving} onClick={() => mutateCoordination({ bk_action: "set" })}>I am BK</button>
+                      ) : (
+                        <>
+                          <button type="button" className="btn btn-primary" disabled={coordinationSaving} onClick={() => mutateCoordination({ bk_action: "confirm" })}>Still BK</button>
+                          <button type="button" className="btn btn-quiet" disabled={coordinationSaving} onClick={() => mutateCoordination({ bk_action: "clear" })}>Clear BK</button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        className={coordination.go_mode_since ? "btn btn-quiet" : "btn"}
+                        disabled={coordinationSaving}
+                        onClick={() => mutateCoordination({ go_mode: !coordination.go_mode_since })}
+                      >
+                        {coordination.go_mode_since ? "Leave go mode" : "Enter go mode"}
+                      </button>
+                    </div>
+                    <label className="field">
+                      <span>Slot note</span>
+                      <textarea
+                        value={noteDraft}
+                        onChange={(e) => setNoteDraft(e.target.value.slice(0, 280))}
+                        rows={3}
+                        placeholder="What are you waiting for, or when will you play next?"
+                        disabled={coordinationSaving}
+                      />
+                    </label>
+                    <div className="slot-note-footer">
+                      <span className="muted">{noteDraft.length}/280</span>
+                      <button type="button" className="btn btn-primary" disabled={coordinationSaving || noteDraft === coordination.slot_note} onClick={() => mutateCoordination({ slot_note: noteDraft })}>Save note</button>
+                    </div>
+                  </div>
+                ) : (
+                  coordination.slot_note && <div className="notice notice-info"><strong>Player note.</strong><span>{coordination.slot_note}</span></div>
+                )}
+                {coordinationError && <p className="error">{coordinationError}</p>}
+              </>
+            )}
+          </div>
+        )}
+
+        {detail && tab !== "overview" && tab !== "coordination" && (
           <div className="slot-modal-toolbar">
             <input
               type="search"
