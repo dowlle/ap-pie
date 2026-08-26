@@ -167,6 +167,37 @@ test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ r
   }
 });
 
+test("server-rendered guides share the approved navigation and component contract", async ({ page }) => {
+  await page.goto("/guides/getting-started");
+  const header = page.locator(".site-header");
+  await expect(header.getByRole("link", { name: "Guides", exact: true })).toBeVisible();
+  await expect(header.getByRole("link", { name: "APWorlds", exact: true })).toBeVisible();
+  await expect(header.getByRole("link", { name: "YAML Builder", exact: true })).toBeVisible();
+  await expect(header.getByRole("link", { name: "Sign in with Discord" })).toHaveCSS("color", "rgb(33, 23, 13)");
+
+  await page.setViewportSize({ width: 412, height: 915 });
+  const menu = header.locator(".site-menu-button");
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAccessibleName("Open menu");
+  await menu.click();
+  await expect(menu).toHaveAttribute("aria-expanded", "true");
+  await expect(header.getByRole("link", { name: "APWorlds", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await expect(menu).toBeFocused();
+});
+
+test("CTR references consume approved actions, notices, badges and tabs", async ({ page }) => {
+  await page.goto("/ctr/reference");
+  await expect(page.locator(".section-subnav [aria-current='page']")).toHaveText("Reference");
+  await expect(page.locator(".reference-note")).toHaveClass(/\bnotice-warning\b/);
+  await expect(page.locator(".version-pill").first()).toHaveClass(/\bbadge\b/);
+
+  await page.goto("/ctr/download");
+  await expect(page.getByRole("link", { name: "Download for Windows" })).toHaveClass(/\bbtn-primary\b/);
+  await expect(page.locator(".notice-warning").first()).toBeVisible();
+});
+
 test("guide collection lists every published guide exactly once", async ({ request }) => {
   const response = await request.get("/guides");
   const html = await response.text();
