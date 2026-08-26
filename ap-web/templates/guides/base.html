@@ -29,17 +29,35 @@
 
     <style>
       :root {
-        --bg: #121016;
-        --bg-card: #1b181f;
-        --bg-hover: #242029;
-        --text: #a59c91;
-        --text-h: #f5f1eb;
-        --text-muted: #a59c91;
-        --accent: #f2ad55;
-        --accent-light: #f7c477;
+        --color-canvas: #121016;
+        --color-surface: #1b181f;
+        --color-surface-raised: #242029;
+        --color-border: #332d39;
+        --color-border-strong: #49404f;
+        --color-text: #f5f1eb;
+        --color-text-muted: #a59c91;
+        --color-text-subtle: #746d68;
+        --color-accent: #f2ad55;
+        --color-accent-strong: #f7c477;
+        --color-info: #72a7d8;
+        --color-success: #69c99d;
+        --color-warning: #e9b95f;
+        --color-danger: #e57c78;
+        --bg: var(--color-canvas);
+        --bg-card: var(--color-surface);
+        --bg-hover: var(--color-surface-raised);
+        --text: var(--color-text-muted);
+        --text-h: var(--color-text);
+        --text-muted: var(--color-text-muted);
+        --accent: var(--color-accent);
+        --accent-light: var(--color-accent-strong);
         --accent-dim: rgba(242, 173, 85, 0.15);
-        --border: #332d39;
-        --border-strong: #49404f;
+        --accent-glow: rgba(242, 173, 85, 0.35);
+        --border: var(--color-border);
+        --border-strong: var(--color-border-strong);
+        --radius-control: 0.45rem;
+        --radius-card: 0.65rem;
+        --radius-feature: 0.8rem;
         --font-display: "Bricolage Grotesque", "Inter Tight", system-ui, -apple-system, sans-serif;
         --font-body: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
         --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -60,6 +78,39 @@
       }
       a { color: var(--accent-light); text-decoration: none; }
       a:hover { text-decoration: underline; }
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .btn, .btn-primary, .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.35rem;
+        padding: 0.58rem 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-hover);
+        color: var(--text-h);
+        font: 600 0.84rem/1.2 var(--font-body);
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .btn:hover, .btn-secondary:hover { border-color: var(--border-strong); background: var(--bg-hover); color: var(--text-h); text-decoration: none; }
+      .btn-primary { border-color: var(--accent); background: var(--accent); color: #21170d; box-shadow: 0 1px 0 rgba(255,255,255,.18) inset; }
+      .btn-primary:hover { border-color: var(--accent-light); background: var(--accent-light); color: #21170d; text-decoration: none; }
+
+      .surface { padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-feature); background: var(--bg-card); }
+      .notice {
+        display: flex; align-items: baseline; gap: 0.45rem; margin: 1.25rem 0;
+        padding: 0.75rem 0.85rem; border: 1px solid var(--border); border-left: 2px solid var(--color-info);
+        border-radius: 8px; background: var(--bg-hover); color: var(--text-muted); font-size: 0.82rem;
+      }
+      .notice strong { color: var(--text-h); }
+      .notice-warning { border-left-color: var(--color-warning); }
+      .badge {
+        display: inline-flex; align-items: center; min-height: 1.45rem; padding: 0.18rem 0.48rem;
+        border: 1px solid var(--border); border-radius: 999px; background: var(--bg-hover);
+        color: var(--text-muted); font: 650 0.66rem var(--font-body); letter-spacing: 0.05em; text-transform: uppercase;
+      }
 
       .site-header {
         position: sticky;
@@ -84,6 +135,8 @@
       .site-nav { display: flex; align-items: center; gap: 1rem; }
       .site-nav a { color: var(--text); padding: 0.35rem 0.55rem; border-radius: 7px; }
       .site-nav a:hover { color: var(--text-h); background: var(--bg-hover); text-decoration: none; }
+      .site-nav .btn-primary { color: #21170d; padding: 0.35rem 0.65rem; }
+      .site-menu-button { display: none; width: 2.75rem; height: 2.75rem; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-h); font-size: 1.3rem; cursor: pointer; }
 
       main {
         flex: 1;
@@ -177,9 +230,9 @@
         text-align: center;
       }
       .guide-body blockquote {
-        background: var(--accent-dim);
-        border: 1px solid var(--border-strong);
-        border-left: 4px solid var(--accent);
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
+        border-left: 2px solid var(--color-info);
         border-radius: 8px;
         padding: 0.9rem 1.2rem;
         margin: 0 0 1rem;
@@ -193,6 +246,9 @@
         text-decoration: underline;
         text-underline-offset: 0.18em;
       }
+      .guide-body table { width: 100%; margin: 0 0 1rem; border: 1px solid var(--border); border-radius: var(--radius-control); border-collapse: separate; border-spacing: 0; overflow: hidden; font-size: 0.86rem; }
+      .guide-body th { padding: 0.6rem 0.7rem; background: var(--bg); color: var(--text-muted); font-size: 0.68rem; font-weight: 650; letter-spacing: 0.05em; text-align: left; text-transform: uppercase; }
+      .guide-body td { padding: 0.65rem 0.7rem; border-top: 1px solid var(--border); color: var(--text); }
       .guide-path-tabs {
         margin: 1.25rem 0 2rem;
         padding: 0.4rem;
@@ -275,6 +331,18 @@
         margin-bottom: 0.4rem;
       }
       .guide-card p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
+
+      @media (max-width: 768px) {
+        .site-header { padding: 0.75rem 1rem; }
+        .site-menu-button { display: inline-grid; place-items: center; }
+        .site-nav {
+          position: absolute; top: 100%; left: 0; right: 0; display: none; flex-direction: column;
+          align-items: stretch; gap: 0.25rem; padding: 0.75rem 1rem 1rem; border-bottom: 1px solid var(--border);
+          background: var(--bg-card); box-shadow: 0 16px 32px rgba(0,0,0,.28);
+        }
+        .site-nav[data-open="true"] { display: flex; }
+        .site-nav a, .site-nav .btn-primary { min-height: 2.75rem; display: flex; align-items: center; padding: 0.55rem 0.75rem; }
+      }
 
       .site-footer {
         border-top: 1px solid var(--border);
@@ -382,15 +450,17 @@
       .crumbs a:hover { color: var(--text-h); }
       .crumbs .sep { margin: 0 0.45rem; opacity: 0.6; }
       .section-subnav {
-        display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.75rem;
+        display: flex; gap: 0.2rem; overflow-x: auto; margin-bottom: 1.75rem;
+        border-bottom: 1px solid var(--border); scrollbar-width: thin;
       }
       .section-subnav a {
-        display: inline-block; border: 1px solid var(--border-strong); border-radius: 999px;
-        padding: 0.28rem 0.9rem; font-size: 0.85rem; color: var(--text);
+        display: inline-flex; align-items: center; min-height: 2.4rem; flex: none;
+        border: 0; border-bottom: 2px solid transparent; padding: 0.5rem 0.65rem;
+        font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
       }
-      .section-subnav a:hover { background: var(--bg-hover); color: var(--text-h); border-color: var(--accent); text-decoration: none; }
+      .section-subnav a:hover { color: var(--text-h); text-decoration: none; }
       .section-subnav a.current {
-        border-color: var(--accent); color: var(--accent-light); background: var(--accent-dim);
+        border-bottom-color: var(--accent); color: var(--text-h); background: transparent;
         pointer-events: none;
       }
       .related-block { border-top: 1px dashed var(--border-strong); margin-top: 3rem; padding-top: 1.75rem; }
@@ -442,9 +512,12 @@
   <body>
     <header class="site-header">
       <a class="site-brand" href="/">Archipelago Pie</a>
-      <nav class="site-nav">
+      <button class="site-menu-button" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">☰</button>
+      <nav class="site-nav" id="site-nav">
         <a href="/guides">Guides</a>
-        <a href="/">Open the app</a>
+        <a href="/apworlds">APWorlds</a>
+        <a href="/yaml-builder">YAML Builder</a>
+        <a class="btn-primary" href="/api/auth/login">Sign in with Discord</a>
       </nav>
     </header>
 
@@ -459,6 +532,29 @@
     </footer>
 
     <script>
+      var menuButton = document.querySelector(".site-menu-button");
+      var siteNav = document.querySelector("#site-nav");
+      if (menuButton && siteNav) {
+        menuButton.addEventListener("click", function () {
+          var open = menuButton.getAttribute("aria-expanded") !== "true";
+          menuButton.setAttribute("aria-expanded", String(open));
+          menuButton.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+          siteNav.dataset.open = open ? "true" : "";
+        });
+        siteNav.addEventListener("click", function () {
+          menuButton.setAttribute("aria-expanded", "false");
+          menuButton.setAttribute("aria-label", "Open menu");
+          siteNav.dataset.open = "";
+        });
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape" && menuButton.getAttribute("aria-expanded") === "true") {
+            menuButton.setAttribute("aria-expanded", "false");
+            menuButton.setAttribute("aria-label", "Open menu");
+            siteNav.dataset.open = "";
+            menuButton.focus();
+          }
+        });
+      }
       // Click-to-play video facades: nothing Google-hosted loads until this
       // fires, so no consent gate is needed for the facade itself.
       document.querySelectorAll(".video-facade").forEach(function (btn) {

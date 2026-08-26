@@ -10,14 +10,6 @@
     @media (max-width: 640px) { .ctr-hero h1 { font-size: 2rem; } }
     .ctr-hero .lede { color: var(--text-muted); font-size: 1.15rem; line-height: 1.6; max-width: 38rem; margin-bottom: 1.75rem; }
     .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
-    .btn-primary, .btn-secondary {
-      display: inline-block; border-radius: 8px; padding: 0.65rem 1.3rem;
-      font-weight: 600; font-size: 1rem;
-    }
-    .btn-primary { background: var(--accent); color: #1a1410; }
-    .btn-primary:hover { background: var(--accent-light); text-decoration: none; }
-    .btn-secondary { border: 1px solid var(--border-strong); color: var(--text-h); }
-    .btn-secondary:hover { background: var(--bg-hover); border-color: var(--accent); text-decoration: none; }
     .cta-aside { color: var(--text-muted); font-size: 0.9rem; }
     .hero-note { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.9rem; max-width: 38rem; }
     .shot { margin: 1.5rem 0; }
@@ -48,18 +40,12 @@
     .flow-col ol { margin: 0 0 0 1.25rem; color: var(--text-muted); }
     .flow-col li { margin-bottom: 0.35rem; }
     .flow-col li strong { color: var(--text-h); font-weight: 600; }
-    .notice {
-      background: var(--accent-dim); border: 1px solid var(--border-strong);
-      border-left: 4px solid var(--accent); border-radius: 8px;
-      padding: 0.9rem 1.2rem; margin: 1.25rem 0; max-width: 42rem;
-    }
-    .notice p { margin: 0; }
     .ctr-final { border-top: 1px dashed var(--border-strong); margin-top: 3rem; padding-top: 2.25rem; }
   </style>
 {% endblock %}
 {% block main %}
   <nav class="section-subnav" aria-label="CTR section">
-    <a class="current" href="/ctr">Overview</a>
+    <a class="current" aria-current="page" href="/ctr">Overview</a>
     <a href="/ctr/download">Download</a>
     <a href="/guides/ctr">Setup guide</a>
     <a href="/ctr/reference">Reference</a>
@@ -73,8 +59,8 @@
       players, and their games send items back into yours.
     </p>
     <div class="cta-row">
-      <a class="btn-primary" href="/ctr/download">Download CTR Archipelago</a>
-      <a class="btn-secondary" href="/guides/ctr">Setup guide</a>
+      <a class="btn btn-primary" href="/ctr/download">Download CTR Archipelago</a>
+      <a class="btn btn-secondary" href="/guides/ctr">Setup guide</a>
       <span class="cta-aside">Current stable release: {{ stable.version }}</span>
     </div>
     <p class="hero-note">Requires a disc image made from your own North American (NTSC-U) Crash Team Racing disc. No game data is included.</p>
@@ -164,7 +150,7 @@
       </video>
       <figcaption>Resizing the window live: the game follows custom resolutions and aspect ratios.</figcaption>
     </figure>
-    <div class="notice">
+    <div class="notice notice-warning">
       <p>
         <strong>Bring your own disc.</strong> CTR Archipelago contains no
         retail game data. You need a disc image of your own North American
@@ -203,9 +189,9 @@
       explains how multiworld games get organized.
     </p>
     <div class="cta-row">
-      <a class="btn-primary" href="/ctr/download">Download CTR Archipelago</a>
-      <a class="btn-secondary" href="/guides/ctr">Follow the setup guide</a>
-      <a class="btn-secondary" href="https://github.com/dowlle/ctr-native-ap" rel="noopener noreferrer">View on GitHub</a>
+      <a class="btn btn-primary" href="/ctr/download">Download CTR Archipelago</a>
+      <a class="btn btn-secondary" href="/guides/ctr">Follow the setup guide</a>
+      <a class="btn btn-secondary" href="https://github.com/dowlle/ctr-native-ap" rel="noopener noreferrer">View on GitHub</a>
     </div>
   </section>
 {% endblock %}

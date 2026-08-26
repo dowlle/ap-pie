@@ -4,11 +4,6 @@
     .reference-hero { padding: 1rem 0 2rem; }
     .reference-hero h1 { margin-bottom: 0.8rem; }
     .reference-hero .lede { color: var(--text-muted); font-size: 1.12rem; max-width: 42rem; }
-    .reference-note {
-      margin: 0 0 2rem; padding: 1rem 1.2rem; border: 1px solid var(--border-strong);
-      border-left: 4px solid var(--accent); border-radius: 9px; background: var(--accent-dim);
-    }
-    .reference-note p { margin: 0; }
     .reference-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
     .reference-card {
       display: flex; flex-direction: column; min-height: 13rem; padding: 1.35rem;
@@ -18,10 +13,6 @@
     .reference-card h2 { color: var(--text-h); font-family: var(--font-display); font-size: 1.25rem; margin: 0.45rem 0; }
     .reference-card p { color: var(--text-muted); margin: 0; }
     .reference-card .open { color: var(--accent-light); margin-top: auto; padding-top: 1rem; font-weight: 650; }
-    .version-pill {
-      align-self: flex-start; border: 1px solid var(--border-strong); border-radius: 999px;
-      padding: 0.15rem 0.55rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.68rem;
-    }
     @media (max-width: 640px) { .reference-grid { grid-template-columns: 1fr; } .reference-card { min-height: 0; } }
   </style>
 {% endblock %}
@@ -31,19 +22,19 @@
     <a href="/ctr">Overview</a>
     <a href="/ctr/download">Download</a>
     <a href="/guides/ctr">Setup guide</a>
-    <a class="current" href="/ctr/reference">Reference</a>
+    <a class="current" aria-current="page" href="/ctr/reference">Reference</a>
   </nav>
   <header class="reference-hero">
     <h1>How CTR Archipelago works</h1>
     <p class="lede">A growing reference for the rules and systems that CTR Archipelago adds to Crash Team Racing. Start here when the game behaves differently from the original.</p>
   </header>
-  <div class="reference-note">
+  <div class="reference-note notice notice-warning">
     <p><strong>This reference covers two release lanes.</strong> Pages marked Current stable describe {{ stable.version }}. Pages marked 0.2.0 preview describe the current test build and may still change before release.</p>
   </div>
   <div class="reference-grid">
     {% for page in pages %}
     <a class="reference-card" href="/ctr/reference/{{ page.slug }}">
-      <span class="version-pill">{{ page.status_label }} · {{ page.verified_against }}</span>
+      <span class="version-pill badge">{{ page.status_label }} · {{ page.verified_against }}</span>
       <h2>{{ page.title }}</h2>
       <p>{{ page.blurb }}</p>
       <span class="open">Read the explanation →</span>
