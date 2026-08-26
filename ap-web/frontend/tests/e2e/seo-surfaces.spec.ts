@@ -69,6 +69,19 @@ test("style guide is a noindex review surface", async ({ page, request }) => {
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
 });
 
+test("style guide renders the shared production primitives", async ({ page }) => {
+  await page.goto("/style-guide");
+
+  const primary = page.getByRole("button", { name: "Primary action" });
+  await expect(primary).toHaveClass(/\bbtn-primary\b/);
+  await expect(primary).toHaveCSS("background-color", "rgb(242, 173, 85)");
+  await expect(primary).toHaveCSS("color", "rgb(33, 23, 13)");
+  await expect(page.locator(".sg-button, .sg-field, .sg-notice, .sg-badge, .sg-surface")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 412, height: 915 });
+  expect((await primary.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+});
+
 test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ page, request }) => {
   const indexResponse = await request.get("/api/apworlds");
   const worlds = await indexResponse.json();
@@ -192,6 +205,13 @@ test("APWorld catalog explains its outputs and exposes task-led views", async ({
   await expect(page.locator(".apworld-card")).toHaveCount(
     Number((await page.getByRole("button", { name: /^With recorded setup links/ }).locator("span").textContent()) || 0),
   );
+});
+
+test("APWorld catalog consumes shared field and notice primitives", async ({ page }) => {
+  await page.goto("/apworlds");
+  await expect(page.locator(".apworlds-version-note")).toHaveClass(/\bnotice-info\b/);
+  await expect(page.getByText("Search integrations", { exact: true }).locator("..")).toHaveClass(/\bfield\b/);
+  await expect(page.getByText("Sort", { exact: true }).locator("..")).toHaveClass(/\bfield\b/);
 });
 
 test("APWorld cards use the style-guide comparison hierarchy", async ({ page }) => {
