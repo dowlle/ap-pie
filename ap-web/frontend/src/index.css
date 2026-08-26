@@ -5142,6 +5142,101 @@ details.yaml-builder-group > summary .muted {
 .sg-component-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
 .sg-component-grid .surface { display: flex; flex-direction: column; gap: 1rem; min-height: 12rem; }
 .sg-provenance { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0; color: var(--sg-muted); font: 0.7rem var(--font-mono); }
+.sg-review-section { position: relative; }
+.sg-review-flag {
+  display: inline-flex;
+  margin-bottom: var(--space-3);
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(242, 173, 85, 0.4);
+  border-radius: 999px;
+  background: rgba(242, 173, 85, 0.1);
+  color: var(--sg-amber);
+  font: 700 0.66rem var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sg-review-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.sg-review-card { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.sg-review-card-wide { grid-column: 1 / -1; }
+.sg-review-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.sg-review-card-head h3 { margin: var(--space-1) 0 0; font-size: 1.2rem; }
+.sg-review-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--border); }
+.sg-review-tabs button {
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font: 600 0.78rem var(--font-body);
+  cursor: pointer;
+}
+.sg-review-tabs button.is-active { border-bottom-color: var(--accent); color: var(--text-h); }
+.sg-review-tabs button span { margin-left: var(--space-1); color: var(--text-subtle); font: 0.66rem var(--font-mono); }
+.sg-review-segments { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sg-review-segments button {
+  min-height: 2rem;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: 0.74rem var(--font-body);
+}
+.sg-review-segments button.is-active { border-color: var(--accent); background: var(--accent); color: #21170d; }
+.sg-review-segments span { margin-left: var(--space-1); font: 0.64rem var(--font-mono); }
+.sg-review-drawer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--bg); }
+.sg-review-drawer strong, .sg-review-drawer small { display: block; }
+.sg-review-drawer small { color: var(--text-muted); font-size: 0.72rem; }
+.sg-review-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-control); }
+.sg-review-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+.sg-review-table th { padding: 0.55rem 0.65rem; background: var(--bg); color: var(--text-muted); font-size: 0.66rem; letter-spacing: 0.05em; text-align: left; text-transform: uppercase; }
+.sg-review-table td { padding: 0.65rem; border-top: 1px solid var(--border); color: var(--text-h); }
+.sg-review-accordion { border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--bg); }
+.sg-review-accordion summary { display: flex; justify-content: space-between; gap: var(--space-3); padding: 0.7rem 0.8rem; color: var(--text-h); font-size: 0.78rem; font-weight: 600; cursor: pointer; list-style: none; }
+.sg-review-accordion summary::-webkit-details-marker { display: none; }
+.sg-review-accordion summary span:last-child { color: var(--text-muted); font: 0.68rem var(--font-mono); }
+.sg-review-accordion > div { padding: 0 0.8rem 0.8rem; color: var(--text-muted); font-size: 0.74rem; }
+.sg-review-workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr); gap: var(--space-4); }
+.sg-review-dialog, .sg-review-live { min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg); }
+.sg-review-dialog > header, .sg-review-dialog > footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+.sg-review-dialog > header { border-bottom: 1px solid var(--border); }
+.sg-review-dialog > footer { justify-content: flex-end; border-top: 1px solid var(--border); background: var(--bg-card); }
+.sg-review-dialog header strong, .sg-review-dialog header small { display: block; }
+.sg-review-dialog header small { color: var(--text-muted); font-size: 0.72rem; }
+.sg-review-steps { display: grid; grid-template-columns: repeat(3, 1fr); margin: var(--space-4); padding: 0; list-style: none; counter-reset: review-step; }
+.sg-review-steps li { position: relative; padding-top: 1.7rem; color: var(--text-subtle); font-size: 0.68rem; text-align: center; counter-increment: review-step; }
+.sg-review-steps li::before { content: counter(review-step); position: absolute; z-index: 1; top: 0; left: 50%; display: grid; place-items: center; width: 1.35rem; height: 1.35rem; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--bg); transform: translateX(-50%); }
+.sg-review-steps li:not(:last-child)::after { content: ""; position: absolute; top: 0.65rem; left: calc(50% + 0.7rem); width: calc(100% - 1.4rem); border-top: 1px solid var(--border); }
+.sg-review-steps li.is-complete, .sg-review-steps li.is-active { color: var(--text-h); }
+.sg-review-steps li.is-complete::before { border-color: var(--color-success); background: var(--color-success); color: #12241c; }
+.sg-review-steps li.is-active::before { border-color: var(--accent); color: var(--accent); }
+.sg-review-option { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin: 0 var(--space-4) var(--space-4); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--bg-card); }
+.sg-review-option strong, .sg-review-option small { display: block; }
+.sg-review-option small { color: var(--text-muted); font-size: 0.72rem; }
+.sg-review-live { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4); }
+.sg-review-live code { flex: 1; padding: var(--space-3); border-radius: var(--radius-control); background: var(--color-surface-raised); color: var(--color-info); font: 0.72rem/1.8 var(--font-mono); white-space: normal; }
+.sg-review-feedback-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.sg-review-dropzone { display: flex; min-height: 8rem; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1); padding: var(--space-5); border: 1px dashed var(--border-strong); border-radius: var(--radius-card); background: var(--bg); color: var(--text-h); font: inherit; cursor: pointer; }
+.sg-review-dropzone:hover { border-color: var(--accent); background: var(--accent-dim); }
+.sg-review-dropzone span { color: var(--text-muted); font-size: 0.72rem; }
+.sg-review-tracker, .sg-review-feed { padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg); }
+.sg-review-tracker > div:first-child { display: flex; align-items: center; gap: var(--space-3); }
+.sg-review-tracker > div:first-child > div { flex: 1; }
+.sg-review-tracker strong, .sg-review-tracker small { display: block; }
+.sg-review-tracker small { color: var(--text-muted); font-size: 0.72rem; }
+.sg-review-player-mark { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: var(--radius-control); background: var(--accent-dim); color: var(--accent); font: 700 0.7rem var(--font-mono); }
+.sg-review-progress { height: 0.45rem; margin: var(--space-4) 0 var(--space-2); overflow: hidden; border-radius: 999px; background: var(--color-surface-raised); }
+.sg-review-progress span { display: block; height: 100%; border-radius: inherit; background: var(--color-success); }
+.sg-review-feed { display: flex; flex-direction: column; gap: var(--space-3); }
+.sg-review-feed p { display: grid; grid-template-columns: 3rem 1fr; gap: var(--space-2); margin: 0; color: var(--text-muted); font-size: 0.74rem; }
+.sg-review-feed time { color: var(--text-subtle); font-family: var(--font-mono); }
+.sg-review-feed strong { color: var(--text-h); }
+.sg-review-toast { display: flex; align-items: center; gap: var(--space-3); align-self: end; padding: var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--color-surface-raised); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28); }
+.sg-review-toast-icon { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 999px; background: rgba(105, 201, 157, 0.14); color: var(--color-success); }
+.sg-review-toast > div { min-width: 0; flex: 1; }
+.sg-review-toast strong, .sg-review-toast small { display: block; }
+.sg-review-toast small { overflow: hidden; color: var(--text-muted); font: 0.68rem var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.sg-review-toast button { border: 0; background: transparent; color: var(--text-muted); font-size: 1rem; cursor: pointer; }
 .sg-family-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
 .sg-family { min-height: 14rem; padding: 1.2rem; border: 1px solid var(--sg-border); border-radius: 12px; background: var(--sg-surface); }
 .sg-family h3 { margin: 0 0 0.6rem; color: var(--sg-text); font-family: "Bricolage Grotesque", var(--font-display); font-size: 1.35rem; font-weight: 500; letter-spacing: -0.025em; }
@@ -5158,7 +5253,9 @@ details.yaml-builder-group > summary .muted {
   .sg-page { padding-top: 2.8rem; }
   .sg-color-grid { grid-template-columns: repeat(2, 1fr); }
   .sg-component-grid,
-  .sg-family-grid { grid-template-columns: repeat(2, 1fr); }
+  .sg-family-grid,
+  .sg-review-grid { grid-template-columns: repeat(2, 1fr); }
+  .sg-review-workspace { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
   .sg-page { padding-bottom: 4rem; }
@@ -5166,7 +5263,13 @@ details.yaml-builder-group > summary .muted {
   .sg-local-nav { overflow-x: auto; white-space: nowrap; }
   .sg-type-specimen,
   .sg-component-grid,
-  .sg-family-grid { grid-template-columns: 1fr; }
+  .sg-family-grid,
+  .sg-review-grid,
+  .sg-review-feedback-grid { grid-template-columns: 1fr; }
+  .sg-review-card-wide { grid-column: auto; }
+  .sg-review-card-head { align-items: flex-start; }
+  .sg-review-tabs { overflow-x: auto; }
+  .sg-review-toast { align-self: stretch; }
   .sg-type-mono { grid-column: auto; }
   .field-pair { grid-template-columns: 1fr; }
 }

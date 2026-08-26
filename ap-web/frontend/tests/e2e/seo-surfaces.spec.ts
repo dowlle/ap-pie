@@ -82,6 +82,22 @@ test("style guide renders the shared production primitives", async ({ page }) =>
   expect((await primary.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 });
 
+test("style guide keeps unapproved modules in a proposal-only review section", async ({ page }) => {
+  await page.goto("/style-guide");
+  const review = page.locator("#review");
+  await expect(review.getByText("Needs review", { exact: true })).toBeVisible();
+  await expect(review.getByText("These four groups are visual proposals only.", { exact: false })).toBeVisible();
+  for (const heading of [
+    "Tabs, filters and drawers",
+    "Tables, grids and accordions",
+    "Dialogs, steppers and live tools",
+    "Uploads, trackers, progress and toasts",
+  ]) {
+    await expect(review.getByRole("heading", { name: heading })).toBeVisible();
+  }
+  await expect(review.getByText("Proposal", { exact: true })).toHaveCount(4);
+});
+
 test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ page, request }) => {
   const indexResponse = await request.get("/api/apworlds");
   const worlds = await indexResponse.json();
