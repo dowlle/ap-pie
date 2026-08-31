@@ -5,7 +5,7 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, request
 
 from auth import requires_admin
-from db import list_users, set_user_approved
+from db import list_users, set_user_approved, set_user_room_creation_blocked
 
 bp = Blueprint("admin", __name__)
 
@@ -24,6 +24,18 @@ def approve_user(user_id: int):
     data = request.get_json(silent=True) or {}
     approved = data.get("approved", True)
     user = set_user_approved(user_id, approved)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(user)
+
+
+@bp.route("/api/admin/users/<int:user_id>/room-creation-block", methods=["POST"])
+@requires_admin
+def block_room_creation(user_id: int):
+    """Stop or restore new room creation without deleting existing rooms."""
+    data = request.get_json(silent=True) or {}
+    blocked = bool(data.get("blocked", True))
+    user = set_user_room_creation_blocked(user_id, blocked)
     if not user:
         return jsonify({"error": "User not found"}), 404
     return jsonify(user)

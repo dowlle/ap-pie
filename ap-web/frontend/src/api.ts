@@ -4,6 +4,7 @@ const BASE = "/api";
 
 export interface Features {
   generation: boolean;
+  open_room_creation: boolean;
 }
 
 export async function getFeatures(): Promise<Features> {
@@ -375,6 +376,7 @@ export interface AuthUser {
   discord_username: string;
   is_admin: boolean;
   is_approved: boolean;
+  room_creation_blocked?: boolean;
   /** Derived server-side from Discord ID match against AP_OWNER_DISCORD_ID.
    *  Used only to gate the owner-only "view as" toggle (DEVEX-02);
    *  is_admin remains the canonical authorization flag for every
@@ -1095,6 +1097,16 @@ export async function setUserApproval(userId: number, approved: boolean): Promis
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ approved }),
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+  return res.json();
+}
+
+export async function setUserRoomCreationBlocked(userId: number, blocked: boolean): Promise<AuthUser> {
+  const res = await fetch(`${BASE}/admin/users/${userId}/room-creation-block`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ blocked }),
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
   return res.json();

@@ -4,11 +4,11 @@ import { getAuthMe, type AuthUser } from "../api";
 /**
  * Role vocabulary on the frontend (per 2026-05-04 conversation):
  *   - Admin  : the owner (is_owner=true). Full control, sees all admin tools.
- *   - Host   : approved logged-in user (is_approved=true, !is_admin). Can
- *              create / manage their own rooms, browse the APWorlds index.
- *   - User   : logged in but not approved. Lands on the Landing page with
- *              the "ping Appie on Discord" CTA. Can still submit YAMLs to
- *              any room they have a URL for.
+ *   - Host   : signed-in user with room access, either through legacy approval
+ *              or the open-room feature. Can create / manage their own rooms.
+ *   - User   : logged in but not approved. With open rooms enabled this is a
+ *              host for collection-room purposes only; otherwise sees the
+ *              legacy approval CTA. Can submit YAMLs to shared rooms.
  *   - Public : no session. Only reachable via /r/<id> or /play/<seed>.
  *
  * The owner-only "view as" toggle (DEVEX-02) lets Stef preview the Admin /

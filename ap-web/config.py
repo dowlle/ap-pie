@@ -26,7 +26,17 @@ FEATURES: dict[str, bool] = {
     # hosts collect YAMLs, then download the bundle and run generation
     # themselves off-server.
     "generation": _bool_env("FEATURE_GENERATION", True),
+    # Let any signed-in Discord user create and manage collection rooms.
+    # Keep this opt-in so code can reach beta before the public switch and so
+    # operators retain a one-variable rollback without reverting a release.
+    "open_room_creation": _bool_env("FEATURE_OPEN_ROOM_CREATION", False),
 }
+
+# Open-room abuse ceilings. When FEATURE_OPEN_ROOM_CREATION is enabled, every
+# non-admin host uses these limits. Deleting an old room frees quota.
+ROOM_CREATION_PER_HOUR = int(os.environ.get("AP_ROOM_CREATION_PER_HOUR", "5"))
+ROOM_CREATION_MAX_ACTIVE = int(os.environ.get("AP_ROOM_CREATION_MAX_ACTIVE", "10"))
+ROOM_CREATION_MAX_TOTAL = int(os.environ.get("AP_ROOM_CREATION_MAX_TOTAL", "50"))
 
 
 OUTPUT_DIR = os.environ.get("AP_OUTPUT_DIR", r"C:\ProgramData\Archipelago\output")

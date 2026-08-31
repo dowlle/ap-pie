@@ -16,6 +16,22 @@ DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
 
 _OAUTH_STATE_KEY = "oauth_state"
 
+# Opening the collection-room workflow must not implicitly open server-side
+# generation if FEATURE_GENERATION is enabled in some later deployment.
+# Approved hosts/admins retain those routes; public room hosts do not.
+_APPROVED_HOST_ROOM_ENDPOINTS = frozenset({
+    "rooms.room_test_generate",
+    "rooms.room_generate",
+    "rooms.room_generation_latest",
+    "rooms.room_generation_status",
+    "rooms.room_launch",
+    "rooms.room_stop",
+    "rooms.room_spoiler",
+    "rooms.room_download",
+    "rooms.room_patches",
+    "rooms.room_patch_download",
+})
+
 
 def generate_oauth_state() -> str:
     """Generate and store a fresh OAuth state token in the session."""
@@ -226,6 +242,18 @@ def apply_auth_to_app(app):
                 _record_403("admin_403", user)
                 return jsonify({"error": "Admin access required"}), 403
             return None
+
+        # Open room creation is narrower than global approval. Any signed-in
+        # Discord user may use their own room collector and room templates,
+        # while unrelated protected/admin/generation surfaces retain their
+        # existing role gates. Ownership is enforced inside the room APIs.
+        if config.FEATURES.get("open_room_creation", False):
+            room_collector_path = (
+                (request.path == "/api/rooms" or request.path.startswith("/api/rooms/"))
+                and request.endpoint not in _APPROVED_HOST_ROOM_ENDPOINTS
+            )
+            if room_collector_path or request.path.startswith("/api/users/me/room-templates"):
+                return None
 
         # Non-admin protected routes require approval
         if not user.get("is_approved") and not user.get("is_admin"):

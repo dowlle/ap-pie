@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAdminUsers, setUserApproval, type AuthUser } from "../api";
+import { getAdminUsers, setUserApproval, setUserRoomCreationBlocked, type AuthUser } from "../api";
 
 export default function Admin() {
   const [users, setUsers] = useState<AuthUser[]>([]);
@@ -23,6 +23,15 @@ export default function Admin() {
     }
   };
 
+  const toggleRoomCreationBlock = async (user: AuthUser) => {
+    try {
+      const updated = await setUserRoomCreationBlocked(user.id, !user.room_creation_blocked);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to update room access");
+    }
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="error">{error}</p>;
 
@@ -36,6 +45,7 @@ export default function Admin() {
             <th>Discord ID</th>
             <th>Admin</th>
             <th>Host</th>
+            <th>Room creation</th>
             <th>Joined</th>
             <th>Actions</th>
           </tr>
@@ -47,6 +57,7 @@ export default function Admin() {
               <td style={{ fontFamily: "monospace", fontSize: "0.85rem" }}>{u.discord_id}</td>
               <td>{u.is_admin ? "Yes" : "No"}</td>
               <td>{u.is_approved ? "Yes" : "No"}</td>
+              <td>{u.room_creation_blocked ? "Blocked" : "Allowed"}</td>
               <td>{new Date(u.created_at).toLocaleDateString()}</td>
               <td>
                 <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", alignItems: "center" }}>
@@ -57,6 +68,14 @@ export default function Admin() {
                     title={u.is_admin ? "Admins are always hosts" : ""}
                   >
                     {u.is_approved ? "Remove host" : "Make host"}
+                  </button>
+                  <button
+                    className={`btn btn-sm ${u.room_creation_blocked ? "btn-primary" : "btn-danger"}`}
+                    onClick={() => toggleRoomCreationBlock(u)}
+                    disabled={u.is_admin}
+                    title={u.is_admin ? "Admins cannot be blocked" : ""}
+                  >
+                    {u.room_creation_blocked ? "Allow rooms" : "Block rooms"}
                   </button>
                   <Link
                     to={`/rooms?as_user=${u.id}`}

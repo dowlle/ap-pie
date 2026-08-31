@@ -22,11 +22,11 @@ Prepare the information players need before making their YAMLs:
 
 Putting these rules in the room description keeps the collector link useful even when the Discord announcement scrolls away.
 
-## Step 1: get host access
+## Step 1: sign in
 
-Sign in to Archipelago Pie with Discord. Room creation is currently in closed beta, so new hosts need approval. After signing in, contact Appie on Discord to request host access.
+Sign in to Archipelago Pie with Discord. Any signed-in user can create collection rooms. New accounts have sensible creation and active-room limits; delete obsolete rooms to free space if you reach one.
 
-Players do not need host access to open a shared room, build a YAML, or submit to a room that accepts them.
+Players do not need to sign in to open a shared room, build a YAML, or submit to a room that accepts anonymous submissions.
 
 ## Step 2: create the collection room
 

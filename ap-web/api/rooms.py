@@ -18,6 +18,7 @@ from db import (
     get_generation_job,
     get_latest_generation_job,
     get_room,
+    get_room_creation_counts,
     get_room_apworlds,
     get_yamls,
     get_yamls_with_submitters,
@@ -68,6 +69,31 @@ def _validate_room_string_lengths(data: dict):
             return jsonify({
                 "error": f"{field} is too long (max {limit} characters, got {len(v)})",
             }), 400
+    return None
+
+
+def _open_room_creation_error(user: dict, counts: dict[str, int]):
+    """Return (message, status) when a public-room quota blocks creation."""
+    if user.get("room_creation_blocked"):
+        return (
+            "Room creation is disabled for this account. Contact support if you think this is a mistake.",
+            403,
+        )
+    if counts["recent"] >= config.ROOM_CREATION_PER_HOUR:
+        return (
+            f"Room creation is limited to {config.ROOM_CREATION_PER_HOUR} per hour.",
+            429,
+        )
+    if counts["active"] >= config.ROOM_CREATION_MAX_ACTIVE:
+        return (
+            f"You can have at most {config.ROOM_CREATION_MAX_ACTIVE} active rooms. Close or delete an old room first.",
+            409,
+        )
+    if counts["total"] >= config.ROOM_CREATION_MAX_TOTAL:
+        return (
+            f"You can keep at most {config.ROOM_CREATION_MAX_TOTAL} rooms. Delete an old room before creating another.",
+            409,
+        )
     return None
 
 
@@ -176,6 +202,20 @@ def rooms_create():
 
     user = _current_user()
     host_user_id = user["id"] if user else None
+
+    # Open access is intentionally signed-in and quota-backed. Once the flag
+    # is enabled, every non-admin host uses the same limits; approval is not a
+    # quota bypass. With the flag off, the legacy approval flow is unchanged.
+    if user and not user.get("is_admin"):
+        open_access = config.FEATURES.get("open_room_creation", False)
+        if not user.get("is_approved") and not open_access:
+            return jsonify({"error": "Room creation is not open for this account"}), 403
+        if open_access:
+            counts = get_room_creation_counts(user["id"])
+            limit_error = _open_room_creation_error(user, counts)
+            if limit_error:
+                message, status = limit_error
+                return jsonify({"error": message}), status
 
     # FEAT-04: optional submit_deadline (ISO 8601 string from the frontend,
     # already converted to UTC client-side). Pass through verbatim - Postgres

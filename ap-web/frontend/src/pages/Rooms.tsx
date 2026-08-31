@@ -76,8 +76,14 @@ export default function Rooms() {
     <div>
       <div className="page-header">
         <h1>Rooms</h1>
-        {!isViewingAsOther && <CreateRoomButton onCreated={refresh} />}
+        {!isViewingAsOther && !user?.room_creation_blocked && <CreateRoomButton onCreated={refresh} />}
       </div>
+
+      {user?.room_creation_blocked && !isViewingAsOther && (
+        <p className="approval-toast" role="status">
+          Room creation is disabled for this account. Existing rooms remain available.
+        </p>
+      )}
 
       {isViewingAsOther && (
         <div className="approval-toast" role="status" style={{ marginBottom: "1rem" }}>
