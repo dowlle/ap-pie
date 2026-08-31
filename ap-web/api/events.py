@@ -102,7 +102,9 @@ def post_events():
             room_id = None
         analytics.record_event(
             kind,
-            user_id=user_id,
+            # Anonymous kinds (the Pokepelago ones) never carry the account
+            # id, even when an apie_session cookie rides along.
+            user_id=None if kind in analytics.ANONYMOUS_KINDS else user_id,
             room_id=room_id,
             props=item.get("props") if isinstance(item.get("props"), dict) else None,
             req=request,
