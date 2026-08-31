@@ -32,6 +32,9 @@
             <span class="shelf-kicker">{{ s.soon.kicker }}</span>
             <h3>{{ s.soon.title }}</h3>
             <p>{{ s.soon.blurb }}</p>
+            {% if s.soon.play_url %}
+            <a class="shelf-play" href="{{ s.soon.play_url }}">{{ s.soon.play_label }} <small>pokepelago.ap-pie.com</small></a>
+            {% endif %}
           </div>
           {% endif %}
         </div>

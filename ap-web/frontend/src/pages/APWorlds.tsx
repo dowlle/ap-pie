@@ -497,6 +497,9 @@ function WorldCard({
   const detailAction = detailHref && (detailRouteKind === "server"
     ? <a className="btn apworld-card-detail-button" href={detailHref}>{detailLabel ?? "View details"}</a>
     : <Link className="btn apworld-card-detail-button" to={detailHref}>{detailLabel ?? "View details"}</Link>);
+  const playUrl = world.name.toLowerCase() === "pokepelago"
+    ? "https://pokepelago.ap-pie.com/"
+    : null;
 
   return (
     <article className="apworld-card">
@@ -528,6 +531,7 @@ function WorldCard({
           </dl>
 
           <div className="apworld-card-primary-actions">
+            {playUrl && <a className="btn btn-primary btn-sm" href={playUrl}>Play Poképelago</a>}
             {detailAction}
             {latestDownloadable && (
               <button

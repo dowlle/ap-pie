@@ -46,8 +46,10 @@ PROJECTS: list[dict] = [
         "key": "poke", "name": "Pokepelago", "sub": "catch across worlds", "color": "#e05d5d",
         "soon": {
             "kicker": "Setup",
-            "title": "Pokepelago setup",
+            "title": "Poképelago setup",
             "blurb": "Catching across worlds: the browser client and how your dex feeds the multiworld. Coming soon.",
+            "play_url": "https://pokepelago.ap-pie.com/",
+            "play_label": "Play Poképelago",
         },
     },
     {
@@ -509,6 +511,10 @@ def llms() -> Response:
     for p in CTR_PAGES:
         lines.append(f"- [{p['title']}]({_canonical(p['path'])}): {p['blurb']}")
     lines += [
+        "",
+        "## Games",
+        "",
+        "- [Play Poképelago](https://pokepelago.ap-pie.com/): guess and catch Pokémon in your browser, standalone or connected to an Archipelago multiworld",
         "",
         "## App",
         "",

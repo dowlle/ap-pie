@@ -4351,6 +4351,11 @@ details.collapsible-section > .accordion-body {
 a.lp-pj:hover { border-color: var(--c, var(--accent)); transform: translateY(-3px); background: var(--bg-hover); text-decoration: none; }
 .lp-pj h3 { font-family: var(--lp-display); font-weight: 500; font-size: 1.25rem; color: var(--text-h); margin: 0 0 0.35rem; }
 .lp-pj p { color: var(--text-muted); font-size: 0.93rem; margin: 0; }
+.lp-pj-link {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.45rem; margin-top: 1rem;
+  color: var(--c, var(--accent)); font-size: 0.82rem; font-weight: 700;
+}
+.lp-pj-link small { color: var(--text-muted); font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: 0.69rem; font-weight: 500; }
 .lp-glyph {
   width: 2.4rem; height: 2.4rem; border-radius: 10px; display: grid; place-items: center;
   margin-bottom: 0.9rem; background: color-mix(in srgb, var(--c, var(--accent)) 18%, transparent);

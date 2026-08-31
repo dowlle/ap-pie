@@ -140,6 +140,31 @@ test("server-owned APWorld routes perform a document navigation", async ({ page 
   await expect(page.getByRole("heading", { level: 1, name: "APWorld downloads" })).toBeVisible();
 });
 
+test("Poképelago discovery links are followed and crawler-visible", async ({ page, request }) => {
+  const homepage = await (await request.get("/")).text();
+  expect(homepage).toContain('<a href="https://pokepelago.ap-pie.com/">Play Poképelago');
+
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: /Play Poképelago/ })).toHaveAttribute(
+    "href",
+    "https://pokepelago.ap-pie.com/",
+  );
+
+  const guides = await (await request.get("/guides")).text();
+  expect(guides).toContain('href="https://pokepelago.ap-pie.com/"');
+  expect(guides).toContain("Play Poképelago");
+
+  const machineIndex = await (await request.get("/llms.txt")).text();
+  expect(machineIndex).toContain("[Play Poképelago](https://pokepelago.ap-pie.com/)");
+
+  await page.goto("/apworlds");
+  const card = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Pokepelago" }) });
+  await expect(card.getByRole("link", { name: "Play Poképelago" })).toHaveAttribute(
+    "href",
+    "https://pokepelago.ap-pie.com/",
+  );
+});
+
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
   const cases = [
     { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },
