@@ -165,10 +165,29 @@ test("Poképelago discovery links are followed and crawler-visible", async ({ pa
   );
 });
 
+test("Poképelago setup guide is published through every guide surface", async ({ request }) => {
+  const guides = await (await request.get("/guides")).text();
+  expect(guides).toContain('href="/guides/pokepelago"');
+
+  const setupGuide = await (await request.get("/guides/pokepelago")).text();
+  expect(setupGuide).toContain("Poképelago setup guide");
+  expect(setupGuide).toContain("pokepelago.apworld");
+  expect(setupGuide).toContain("Archipelago 0.6.7 or newer");
+  expect(setupGuide).toContain('https://pokepelago.ap-pie.com/');
+  expect(setupGuide).toContain('content="https://ap-pie.com/img/guides/pokepelago-gameplay.png"');
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("https://ap-pie.com/guides/pokepelago");
+
+  const machineIndex = await (await request.get("/llms.txt")).text();
+  expect(machineIndex).toContain("[Poképelago setup](https://ap-pie.com/guides/pokepelago)");
+});
+
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
   const cases = [
     { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },
     { path: "/guides/getting-started", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
+    { path: "/guides/pokepelago", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
     { path: "/privacy", types: ["WebPage", "BreadcrumbList"], absent: "TechArticle" },
     { path: "/ctr", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },
     { path: "/ctr/download", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },

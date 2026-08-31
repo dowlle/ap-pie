@@ -19,7 +19,7 @@
           <h2>{{ s.name }}</h2>
           <span class="shelf-sub">{{ s.sub }}</span>
         </div>
-        <div class="shelf-row{% if s.cards|length + (1 if s.soon else 0) == 1 %} single{% endif %}">
+        <div class="shelf-row{% if s.cards|length + (1 if s.soon else 0) + (1 if s.action else 0) == 1 %} single{% endif %}">
           {% for c in s.cards %}
           <a class="shelf-card{% if c.featured %} featured{% endif %}" href="{{ c.path }}">
             <span class="shelf-kicker">{{ c.kicker }}</span>
@@ -27,6 +27,14 @@
             <p>{{ c.blurb }}</p>
           </a>
           {% endfor %}
+          {% if s.action %}
+          <div class="shelf-card shelf-action">
+            <span class="shelf-kicker">{{ s.action.kicker }}</span>
+            <h3>{{ s.action.title }}</h3>
+            <p>{{ s.action.blurb }}</p>
+            <a class="shelf-play" href="{{ s.action.play_url }}">{{ s.action.play_label }} <small>pokepelago.ap-pie.com</small></a>
+          </div>
+          {% endif %}
           {% if s.soon %}
           <div class="shelf-card soon">
             <span class="shelf-kicker">{{ s.soon.kicker }}</span>
