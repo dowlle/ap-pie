@@ -38,12 +38,13 @@ export function buildYamlContent(input: {
     description: `${game} - created with the ap-pie.com builder`,
     game,
   };
-  if (worldVersion) {
-    // `requires.game` pins the apworld; `requires.version` states the
-    // minimum generator this file expects (Generate.py:539-545). Emitting
-    // both means a host on an older Archipelago is told so at generation
-    // time instead of hitting a confusing option error.
-    const requires: Record<string, unknown> = { game: { [game]: worldVersion } };
+  const requiredWorldVersion = normalizeWorldRequirement(worldVersion);
+  if (requiredWorldVersion || apVersion) {
+    // Archipelago parses requirement versions as numeric major.minor.patch
+    // tuples. Index release labels may add a prerelease suffix, so pin the
+    // compatible numeric version rather than emitting generator-invalid YAML.
+    const requires: Record<string, unknown> = {};
+    if (requiredWorldVersion) requires.game = { [game]: requiredWorldVersion };
     if (apVersion) requires.version = apVersion;
     doc.requires = requires;
   }
@@ -73,6 +74,14 @@ export function buildYamlContent(input: {
     // in schema order) instead of alphabetical.
     sortKeys: false,
   });
+}
+
+/** Convert an index release label to the numeric tuple accepted by
+ *  Archipelago's `requires.game` parser. Unknown label shapes are omitted
+ *  rather than making an otherwise valid player YAML impossible to load. */
+function normalizeWorldRequirement(version: string): string | null {
+  const match = /^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(version.trim());
+  return match ? `${match[1]}.${match[2]}.${match[3]}` : null;
 }
 
 /**

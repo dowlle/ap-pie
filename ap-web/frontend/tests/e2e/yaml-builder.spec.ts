@@ -321,6 +321,7 @@ test("nested OptionDict YAML survives form editing, YAML loading, and rebuild", 
   const editor = page.locator(".yaml-builder-live-editor");
   const generated = await editor.inputValue();
   expect(load(generated)).toMatchObject({
+    requires: { game: { "Dict Kinds Fixture": "0.2.0" } },
     "Dict Kinds Fixture": {
       custom_tracks: { "baby-t-park": CUSTOM_TRACK },
     },
