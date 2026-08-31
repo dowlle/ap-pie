@@ -431,6 +431,7 @@
       }
       .shelf-card.soon { opacity: 0.5; }
       .shelf-card.soon:has(.shelf-play) { opacity: 0.78; }
+      .shelf-card.shelf-action::after { content: none; }
       .shelf-play {
         display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.45rem; width: fit-content;
         margin-top: 1rem; color: var(--c, var(--accent)); font-weight: 700; font-size: 0.86rem;
