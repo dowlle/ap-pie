@@ -117,12 +117,13 @@ export default function Landing() {
             <h3>CTR Archipelago</h3>
             <p>The 1999 kart racer as a native PC randomizer. Warp pads, trophies, and relics join the pool.</p>
           </a>
-          <article className="lp-pj" style={{ "--c": "#e05d5d" } as React.CSSProperties}>
+          <a className="lp-pj" style={{ "--c": "#e05d5d" } as React.CSSProperties} href="https://pokepelago.ap-pie.com/">
             <span className="lp-st">Released</span>
             <div className="lp-glyph">PK</div>
-            <h3>Pokepelago</h3>
-            <p>A catching game in your browser where every Pokemon can carry someone's progression.</p>
-          </article>
+            <h3>Poképelago</h3>
+            <p>A catching game in your browser where every Pokémon can carry someone's progression.</p>
+            <span className="lp-pj-link">Play Poképelago <small>pokepelago.ap-pie.com</small></span>
+          </a>
           <article className="lp-pj" style={{ "--c": "#7fa65a" } as React.CSSProperties}>
             <span className="lp-st">Alpha</span>
             <div className="lp-glyph">TB</div>

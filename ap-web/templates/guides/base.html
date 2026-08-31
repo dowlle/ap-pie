@@ -430,6 +430,12 @@
         background: linear-gradient(135deg, color-mix(in srgb, var(--c) 12%, var(--bg-card)), var(--bg-card) 55%);
       }
       .shelf-card.soon { opacity: 0.5; }
+      .shelf-card.soon:has(.shelf-play) { opacity: 0.78; }
+      .shelf-play {
+        display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.45rem; width: fit-content;
+        margin-top: 1rem; color: var(--c, var(--accent)); font-weight: 700; font-size: 0.86rem;
+      }
+      .shelf-play small { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; }
       @media (max-width: 860px) {
         .guides-layout { grid-template-columns: 1fr; gap: 1.5rem; }
         .guides-rail { position: static; display: flex; flex-wrap: wrap; gap: 0.25rem; }
