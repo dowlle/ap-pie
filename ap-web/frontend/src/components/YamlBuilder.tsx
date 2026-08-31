@@ -1680,8 +1680,11 @@ function OptionControl({
     }
 
     case "dict": {
-      // With known keys (OptionCounter - trap/filler weights), render one
-      // number row per key. Unknown-key dicts fall back to a textarea.
+      // Only a parser-confirmed OptionCounter gets numeric rows. OptionDict
+      // can also declare valid_keys and an empty default while carrying
+      // nested mappings, so neither those fields nor current values are a
+      // safe semantic signal. Legacy schemas without dict_kind deliberately
+      // fall back to the structured mapping editor.
       const dictVal = (typeof value === "object" && value !== null)
         ? (value as Record<string, unknown>)
         : {};
@@ -1691,7 +1694,12 @@ function OptionControl({
       const allNumeric = keys.length > 0 && keys.every(
         (k) => dictVal[k] === undefined || typeof dictVal[k] === "number",
       );
-      if (allNumeric && keys.length > 0 && typeof value !== "string") {
+      if (
+        option.dict_kind === "counter"
+        && allNumeric
+        && keys.length > 0
+        && typeof value !== "string"
+      ) {
         return (
           <div className="yaml-builder-counter">
             {keys.map((k) => (

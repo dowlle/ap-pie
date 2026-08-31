@@ -33,7 +33,7 @@ def _fixture_apworld() -> bytes:
         archive.writestr(
             "fixture/Options.py",
             """from dataclasses import dataclass
-from Options import PerGameCommonOptions, OptionSet
+from Options import OptionCounter, OptionDict, PerGameCommonOptions, OptionSet
 from .data import GAME_REGIONS
 
 class Regions(OptionSet):
@@ -41,9 +41,27 @@ class Regions(OptionSet):
     valid_keys = frozenset(GAME_REGIONS)
     default = frozenset({"Kanto"})
 
+class _BaseTrapWeights(OptionCounter):
+    display_name = "Trap Weights"
+    valid_keys = ["slow", "spin"]
+    default = {"slow": 2, "spin": 1}
+
+class TrapWeights(_BaseTrapWeights):
+    pass
+
+class _BaseCustomTracks(OptionDict):
+    display_name = "Custom Tracks"
+    valid_keys = ["baby-t-park"]
+    default = {}
+
+class CustomTracks(_BaseCustomTracks):
+    pass
+
 @dataclass
 class FixtureOptions(PerGameCommonOptions):
     regions: Regions
+    trap_weights: TrapWeights
+    custom_tracks: CustomTracks
 """,
         )
     return output.getvalue()
@@ -62,6 +80,27 @@ class APWorldOptionsParser(unittest.TestCase):
             schema["options"][0]["choices"],
             ["Hoenn", "Johto", "Kanto"],
         )
+
+    def test_option_counter_emits_counter_dict_kind(self) -> None:
+        schema = parse_apworld_options_bytes(_fixture_apworld(), stem_hint="fixture")
+
+        self.assertIsNotNone(schema)
+        assert schema is not None
+        option = next(o for o in schema["options"] if o["name"] == "trap_weights")
+        self.assertEqual(option["type"], "dict")
+        self.assertEqual(option["dict_kind"], "counter")
+        self.assertEqual(option["valid_keys"], ["slow", "spin"])
+
+    def test_option_dict_emits_mapping_dict_kind(self) -> None:
+        schema = parse_apworld_options_bytes(_fixture_apworld(), stem_hint="fixture")
+
+        self.assertIsNotNone(schema)
+        assert schema is not None
+        option = next(o for o in schema["options"] if o["name"] == "custom_tracks")
+        self.assertEqual(option["type"], "dict")
+        self.assertEqual(option["dict_kind"], "mapping")
+        self.assertEqual(option["default"], {})
+        self.assertEqual(option["valid_keys"], ["baby-t-park"])
 
 
 if __name__ == "__main__":

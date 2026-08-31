@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 2
+BUILDER_SCHEMA_FORMAT_VERSION = 3
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -537,6 +537,11 @@ def _parse_options_source(
             entry = {
                 **base,
                 "type": "dict",
+                # OptionCounter and OptionDict share Archipelago's mapping
+                # wire shape, but not their editing semantics. Preserve the
+                # resolved AP base class instead of asking the frontend to
+                # guess from valid_keys, defaults, or current values.
+                "dict_kind": "counter" if ap_base == "OptionCounter" else "mapping",
                 "default": default_dict,
             }
             if isinstance(valid_keys, (set, frozenset)):

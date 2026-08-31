@@ -116,8 +116,9 @@ function normalizeValue(opt: TemplateOption, raw: unknown): unknown {
       return [];
     case "dict": {
       if (typeof val === "string") {
-        // The generic dict control is a "key: value" textarea; parse lines
-        // into an object, numbers as numbers.
+        // Compatibility for old stored values from the former line-based
+        // dict control. Current mapping editors commit parsed objects, which
+        // preserves nested OptionDict values without flattening them.
         const out: Record<string, unknown> = {};
         for (const line of val.split("\n")) {
           const idx = line.indexOf(":");
