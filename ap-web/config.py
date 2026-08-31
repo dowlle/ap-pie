@@ -38,6 +38,18 @@ ROOM_CREATION_PER_HOUR = int(os.environ.get("AP_ROOM_CREATION_PER_HOUR", "5"))
 ROOM_CREATION_MAX_ACTIVE = int(os.environ.get("AP_ROOM_CREATION_MAX_ACTIVE", "10"))
 ROOM_CREATION_MAX_TOTAL = int(os.environ.get("AP_ROOM_CREATION_MAX_TOTAL", "50"))
 
+# Account deletion is deliberately two-stage. Scheduling locks the account but
+# keeps its data intact for this many days so an accidental deletion can be
+# cancelled through a fresh Discord login. The irreversible purge runs only
+# after the deadline. Erasure receipts live outside Postgres so they survive a
+# database restore long enough to replay deletions against a restored dump.
+ACCOUNT_DELETION_GRACE_DAYS = int(os.environ.get("AP_ACCOUNT_DELETION_GRACE_DAYS", "7"))
+ACCOUNT_ERASURE_RECEIPT_DAYS = int(os.environ.get("AP_ACCOUNT_ERASURE_RECEIPT_DAYS", "16"))
+ACCOUNT_ERASURE_LEDGER = os.environ.get(
+    "AP_ACCOUNT_ERASURE_LEDGER",
+    os.path.join(os.path.dirname(__file__), ".state", "account-erasure-receipts.jsonl"),
+)
+
 
 OUTPUT_DIR = os.environ.get("AP_OUTPUT_DIR", r"C:\ProgramData\Archipelago\output")
 SERVER_EXE = os.environ.get("AP_SERVER_EXE", r"C:\ProgramData\Archipelago\ArchipelagoServer.exe")
@@ -72,6 +84,10 @@ DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
 DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "")
 OWNER_DISCORD_ID = os.environ.get("AP_OWNER_DISCORD_ID", "")
 SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
+# A room-creation block must not disappear when its user row is erased. This
+# keyed value pseudonymises Discord ids in the separate abuse-prevention table;
+# it is still personal data and is described as such in the privacy notice.
+ABUSE_HMAC_KEY = os.environ.get("AP_ABUSE_HMAC_KEY", SECRET_KEY)
 
 # APIE-1 (ap-pie-wide SSO): the session cookie defaults to host-only with
 # Flask's default name "session". To make one Discord login work across all

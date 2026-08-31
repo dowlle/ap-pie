@@ -10,3 +10,7 @@ threads = 4
 preload_app = False
 accesslog = "-"
 errorlog = "-"
+# Privacy-minimised request log: path without query string, no client IP,
+# User-Agent or referrer. In particular this keeps Discord OAuth codes/state
+# out of the container log while preserving status/latency evidence.
+access_log_format = '%(t)s "%(m)s %(U)s %(H)s" %(s)s %(b)s %(L)s'

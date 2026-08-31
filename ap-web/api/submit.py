@@ -245,6 +245,8 @@ def submit_yaml(room_id: str):
         add_activity(
             room_id, "yaml_submitted",
             f"{uploader} uploaded {game} YAML for player {player_name}",
+            actor_user_id=submitter_user_id,
+            subject_yaml_id=yaml_record["id"],
         )
         # FEAT-31: the game name is index metadata, not personal data. The
         # player name and the YAML body are never recorded.
@@ -262,6 +264,8 @@ def submit_yaml(room_id: str):
         add_activity(
             room_id, "yaml_submitted_invalid",
             f"{uploader} uploaded invalid {game} YAML for player {player_name}: {error}",
+            actor_user_id=submitter_user_id,
+            subject_yaml_id=yaml_record["id"],
         )
         # A validator failure still stores the YAML (the host can see it and
         # ask the player to fix it), so this is "rejected by the validator",

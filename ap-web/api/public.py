@@ -504,7 +504,10 @@ def public_yaml_update(room_id: str, yaml_id: int):
                 f"{uploader} updated {new_game} YAML for player "
                 f"{new_player_name} (now invalid: {error})"
             )
-    add_activity(room_id, "yaml_updated", message)
+    add_activity(
+        room_id, "yaml_updated", message,
+        actor_user_id=user["id"], subject_yaml_id=yaml_id,
+    )
 
     return jsonify({
         "id": updated["id"],
@@ -561,6 +564,7 @@ def public_yaml_delete(room_id: str, yaml_id: int):
         add_activity(
             room_id, "yaml_deleted",
             f"{actor} deleted {target['game']} YAML for player {target['player_name']}",
+            actor_user_id=user["id"],
         )
         return jsonify({"status": "deleted"})
     return jsonify({"error": "YAML not found"}), 404
@@ -661,6 +665,7 @@ def public_yaml_claim(room_id: str, yaml_id: int):
     add_activity(
         room_id, "yaml_claimed",
         f"{actor} claimed {claimed['game']} YAML for player {claimed['player_name']}",
+        actor_user_id=user["id"], subject_yaml_id=yaml_id,
     )
     analytics.record_event(
         "claim_succeeded", user_id=user["id"], room_id=room_id, req=request
@@ -703,6 +708,7 @@ def public_yaml_release(room_id: str, yaml_id: int):
     add_activity(
         room_id, "yaml_released",
         f"{actor} released their claim on {released['game']} YAML for player {released['player_name']}",
+        actor_user_id=user["id"], subject_yaml_id=yaml_id,
     )
     return jsonify({
         "status": "released",

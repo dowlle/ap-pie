@@ -18,6 +18,24 @@ for stack in prod beta; do
         | sort -n | tail -1 | cut -d' ' -f2-)"
     [[ -n "$newest" ]] || { echo "No $stack backup found" >&2; exit 1; }
     (cd "$(dirname "$newest")" && sha256sum --check "$(basename "$newest").sha256")
+    ledger="${newest%.dump.gpg}.erasure.jsonl.gpg"
+    [[ -s "$ledger" ]] || { echo "No matching $stack erasure ledger found" >&2; exit 1; }
+    (cd "$(dirname "$ledger")" && sha256sum --check "$(basename "$ledger").sha256")
+
+    gpg --homedir "$gpg_home" --batch --quiet --decrypt "$ledger" \
+      | python3 -c '
+import json
+import sys
+
+for line_number, raw in enumerate(sys.stdin, 1):
+    if not raw.strip():
+        continue
+    receipt = json.loads(raw)
+    assert isinstance(receipt.get("receipt_id"), str), line_number
+    assert isinstance(receipt.get("user_id"), int), line_number
+    assert isinstance(receipt.get("seeds"), list), line_number
+    assert isinstance(receipt.get("erased_at"), str), line_number
+'
 
     container="ap-pie-restore-test-$stack"
     docker rm -f "$container" >/dev/null 2>&1 || true

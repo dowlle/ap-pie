@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   deleteMyYaml,
   getMySubmissions,
@@ -9,9 +9,11 @@ import {
   type UserYaml,
 } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useFeature } from "../context/FeaturesContext";
 import { usePageTitle } from "../lib/usePageTitle";
 import MyPresets from "./MyPresets";
 import MyRoomTemplates from "./MyRoomTemplates";
+import AccountTab from "./AccountTab";
 
 /**
  * FEAT-43: one personal area instead of three scattered "my" pages.
@@ -31,6 +33,7 @@ const TABS = [
   { key: "yamls", label: "YAMLs" },
   { key: "presets", label: "Presets" },
   { key: "templates", label: "Room templates" },
+  { key: "account", label: "Account" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -39,17 +42,24 @@ export default function MyArea() {
   const { tab } = useParams<{ tab?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const openRoomCreation = useFeature("open_room_creation");
   const isApproved = !!(user?.is_approved || user?.is_admin);
-  const active: TabKey = TABS.some((t) => t.key === tab) ? (tab as TabKey) : "yamls";
+  const isKnownTab = TABS.some((t) => t.key === tab);
+  const active: TabKey = isKnownTab ? (tab as TabKey) : "yamls";
   usePageTitle(`My ${active === "yamls" ? "YAMLs" : active}`);
 
   const visibleTabs = useMemo(
     // Room templates are a host tool; there is nothing behind that tab for
     // an account that cannot create rooms yet. Hiding the tab beats gating
     // the whole area.
-    () => TABS.filter((t) => t.key !== "templates" || isApproved),
-    [isApproved],
+    () => TABS.filter((t) => t.key !== "templates" || isApproved || openRoomCreation),
+    [isApproved, openRoomCreation],
   );
+
+  if (tab && !isKnownTab) return <Navigate to="/my/yamls" replace />;
+  if (active === "templates" && !isApproved && !openRoomCreation) {
+    return <Navigate to="/my/yamls" replace />;
+  }
 
   if (!user) {
     return (
@@ -82,7 +92,8 @@ export default function MyArea() {
 
       {active === "yamls" && <MyYamlsTab />}
       {active === "presets" && <MyPresets embedded />}
-      {active === "templates" && isApproved && <MyRoomTemplates />}
+      {active === "templates" && (isApproved || openRoomCreation) && <MyRoomTemplates embedded />}
+      {active === "account" && <AccountTab />}
     </div>
   );
 }

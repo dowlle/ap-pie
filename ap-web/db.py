@@ -6,6 +6,7 @@ import os
 import re
 import secrets
 import threading
+from datetime import datetime, timezone
 
 import psycopg2
 import psycopg2.extras
@@ -31,6 +32,18 @@ def scrub_db_url(text: object) -> str:
 
 _db_url: str | None = None
 _local = threading.local()
+
+
+def rollback_request_transaction() -> None:
+    """Close any read-only/request transaction left on this thread.
+
+    Helpers use a thread-local persistent connection and many SELECT helpers
+    intentionally do not commit. Flask calls this after every request so those
+    reads cannot hold snapshots or relation locks between requests.
+    """
+    conn = getattr(_local, "conn", None)
+    if conn is not None and not conn.closed:
+        conn.rollback()
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -244,6 +257,69 @@ def init_db(db_url: str) -> None:
         cur.execute(
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
             "room_creation_blocked BOOLEAN DEFAULT FALSE"
+        )
+        # Account lifecycle: a scheduled deletion locks the account immediately
+        # but preserves every row until deletion_due_at so the same Discord
+        # identity can cancel an accidental request during the grace period.
+        cur.execute(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS deletion_requested_at TIMESTAMPTZ"
+        )
+        cur.execute(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS deletion_due_at TIMESTAMPTZ"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_users_deletion_due "
+            "ON users(deletion_due_at) WHERE deletion_due_at IS NOT NULL"
+        )
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS account_deletion_tokens (
+                user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                token_hash TEXT NOT NULL,
+                expires_at TIMESTAMPTZ NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS account_deletion_rate_limits (
+                user_id           INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                window_started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                attempts          INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS room_creation_blocks (
+                discord_id_hmac TEXT PRIMARY KEY,
+                blocked_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                review_after    TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '180 days')
+            )
+        """)
+        # Operational grants issued by an account can outlive that account;
+        # preserve the grant while removing its person-level attribution.
+        cur.execute(
+            "ALTER TABLE apworld_maintainers "
+            "DROP CONSTRAINT IF EXISTS apworld_maintainers_granted_by_fkey"
+        )
+        cur.execute(
+            "ALTER TABLE apworld_maintainers ALTER COLUMN granted_by DROP NOT NULL"
+        )
+        cur.execute(
+            "ALTER TABLE apworld_maintainers ADD CONSTRAINT "
+            "apworld_maintainers_granted_by_fkey FOREIGN KEY (granted_by) "
+            "REFERENCES users(id) ON DELETE SET NULL"
+        )
+        # Structured attribution makes future account erasure exact. Legacy
+        # rows remain nullable and are handled by the permanent-delete scrub.
+        cur.execute(
+            "ALTER TABLE room_activity ADD COLUMN IF NOT EXISTS "
+            "actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL"
+        )
+        cur.execute(
+            "ALTER TABLE room_activity ADD COLUMN IF NOT EXISTS "
+            "subject_yaml_id INTEGER REFERENCES room_yamls(id) ON DELETE SET NULL"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_room_activity_actor "
+            "ON room_activity(actor_user_id) WHERE actor_user_id IS NOT NULL"
         )
         # Migration: optional auto-close deadline. NULL = no scheduled close,
         # manual "Close Room" still works regardless. The sweeper closes any
@@ -1164,13 +1240,21 @@ def update_yaml_validation(yaml_id: int, status: str, error: str | None = None) 
 # ── Room Activity ────────────────────────────────────────────────
 
 
-def add_activity(room_id: str, event_type: str, message: str) -> dict:
+def add_activity(
+    room_id: str,
+    event_type: str,
+    message: str,
+    *,
+    actor_user_id: int | None = None,
+    subject_yaml_id: int | None = None,
+) -> dict:
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
-            """INSERT INTO room_activity (room_id, event_type, message)
-               VALUES (%s, %s, %s) RETURNING *""",
-            (room_id, event_type, message),
+            """INSERT INTO room_activity
+                      (room_id, event_type, message, actor_user_id, subject_yaml_id)
+               VALUES (%s, %s, %s, %s, %s) RETURNING *""",
+            (room_id, event_type, message, actor_user_id, subject_yaml_id),
         )
         row = _dictrow(cur)[0]
     conn.commit()
@@ -2240,9 +2324,47 @@ def reset_orphaned_running_jobs() -> int:
 # ── Users ─────────────────────────────────────────────────────────
 
 
+def discord_id_hmac(discord_id: str) -> str:
+    """Pseudonymous key for the separate room-creation denylist."""
+    import hashlib
+    import hmac
+    import config
+
+    return hmac.new(
+        config.ABUSE_HMAC_KEY.encode("utf-8"),
+        discord_id.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def is_discord_room_creation_blocked(discord_id: str) -> bool:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM room_creation_blocks WHERE review_after <= NOW()")
+        cur.execute(
+            """SELECT 1 FROM room_creation_blocks
+                WHERE discord_id_hmac = %s AND review_after > NOW()""",
+            (discord_id_hmac(discord_id),),
+        )
+        blocked = cur.fetchone() is not None
+    conn.commit()
+    return blocked
+
+
+def prune_expired_room_creation_blocks() -> int:
+    """Enforce the denylist retention ceiling even when nobody signs in."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM room_creation_blocks WHERE review_after <= NOW()")
+        removed = cur.rowcount
+    conn.commit()
+    return removed
+
+
 def create_or_update_user(discord_id: str, discord_username: str) -> dict:
     import config
     is_owner = discord_id == config.OWNER_DISCORD_ID
+    blocked = is_discord_room_creation_blocked(discord_id)
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
@@ -2250,14 +2372,18 @@ def create_or_update_user(discord_id: str, discord_username: str) -> dict:
             # its UPDATE: a freshly inserted tuple has no update transaction
             # id. Surfaced as is_new_user so the OAuth callback can record
             # first-login vs returning (FEAT-31) without a second query.
-            """INSERT INTO users (discord_id, discord_username, is_admin, is_approved)
-               VALUES (%s, %s, %s, %s)
+            """INSERT INTO users
+                      (discord_id, discord_username, is_admin, is_approved,
+                       room_creation_blocked)
+               VALUES (%s, %s, %s, %s, %s)
                ON CONFLICT (discord_id)
                DO UPDATE SET discord_username = EXCLUDED.discord_username,
                              is_admin = users.is_admin OR EXCLUDED.is_admin,
-                             is_approved = users.is_approved OR EXCLUDED.is_approved
+                             is_approved = users.is_approved OR EXCLUDED.is_approved,
+                             room_creation_blocked = users.room_creation_blocked
+                                 OR EXCLUDED.room_creation_blocked
                RETURNING *, (xmax = 0) AS is_new_user""",
-            (discord_id, discord_username, is_owner, is_owner),
+            (discord_id, discord_username, is_owner, is_owner, blocked),
         )
         row = _dictrow(cur)[0]
     conn.commit()
@@ -2270,6 +2396,413 @@ def get_user(user_id: int) -> dict:
         cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
         rows = _dictrow(cur)
     return _serialize(rows[0]) if rows else {}
+
+
+def get_user_by_discord_id(discord_id: str) -> dict:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM users WHERE discord_id = %s", (discord_id,))
+        rows = _dictrow(cur)
+    return _serialize(rows[0]) if rows else {}
+
+
+def get_account_summary(user_id: int) -> dict:
+    """Identity plus the exact counts shown before scheduled deletion."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT u.*,
+                      (SELECT COUNT(*) FROM rooms r
+                        WHERE r.host_user_id = u.id) AS rooms,
+                      (SELECT COUNT(*) FROM room_yamls y
+                        JOIN rooms r ON r.id = y.room_id
+                       WHERE r.host_user_id = u.id) AS hosted_submissions,
+                      (SELECT COUNT(*) FROM user_yamls y
+                        WHERE y.user_id = u.id) AS saved_yamls,
+                      (SELECT COUNT(*) FROM room_yamls y
+                        WHERE y.submitter_user_id = u.id) AS submissions,
+                      (SELECT COUNT(*) FROM apworld_presets p
+                        WHERE p.author_user_id = u.id) AS presets,
+                      (SELECT COUNT(*) FROM user_room_templates t
+                        WHERE t.user_id = u.id) AS room_templates,
+                      (SELECT COUNT(*) FROM apworld_index_requests q
+                        WHERE q.requester_user_id = u.id) AS apworld_requests
+                 FROM users u WHERE u.id = %s""",
+            (user_id,),
+        )
+        rows = _dictrow(cur)
+    if not rows:
+        return {}
+    row = _serialize(rows[0])
+    count_keys = (
+        "rooms", "hosted_submissions", "saved_yamls", "submissions",
+        "presets", "room_templates", "apworld_requests",
+    )
+    return {
+        "account": {k: v for k, v in row.items() if k not in count_keys},
+        "counts": {k: int(row[k]) for k in count_keys},
+    }
+
+
+def create_account_deletion_token(user_id: int, token_hash: str, minutes: int = 10) -> None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO account_deletion_tokens (user_id, token_hash, expires_at)
+               VALUES (%s, %s, NOW() + make_interval(mins => %s))
+               ON CONFLICT (user_id) DO UPDATE
+                  SET token_hash = EXCLUDED.token_hash,
+                      expires_at = EXCLUDED.expires_at,
+                      created_at = NOW()""",
+            (user_id, token_hash, minutes),
+        )
+    conn.commit()
+
+
+def consume_account_deletion_reauth_limit(
+    user_id: int,
+    *,
+    max_attempts: int = 5,
+    window_minutes: int = 15,
+) -> tuple[bool, int]:
+    """Database-wide limit for destructive OAuth initiation.
+
+    Returns ``(allowed, retry_after_seconds)``. Completion is separately
+    bounded by the ten-minute, single-use token and the pending-account lock.
+    """
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT attempts, window_started_at
+                     FROM account_deletion_rate_limits
+                    WHERE user_id = %s FOR UPDATE""",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            now = datetime.now(timezone.utc)
+            if not row:
+                cur.execute(
+                    """INSERT INTO account_deletion_rate_limits
+                              (user_id, window_started_at, attempts)
+                       VALUES (%s, NOW(), 1)""",
+                    (user_id,),
+                )
+                conn.commit()
+                return True, 0
+
+            attempts, started_at = row
+            if started_at.tzinfo is None:
+                started_at = started_at.replace(tzinfo=timezone.utc)
+            elapsed = (now - started_at).total_seconds()
+            window_seconds = max(1, int(window_minutes)) * 60
+            if elapsed >= window_seconds:
+                cur.execute(
+                    """UPDATE account_deletion_rate_limits
+                          SET window_started_at = NOW(), attempts = 1
+                        WHERE user_id = %s""",
+                    (user_id,),
+                )
+                conn.commit()
+                return True, 0
+            if attempts >= max(1, int(max_attempts)):
+                conn.commit()
+                return False, max(1, int(window_seconds - elapsed) + 1)
+            cur.execute(
+                """UPDATE account_deletion_rate_limits
+                      SET attempts = attempts + 1 WHERE user_id = %s""",
+                (user_id,),
+            )
+        conn.commit()
+        return True, 0
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def schedule_account_deletion(
+    user_id: int,
+    token_hash: str,
+    grace_days: int,
+) -> dict:
+    """Consume a reauth token and atomically schedule the reversible stage."""
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """DELETE FROM account_deletion_tokens
+                    WHERE user_id = %s AND token_hash = %s AND expires_at > NOW()
+                RETURNING user_id""",
+                (user_id, token_hash),
+            )
+            if not cur.fetchone():
+                conn.rollback()
+                return {}
+            cur.execute(
+                """UPDATE users
+                      SET deletion_requested_at = NOW(),
+                          deletion_due_at = NOW() + make_interval(days => %s)
+                    WHERE id = %s AND deletion_due_at IS NULL
+                RETURNING *""",
+                (grace_days, user_id),
+            )
+            rows = _dictrow(cur)
+        conn.commit()
+        return _serialize(rows[0]) if rows else {}
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def cancel_account_deletion(user_id: int) -> dict:
+    """Restore access only while the grace deadline is still in the future."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE users
+                  SET deletion_requested_at = NULL, deletion_due_at = NULL
+                WHERE id = %s AND deletion_due_at > NOW()
+            RETURNING *""",
+            (user_id,),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    return _serialize(rows[0]) if rows else {}
+
+
+def list_due_account_deletions(limit: int = 25) -> list[dict]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT id, deletion_due_at
+                 FROM users
+                WHERE deletion_due_at IS NOT NULL AND deletion_due_at <= NOW()
+             ORDER BY deletion_due_at
+                LIMIT %s""",
+            (max(1, min(int(limit), 100)),),
+        )
+        rows = _dictrow(cur)
+    # psycopg2 begins a transaction even for SELECT. This helper runs forever
+    # on the background sweeper thread, so close the read transaction rather
+    # than holding a relation lock and old snapshot until something is due.
+    conn.rollback()
+    return [_serialize(row) for row in rows]
+
+
+def get_account_erasure_targets(user_id: int) -> dict:
+    """Minimal pre-delete material needed for the off-database receipt."""
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT id FROM users
+                WHERE id = %s AND deletion_due_at IS NOT NULL
+                  AND deletion_due_at <= NOW()
+                FOR UPDATE""",
+            (user_id,),
+        )
+        if not cur.fetchone():
+            conn.rollback()
+            return {}
+        cur.execute(
+            """SELECT DISTINCT owned.seed
+                 FROM rooms owned
+                WHERE owned.host_user_id = %s
+                  AND owned.seed IS NOT NULL
+                  AND NOT EXISTS (
+                      SELECT 1 FROM rooms other
+                       WHERE other.seed = owned.seed
+                         AND other.host_user_id IS DISTINCT FROM %s
+                  )""",
+            (user_id, user_id),
+        )
+        seeds = sorted({row[0] for row in cur.fetchall() if row[0]})
+    conn.rollback()
+    return {"user_id": user_id, "seeds": seeds}
+
+
+def export_account_data(user_id: int) -> dict:
+    """Return only this account's identity/content; never other players' YAMLs."""
+    conn = _get_conn()
+
+    def query(cur, sql: str, args: tuple) -> list[dict]:
+        cur.execute(sql, args)
+        return [_serialize(row) for row in _dictrow(cur)]
+
+    with conn.cursor() as cur:
+        account = query(cur, "SELECT * FROM users WHERE id = %s", (user_id,))
+        if not account:
+            return {}
+        discord_id = account[0]["discord_id"]
+        return {
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "account": account[0],
+            "hosted_rooms": query(
+                cur, "SELECT * FROM rooms WHERE host_user_id = %s ORDER BY created_at", (user_id,)
+            ),
+            "saved_yamls": query(
+                cur, "SELECT * FROM user_yamls WHERE user_id = %s ORDER BY created_at", (user_id,)
+            ),
+            "submissions": query(
+                cur,
+                "SELECT * FROM room_yamls WHERE submitter_user_id = %s ORDER BY uploaded_at",
+                (user_id,),
+            ),
+            "presets": query(
+                cur,
+                "SELECT * FROM apworld_presets WHERE author_user_id = %s ORDER BY created_at",
+                (user_id,),
+            ),
+            "room_templates": query(
+                cur,
+                "SELECT * FROM user_room_templates WHERE user_id = %s ORDER BY created_at",
+                (user_id,),
+            ),
+            "apworld_requests": query(
+                cur,
+                "SELECT * FROM apworld_index_requests WHERE requester_user_id = %s ORDER BY created_at",
+                (user_id,),
+            ),
+            "maintainer_grants": query(
+                cur,
+                "SELECT * FROM apworld_maintainers WHERE discord_user_id = %s ORDER BY granted_at",
+                (discord_id,),
+            ),
+            "analytics_events": query(
+                cur, "SELECT * FROM events WHERE user_id = %s ORDER BY ts", (user_id,)
+            ),
+            "room_activity": query(
+                cur,
+                "SELECT * FROM room_activity WHERE actor_user_id = %s ORDER BY created_at",
+                (user_id,),
+            ),
+            "deletion_security": query(
+                cur,
+                "SELECT window_started_at, attempts "
+                "FROM account_deletion_rate_limits WHERE user_id = %s",
+                (user_id,),
+            ),
+        }
+
+
+def permanently_delete_account(user_id: int, *, receipt_replay: bool = False) -> dict:
+    """Irreversibly erase one account's live database graph in one transaction.
+
+    Normal callers may only purge an expired scheduled deletion. A durable
+    erasure receipt may set receipt_replay=True after a backup restore, where
+    the restored user row can predate the schedule columns entirely.
+    """
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            if receipt_replay:
+                cur.execute("SELECT * FROM users WHERE id = %s FOR UPDATE", (user_id,))
+            else:
+                cur.execute(
+                    """SELECT * FROM users
+                        WHERE id = %s AND deletion_due_at <= NOW()
+                        FOR UPDATE""",
+                    (user_id,),
+                )
+            user_rows = _dictrow(cur)
+            if not user_rows:
+                conn.rollback()
+                return {"user_id": user_id, "already_absent": True, "seeds": []}
+            user = user_rows[0]
+            cur.execute(
+                "SELECT id, seed FROM rooms WHERE host_user_id = %s FOR UPDATE",
+                (user_id,),
+            )
+            owned_rooms = _dictrow(cur)
+            room_ids = [row["id"] for row in owned_rooms]
+            seeds = sorted({row["seed"] for row in owned_rooms if row.get("seed")})
+
+            cur.execute(
+                "SELECT id, player_name FROM room_yamls WHERE submitter_user_id = %s",
+                (user_id,),
+            )
+            submitted = _dictrow(cur)
+            yaml_ids = [row["id"] for row in submitted]
+
+            if user.get("room_creation_blocked"):
+                cur.execute(
+                    """INSERT INTO room_creation_blocks (discord_id_hmac)
+                       VALUES (%s) ON CONFLICT (discord_id_hmac) DO NOTHING""",
+                    (discord_id_hmac(user["discord_id"]),),
+                )
+
+            if room_ids:
+                cur.execute(
+                    "DELETE FROM events WHERE user_id = %s OR room_id = ANY(%s)",
+                    (user_id, room_ids),
+                )
+            else:
+                cur.execute("DELETE FROM events WHERE user_id = %s", (user_id,))
+
+            if yaml_ids:
+                cur.execute(
+                    """DELETE FROM room_activity
+                        WHERE actor_user_id = %s OR subject_yaml_id = ANY(%s)""",
+                    (user_id, yaml_ids),
+                )
+            else:
+                cur.execute("DELETE FROM room_activity WHERE actor_user_id = %s", (user_id,))
+
+            # Legacy activity predates structured actor/subject ids. Delete
+            # only user-action event kinds whose message contains a known name.
+            legacy_names = {
+                user.get("discord_username"),
+                *(row.get("player_name") for row in submitted),
+            }
+            legacy_names = [
+                value.strip() for value in legacy_names
+                if isinstance(value, str) and len(value.strip()) >= 3
+            ]
+            if legacy_names:
+                cur.execute(
+                    """DELETE FROM room_activity
+                        WHERE actor_user_id IS NULL
+                          AND event_type IN (
+                              'yaml_submitted', 'yaml_submitted_invalid',
+                              'yaml_uploaded', 'yaml_preloaded', 'yaml_created',
+                              'yaml_invalid', 'yaml_updated', 'yaml_deleted',
+                              'yaml_claimed', 'yaml_released'
+                          )
+                          AND EXISTS (
+                              SELECT 1 FROM unnest(%s::text[]) AS legacy_name
+                               WHERE position(lower(legacy_name) in lower(message)) > 0
+                          )""",
+                    (legacy_names,),
+                )
+
+            cur.execute(
+                "DELETE FROM apworld_index_requests WHERE requester_user_id = %s",
+                (user_id,),
+            )
+            cur.execute(
+                "DELETE FROM apworld_maintainers WHERE discord_user_id = %s",
+                (user["discord_id"],),
+            )
+            cur.execute(
+                "DELETE FROM apworld_presets WHERE author_user_id = %s",
+                (user_id,),
+            )
+            cur.execute(
+                "DELETE FROM room_yamls WHERE submitter_user_id = %s",
+                (user_id,),
+            )
+            cur.execute("DELETE FROM rooms WHERE host_user_id = %s", (user_id,))
+            cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+        return {
+            "user_id": user_id,
+            "already_absent": False,
+            "rooms_deleted": len(room_ids),
+            "submissions_deleted": len(yaml_ids),
+            "seeds": seeds,
+        }
+    except Exception:
+        conn.rollback()
+        raise
 
 
 def list_users() -> list[dict]:
@@ -2300,6 +2833,11 @@ def set_user_room_creation_blocked(user_id: int, blocked: bool) -> dict:
             (blocked, user_id),
         )
         rows = _dictrow(cur)
+        if rows and not blocked:
+            cur.execute(
+                "DELETE FROM room_creation_blocks WHERE discord_id_hmac = %s",
+                (discord_id_hmac(rows[0]["discord_id"]),),
+            )
     conn.commit()
     return _serialize(rows[0]) if rows else {}
 

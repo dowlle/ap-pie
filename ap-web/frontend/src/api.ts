@@ -1761,3 +1761,62 @@ export async function deleteMyYaml(id: number): Promise<void> {
   const res = await fetch(`${BASE}/my/yamls/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete YAML");
 }
+
+// ── Personal account controls ────────────────────────────────────
+
+export interface AccountCounts {
+  rooms: number;
+  hosted_submissions: number;
+  saved_yamls: number;
+  submissions: number;
+  presets: number;
+  room_templates: number;
+  apworld_requests: number;
+}
+
+export interface AccountSummary {
+  account: AuthUser & {
+    deletion_requested_at: string | null;
+    deletion_due_at: string | null;
+  };
+  counts: AccountCounts;
+  is_owner: boolean;
+  deletion_grace_days: number;
+}
+
+export interface AccountRecoveryStatus {
+  discord_username: string;
+  deletion_requested_at: string;
+  deletion_due_at: string;
+}
+
+export async function getMyAccount(): Promise<AccountSummary> {
+  return fetchJson(`${BASE}/my/account`);
+}
+
+export async function scheduleMyAccountDeletion(
+  confirmation: string,
+): Promise<{ status: string; deletion_due_at: string; recoverable_until: string }> {
+  const res = await fetch(`${BASE}/my/account/deletion`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ confirmation }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to schedule account deletion");
+  }
+  return res.json();
+}
+
+export async function getAccountRecoveryStatus(): Promise<AccountRecoveryStatus> {
+  return fetchJson(`${BASE}/auth/account-recovery`);
+}
+
+export async function recoverMyAccount(): Promise<void> {
+  const res = await fetch(`${BASE}/auth/account-recovery`, { method: "POST" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to recover account");
+  }
+}

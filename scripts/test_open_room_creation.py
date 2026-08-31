@@ -37,13 +37,21 @@ class OpenRoomAuthorization(unittest.TestCase):
         def rooms():
             return jsonify({"ok": True})
 
-        @self.app.route("/api/users/me/room-templates")
+        templates_bp = Blueprint("room_templates", __name__)
+
+        @templates_bp.route("/api/users/me/room-templates")
         def room_templates():
             return jsonify({"ok": True})
 
-        @self.app.route("/api/my/yamls")
+        self.app.register_blueprint(templates_bp)
+
+        personal_bp = Blueprint("user_yamls", __name__)
+
+        @personal_bp.route("/api/my/yamls")
         def saved_yamls():
             return jsonify({"ok": True})
+
+        self.app.register_blueprint(personal_bp)
 
         rooms_bp = Blueprint("rooms", __name__)
 
@@ -86,7 +94,7 @@ class OpenRoomAuthorization(unittest.TestCase):
             self._get("/api/users/me/room-templates", user).status_code,
             200,
         )
-        self.assertEqual(self._get("/api/my/yamls", user).status_code, 403)
+        self.assertEqual(self._get("/api/my/yamls", user).status_code, 200)
         self.assertEqual(self._get("/api/rooms/example/generate", user).status_code, 403)
         self.assertEqual(self._get("/api/roomsmith", user).status_code, 403)
 

@@ -32,6 +32,16 @@ _APPROVED_HOST_ROOM_ENDPOINTS = frozenset({
     "rooms.room_patch_download",
 })
 
+# These blueprints contain only resources owned by the signed-in account.
+# They require an authenticated user, but never legacy beta approval. Keeping
+# this boundary at the blueprint level avoids accidentally opening a future
+# unrelated endpoint merely because its URL happens to start with /api/my.
+_SIGNED_IN_PERSONAL_BLUEPRINTS = frozenset({
+    "account",
+    "room_templates",
+    "user_yamls",
+})
+
 
 def generate_oauth_state() -> str:
     """Generate and store a fresh OAuth state token in the session."""
@@ -109,6 +119,12 @@ def requires_auth(f):
         if not user:
             session.clear()
             return jsonify({"error": "Authentication required"}), 401
+        if user.get("deletion_due_at"):
+            session.clear()
+            return jsonify({
+                "error": "Account deletion is pending",
+                "code": "account_pending_deletion",
+            }), 401
 
         g.user = user
         return f(*args, **kwargs)
@@ -130,7 +146,9 @@ def requires_admin(f):
 
         from db import get_user
         user = get_user(user_id)
-        if not user or not user.get("is_admin"):
+        if not user or user.get("deletion_due_at") or not user.get("is_admin"):
+            if user and user.get("deletion_due_at"):
+                session.clear()
             return jsonify({"error": "Admin access required"}), 403
 
         g.user = user
@@ -204,6 +222,16 @@ def apply_auth_to_app(app):
         if not _auth_configured():
             return None
 
+        # A scheduled deletion invalidates every extant signed cookie, including
+        # requests to otherwise-public APIs. Recovery gets a separate, narrowly
+        # scoped session marker only after a fresh Discord OAuth round-trip.
+        session_user_id = session.get("user_id")
+        if session_user_id:
+            from db import get_user
+            session_user = get_user(session_user_id)
+            if session_user and session_user.get("deletion_due_at"):
+                session.clear()
+
         # Static files and SPA - always public
         if not request.path.startswith("/api/"):
             return None
@@ -230,6 +258,12 @@ def apply_auth_to_app(app):
         if not user:
             session.clear()
             return jsonify({"error": "Authentication required"}), 401
+        if user.get("deletion_due_at"):
+            session.clear()
+            return jsonify({
+                "error": "Account deletion is pending",
+                "code": "account_pending_deletion",
+            }), 401
 
         g.user = user
 
@@ -243,6 +277,9 @@ def apply_auth_to_app(app):
                 return jsonify({"error": "Admin access required"}), 403
             return None
 
+        if request.blueprint in _SIGNED_IN_PERSONAL_BLUEPRINTS:
+            return None
+
         # Open room creation is narrower than global approval. Any signed-in
         # Discord user may use their own room collector and room templates,
         # while unrelated protected/admin/generation surfaces retain their
@@ -252,7 +289,7 @@ def apply_auth_to_app(app):
                 (request.path == "/api/rooms" or request.path.startswith("/api/rooms/"))
                 and request.endpoint not in _APPROVED_HOST_ROOM_ENDPOINTS
             )
-            if room_collector_path or request.path.startswith("/api/users/me/room-templates"):
+            if room_collector_path:
                 return None
 
         # Non-admin protected routes require approval

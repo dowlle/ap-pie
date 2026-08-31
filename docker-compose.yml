@@ -55,6 +55,9 @@ services:
       - AP_ROOM_CREATION_PER_HOUR=${AP_ROOM_CREATION_PER_HOUR:-5}
       - AP_ROOM_CREATION_MAX_ACTIVE=${AP_ROOM_CREATION_MAX_ACTIVE:-10}
       - AP_ROOM_CREATION_MAX_TOTAL=${AP_ROOM_CREATION_MAX_TOTAL:-50}
+      - AP_ACCOUNT_DELETION_GRACE_DAYS=${AP_ACCOUNT_DELETION_GRACE_DAYS:-7}
+      - AP_ACCOUNT_ERASURE_RECEIPT_DAYS=${AP_ACCOUNT_ERASURE_RECEIPT_DAYS:-16}
+      - AP_ACCOUNT_ERASURE_LEDGER=/app/.state/account-erasure-receipts.jsonl
       # OPS-07: deployment label drives the DeploymentBanner. Empty = prod
       # (no banner). Set to "beta" on the beta stack so testers see a
       # persistent visual cue and never confuse the two.
@@ -76,6 +79,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
 volumes:

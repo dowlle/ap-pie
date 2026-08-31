@@ -4,7 +4,7 @@ Archipelago Pie is run by one person as a hobby project. This page explains exac
 
 ## The short version
 
-There is no cookie banner on this site because there is nothing to consent to. No advertising, no third-party analytics scripts, no tracking pixels, no cross-site profiles, no data sold or shared with anyone. The site keeps a small log of what happens on it, stripped of anything that identifies you.
+There is no cookie banner on this site because there is nothing to consent to. No advertising, no third-party analytics scripts, no tracking pixels, no cross-site profiles, no data sold or shared with anyone. The site keeps a small first-party event log; activity may carry your internal account id while you are signed in, and otherwise has no durable visitor identifier.
 
 ## Who is responsible
 
@@ -47,7 +47,15 @@ If you sign in, the site stores your Discord user id and display name so it can 
 
 ### Things you create
 
-Rooms you host and YAML files you submit are stored so the site can do its job. Those are visible to the room's host and, depending on the room's settings, to other players in that room.
+Rooms you host and YAML files you submit are stored so the site can do its job. Those are visible to the room's host and, depending on the room's settings, to other players in that room. Saved YAMLs, private and published presets, and room templates are tied to your account so you can reuse and manage them from the My area.
+
+Room activity records short human-readable messages such as who uploaded, edited, claimed, released or deleted a YAML. New entries also keep structured account and YAML references so an account deletion can remove the right history without relying only on the message text.
+
+Starting the destructive account flow is limited to five attempts per 15 minutes. The current window time and count are stored against your account only to enforce that limit, are included in your account export, and disappear with the account.
+
+### Operational request logs
+
+The application keeps a small rotating server log so failures and attacks can be diagnosed. A request line contains the time, request method, path, HTTP version, response status, response size and duration. Query strings, browser User-Agent strings, referrers and account ids are deliberately excluded; this also keeps Discord OAuth codes out of the log. The application container is capped at three log files of 10 MB each rather than keeping an unlimited history.
 
 ## Why the site is allowed to do this
 
@@ -59,7 +67,15 @@ If your browser sends a Global Privacy Control (`Sec-GPC`) or Do Not Track (`DNT
 
 ## How long it is kept
 
-Raw analytics rows are deleted automatically after 180 days. What survives is a daily table of counts per event type, which contains no account ids, no room ids and nothing relating to an identifiable person. Your account and the rooms and YAMLs you create are kept until you ask for them to be removed.
+Raw analytics rows are deleted automatically after 180 days. What survives is a daily table of counts per event type, which contains no account ids, no room ids and nothing relating to an identifiable person.
+
+Your account and the things you create are kept until you delete them or schedule account deletion. Scheduling deletion locks the account immediately and starts a seven-day recovery period. No account data is removed during those seven days: signing in again with the same Discord identity lets you cancel the request. After the displayed deadline, the account and the personal content controlled by Archipelago Pie are permanently deleted from the live service and can no longer be restored through the site.
+
+Encrypted database backups are kept for 14 days and are not edited in place. A short-lived erasure receipt containing the internal account id, owned seed ids and deletion time is kept outside the database for 16 days, giving the nightly rotation enough overlap to remove the last older dump. If an older backup is restored, that receipt makes the service reapply the deletion before reopening the account. The receipt is removed after that overlap once deletion and file cleanup are confirmed.
+
+If room creation was blocked for abuse prevention when an account is deleted, the site keeps a keyed, pseudonymous form of the Discord id for up to 180 days so deleting and recreating the account does not bypass the block. It is not used for analytics or advertising and cannot be used without the server-side key. It is still personal data, not anonymous data.
+
+Deleting an account cannot recall YAMLs, patches or ZIP files that another person already downloaded, and it does not delete data held independently by Discord, GitHub or another external service.
 
 ## Other services involved
 
@@ -71,7 +87,7 @@ Raw analytics rows are deleted automatically after 180 days. What survives is a 
 
 ## Your rights
 
-You can ask for a copy of the data held about you, ask for it to be corrected, ask for it to be deleted, or object to the analytics processing. Ask Appie (Dowlle) on Discord and it will be handled directly, normally within a few days. If you are unhappy with the outcome you can complain to the Dutch Data Protection Authority, the Autoriteit Persoonsgegevens.
+The Account tab in the My area lets you download a copy of your AP-Pie account data and schedule deletion. You can also ask for a copy, correction or deletion, object to the analytics processing, or raise an exceptional request directly with Appie (Dowlle) on Discord. Requests are normally handled within a few days. If you are unhappy with the outcome you can complain to the Dutch Data Protection Authority, the Autoriteit Persoonsgegevens.
 
 ## Changes
 
