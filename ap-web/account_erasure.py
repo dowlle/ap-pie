@@ -44,7 +44,11 @@ def _read_receipts_unlocked(path: Path) -> list[dict]:
 
 def _with_file_lock(path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
-    lock_handle = (path.parent / f".{path.name}.lock").open("a+", encoding="utf-8")
+    lock_path = path.parent / f".{path.name}.lock"
+    lock_handle = lock_path.open("a+", encoding="utf-8")
+    os.chmod(lock_path, 0o600)
+    if path.exists():
+        os.chmod(path, 0o600)
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     return lock_handle
 
@@ -69,6 +73,7 @@ def ensure_receipt(user_id: int, seeds: list[str]) -> dict:
                 handle.write(json.dumps(receipt, separators=(",", ":")) + "\n")
                 handle.flush()
                 os.fsync(handle.fileno())
+            os.chmod(path, 0o600)
             return receipt
         finally:
             fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
@@ -147,6 +152,7 @@ def compact_resolved_receipts() -> None:
                     handle.write(json.dumps(receipt, separators=(",", ":")) + "\n")
                 handle.flush()
                 os.fsync(handle.fileno())
+            os.chmod(temp, 0o600)
             os.replace(temp, path)
         finally:
             fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
