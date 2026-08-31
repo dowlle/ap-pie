@@ -1023,8 +1023,11 @@ export interface TemplateOption {
   /** FEAT-38: the apworld's display_name for the option, when declared.
    *  Falls back to the snake_case `name` in the UI. */
   display_name?: string;
-  /** FEAT-38: allowed keys for dict-type options (OptionCounter). */
+  /** FEAT-38: allowed keys declared by a dict-type option. */
   valid_keys?: string[];
+  /** Dict editing semantics derived from the resolved Archipelago base
+   *  class. Absent on legacy schemas, which the UI treats as a mapping. */
+  dict_kind?: "mapping" | "counter";
 }
 
 export interface ParsedTemplate {

@@ -1,4 +1,71 @@
 import { expect, test, type Page } from "@playwright/test";
+import { load } from "js-yaml";
+
+const CUSTOM_TRACK = {
+  lev_sha256: "96ad9f74f51a02eafcc207cd02c97052d674c950e0f24b6440a227494a705fe8",
+  vrm_sha256: "2dcaa0fe93359c7ae00fb93842a581210e0dcc2db73f4de43508375834092e83",
+  laps: 7,
+  replaces: "purple_gem_cup",
+  flags: {
+    crates: true,
+    ctr_letters: true,
+    relic_crates: true,
+    ai_nav: true,
+    minimap: false,
+    ghosts: false,
+    spawns: 8,
+    checkpoints: 35,
+  },
+};
+
+async function mockDictKindsSchema(page: Page) {
+  await page.route("**/api/apworlds/dict-kinds-fixture/builder-schema?*", (route) => route.fulfill({
+    json: {
+      game: "Dict Kinds Fixture",
+      apworld_name: "dict-kinds-fixture",
+      display_name: "Dict Kinds Fixture",
+      version: "0.2.0-alpha6",
+      schema: {
+        _format_version: 3,
+        game: "Dict Kinds Fixture",
+        ap_version: "0.6.7",
+        world_version: "0.2.0-alpha6",
+        categories: ["Composite"],
+        options: [
+          {
+            name: "custom_tracks",
+            display_name: "Custom Tracks",
+            type: "dict",
+            dict_kind: "mapping",
+            valid_keys: ["baby-t-park"],
+            category: "Composite",
+            description: "Nested custom track metadata.",
+            default: {},
+          },
+          {
+            name: "trap_weights",
+            display_name: "Trap Weights",
+            type: "dict",
+            dict_kind: "counter",
+            valid_keys: ["slow", "spin"],
+            category: "Composite",
+            description: "Numeric trap weights.",
+            default: { slow: 2, spin: 1 },
+          },
+          {
+            name: "legacy_mapping",
+            display_name: "Legacy Mapping",
+            type: "dict",
+            valid_keys: ["known-key"],
+            category: "Composite",
+            description: "Cached schema without dict_kind.",
+            default: {},
+          },
+        ],
+      },
+    },
+  }));
+}
 
 async function openCtrBuilder(page: Page, expectDesktopLiveEditor = true) {
   await page.goto("/yaml-builder/ctr?version=0.1.5");
@@ -206,6 +273,75 @@ test("structured composite options only commit valid YAML fragments", async ({ p
   const stages = page.getByRole("textbox", { name: "Stages", exact: true });
   await stages.fill("- name: first\n  checks: 4\n- name: final\n  checks: 8");
   await expect(editor).toHaveValue(/stages:\n\s+- name: first\n\s+checks: 4\n\s+- name: final\n\s+checks: 8/);
+});
+
+test("dict controls use explicit mapping and counter semantics", async ({ page }) => {
+  await mockDictKindsSchema(page);
+  await page.goto("/yaml-builder/dict-kinds-fixture?version=0.2.0-alpha6");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+
+  const customTracks = page.locator(".yaml-builder-option").filter({ hasText: "Custom Tracks" });
+  await expect(customTracks.getByRole("textbox", { name: "Custom Tracks" })).toBeVisible();
+  await expect(customTracks.locator('input[type="number"]')).toHaveCount(0);
+
+  const trapWeights = page.locator(".yaml-builder-option").filter({ hasText: "Trap Weights" });
+  await expect(trapWeights.locator('input[type="number"]')).toHaveCount(2);
+  await expect(trapWeights.locator('input[type="number"]').nth(0)).toHaveValue("2");
+  await expect(trapWeights.locator('input[type="number"]').nth(1)).toHaveValue("1");
+
+  const legacyMapping = page.locator(".yaml-builder-option").filter({ hasText: "Legacy Mapping" });
+  await expect(legacyMapping.getByRole("textbox", { name: "Legacy Mapping" })).toBeVisible();
+  await expect(legacyMapping.locator('input[type="number"]')).toHaveCount(0);
+});
+
+test("nested OptionDict YAML survives form editing, YAML loading, and rebuild", async ({ page }) => {
+  await mockDictKindsSchema(page);
+  const url = "/yaml-builder/dict-kinds-fixture?version=0.2.0-alpha6";
+  await page.goto(url);
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+
+  const customTracks = page.getByRole("textbox", { name: "Custom Tracks", exact: true });
+  await customTracks.fill([
+    "baby-t-park:",
+    `  lev_sha256: ${CUSTOM_TRACK.lev_sha256}`,
+    `  vrm_sha256: ${CUSTOM_TRACK.vrm_sha256}`,
+    "  laps: 7",
+    "  replaces: purple_gem_cup",
+    "  flags:",
+    "    crates: true",
+    "    ctr_letters: true",
+    "    relic_crates: true",
+    "    ai_nav: true",
+    "    minimap: false",
+    "    ghosts: false",
+    "    spawns: 8",
+    "    checkpoints: 35",
+  ].join("\n"));
+
+  const editor = page.locator(".yaml-builder-live-editor");
+  const generated = await editor.inputValue();
+  expect(load(generated)).toMatchObject({
+    "Dict Kinds Fixture": {
+      custom_tracks: { "baby-t-park": CUSTOM_TRACK },
+    },
+  });
+
+  // Exercise the opposite direction from a clean form: load the complete
+  // manager-shaped YAML, let it sync into form state, then rebuild it.
+  await page.evaluate(() => sessionStorage.clear());
+  await page.goto(url);
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  await page.locator(".yaml-builder-live-editor").fill(generated);
+  await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Synced");
+  await page.getByRole("button", { name: "Review YAML" }).click();
+  await page.getByRole("button", { name: "Discard edits and rebuild from the form" }).click();
+
+  const rebuilt = await page.locator(".yaml-builder-live-editor").inputValue();
+  expect(load(rebuilt)).toMatchObject({
+    "Dict Kinds Fixture": {
+      custom_tracks: { "baby-t-park": CUSTOM_TRACK },
+    },
+  });
 });
 
 test("route drafts recover after refresh", async ({ page }) => {
