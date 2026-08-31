@@ -44,10 +44,10 @@ PROJECTS: list[dict] = [
     {"key": "ctr", "name": "Crash Team Racing", "sub": "native PC port + randomizer", "color": "#e8a857"},
     {
         "key": "poke", "name": "Pokepelago", "sub": "catch across worlds", "color": "#e05d5d",
-        "soon": {
-            "kicker": "Setup",
-            "title": "Poképelago setup",
-            "blurb": "Catching across worlds: the browser client and how your dex feeds the multiworld. Coming soon.",
+        "action": {
+            "kicker": "Play",
+            "title": "Open Poképelago",
+            "blurb": "Try the guessing game standalone or connect the browser client to your Archipelago slot.",
             "play_url": "https://pokepelago.ap-pie.com/",
             "play_label": "Play Poképelago",
         },
@@ -185,6 +185,26 @@ GUIDES: list[dict[str, str]] = [
         "featured": False,
     },
     {
+        "slug": "pokepelago",
+        "file": "pokepelago.md",
+        "h1": "Poképelago setup guide",
+        "page_title": "Poképelago Setup Guide | Archipelago Pie",
+        "meta_description": (
+            "Set up Poképelago for Archipelago: install the APWorld, create a YAML, "
+            "generate a seed, configure sprites, connect the browser client, and play."
+        ),
+        "card_title": "Poképelago setup",
+        "card_blurb": (
+            "Install the APWorld, configure your regions and locks, generate a seed, "
+            "then connect the browser client and start guessing."
+        ),
+        "published": "2026-08-31",
+        "updated": "2026-08-31",
+        "project": "poke",
+        "kicker": "Setup",
+        "featured": True,
+    },
+    {
         "slug": "crash-team-racing-pc",
         "file": "crash-team-racing-pc.md",
         "h1": "Play Crash Team Racing on PC",
@@ -284,7 +304,8 @@ def guides_index() -> str:
             "color": p["color"],
             "cards": cards,
             "soon": p.get("soon"),
-            "count": len(cards) + (1 if p.get("soon") else 0),
+            "action": p.get("action"),
+            "count": len(cards) + (1 if p.get("soon") else 0) + (1 if p.get("action") else 0),
         })
     canonical_url = _canonical("/guides")
     item_list_id = f"{canonical_url}#guide-list"
@@ -390,6 +411,9 @@ def guide_page(slug: str) -> str:
     article_image = _canonical("/img/guides/og-guides.svg")
     if guide.get("project") == "ctr":
         og_image = _canonical("/img/ctr/og-ctr.jpg")
+        article_image = og_image
+    elif guide.get("project") == "poke":
+        og_image = _canonical("/img/guides/pokepelago-gameplay.png")
         article_image = og_image
     article["image"] = article_image
     page_node = seo.page(
