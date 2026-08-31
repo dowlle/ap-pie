@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -167,6 +168,10 @@ class AccountLifecycle(unittest.TestCase):
 
             receipts = account_erasure.list_receipts()
             self.assertEqual(receipts[0]["user_id"], user_id)
+            self.assertEqual(
+                stat.S_IMODE(Path(config.ACCOUNT_ERASURE_LEDGER).stat().st_mode),
+                0o600,
+            )
 
             # Simulate an older database dump bringing the erased id back. The
             # receipt replay must remove it before normal service resumes.
