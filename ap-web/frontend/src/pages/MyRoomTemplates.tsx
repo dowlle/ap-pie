@@ -18,7 +18,7 @@ import EditTemplateModal from "../components/EditTemplateModal";
  * templates are most usefully captured in-context with the modal already
  * filled in.
  */
-export default function MyRoomTemplates() {
+export default function MyRoomTemplates({ embedded = false }: { embedded?: boolean }) {
   const [templates, setTemplates] = useState<RoomTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -106,7 +106,7 @@ export default function MyRoomTemplates() {
   return (
     <div className="my-templates">
       <header className="my-templates-header">
-        <h1>My room templates</h1>
+        {!embedded && <h1>My room templates</h1>}
         <p className="muted">
           Save and reuse room settings across your rooms. Capture a new template
           from the "Save as template" button in any room creation. The default
@@ -115,9 +115,11 @@ export default function MyRoomTemplates() {
           field — including the room-name pre-fill, deadline, APWorld policy,
           and the rest.
         </p>
-        <p>
-          <Link to="/rooms" className="btn btn-sm">← Back to rooms</Link>
-        </p>
+        {!embedded && (
+          <p>
+            <Link to="/rooms" className="btn btn-sm">← Back to rooms</Link>
+          </p>
+        )}
       </header>
 
       {actionError && <p className="settings-error">{actionError}</p>}

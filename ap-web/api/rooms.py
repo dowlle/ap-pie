@@ -503,11 +503,15 @@ def yaml_upload(room_id: str):
             add_activity(
                 room_id, "yaml_preloaded",
                 f"{uploader} pre-loaded {game} YAML for player {player_name} (claim-mode)",
+                actor_user_id=(user or {}).get("id"),
+                subject_yaml_id=yaml_record["id"],
             )
         else:
             add_activity(
                 room_id, "yaml_uploaded",
                 f"{uploader} uploaded {game} YAML for player {player_name}",
+                actor_user_id=(user or {}).get("id"),
+                subject_yaml_id=yaml_record["id"],
             )
     else:
         update_yaml_validation(yaml_record["id"], "failed", error)
@@ -516,6 +520,8 @@ def yaml_upload(room_id: str):
         add_activity(
             room_id, "yaml_invalid",
             f"{uploader} uploaded invalid {game} YAML for player {player_name}: {error}",
+            actor_user_id=(user or {}).get("id"),
+            subject_yaml_id=yaml_record["id"],
         )
 
     # FEAT-21 auto-pin: first YAML for a game in this room sets the pin.
@@ -599,11 +605,15 @@ def yaml_create(room_id: str):
             add_activity(
                 room_id, "yaml_preloaded",
                 f"{uploader} pre-loaded {game} YAML for player {player_name} (via editor, claim-mode)",
+                actor_user_id=(user or {}).get("id"),
+                subject_yaml_id=yaml_record["id"],
             )
         else:
             add_activity(
                 room_id, "yaml_created",
                 f"{uploader} uploaded {game} YAML for player {player_name} (via editor)",
+                actor_user_id=(user or {}).get("id"),
+                subject_yaml_id=yaml_record["id"],
             )
     else:
         update_yaml_validation(yaml_record["id"], "failed", error)
@@ -612,6 +622,8 @@ def yaml_create(room_id: str):
         add_activity(
             room_id, "yaml_invalid",
             f"{uploader} uploaded invalid {game} YAML for player {player_name} (via editor): {error}",
+            actor_user_id=(user or {}).get("id"),
+            subject_yaml_id=yaml_record["id"],
         )
 
     # FEAT-21 auto-pin (editor path). Honours `requires.game` like the
@@ -648,8 +660,12 @@ def yaml_set_validation(room_id: str, yaml_id: int):
 
     error = None if status in ("validated", "manually_validated") else data.get("error")
     updated = update_yaml_validation(yaml_id, status, error)
-    add_activity(room_id, "yaml_validation_override",
-                 f"YAML {updated['player_name']} set to {status}")
+    add_activity(
+        room_id, "yaml_validation_override",
+        f"YAML {updated['player_name']} set to {status}",
+        actor_user_id=(_current_user() or {}).get("id"),
+        subject_yaml_id=yaml_id,
+    )
     return jsonify(updated)
 
 
@@ -760,7 +776,10 @@ def yaml_update(room_id: str, yaml_id: int):
                 f"{actor} updated {new_game} YAML for player "
                 f"{new_player_name} (now invalid: {error})"
             )
-    add_activity(room_id, "yaml_updated", message)
+    add_activity(
+        room_id, "yaml_updated", message,
+        actor_user_id=(user or {}).get("id"), subject_yaml_id=yaml_id,
+    )
 
     return jsonify({
         "id": updated["id"],
@@ -799,6 +818,7 @@ def yaml_delete(room_id: str, yaml_id: int):
             add_activity(
                 room_id, "yaml_deleted",
                 f"{actor} deleted {target['game']} YAML for player {target['player_name']}",
+                actor_user_id=(user or {}).get("id"),
             )
         return jsonify({"status": "deleted"})
     return jsonify({"error": "YAML not found"}), 404
@@ -949,7 +969,10 @@ def room_close(room_id: str):
         return jsonify({"error": "Room is not open"}), 400
 
     updated = update_room(room_id, status="closed")
-    add_activity(room_id, "room_closed", f"Room closed by {room['host_name']}")
+    add_activity(
+        room_id, "room_closed", f"Room closed by {room['host_name']}",
+        actor_user_id=(_current_user() or {}).get("id"),
+    )
     return jsonify(updated)
 
 
@@ -969,7 +992,10 @@ def room_reopen(room_id: str):
         return jsonify({"error": "Only closed rooms can be reopened"}), 400
 
     updated = update_room(room_id, status="open")
-    add_activity(room_id, "room_reopened", f"Room reopened by {room['host_name']}")
+    add_activity(
+        room_id, "room_reopened", f"Room reopened by {room['host_name']}",
+        actor_user_id=(_current_user() or {}).get("id"),
+    )
     return jsonify(updated)
 
 

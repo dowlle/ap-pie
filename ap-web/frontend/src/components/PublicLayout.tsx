@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useFeature } from "../context/FeaturesContext";
 import DeploymentBanner from "./DeploymentBanner";
 
 /**
@@ -31,9 +32,9 @@ function PublicAuthControl() {
   }
   return (
     <div className="public-shell-auth">
-      <span className="muted public-shell-auth-name" title={`Signed in as ${user?.discord_username}`}>
+      <Link to="/my/account" className="muted public-shell-auth-name" title={`Signed in as ${user?.discord_username}`}>
         {user?.discord_username}
-      </span>
+      </Link>
       <button type="button" className="btn btn-sm" onClick={logout}>
         Logout
       </button>
@@ -43,7 +44,8 @@ function PublicAuthControl() {
 
 export default function PublicLayout() {
   const { user } = useAuth();
-  const brandHref = user?.is_approved || user?.is_admin ? "/rooms" : "/";
+  const openRoomCreation = useFeature("open_room_creation");
+  const brandHref = user && (user.is_approved || user.is_admin || openRoomCreation) ? "/rooms" : "/";
   return (
     <div className="public-shell">
       <DeploymentBanner />

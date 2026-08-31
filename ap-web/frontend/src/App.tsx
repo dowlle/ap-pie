@@ -21,6 +21,7 @@ import YamlBuilderLanding from "./pages/YamlBuilderLanding";
 import NotFound from "./pages/NotFound";
 import StyleGuide from "./pages/StyleGuide";
 import APWorldDetailPreview from "./pages/APWorldDetailPreview";
+import AccountRecovery from "./pages/AccountRecovery";
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
 import { useEffect, useState } from "react";
@@ -120,6 +121,7 @@ function NavBar() {
             backend is session-gated). */}
         <NavLink to="/apworlds">APWorlds</NavLink>
         <NavLink to="/yaml-builder">YAML Builder</NavLink>
+        {user && <NavLink to="/my/yamls">My</NavLink>}
         {showAdminTools && (
           <>
             <NavLink to="/market">Market</NavLink>
@@ -294,6 +296,7 @@ function AppRoutes() {
           so existing links and bookmarks keep working. */}
       <Route path="/my" element={<Navigate to="/my/yamls" replace />} />
       <Route path="/my/:tab" element={<AdminShell><MyArea /></AdminShell>} />
+      <Route path="/account-recovery" element={<AdminShell><AccountRecovery /></AdminShell>} />
       <Route path="/presets" element={<Navigate to="/my/presets" replace />} />
       <Route path="/summary" element={<AdminShell><RequireApproval><Summary /></RequireApproval></AdminShell>} />
       <Route path="*" element={<AdminShell><NotFound /></AdminShell>} />

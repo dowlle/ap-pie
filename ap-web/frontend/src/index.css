@@ -2749,6 +2749,52 @@ a.btn:hover { text-decoration: none; }
 .my-yaml-warnings { margin: 0.3rem 0 0 1rem; padding: 0; font-size: 0.74rem; color: var(--text-muted); }
 .my-yaml-actions { display: flex; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; }
 
+.account-section { margin-top: 1rem; }
+.account-facts { display: grid; gap: 0.45rem; margin: 0; }
+.account-facts > div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.35fr) 1fr;
+  gap: 0.75rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--border);
+}
+.account-facts > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.account-facts dt { color: var(--text-muted); font-size: 0.78rem; }
+.account-facts dd { margin: 0; color: var(--text-h); }
+.account-count-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.55rem;
+}
+.account-count-grid a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  text-decoration: none;
+}
+.account-count-grid a:hover { border-color: var(--accent); }
+.account-count-grid strong { color: var(--text-h); font-size: 1.2rem; }
+.account-count-grid span { color: var(--text-muted); font-size: 0.76rem; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.account-danger-zone { border-color: rgba(229, 124, 120, 0.45); }
+.account-danger-zone > p { margin: 0; }
+.account-delete-confirm { display: flex; flex-direction: column; align-items: flex-start; gap: 0.55rem; }
+.account-delete-confirm label { color: var(--text-h); font-size: 0.82rem; }
+.account-delete-confirm input { width: min(100%, 18rem); }
+.account-recovery { max-width: 42rem; margin: 0 auto; }
+.account-recovery .settings-section p { margin: 0 0 0.35rem; }
+.account-recovery-home { margin-top: 1rem; }
+
+@media (max-width: 560px) {
+  .account-facts > div { grid-template-columns: 1fr; gap: 0.15rem; }
+  .account-count-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 .option-filter-row { display: flex; align-items: center; gap: 0.6rem; }
 .option-filter-count { font-size: 0.75rem; white-space: nowrap; margin-bottom: 0.6rem; }
 .preset-filter {

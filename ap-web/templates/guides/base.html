@@ -523,7 +523,12 @@
         <a href="/guides">Guides</a>
         <a href="/apworlds">APWorlds</a>
         <a href="/yaml-builder">YAML Builder</a>
+        {% if current_nav_user %}
+        <a href="/my/yamls">My</a>
+        <a class="btn-primary" href="/my/account">{{ current_nav_user.discord_username }}</a>
+        {% else %}
         <a class="btn-primary" href="/api/auth/login">Sign in with Discord</a>
+        {% endif %}
       </nav>
     </header>
 

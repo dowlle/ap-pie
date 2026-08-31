@@ -26,7 +26,7 @@ _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 bp = Blueprint("legal", __name__, template_folder=str(_TEMPLATES_DIR))
 
 # Bump when the statement's content changes; drives the byline and sitemap.
-PRIVACY_UPDATED = "2026-08-17"
+PRIVACY_UPDATED = "2026-08-31"
 PRIVACY_PATH = "/privacy"
 
 
@@ -48,7 +48,7 @@ def privacy() -> str:
     canonical_url = _canonical(PRIVACY_PATH)
     description = (
         "What Archipelago Pie records, what it deliberately does not "
-        "record, how long it is kept, and how to ask for it to be removed."
+        "record, how long it is kept, and how account export, recovery and deletion work."
     )
     page_node = seo.page(
         config.PUBLIC_BASE_URL,

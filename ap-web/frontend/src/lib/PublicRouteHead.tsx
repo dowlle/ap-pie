@@ -59,6 +59,17 @@ export default function PublicRouteHead() {
   const { pathname } = useLocation();
 
   useEffect(() => {
+    const isPrivate = pathname === "/my" || pathname.startsWith("/my/")
+      || pathname === "/account-recovery";
+    if (isPrivate) {
+      setMeta('meta[name="robots"]', "name", "robots", "noindex, nofollow");
+      document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.remove();
+      document.head.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.remove();
+      return () => {
+        document.head.querySelector<HTMLMetaElement>('meta[name="robots"]')?.remove();
+      };
+    }
+
     const route = PUBLIC_ROUTE_HEAD[pathname];
     if (!route) return;
 

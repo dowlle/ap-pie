@@ -7,7 +7,7 @@ import re
 import threading
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, send_from_directory
+from flask import Flask, Response, g, jsonify, request, send_from_directory, session
 from flask_cors import CORS
 
 import config
@@ -26,7 +26,7 @@ STATE_DIR = Path(__file__).parent / ".state"
 SPA_STATIC_PATHS = {
     "", "market", "admin", "admin/apworld-requests", "rooms", "tracker",
     "servers", "apworlds", "yaml-builder", "rooms/templates", "my",
-    "presets", "summary", "style-guide",
+    "presets", "summary", "style-guide", "account-recovery",
 }
 SPA_DYNAMIC_PATHS = (
     re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
@@ -273,6 +273,24 @@ def create_app() -> Flask:
             "Permissions-Policy",
             "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
         )
+        normalized = request.path.rstrip("/")
+        if (
+            normalized == "/my"
+            or normalized.startswith("/my/")
+            or normalized == "/account-recovery"
+            or normalized.startswith("/api/my/")
+            or normalized.startswith("/api/users/me/")
+            or normalized.startswith("/api/auth/")
+        ):
+            response.headers["Cache-Control"] = "no-store"
+        if normalized == "/api/auth/callback":
+            response.headers["Referrer-Policy"] = "no-referrer"
+        if (
+            normalized == "/my"
+            or normalized.startswith("/my/")
+            or normalized == "/account-recovery"
+        ):
+            response.headers["X-Robots-Tag"] = "noindex, nofollow"
         return response
 
     app.config["MAX_CONTENT_LENGTH"] = config.MAX_UPLOAD_MB * 1024 * 1024
@@ -322,6 +340,17 @@ def create_app() -> Flask:
         # to gunicorn / Caddy access logs.
         app.logger.warning(f"Database not available: {scrub_db_url(e)}. Market features will not work.")
 
+    @app.teardown_request
+    def _finish_request_db_transaction(_error=None) -> None:
+        if not db_available:
+            return
+        try:
+            from db import rollback_request_transaction
+
+            rollback_request_transaction()
+        except Exception as e:
+            app.logger.error(f"request database cleanup failed: {e}")
+
     # FEAT-04: background sweeper that auto-closes rooms whose submit_deadline
     # has passed. Runs every DEADLINE_SWEEP_INTERVAL_SECONDS in a daemon
     # thread so it dies with the worker. Lazy checks in the request path
@@ -351,6 +380,51 @@ def create_app() -> Flask:
 
         sweeper = threading.Thread(target=_deadline_sweeper, name="deadline-sweeper", daemon=True)
         sweeper.start()
+
+        # Account deletion is recoverable until its explicit deadline. This
+        # worker performs only expired purges and replays the off-database
+        # erasure ledger, so restoring a dump cannot resurrect deleted data.
+        ACCOUNT_DELETION_SWEEP_INTERVAL_SECONDS = 5 * 60
+
+        def _account_deletion_sweeper() -> None:
+            from account_erasure import process_due_accounts
+
+            while True:
+                try:
+                    removed = process_due_accounts(manager=manager, logger=app.logger)
+                    if removed:
+                        _refresh_records()
+                        app.logger.info(
+                            "account deletion: permanently erased %d expired account(s)",
+                            len(removed),
+                        )
+                except Exception as e:
+                    app.logger.error(f"account deletion sweep failed: {e}")
+                time.sleep(ACCOUNT_DELETION_SWEEP_INTERVAL_SECONDS)
+
+        threading.Thread(
+            target=_account_deletion_sweeper,
+            name="account-deletion-sweeper",
+            daemon=True,
+        ).start()
+
+    @app.context_processor
+    def _server_rendered_nav_user() -> dict:
+        """Make Guides/CTR/Privacy chrome reflect the active Discord session."""
+        if not db_available:
+            return {"current_nav_user": None}
+        user_id = session.get("user_id")
+        if not isinstance(user_id, int):
+            return {"current_nav_user": None}
+        try:
+            from db import get_user
+
+            user = get_user(user_id)
+            if not user or user.get("deletion_due_at"):
+                return {"current_nav_user": None}
+            return {"current_nav_user": user}
+        except Exception:
+            return {"current_nav_user": None}
 
     # FEAT-31: analytics recorder + retention sweeper.
     #
@@ -442,6 +516,7 @@ def create_app() -> Flask:
     from api.events import bp as events_bp
     from api.presets import bp as presets_bp
     from api.user_yamls import bp as user_yamls_bp
+    from api.account import bp as account_bp
     from api.legal import bp as legal_bp
 
     app.register_blueprint(games_bp)
@@ -476,6 +551,7 @@ def create_app() -> Flask:
     app.register_blueprint(presets_bp)
     # FEAT-43: the player's own YAML library and submission history.
     app.register_blueprint(user_yamls_bp)
+    app.register_blueprint(account_bp)
     app.register_blueprint(legal_bp)
 
     # Apply auth middleware - protects all /api/* except /api/market, /api/auth, /api/trackers

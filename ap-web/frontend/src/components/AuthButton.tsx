@@ -1,4 +1,5 @@
 import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function AuthButton() {
   const { user, isAuthenticated, authEnabled, loading, login, logout } = useAuth();
@@ -15,7 +16,7 @@ export default function AuthButton() {
 
   return (
     <div className="auth-user">
-      <span className="auth-username">{user?.discord_username}</span>
+      <Link className="auth-username" to="/my/account">{user?.discord_username}</Link>
       <button onClick={logout} className="btn btn-sm">
         Logout
       </button>
