@@ -6,7 +6,7 @@ There is no ROM, emulator, or separate game installation. The playable client ru
 
 ![The Poképelago browser client showing caught Pokémon and hidden silhouettes across three regions.](/img/guides/pokepelago-gameplay.png)
 
-This guide reflects Poképelago APWorld **0.6.4**. That APWorld requires **Archipelago 0.6.7 or newer**. In an organized multiworld, always use the exact APWorld version chosen by the host.
+This guide reflects the current published release, Poképelago APWorld **0.6.4**. That APWorld requires **Archipelago 0.6.7 or newer**. In an organized multiworld, always use the exact APWorld version chosen by the host.
 
 New to rooms, slots, YAMLs, and checks? Read [Getting started with Archipelago](/guides/getting-started) first.
 
@@ -28,8 +28,8 @@ If you are only joining a room that somebody else generated, you need the browse
 If you are creating or generating the seed, you need:
 
 - [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases/latest), version 0.6.7 or newer;
-- `pokepelago.apworld` from the [latest Poképelago release](https://github.com/dowlle/PokepelagoClient/releases/latest);
-- `Pokepelago.yaml` from the same release, or a YAML created for that same APWorld version;
+- [`pokepelago.apworld` for version 0.6.4](https://github.com/dowlle/PokepelagoClient/releases/download/v0.6.4/pokepelago.apworld);
+- [`Pokepelago.yaml` from the same release](https://github.com/dowlle/PokepelagoClient/releases/download/v0.6.4/Pokepelago.yaml), or a YAML created for that same APWorld version;
 - one YAML for every world included in the generation.
 
 Custom APWorlds can run code on the generator's computer. Download Poképelago from its maintained release page and do not accept an unexplained replacement file from a third party.
@@ -46,7 +46,7 @@ Once installed, Poképelago behaves like the worlds included with Archipelago fo
 
 Start from the `Pokepelago.yaml` shipped beside the APWorld. Change `name` to the exact slot name you want to use, then review the options under `Pokepelago`.
 
-You can also [find Poképelago in the APWorld catalog](/apworlds) or open its [YAML Builder](/yaml-builder/pokepelago) when the version selected by your host is available there. [Setting up your YAML](/guides/setting-up-your-yaml) explains names, option weights, validation, and handoff in more detail.
+Poképelago 0.6.4 is available in the [APWorld catalog](/apworlds) and its [YAML Builder](/yaml-builder/pokepelago). [Setting up your YAML](/guides/setting-up-your-yaml) explains names, option weights, validation, and handoff in more detail.
 
 ### Pick regions deliberately
 
@@ -57,7 +57,7 @@ You can also [find Poképelago in the APWorld catalog](/apworlds) or open its [Y
 - With `group_hisui_galar` enabled, random Gen 8 selection includes Galar and Hisui together.
 - Version 0.6.4 will not randomly select Hisui as the only region. Hisui has only seven Pokémon, which is too small for some heavy lock combinations.
 
-You can still request manual Hisui-only play. If generation reports a `FillError`, pair Hisui with Galar or disable some lock systems rather than repeatedly generating the same constrained configuration.
+You can still request manual Hisui-only play with a light lock setup. Version 0.6.4 rejects a manual solo-Hisui configuration when two or more lock systems are enabled, before generation reaches a cryptic `FillError`. Pair Hisui with Galar or another region, or disable some locks.
 
 ### Choose how much gating you want
 
@@ -120,7 +120,7 @@ Use `route_locks_enabled` in the YAML. Archipelago ignores unknown option keys, 
 
 ### Generation fails with Hisui
 
-If Hisui is the only manually selected region and many lock systems are enabled, add Galar or another region, or disable some locks. Version 0.6.4 prevents this combination from appearing through one-region random selection, but it does not override a manual choice.
+Version 0.6.4 does not randomly choose Hisui as the only region. If you manually select only Hisui and enable two or more lock systems, generation stops with an option error explaining the constraint. Add Galar or another region, or disable some locks.
 
 ### The client shows no Pokémon images
 
@@ -136,4 +136,4 @@ Confirm the selected guessing language, then open the Pokémon's detail view. Th
 
 ## Where to get help
 
-Use the [Poképelago release page](https://github.com/dowlle/PokepelagoClient/releases/latest) for the maintained APWorld and template. Report reproducible client or APWorld problems in the [Poképelago issue tracker](https://github.com/dowlle/PokepelagoClient/issues). For general multiworld questions, join the [Archipelago Discord](https://discord.gg/8Z65BR2).
+Use the [Poképelago 0.6.4 release page](https://github.com/dowlle/PokepelagoClient/releases/tag/v0.6.4) for the maintained APWorld, template, and release notes. Report reproducible client or APWorld problems in the [Poképelago issue tracker](https://github.com/dowlle/PokepelagoClient/issues). For general multiworld questions, join the [Archipelago Discord](https://discord.gg/8Z65BR2).
