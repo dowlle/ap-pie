@@ -1,6 +1,6 @@
 Archipelago Pie is run by one person as a hobby project. This page explains exactly what the site records, what it deliberately does not record, and what you can ask for. It is written to be checkable: everything described here corresponds to code you can read in the public repository at [github.com/dowlle/ap-pie](https://github.com/dowlle/ap-pie).
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-31
 
 ## The short version
 
@@ -36,6 +36,10 @@ That is the whole record. In particular it does **not** contain:
 Because the visit value cannot survive a page load, the log has no concept of a session. It can say that fifty people arrived at a page from a guide; it cannot follow one person from one page to the next. That limitation is deliberate, and it is what the site gives up in exchange for having no cookie banner.
 
 If you are signed in, page views on the guides and the Crash Team Racing pages are recorded with your account id, the same as the rest of your activity on the site. Signed out, they are not linked to anything.
+
+### Poképelago
+
+The Poképelago game client at pokepelago.ap-pie.com sends a few technical events to this same log: whether connecting to an Archipelago server worked (as a short reason code such as `unreachable`, never the server's address or your slot name), which generation of the game data was in use, whether sprite images were being blocked by a browser extension, and that a game goal was completed. These events are always recorded anonymously: even if you are signed in to ap-pie.com, your account id is never attached to them. Nothing about what you guess or how you play is recorded.
 
 ### Signing in with Discord
 

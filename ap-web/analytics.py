@@ -8,9 +8,11 @@ What this records
 Outcomes at the Flask layer that Cloudflare Web Analytics structurally cannot
 see: why a YAML submission was rejected, whether an OAuth round-trip finished,
 which games people open the YAML builder for, whether a guide reader goes on
-to download anything. Server-rendered pages record themselves; the five
+to download anything. Server-rendered pages record themselves; the
 client-postable kinds cover what only the browser knows (which SPA view is on
-screen, and how far someone got inside the builder modal).
+screen, how far someone got inside the builder modal, and the operational
+signals of the Pokepelago SPA at pokepelago.ap-pie.com, which is static and
+posts its events here).
 
 What it never records
 ---------------------
@@ -105,6 +107,32 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
         "props": {"name": _STR, "version": _STR, "surface": _STR},
     },
 
+    # ── Pokepelago client (pokepelago.ap-pie.com) ──
+    # Posted cross-site by the static Pokepelago SPA, which has no backend of
+    # its own. These are operational signals only - no guesses, no gameplay
+    # telemetry, no slot names, no server hostnames; props are canonical short
+    # codes. `anonymous: True` strips the account id even when an apie_session
+    # cookie rides along on the same-site request: playing Pokepelago is not
+    # an action on this site, so it is never linked to an account.
+    "pokepelago_connect_result": {
+        "client": True,
+        "anonymous": True,
+        "props": {"outcome": _STR, "reason": _STR, "apworld_version": _STR},
+    },
+    "pokepelago_goal_reached": {
+        "client": True,
+        "anonymous": True,
+        "props": {"goal_count": _INT},
+    },
+    # Emitted when the sprite diagnostic banner is shown (many sprite loads
+    # failing while online, usually a content blocker). `layer` names the
+    # sprite source layer that failed.
+    "pokepelago_sprite_block_detected": {
+        "client": True,
+        "anonymous": True,
+        "props": {"failures": _INT, "layer": _STR},
+    },
+
     # ── Auth funnel ──
     "oauth_login_started": {"client": False, "props": {"next_path": _STR}},
     "oauth_callback_succeeded": {"client": False, "props": {"first_login": _BOOL}},
@@ -175,6 +203,12 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
 }
 
 CLIENT_KINDS = frozenset(k for k, spec in KIND_SPECS.items() if spec["client"])
+
+# Kinds that must never carry an account id, even when the poster is signed
+# in to ap-pie.com (the Pokepelago kinds - see their section above).
+ANONYMOUS_KINDS = frozenset(
+    k for k, spec in KIND_SPECS.items() if spec.get("anonymous")
+)
 
 # Props are metadata, never content. 120 characters is longer than any game
 # name, version string, or reason code we emit, and short enough that a
