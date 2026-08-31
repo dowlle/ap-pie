@@ -1,26 +1,25 @@
 import { useAuth } from "../context/AuthContext";
+import { useFeature } from "../context/FeaturesContext";
 
 /**
- * Anonymous / pending-approval landing for the root route.
+ * Public landing for the root route.
  *
  * - Unauthenticated visitors: see what Archipelago Pie is + a Discord login CTA.
- * - Logged-in but unapproved (closed-beta queue): same page, but the CTA
- *   becomes a "waiting for approval" notice that auto-flips when AuthContext
- *   polls and detects approval (then the parent route redirects to /rooms).
+ * - Logged-in but unapproved while open access is disabled: same page, but
+ *   the CTA becomes a waiting-for-approval notice.
  *
- * Approved hosts and admins never see this - App.tsx routes them onward
- * before they hit Landing.
+ * Signed-in room hosts and admins never see this - App.tsx routes them onward.
  *
  * FEAT-39 design pass (ruled 2026-07-22): project-showcase layout from the
  * approved homepage mockup. Hero with the connected-islands motif, "Host a
  * room" as the primary CTA (the room collector remains the core utility),
  * Tools band above Projects. Digipelago stays off the page until it has
- * something releasable to show. The "ping Appie on Discord" host-access
- * flow copy is unchanged.
+ * something releasable to show.
  */
 export default function Landing() {
   const { user, login } = useAuth();
-  const pending = !!user && !user.is_approved && !user.is_admin;
+  const openRoomCreation = useFeature("open_room_creation");
+  const pending = !!user && !user.is_approved && !user.is_admin && !openRoomCreation;
 
   return (
     <div className="lp">
@@ -54,7 +53,12 @@ export default function Landing() {
             </span>
           </div>
         )}
-        {!user && (
+        {!user && openRoomCreation && (
+          <p className="lp-hint">
+            Room creation is open. Sign in with Discord to create and manage your own collection rooms.
+          </p>
+        )}
+        {!user && !openRoomCreation && (
           <p className="lp-hint">
             Archipelago Pie is in <strong>closed beta</strong>. Sign in with Discord to browse
             and submit to existing rooms straight away. To host your own, ping

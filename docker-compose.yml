@@ -51,6 +51,10 @@ services:
       - SESSION_COOKIE_DOMAIN=${SESSION_COOKIE_DOMAIN:-}
       - SESSION_COOKIE_NAME=${SESSION_COOKIE_NAME:-}
       - FEATURE_GENERATION=${FEATURE_GENERATION:-true}
+      - FEATURE_OPEN_ROOM_CREATION=${FEATURE_OPEN_ROOM_CREATION:-false}
+      - AP_ROOM_CREATION_PER_HOUR=${AP_ROOM_CREATION_PER_HOUR:-5}
+      - AP_ROOM_CREATION_MAX_ACTIVE=${AP_ROOM_CREATION_MAX_ACTIVE:-10}
+      - AP_ROOM_CREATION_MAX_TOTAL=${AP_ROOM_CREATION_MAX_TOTAL:-50}
       # OPS-07: deployment label drives the DeploymentBanner. Empty = prod
       # (no banner). Set to "beta" on the beta stack so testers see a
       # persistent visual cue and never confuse the two.

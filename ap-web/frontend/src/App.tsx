@@ -60,8 +60,9 @@ function NavBar() {
     }
   };
 
-  // MVP scope: Archipelago Pie ships as a YAML collector. Hosts (approved
-  // users) see Rooms; everything else (Market, Tracker, Games, Servers,
+  // MVP scope: Archipelago Pie ships as a YAML collector. When open room
+  // creation is enabled, every signed-in user sees Rooms; everything else
+  // (Market, Tracker, Games, Servers,
   // Summary, Refresh) is admin-only chrome. When auth is disabled (dev) or
   // still resolving, treat it as full-access so the nav doesn't flash empty
   // during boot. When the generation feature flag is OFF, the AP-server-
@@ -73,13 +74,15 @@ function NavBar() {
   // "user" hides the admin nav exactly as it would for a real host or user.
   const isAdmin = !!user?.is_admin;
   const isApproved = !!(user?.is_approved || user?.is_admin);
+  const openRoomCreation = useFeature("open_room_creation");
+  const canUseRooms = !!user && (isApproved || openRoomCreation);
   const authBypassed = !authEnabled || loading;
-  const showRoomsLink = authBypassed || isApproved;
+  const showRoomsLink = authBypassed || canUseRooms;
   const showAdminTools = authBypassed || isAdmin;
 
   return (
     <nav className="navbar">
-      <Link to={isApproved ? "/rooms" : "/"} className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
+      <Link to={canUseRooms ? "/rooms" : "/"} className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
       <button
         type="button"
         className="nav-hamburger"
@@ -172,18 +175,17 @@ function ViewAsToggle({
 /**
  * The `/` landing decides per audience:
  *   - dev mode (auth disabled) or admin: legacy GameList (admin tooling)
- *   - approved non-admin host: redirect to /rooms (their working surface)
- *   - anonymous or pending-approval visitor: Landing (marketing + Discord CTA
- *     + closed-beta queue notice). Landing handles both states internally,
- *     and the auth poll in AuthContext flips them onto /rooms automatically
- *     once an admin approves them.
+ *   - signed-in room host: redirect to /rooms when approved or open access is on
+ *   - anonymous visitor, or pending user while open access is off: Landing
+ *     (marketing + Discord CTA and, when applicable, the legacy beta notice)
  */
 function HomeView() {
   const { user, authEnabled, loading } = useAuth();
+  const openRoomCreation = useFeature("open_room_creation");
   if (loading) return null;
   if (!authEnabled) return <GameList />;
   if (user?.is_admin) return <GameList />;
-  if (user?.is_approved) return <Navigate to="/rooms" replace />;
+  if (user?.is_approved || (user && openRoomCreation)) return <Navigate to="/rooms" replace />;
   return <Landing />;
 }
 
@@ -193,6 +195,16 @@ function RequireApproval({ children }: { children: React.ReactNode }) {
   if (!authEnabled) return <>{children}</>;
   if (!user) return <Navigate to="/" replace />;
   if (!user.is_approved && !user.is_admin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+function RequireRoomAccess({ children }: { children: React.ReactNode }) {
+  const { user, authEnabled, loading } = useAuth();
+  const openRoomCreation = useFeature("open_room_creation");
+  if (loading) return null;
+  if (!authEnabled) return <>{children}</>;
+  if (!user) return <Navigate to="/" replace />;
+  if (!user.is_approved && !user.is_admin && !openRoomCreation) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -266,8 +278,8 @@ function AppRoutes() {
       <Route path="/admin" element={<AdminShell><RequireAdmin><Admin /></RequireAdmin></AdminShell>} />
       <Route path="/admin/apworld-requests" element={<AdminShell><RequireAdmin><AdminApworldRequests /></RequireAdmin></AdminShell>} />
       <Route path="/" element={<AdminShell><HomeView /></AdminShell>} />
-      <Route path="/rooms" element={<AdminShell><RequireApproval><Rooms /></RequireApproval></AdminShell>} />
-      <Route path="/rooms/:id" element={<AdminShell><RequireApproval><RoomDetail /></RequireApproval></AdminShell>} />
+      <Route path="/rooms" element={<AdminShell><RequireRoomAccess><Rooms /></RequireRoomAccess></AdminShell>} />
+      <Route path="/rooms/:id" element={<AdminShell><RequireRoomAccess><RoomDetail /></RequireRoomAccess></AdminShell>} />
       <Route path="/tracker" element={<AdminShell><RequireApproval><TrackerPage /></RequireApproval></AdminShell>} />
       <Route path="/games/:seed" element={<AdminShell><RequireApproval><GameDetail /></RequireApproval></AdminShell>} />
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />

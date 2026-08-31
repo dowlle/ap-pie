@@ -237,6 +237,14 @@ def init_db(db_url: str) -> None:
               AND (SELECT COUNT(*) FROM users WHERE discord_username = r.host_name) = 1
         """)
         cur.execute("CREATE INDEX IF NOT EXISTS idx_rooms_host_user ON rooms(host_user_id)")
+        # Open-room access keeps a separate abuse switch from the legacy
+        # approval bit. Approval still controls the older host-only surfaces;
+        # this flag lets an admin stop new room creation without erasing a
+        # user's rooms or preventing them from downloading existing work.
+        cur.execute(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+            "room_creation_blocked BOOLEAN DEFAULT FALSE"
+        )
         # Migration: optional auto-close deadline. NULL = no scheduled close,
         # manual "Close Room" still works regardless. The sweeper closes any
         # open room whose deadline has passed; writes to open rooms also do
@@ -805,6 +813,30 @@ def list_rooms(status: str | None = None, host_user_id: int | None = None) -> li
         cur.execute(sql, args)
         rows = _dictrow(cur)
     return [_serialize(r) for r in rows]
+
+
+def get_room_creation_counts(host_user_id: int) -> dict[str, int]:
+    """Return the three quota counters used by open room creation.
+
+    `active` means a collector that is still accepting submissions. Closing a
+    room frees active quota; deleting it also frees retained-room quota. The
+    query is one indexed pass over that user's rooms.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT
+                   COUNT(*) AS total,
+                   COUNT(*) FILTER (WHERE status = 'open') AS active,
+                   COUNT(*) FILTER (
+                       WHERE created_at >= NOW() - INTERVAL '1 hour'
+                   ) AS recent
+               FROM rooms
+               WHERE host_user_id = %s""",
+            (host_user_id,),
+        )
+        row = _dictrow(cur)[0]
+    return {key: int(row.get(key) or 0) for key in ("total", "active", "recent")}
 
 
 def update_room(room_id: str, **kwargs) -> dict:
@@ -2254,6 +2286,18 @@ def set_user_approved(user_id: int, approved: bool) -> dict:
         cur.execute(
             "UPDATE users SET is_approved = %s WHERE id = %s RETURNING *",
             (approved, user_id),
+        )
+        rows = _dictrow(cur)
+    conn.commit()
+    return _serialize(rows[0]) if rows else {}
+
+
+def set_user_room_creation_blocked(user_id: int, blocked: bool) -> dict:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET room_creation_blocked = %s WHERE id = %s RETURNING *",
+            (blocked, user_id),
         )
         rows = _dictrow(cur)
     conn.commit()

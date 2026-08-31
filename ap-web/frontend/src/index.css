@@ -2393,10 +2393,9 @@ a.btn:hover { text-decoration: none; }
   font-size: 0.8rem;
 }
 
-/* ── Landing page (anonymous / pending-approval root) ───────────
-   The `/` route shows this for anyone not yet approved into the
-   closed beta - first-time visitors and the pending queue.
-   Approved hosts and admins are redirected before they hit it. */
+/* ── Landing page (public root) ─────────────────────────────────
+   The `/` route shows this to first-time visitors, plus the legacy
+   approval queue when open room creation is disabled. */
 .landing {
   display: flex;
   flex-direction: column;

@@ -221,6 +221,7 @@ export default function YamlBuilderPage() {
           user ? (
             <RoomAttach
               yamlContent={yamlContent}
+              canCreateRoom={!user.room_creation_blocked}
               onCreateRoom={(yaml) => {
                 setPendingYaml(yaml);
                 setCreateRoomOpen(true);
@@ -252,9 +253,11 @@ export default function YamlBuilderPage() {
 
 function RoomAttach({
   yamlContent,
+  canCreateRoom,
   onCreateRoom,
 }: {
   yamlContent: string;
+  canCreateRoom: boolean;
   onCreateRoom: (yamlContent: string) => void;
 }) {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -305,11 +308,17 @@ function RoomAttach({
             <button type="button" className="btn btn-sm btn-primary" onClick={handleAdd} disabled={!selected || busy}>
               {busy ? "Adding…" : "Add to room"}
             </button>
-            <button type="button" className="btn btn-sm" onClick={() => onCreateRoom(yamlContent)} disabled={busy}>
-              Create room with this YAML
-            </button>
+            {canCreateRoom && (
+              <button type="button" className="btn btn-sm" onClick={() => onCreateRoom(yamlContent)} disabled={busy}>
+                Create room with this YAML
+              </button>
+            )}
           </div>
-          <p className="settings-hint">Or download the file and use it anywhere.</p>
+          <p className="settings-hint">
+            {canCreateRoom
+              ? "Or download the file and use it anywhere."
+              : "New room creation is disabled for this account. You can still add the YAML to an existing room or download it."}
+          </p>
           {error && <p className="settings-error" style={{ margin: 0 }}>{error}</p>}
         </>
       )}

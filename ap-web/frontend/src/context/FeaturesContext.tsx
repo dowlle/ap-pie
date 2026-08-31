@@ -8,23 +8,24 @@ import { getFeatures, type Features } from "../api";
  * via GET /api/features.
  *
  * If the fetch fails (network error / endpoint missing on a legacy deploy),
- * defaults to ALL ON - backward compat for older deployments that
- * haven't picked up this commit yet.
+ * defaults conservatively for access-changing features when the endpoint is
+ * unavailable. Generation retains its historical compatibility default.
  */
 
-const ALL_ON: Features = {
+const SAFE_DEFAULTS: Features = {
   generation: true,
+  open_room_creation: false,
 };
 
-const FeaturesContext = createContext<Features>(ALL_ON);
+const FeaturesContext = createContext<Features>(SAFE_DEFAULTS);
 
 export function FeaturesProvider({ children }: { children: ReactNode }) {
-  const [features, setFeatures] = useState<Features>(ALL_ON);
+  const [features, setFeatures] = useState<Features>(SAFE_DEFAULTS);
   useEffect(() => {
     getFeatures()
       .then(setFeatures)
       .catch(() => {
-        // Endpoint missing or network error - leave defaults (all on).
+        // Endpoint missing or network error - leave conservative defaults.
       });
   }, []);
   return <FeaturesContext.Provider value={features}>{children}</FeaturesContext.Provider>;
