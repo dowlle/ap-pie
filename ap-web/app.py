@@ -41,6 +41,12 @@ PUBLIC_ROUTE_SEO = {
         "heading": "Your games, connected by one randomizer.",
         "intro": "Archipelago Pie helps beginners learn Archipelago, build player YAMLs, browse community game integrations, and organize multiworld sessions.",
         "schema_type": "WebPage",
+        "links": [
+            {
+                "href": "https://pokepelago.ap-pie.com/",
+                "label": "Play Poképelago, a browser guessing game for Archipelago",
+            },
+        ],
     },
     "apworlds": {
         "title": "APWorld Downloads & YAML Builder | Archipelago Pie",
@@ -152,10 +158,16 @@ def _public_spa_response(path: str) -> Response:
         f'{json.dumps(structured, separators=(",", ":")).replace("<", "\\u003c")}'
         f'</script>'
     )
+    fallback_links = "".join(
+        f'<li><a href="{html.escape(link["href"], quote=True)}">{html.escape(link["label"])}</a></li>'
+        for link in route.get("links", [])
+    )
+    fallback_list = f"<ul>{fallback_links}</ul>" if fallback_links else ""
     fallback = (
         '<main class="route-html-fallback">'
         f'<h1>{html.escape(route["heading"])}</h1>'
         f'<p>{html.escape(route["intro"])}</p>'
+        f'{fallback_list}'
         '</main>'
     )
     document = document.replace("<!-- ROUTE_META -->", route_meta)
