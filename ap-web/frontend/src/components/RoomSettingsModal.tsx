@@ -33,11 +33,13 @@ type TabKey = "general" | "apworlds" | "tracker";
 
 export default function RoomSettingsModal({
   room,
+  initialTab = "general",
   onClose,
   onUpdate,
   onRequestApworldUpdate,
 }: {
   room: Room;
+  initialTab?: TabKey;
   onClose: () => void;
   onUpdate: () => void;
   // FEAT-30 Phase 0a: bubble per-row "Request update" clicks up to
@@ -52,7 +54,7 @@ export default function RoomSettingsModal({
   }) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [tab, setTab] = useState<TabKey>("general");
+  const [tab, setTab] = useState<TabKey>(initialTab);
 
   // Same fix as YamlModal: parent re-renders pass new inline onClose
   // refs which would otherwise tear down + re-open the dialog (focus
@@ -535,10 +537,7 @@ function TrackerUrlSection({ room, onUpdate }: { room: Room; onUpdate: () => voi
     <section className="settings-section">
       <SectionHeader
         title="Live tracker URL"
-        hint={
-          "Paste an archipelago.gg tracker URL. The room page surfaces a live dashboard with per-player checks, completion %, and connection status. " +
-          "Per-slot items / locations / hints are also exposed via the per-card detail modal (FEAT-14)."
-        }
+        hint="Add this room's archipelago.gg tracker URL to show player progress, completed checks and connection status on the room page."
       />
       <div className="settings-controls">
         <input
@@ -593,11 +592,7 @@ function TrackerSlotOverrideSection({ room, onUpdate }: { room: Room; onUpdate: 
     <section className="settings-section">
       <SectionHeader
         title="Tracker slot override"
-        hint={
-          "Optional. Names the in-game slot the WebSocket tracker connection will authenticate as. " +
-          "Leave blank to auto-pick (your first uploaded slot in this room, or the first slot scraped from the tracker page if none of your YAMLs match). " +
-          "Saving here will bounce the active connection so the new slot takes effect immediately - that posts one Join line into the AP server's chat."
-        }
+        hint="Usually AP-Pie identifies the tracker player automatically. If it chooses the wrong one, enter the exact player name it should use."
       />
       <div className="settings-controls">
         <input
@@ -622,7 +617,7 @@ function TrackerSlotOverrideSection({ room, onUpdate }: { room: Room; onUpdate: 
         <SavedHint visible={savedHint} />
       </div>
       {!room.tracker_url && (
-        <p className="settings-aux-note">Set a Live tracker URL above first.</p>
+        <p className="settings-aux-note">Add a Live tracker URL above before setting a player override.</p>
       )}
       {err && <p className="settings-error">{err}</p>}
     </section>
@@ -824,7 +819,7 @@ function APWorldsSection({
                     </span>
                   )}
                   {e.selected_version && e.download_url && (
-                    <a className="btn btn-sm" href={e.download_url} download>Preview</a>
+                    <a className="btn btn-sm" href={e.download_url} download>Download</a>
                   )}
                   {e.home && (
                     <a className="btn btn-sm" href={e.home} target="_blank" rel="noreferrer">Source</a>

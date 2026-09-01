@@ -1,3 +1,5 @@
+import SearchToolbar from "../components/SearchToolbar";
+
 const colors = [
   ["Canvas", "#121016", "Page background"],
   ["Surface", "#1b181f", "Cards and panels"],
@@ -99,7 +101,12 @@ export default function StyleGuide() {
 
           <article className="surface">
             <span className="sg-label">Fields</span>
-            <label className="field"><span>Search integrations</span><input placeholder="Game or APWorld name…" /></label>
+            <SearchToolbar
+              value=""
+              onChange={() => {}}
+              placeholder="Search player, game, or file…"
+              label="Search submitted YAMLs"
+            />
             <div className="field-pair">
               <label className="field"><span>Type</span><select defaultValue="all"><option value="all">All integrations</option><option>Built in</option><option>Community</option></select></label>
               <label className="field"><span>Version</span><input defaultValue="1.2.3" /></label>

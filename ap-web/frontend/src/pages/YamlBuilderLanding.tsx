@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { getAPWorlds, type APWorldInfo } from "../api";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { getAPWorlds, getRoomBuilderSchemas, type APWorldInfo } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 interface LocalDraft {
@@ -39,12 +39,34 @@ function latestBuildVersion(world: APWorldInfo): string | null {
 
 export default function YamlBuilderLanding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const requestedContext = searchParams.get("context");
+  const requestedRoomId = searchParams.get("room") ?? "";
+  const roomContext = requestedContext === "host-room" || requestedContext === "public-room"
+    ? requestedContext
+    : null;
   const [query, setQuery] = useState("");
   const [worlds, setWorlds] = useState<APWorldInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [drafts, setDrafts] = useState<LocalDraft[]>([]);
+  const [roomBuildableNames, setRoomBuildableNames] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!roomContext || !requestedRoomId) return;
+    let cancelled = false;
+    getRoomBuilderSchemas(requestedRoomId)
+      .then((entries) => {
+        if (!cancelled) {
+          setRoomBuildableNames(new Set(
+            entries.filter((entry) => entry.schema !== null && !entry.pending).map((entry) => entry.apworld_name),
+          ));
+        }
+      })
+      .catch(() => { if (!cancelled) setRoomBuildableNames(new Set()); });
+    return () => { cancelled = true; };
+  }, [requestedRoomId, roomContext]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDrafts(readStandaloneDrafts(user?.id)), 0);
@@ -70,17 +92,26 @@ export default function YamlBuilderLanding() {
   }, [query]);
 
   const visible = useMemo(() => {
-    const buildable = worlds.filter((world) => !world.disabled && latestBuildVersion(world));
+    const buildable = worlds.filter((world) =>
+      !world.disabled &&
+      latestBuildVersion(world) &&
+      (!roomContext || !requestedRoomId || roomBuildableNames?.has(world.name)),
+    );
     if (query.trim()) return buildable.slice(0, 18);
     return [...buildable]
       .sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? ""))
       .slice(0, 12);
-  }, [query, worlds]);
+  }, [query, requestedRoomId, roomBuildableNames, roomContext, worlds]);
 
   const openWorld = (world: APWorldInfo) => {
     const version = latestBuildVersion(world);
     if (!version) return;
-    navigate(`/yaml-builder/${encodeURIComponent(world.name)}?version=${encodeURIComponent(version)}`);
+    const params = new URLSearchParams({ version });
+    if (roomContext && requestedRoomId) {
+      params.set("context", roomContext);
+      params.set("room", requestedRoomId);
+    }
+    navigate(`/yaml-builder/${encodeURIComponent(world.name)}?${params.toString()}`);
   };
 
   const deleteDraft = (draft: LocalDraft) => {
@@ -95,8 +126,9 @@ export default function YamlBuilderLanding() {
       <header className="yaml-builder-landing-hero">
         <h1>Build a player YAML</h1>
         <p>
-          Pick your game, choose its options, and watch the YAML update as you work.
-          Download the finished file or send it to an Archipelago Pie room.
+          {roomContext
+            ? "Pick one of this room's APWorlds, choose its options, and add the finished YAML to the room."
+            : "Pick your game, choose its options, and watch the YAML update as you work. Download the finished file or send it to an Archipelago Pie room."}
         </p>
         <label className="yaml-builder-game-search">
           <span>Find your game</span>

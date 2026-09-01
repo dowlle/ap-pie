@@ -73,9 +73,9 @@ export default function Admin() {
                     className={`btn btn-sm ${u.room_creation_blocked ? "btn-primary" : "btn-danger"}`}
                     onClick={() => toggleRoomCreationBlock(u)}
                     disabled={u.is_admin}
-                    title={u.is_admin ? "Admins cannot be blocked" : ""}
+                    title={u.is_admin ? "Admins cannot be blocked" : "Prevents new room creation. Existing rooms and access remain unchanged."}
                   >
-                    {u.room_creation_blocked ? "Allow rooms" : "Block rooms"}
+                    {u.room_creation_blocked ? "Allow room creation" : "Block new room creation"}
                   </button>
                   <Link
                     to={`/rooms?as_user=${u.id}`}

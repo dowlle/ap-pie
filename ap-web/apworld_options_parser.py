@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 3
+BUILDER_SCHEMA_FORMAT_VERSION = 4
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -534,6 +534,28 @@ def _parse_options_source(
 
         elif opt_type == "dict":
             default_dict = dict(default) if isinstance(default, dict) else {}
+            known_keys = (
+                sorted(valid_keys) if isinstance(valid_keys, (set, frozenset))
+                else list(valid_keys) if isinstance(valid_keys, (list, tuple))
+                else []
+            )
+            # OptionDict describes the wire shape, not the most useful form
+            # control. Weight maps are flat numeric mappings even when their
+            # default is empty, while mappings such as CTR custom_tracks can
+            # contain arbitrarily nested records. Publish that capability
+            # explicitly so the browser never has to infer it from live data.
+            numeric_mapping = (
+                ap_base == "OptionDict"
+                and bool(known_keys)
+                and (
+                    (bool(default_dict) and all(
+                        isinstance(value, (int, float)) and not isinstance(value, bool)
+                        for value in default_dict.values()
+                    ))
+                    or opt_name.endswith("_weights")
+                    or cls_name.lower().endswith("weights")
+                )
+            )
             entry = {
                 **base,
                 "type": "dict",
@@ -544,10 +566,10 @@ def _parse_options_source(
                 "dict_kind": "counter" if ap_base == "OptionCounter" else "mapping",
                 "default": default_dict,
             }
-            if isinstance(valid_keys, (set, frozenset)):
-                entry["valid_keys"] = sorted(valid_keys)
-            elif isinstance(valid_keys, (list, tuple)):
-                entry["valid_keys"] = list(valid_keys)
+            if known_keys:
+                entry["valid_keys"] = known_keys
+            if numeric_mapping:
+                entry["mapping_value_kind"] = "number"
             options.append(entry)
 
         elif opt_type == "text":

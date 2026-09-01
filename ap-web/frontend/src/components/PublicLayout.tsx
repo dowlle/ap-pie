@@ -1,61 +1,14 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useFeature } from "../context/FeaturesContext";
+import { Outlet } from "react-router-dom";
 import DeploymentBanner from "./DeploymentBanner";
+import SiteHeader from "./SiteHeader";
 
-/**
- * Wrapper for the no-auth public surfaces (/r/<id> and /play/<seed>).
- *
- * The full admin nav (Market, Tracker, Games, Servers, APWorlds, Summary,
- * Refresh) is overkill for a player who clicked a Discord link from a
- * friend. They came for ONE room or ONE seed; the page should make that
- * obvious. Login/logout, however, belongs everywhere - a Discord-gated
- * room (room.require_discord_login) needs the visitor to authenticate,
- * and a logged-in submitter wants to see who they are and be able to
- * sign out. So this shell carries a slim auth control on the right of
- * the header alongside the brand mark.
- */
-function PublicAuthControl() {
-  const { user, isAuthenticated, authEnabled, loading, login, logout } = useAuth();
-  const location = useLocation();
-  if (loading || !authEnabled) return null;
-  if (!isAuthenticated) {
-    return (
-      <button
-        type="button"
-        className="btn btn-sm btn-primary"
-        onClick={() => login(location.pathname)}
-      >
-        Login with Discord
-      </button>
-    );
-  }
-  return (
-    <div className="public-shell-auth">
-      <Link to="/my/account" className="muted public-shell-auth-name" title={`Signed in as ${user?.discord_username}`}>
-        {user?.discord_username}
-      </Link>
-      <button type="button" className="btn btn-sm" onClick={logout}>
-        Logout
-      </button>
-    </div>
-  );
-}
-
+/** Public content shell. It shares the canonical role-aware site header with
+ * application pages while retaining the wider, room-oriented main canvas. */
 export default function PublicLayout() {
-  const { user } = useAuth();
-  const openRoomCreation = useFeature("open_room_creation");
-  const brandHref = user && (user.is_approved || user.is_admin || openRoomCreation) ? "/rooms" : "/";
   return (
     <div className="public-shell">
       <DeploymentBanner />
-      <header className="public-shell-header">
-        <Link to={brandHref} className="public-shell-brand" title={brandHref === "/rooms" ? "Your Archipelago Pie rooms" : "Archipelago Pie home"}>
-          <span className="public-shell-brand-mark" aria-hidden="true" />
-          <span>Archipelago Pie</span>
-        </Link>
-        <PublicAuthControl />
-      </header>
+      <SiteHeader />
       <main className="public-shell-main">
         <Outlet />
       </main>

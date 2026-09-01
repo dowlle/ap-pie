@@ -154,6 +154,17 @@ def public_room_read(room_id: str):
         yamls = get_yamls(room_id)
 
     payload = _sanitize_room(room)
+    payload["viewer_capabilities"] = {
+        "can_manage_room": bool(
+            user is not None
+            and (
+                room.get("host_user_id") == user.get("id")
+                or bool(user.get("is_admin"))
+            )
+        ),
+        "can_submit": room.get("status") == "open",
+        "can_coordinate": user is not None,
+    }
     payload["yamls"] = [_sanitize_yaml(y, expose_submitter=user is not None) for y in yamls]
     payload["player_count"] = len(yamls)
     # FEAT-31: the public room page is where a shared link lands, so this is

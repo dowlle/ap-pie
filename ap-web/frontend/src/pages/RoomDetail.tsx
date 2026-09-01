@@ -32,6 +32,7 @@ import { useFileDropZone } from "../lib/useFileDropZone";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../lib/usePageTitle";
+import SearchToolbar from "../components/SearchToolbar";
 import {
   formatDeadlineAbsolute,
   formatDeadlineCountdown,
@@ -143,7 +144,7 @@ function EditableRoomHeader({
       <div className="detail-header">
         <div className="page-header">
           <h1>{room.name}</h1>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <div className="page-header-actions">
             <span className={`badge ${room.status === "playing" ? "badge-done" : "badge-save"}`}>
               {room.status}
             </span>
@@ -271,6 +272,7 @@ export default function RoomDetail() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<"general" | "apworlds" | "tracker">("general");
   // FEAT-30 Phase 0a: room-host APWorld update request modal. Opened
   // from RoomSettingsModal's "APWorlds for this room" section; the
   // section passes up the row-specific prefill so the modal lands
@@ -579,7 +581,7 @@ export default function RoomDetail() {
         room={room}
         onUpdate={refresh}
         onDelete={handleDelete}
-        onOpenSettings={() => setShowSettings(true)}
+        onOpenSettings={() => { setSettingsTab("general"); setShowSettings(true); }}
         shareControl={<SharePublicRoomButton roomId={room.id} />}
       />
 
@@ -605,6 +607,7 @@ export default function RoomDetail() {
       {showSettings && (
         <RoomSettingsModal
           room={room}
+          initialTab={settingsTab}
           onClose={() => setShowSettings(false)}
           onUpdate={refresh}
           onRequestApworldUpdate={(payload) => {
@@ -621,6 +624,22 @@ export default function RoomDetail() {
       )}
 
       {error && <p className="error">{error}</p>}
+
+      {room.status === "closed" && !room.tracker_url && (
+        <section className="notice notice-info room-tracker-empty" aria-labelledby="enable-tracker-title">
+          <div>
+            <strong id="enable-tracker-title">Track this room's progress</strong>
+            <span>Add its archipelago.gg tracker URL to show player checks, completion and connection status.</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => { setSettingsTab("tracker"); setShowSettings(true); }}
+          >
+            Enable tracker
+          </button>
+        </section>
+      )}
 
       {/* Live progress moved above Submitted YAMLs (2026-05-04) to match
           the public room layout, which Stef preferred — the live grid is
@@ -678,21 +697,14 @@ export default function RoomDetail() {
             </span>
           )}
           {yamls.length > 0 && (
-            <div className="yaml-toolbar">
-              <input
-                type="search"
-                value={yamlSearch}
-                onChange={(e) => setYamlSearch(e.target.value)}
-                placeholder="Search player, game, or file…"
-                aria-label="Search YAMLs"
-                className="yaml-search"
-              />
-              {yamlSearch.trim() && (
-                <span className="muted yaml-count">
-                  {displayedYamls.length} of {yamls.length}
-                </span>
-              )}
-            </div>
+            <SearchToolbar
+              value={yamlSearch}
+              onChange={setYamlSearch}
+              placeholder="Search player, game, or file…"
+              label="Search submitted YAMLs"
+              resultCount={displayedYamls.length}
+              totalCount={yamls.length}
+            />
           )}
         </div>
       {yamls.length === 0 ? (
@@ -750,7 +762,10 @@ export default function RoomDetail() {
                   </td>
                   <td className="muted">{cleanYamlFilename(y.filename, y.player_name, y.game)}</td>
                   <td><ValidationBadge status={y.validation_status} error={y.validation_error} /></td>
-                  <td className="muted">{y.submitter_username ?? "-"}</td>
+                  <td className="muted">
+                    {y.submitter_username ?? "-"}
+                    {user && y.submitter_user_id === user.id && <span className="uploader-you">You</span>}
+                  </td>
                   <td className="yaml-row-actions-cell">
                     <div className="yaml-row-actions">
                       <button
@@ -833,10 +848,7 @@ export default function RoomDetail() {
             </label>
             <button
               className="btn btn-primary"
-              onClick={() => navigate(
-                `/yaml-builder/${encodeURIComponent(builderGames[0].apworld_name)}` +
-                `?context=host-room&room=${encodeURIComponent(room.id)}`,
-              )}
+              onClick={() => navigate(`/yaml-builder?context=host-room&room=${encodeURIComponent(room.id)}`)}
               disabled={builderGames.length === 0}
               title={builderGames.length === 0
                 ? "No buildable games yet - pin APWorlds in Settings, or wait a moment for schemas to derive"
