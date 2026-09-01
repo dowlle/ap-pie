@@ -148,15 +148,17 @@ def events_summary():
     need a psql session."""
     if _db_url is None:
         return jsonify({"error": "Database not available"}), 503
-    from db import events_counts_by_kind, events_funnel
+    from db import events_counts_by_kind, events_funnel, events_scorecard
 
     days = request.args.get("days", default=7, type=int)
     summary = events_funnel(days)
     summary["by_kind"] = events_counts_by_kind(days)
+    summary["scorecard"] = events_scorecard(days)
     summary["recorder"] = {
         "enabled": config.ANALYTICS_ENABLED,
         "visit_id": config.ANALYTICS_VISIT_ID,
         "retention_days": config.ANALYTICS_RETENTION_DAYS,
+        "attempt_retention_days": config.ANALYTICS_ATTEMPT_RETENTION_DAYS,
         "queue_depth": analytics.queue_depth(),
         "dropped": analytics.dropped_count(),
     }

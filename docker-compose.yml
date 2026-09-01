@@ -69,6 +69,8 @@ services:
       # values under 32 chars are refused at request time.
       - AP_INDEX_REFRESH_TOKEN=${AP_INDEX_REFRESH_TOKEN:-}
       - AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE=${AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE:-600}
+      - AP_ANALYTICS_ATTEMPT_RETENTION_DAYS=${AP_ANALYTICS_ATTEMPT_RETENTION_DAYS:-30}
+      - AP_ANALYTICS_SYNTHETIC_TOKEN=${AP_ANALYTICS_SYNTHETIC_TOKEN:-}
       - AP_TRUST_CLOUDFLARE_HEADERS=${AP_TRUST_CLOUDFLARE_HEADERS:-false}
       # FEAT-17 V0: real-time WebSocket tracker. Off by default; flip to
       # 1 in the server .env to enable. AP_TRACKER_WS_MAX caps connection

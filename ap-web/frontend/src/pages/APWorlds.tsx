@@ -14,6 +14,7 @@ import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
 import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
+import { trackBuilderCta } from "../lib/analytics";
 
 /**
  * /apworlds - browser for the Archipelago-index (now sourced from
@@ -660,8 +661,15 @@ export default function APWorlds() {
   }), [available]);
 
   const handleBuild = (name: string, version: string) => {
+    trackBuilderCta("activation", "apworlds");
     navigate(`/yaml-builder/${encodeURIComponent(name)}?version=${encodeURIComponent(version)}`);
   };
+
+  useEffect(() => {
+    if (!loading && available.some((world) => world.downloadable_versions.length > 0)) {
+      trackBuilderCta("impression", "apworlds");
+    }
+  }, [available, loading]);
 
   const installedMap = useMemo(
     () => new Map(installed.map((w) => [w.name, w])),

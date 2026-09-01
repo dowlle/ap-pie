@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { getAPWorlds, getRoomBuilderSchemas, type APWorldInfo } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { trackBuilderCta } from "../lib/analytics";
 
 interface LocalDraft {
   key: string;
@@ -52,6 +53,10 @@ export default function YamlBuilderLanding() {
   const [error, setError] = useState("");
   const [drafts, setDrafts] = useState<LocalDraft[]>([]);
   const [roomBuildableNames, setRoomBuildableNames] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    trackBuilderCta("impression", "yaml_builder_landing");
+  }, []);
 
   useEffect(() => {
     if (!roomContext || !requestedRoomId) return;
@@ -106,6 +111,7 @@ export default function YamlBuilderLanding() {
   const openWorld = (world: APWorldInfo) => {
     const version = latestBuildVersion(world);
     if (!version) return;
+    trackBuilderCta("activation", "yaml_builder_landing");
     const params = new URLSearchParams({ version });
     if (roomContext && requestedRoomId) {
       params.set("context", roomContext);

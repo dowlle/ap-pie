@@ -164,6 +164,15 @@ ANALYTICS_VISIT_ID = _bool_env("AP_ANALYTICS_VISIT_ID", True)
 # Storage limitation (GDPR Art. 5(1)(e)). Raw rows are deleted past this
 # horizon; the events_daily rollup keeps counts-only history after that.
 ANALYTICS_RETENTION_DAYS = int(os.environ.get("AP_ANALYTICS_RETENTION_DAYS", "180"))
+# Attempt ids answer only short-horizon Builder funnel questions. Their raw
+# events expire sooner than the general product log and never enter a
+# person-level long-term store.
+ANALYTICS_ATTEMPT_RETENTION_DAYS = int(
+    os.environ.get("AP_ANALYTICS_ATTEMPT_RETENTION_DAYS", "30")
+)
+# Optional secret used by browser/HTTP verification to mark its own events.
+# The value is compared transiently and is never stored with an event.
+ANALYTICS_SYNTHETIC_TOKEN = os.environ.get("AP_ANALYTICS_SYNTHETIC_TOKEN", "")
 # Per-IP ceiling for the public POST /api/events endpoint, per hour. The IP
 # is used transiently for this bucket and is never persisted with an event.
 ANALYTICS_EVENTS_PER_IP_PER_HOUR = int(

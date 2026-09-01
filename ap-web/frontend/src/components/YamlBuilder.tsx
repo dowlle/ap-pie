@@ -9,7 +9,14 @@ import { CORE_CATEGORY, CORE_OPTIONS } from "../lib/coreOptions";
 import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import MarkdownText from "./MarkdownText";
-import { trackBuilderAbandoned, trackBuilderEmitted, trackBuilderOpened } from "../lib/analytics";
+import {
+  createBuilderAttemptId,
+  trackBuilderAbandoned,
+  trackBuilderEmitted,
+  trackBuilderFailed,
+  trackBuilderOpened,
+  trackBuilderStage,
+} from "../lib/analytics";
 import type { ParseResponse } from "../workers/yamlParseWorker";
 
 /**
@@ -148,6 +155,8 @@ export default function YamlBuilder({
   // readable from the unload path without re-rendering.
   const emittedRef = useRef(false);
   const abandonReportedRef = useRef(false);
+  const attemptIdRef = useRef("");
+  const reachedStagesRef = useRef(new Set<string>());
   const stepRef = useRef(step);
   useEffect(() => { stepRef.current = step; }, [step]);
   const openedKeyRef = useRef("");
@@ -156,7 +165,9 @@ export default function YamlBuilder({
     if (!entry) return;
     emittedRef.current = true;
     if (draftKey) sessionStorage.removeItem(draftKey);
-    trackBuilderEmitted(entry.game, entry.version, action, roomId, manualYaml !== null);
+    trackBuilderEmitted(
+      entry.game, entry.version, action, attemptIdRef.current, roomId, manualYaml !== null,
+    );
   };
 
   const requestClose = () => {
@@ -220,8 +231,16 @@ export default function YamlBuilder({
     openedKeyRef.current = key;
     emittedRef.current = false;
     abandonReportedRef.current = false;
-    trackBuilderOpened(entry.game, entry.version, surface, roomId);
+    attemptIdRef.current = createBuilderAttemptId();
+    reachedStagesRef.current = new Set(["opened"]);
+    trackBuilderOpened(entry.game, entry.version, surface, attemptIdRef.current, roomId);
   }, [active, entry, surface, roomId]);
+
+  useEffect(() => {
+    if (!active || !entry || !attemptIdRef.current || reachedStagesRef.current.has(step)) return;
+    reachedStagesRef.current.add(step);
+    trackBuilderStage(entry.game, entry.version, step, attemptIdRef.current, roomId);
+  }, [active, entry, roomId, step]);
 
   // Abandonment: fired when the builder closes (or the tab goes away) after
   // being opened for a game without producing a YAML.
@@ -237,7 +256,13 @@ export default function YamlBuilder({
       // Only latch when the send actually succeeded. Latching first meant a
       // dropped send permanently suppressed the report for this builder.
       abandonReportedRef.current = trackBuilderAbandoned(
-        entry.game, entry.version, stepRef.current, roomId, unloading,
+        entry.game,
+        entry.version,
+        stepRef.current,
+        unloading ? "page_closed" : "navigated_away",
+        attemptIdRef.current,
+        roomId,
+        unloading,
       );
     };
     const onPageHide = () => abandonIfUnfinished(true);
@@ -699,6 +724,9 @@ export default function YamlBuilder({
       setSuccess(msg);
       noteEmitted("submit");
     } catch (e) {
+      trackBuilderFailed(
+        entry.game, entry.version, "review", "submit_failed", attemptIdRef.current, roomId,
+      );
       setError(e instanceof Error ? e.message : "Submission failed");
     } finally {
       setBusy(false);
@@ -1081,10 +1109,18 @@ export default function YamlBuilder({
               type="button"
               className="btn btn-sm"
               onClick={() => {
-                downloadYaml(
-                  yamlContent, submittedIdentity.playerName, submittedIdentity.game,
-                );
-                noteEmitted("download");
+                try {
+                  downloadYaml(
+                    yamlContent, submittedIdentity.playerName, submittedIdentity.game,
+                  );
+                  noteEmitted("download");
+                } catch {
+                  trackBuilderFailed(
+                    entry.game, entry.version, "review", "download_failed",
+                    attemptIdRef.current, roomId,
+                  );
+                  setError("The YAML could not be downloaded. Try copying it from the review instead.");
+                }
               }}
               disabled={busy || !canFinalize}
             >

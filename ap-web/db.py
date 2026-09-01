@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 import psycopg2
 import psycopg2.extras
+import config
 
 
 # SEC-22: scrub the password out of any string that may contain a Postgres
@@ -713,9 +714,21 @@ def init_db(db_url: str) -> None:
                 ua_class   TEXT,
                 request_id TEXT,
                 visit_id   TEXT,
+                traffic_class TEXT,
                 props      JSONB NOT NULL DEFAULT '{}'::jsonb
             )
         """)
+        cur.execute("ALTER TABLE events ADD COLUMN IF NOT EXISTS traffic_class TEXT")
+        cur.execute(
+            """UPDATE events e
+                  SET traffic_class = CASE
+                      WHEN e.ua_class = 'synthetic' THEN 'synthetic'
+                      WHEN e.ua_class = 'bot' THEN 'bot'
+                      WHEN EXISTS (SELECT 1 FROM users u WHERE u.id = e.user_id AND u.is_admin IS TRUE)
+                          THEN 'internal'
+                      ELSE 'external' END
+                WHERE e.traffic_class IS NULL"""
+        )
         for stmt in (
             "CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts DESC)",
             "CREATE INDEX IF NOT EXISTS idx_events_kind_ts ON events(kind, ts DESC)",
@@ -739,6 +752,15 @@ def init_db(db_url: str) -> None:
                 kind        TEXT NOT NULL,
                 event_count INTEGER NOT NULL,
                 PRIMARY KEY (day, kind)
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS events_daily_segments (
+                day           DATE NOT NULL,
+                kind          TEXT NOT NULL,
+                traffic_class TEXT NOT NULL,
+                event_count   INTEGER NOT NULL,
+                PRIMARY KEY (day, kind, traffic_class)
             )
         """)
         # SEC-43: a DB-shared ceiling covers every server-side recorder and
@@ -1961,11 +1983,18 @@ def insert_event(
                )
                INSERT INTO events
                    (kind, user_id, room_id, path, cf_country, ua_class,
-                    request_id, visit_id, props)
-               SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s FROM bucket""",
+                    request_id, visit_id, traffic_class, props)
+               SELECT %s, %s, %s, %s, %s, %s, %s, %s,
+                      CASE WHEN %s = 'synthetic' THEN 'synthetic'
+                           WHEN %s = 'bot' THEN 'bot'
+                           WHEN EXISTS (SELECT 1 FROM users u WHERE u.id = %s AND u.is_admin IS TRUE)
+                               THEN 'internal'
+                           ELSE 'external' END,
+                      %s FROM bucket""",
             (max(1, config.ANALYTICS_EVENTS_GLOBAL_PER_MINUTE),
              kind, user_id, room_id, path, cf_country, ua_class,
-             request_id, visit_id, psycopg2.extras.Json(props or {})),
+             request_id, visit_id, ua_class, ua_class, user_id,
+             psycopg2.extras.Json(props or {})),
         )
         cur.execute(
             "DELETE FROM analytics_write_buckets WHERE minute < NOW() - INTERVAL '2 hours'"
@@ -2017,20 +2046,149 @@ def query_events(
 
 
 def events_counts_by_kind(days: int = 7) -> list[dict]:
-    """Event volume per kind over a trailing window."""
+    """Event volume per kind, split into mutually exclusive traffic classes."""
     days = max(1, min(int(days), 3650))
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
-            """SELECT kind, COUNT(*) AS event_count
-                 FROM events
+            """SELECT e.kind, COUNT(*) AS event_count,
+                      COUNT(*) FILTER (WHERE e.traffic_class = 'bot') AS bot_count,
+                      COUNT(*) FILTER (WHERE e.traffic_class = 'synthetic') AS synthetic_count,
+                      COUNT(*) FILTER (WHERE e.traffic_class = 'internal') AS internal_count,
+                      COUNT(*) FILTER (WHERE e.traffic_class = 'external') AS external_count
+                 FROM events e
                 WHERE ts > NOW() - make_interval(days => %s)
-             GROUP BY kind
+             GROUP BY e.kind
              ORDER BY event_count DESC""",
             (days,),
         )
         rows = _dictrow(cur)
-    return [{"kind": r["kind"], "count": int(r["event_count"])} for r in rows]
+    return [
+        {
+            "kind": r["kind"],
+            "count": int(r["event_count"]),
+            "external_count": int(r["external_count"]),
+            "internal_count": int(r["internal_count"]),
+            "bot_count": int(r["bot_count"]),
+            "synthetic_count": int(r["synthetic_count"]),
+        }
+        for r in rows
+    ]
+
+
+def events_scorecard(days: int = 7) -> dict:
+    """Privacy-minimised product scorecard with bots and tests separated."""
+    days = max(1, min(int(days), 90))
+    conn = _get_conn()
+    out: dict = {"window_days": days}
+    human = "e.traffic_class = 'external'"
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""SELECT e.kind, COUNT(*) AS events,
+                       COUNT(DISTINCT e.visit_id) FILTER (WHERE e.visit_id IS NOT NULL) AS visits
+                  FROM events e
+                 WHERE {human} AND e.ts > NOW() - make_interval(days => %s)
+                   AND e.kind IN ('page_view', 'builder_opened', 'builder_stage_reached',
+                                  'builder_yaml_emitted', 'builder_abandoned', 'builder_failed',
+                                  'builder_cta', 'oauth_login_started', 'oauth_callback_succeeded',
+                                  'pokepelago_connect_result', 'pokepelago_goal_reached')
+              GROUP BY e.kind ORDER BY events DESC""",
+            (days,),
+        )
+        out["human_external"] = [
+            {"kind": r["kind"], "events": int(r["events"]), "observable_visits": int(r["visits"])}
+            for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            f"""SELECT e.ua_class AS device,
+                       COUNT(*) FILTER (WHERE e.kind = 'page_view') AS page_views,
+                       COUNT(*) FILTER (WHERE e.kind = 'builder_opened') AS builder_opens,
+                       COUNT(*) FILTER (WHERE e.kind = 'builder_yaml_emitted') AS builder_outputs,
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_opened') AS attempts,
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_yaml_emitted') AS outputs
+                  FROM events e
+                 WHERE {human} AND e.ts > NOW() - make_interval(days => %s)
+              GROUP BY e.ua_class ORDER BY page_views DESC""",
+            (days,),
+        )
+        out["devices"] = [
+            {k: (int(v or 0) if k != "device" else v) for k, v in r.items()}
+            for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            f"""SELECT COALESCE(e.props->>'entry_channel',
+                                e.props->>'from_view', e.props->>'from_path', 'unknown') AS source,
+                       COUNT(*) AS page_views,
+                       COUNT(DISTINCT e.visit_id) FILTER (WHERE e.visit_id IS NOT NULL) AS visits
+                  FROM events e
+                 WHERE {human} AND e.kind = 'page_view'
+                   AND e.props->>'view' = 'yaml_builder'
+                   AND e.ts > NOW() - make_interval(days => %s)
+              GROUP BY source ORDER BY page_views DESC""",
+            (days,),
+        )
+        out["builder_sources"] = [
+            {"source": r["source"], "page_views": int(r["page_views"]), "observable_visits": int(r["visits"])}
+            for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            f"""SELECT e.props->>'stage' AS stage,
+                       COALESCE(e.props->>'reason', 'legacy_unspecified') AS reason,
+                       COUNT(*) AS events,
+                       COUNT(DISTINCT e.props->>'attempt_id') AS attempts
+                  FROM events e
+                 WHERE {human} AND e.kind IN ('builder_abandoned', 'builder_failed')
+                   AND e.ts > NOW() - make_interval(days => %s)
+              GROUP BY stage, reason ORDER BY events DESC""",
+            (days,),
+        )
+        out["builder_exits"] = [
+            {**r, "events": int(r["events"]), "attempts": int(r["attempts"])} for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            f"""SELECT e.props->>'game' AS game,
+                       COUNT(*) FILTER (WHERE e.kind = 'builder_opened') AS builder_opens,
+                       COUNT(*) FILTER (WHERE e.kind = 'builder_yaml_emitted') AS builder_outputs,
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_opened') AS attempts,
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_yaml_emitted') AS outputs
+                  FROM events e
+                 WHERE {human} AND e.kind IN ('builder_opened', 'builder_yaml_emitted')
+                   AND e.props->>'game' IS NOT NULL
+                   AND e.ts > NOW() - make_interval(days => %s)
+              GROUP BY game ORDER BY attempts DESC, outputs DESC LIMIT 20""",
+            (days,),
+        )
+        out["builder_games"] = [
+            {"game": r["game"], "builder_opens": int(r["builder_opens"]),
+             "builder_outputs": int(r["builder_outputs"]),
+             "attempts": int(r["attempts"]), "outputs": int(r["outputs"])}
+            for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            f"""SELECT (e.ts AT TIME ZONE 'Europe/Amsterdam')::date AS day,
+                       COUNT(*) FILTER (WHERE e.kind = 'page_view') AS page_views,
+                       COUNT(*) FILTER (WHERE e.kind = 'builder_opened') AS builder_opens,
+                       COUNT(*) FILTER (WHERE e.kind = 'builder_yaml_emitted') AS builder_outputs,
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_opened') AS attempts,
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_yaml_emitted') AS outputs
+                  FROM events e
+                 WHERE {human} AND e.ts > NOW() - make_interval(days => %s)
+              GROUP BY day ORDER BY day""",
+            (days,),
+        )
+        out["daily"] = [
+            {"day": r["day"].isoformat(), "page_views": int(r["page_views"]),
+             "builder_opens": int(r["builder_opens"]),
+             "builder_outputs": int(r["builder_outputs"]),
+             "attempts": int(r["attempts"]), "outputs": int(r["outputs"])}
+            for r in _dictrow(cur)
+        ]
+    return out
 
 
 def events_funnel(days: int = 7) -> dict:
@@ -2185,12 +2343,34 @@ def rollup_and_prune_events(retention_days: int = 180) -> dict:
         )
         days_rolled = cur.rowcount
         cur.execute(
+            """INSERT INTO events_daily_segments (day, kind, traffic_class, event_count)
+               SELECT (e.ts AT TIME ZONE 'UTC')::date,
+                      e.kind,
+                      e.traffic_class,
+                      COUNT(*)
+                 FROM events e
+             GROUP BY 1, 2, 3
+               ON CONFLICT (day, kind, traffic_class)
+               DO UPDATE SET event_count = GREATEST(
+                   events_daily_segments.event_count, EXCLUDED.event_count)"""
+        )
+        cur.execute(
+            """DELETE FROM events
+                WHERE kind IN ('builder_opened', 'builder_stage_reached',
+                               'builder_yaml_emitted', 'builder_abandoned', 'builder_failed')
+                  AND props ? 'attempt_id'
+                  AND ts < NOW() - make_interval(days => %s)""",
+            (max(1, int(config.ANALYTICS_ATTEMPT_RETENTION_DAYS)),),
+        )
+        attempt_pruned = cur.rowcount
+        cur.execute(
             "DELETE FROM events WHERE ts < NOW() - make_interval(days => %s)",
             (retention_days,),
         )
         pruned = cur.rowcount
     conn.commit()
-    return {"days_rolled": max(days_rolled, 0), "rows_pruned": max(pruned, 0)}
+    return {"days_rolled": max(days_rolled, 0), "rows_pruned": max(pruned, 0),
+            "attempt_rows_pruned": max(attempt_pruned, 0)}
 
 
 def delete_events_for_user(user_id: int) -> int:

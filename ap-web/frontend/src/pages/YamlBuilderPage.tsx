@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   createYamlFromEditor,
@@ -13,6 +13,7 @@ import {
 import CreateRoomModal from "../components/CreateRoomModal";
 import YamlBuilder from "../components/YamlBuilder";
 import { useAuth } from "../context/AuthContext";
+import { createBuilderAttemptId, trackBuilderFailed } from "../lib/analytics";
 
 type BuilderContext = "standalone" | "public-room" | "host-room";
 
@@ -62,6 +63,7 @@ export default function YamlBuilderPage() {
   const [error, setError] = useState("");
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [pendingYaml, setPendingYaml] = useState<string | null>(null);
+  const failedLoadAttemptRef = useRef(createBuilderAttemptId());
 
   const returnPath = useMemo(() => {
     if (context === "public-room" && roomId) return `/r/${roomId}`;
@@ -91,6 +93,7 @@ export default function YamlBuilderPage() {
   useEffect(() => {
     if (!identityReady) return;
     let cancelled = false;
+    failedLoadAttemptRef.current = createBuilderAttemptId();
 
     const run = async () => {
       if ((context === "public-room" || context === "host-room") && !roomId) {
@@ -128,7 +131,17 @@ export default function YamlBuilderPage() {
 
     run()
       .catch((reason) => {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : "Failed to load the builder");
+        if (!cancelled) {
+          const message = reason instanceof Error ? reason.message : "Failed to load the builder";
+          const failure = message.includes("No YAML option forms") || message.includes("does not offer")
+            ? "schema_unsupported"
+            : "schema_load_failed";
+          trackBuilderFailed(
+            apworld || "unknown", version || "unknown", "preset", failure,
+            failedLoadAttemptRef.current, roomId || undefined,
+          );
+          setError(message);
+        }
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

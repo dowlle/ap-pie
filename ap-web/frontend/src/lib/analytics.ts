@@ -29,8 +29,11 @@
 type ClientEventKind =
   | "page_view"
   | "builder_opened"
+  | "builder_stage_reached"
   | "builder_yaml_emitted"
   | "builder_abandoned"
+  | "builder_failed"
+  | "builder_cta"
   | "apworld_download_clicked";
 
 type EventProps = Record<string, string | number | boolean | undefined>;
@@ -131,15 +134,22 @@ function sendBeacon(event: QueuedEvent): boolean {
  * and campaign parameters that say something about the person. Query
  * strings and fragments are stripped from internal paths too.
  */
-function entryPath(): string | undefined {
+function entryContext(): Partial<Pick<EventProps, "from_path" | "entry_channel">> {
   try {
     const ref = document.referrer;
-    if (!ref) return undefined;
+    if (!ref) return { entry_channel: "direct" };
     const url = new URL(ref);
-    if (url.origin !== window.location.origin) return "external";
-    return url.pathname.slice(0, 120);
+    if (url.origin === window.location.origin) {
+      return { from_path: url.pathname.slice(0, 120), entry_channel: "internal" };
+    }
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    const search = new Set(["google.com", "google.nl", "bing.com", "duckduckgo.com", "search.brave.com"]);
+    const social = new Set(["discord.com", "discord.gg", "reddit.com", "mastodon.social", "bsky.app"]);
+    if (search.has(host) || host.endsWith(".google.com")) return { entry_channel: "search" };
+    if (social.has(host) || host.endsWith(".reddit.com")) return { entry_channel: "community" };
+    return { entry_channel: "other_external" };
   } catch {
-    return undefined;
+    return { entry_channel: "unknown" };
   }
 }
 
@@ -160,8 +170,7 @@ export function trackPageView(view: string, roomId?: string): void {
   const props: EventProps = { view };
   if (!entryReported) {
     entryReported = true;
-    const from = entryPath();
-    if (from) props.from_path = from;
+    Object.assign(props, entryContext());
   } else if (lastView && lastView !== view) {
     props.from_view = lastView;
   }
@@ -169,8 +178,22 @@ export function trackPageView(view: string, roomId?: string): void {
   send({ kind: "page_view", room_id: roomId, props });
 }
 
-export function trackBuilderOpened(game: string, version: string, surface: string, roomId?: string): void {
-  send({ kind: "builder_opened", room_id: roomId, props: { game, version, surface } });
+export function createBuilderAttemptId(): string {
+  try {
+    const buf = new Uint8Array(8);
+    crypto.getRandomValues(buf);
+    return Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return Math.random().toString(16).slice(2, 18).padEnd(16, "0");
+  }
+}
+
+export function trackBuilderOpened(game: string, version: string, surface: string, attemptId: string, roomId?: string): void {
+  send({ kind: "builder_opened", room_id: roomId, props: { game, version, surface, attempt_id: attemptId } });
+}
+
+export function trackBuilderStage(game: string, version: string, stage: string, attemptId: string, roomId?: string): void {
+  send({ kind: "builder_stage_reached", room_id: roomId, props: { game, version, stage, attempt_id: attemptId } });
 }
 
 /** action: download | submit | add_to_room | create_room */
@@ -178,13 +201,14 @@ export function trackBuilderEmitted(
   game: string,
   version: string,
   action: string,
+  attemptId: string,
   roomId?: string,
   edited = false,
 ): void {
   send({
     kind: "builder_yaml_emitted",
     room_id: roomId,
-    props: { game, version, action, edited },
+    props: { game, version, action, edited, attempt_id: attemptId },
   });
 }
 
@@ -200,18 +224,28 @@ export function trackBuilderAbandoned(
   game: string,
   version: string,
   stage: string,
+  reason: string,
+  attemptId: string,
   roomId?: string,
   unloading = false,
 ): boolean {
   const event: QueuedEvent = {
     kind: "builder_abandoned",
     room_id: roomId,
-    props: { game, version, stage },
+    props: { game, version, stage, reason, attempt_id: attemptId },
   };
   if (unloading) return sendBeacon(event);
   if (disabled) return false;
   send(event);
   return true;
+}
+
+export function trackBuilderFailed(game: string, version: string, stage: string, reason: string, attemptId: string, roomId?: string): void {
+  send({ kind: "builder_failed", room_id: roomId, props: { game, version, stage, reason, attempt_id: attemptId } });
+}
+
+export function trackBuilderCta(action: "impression" | "activation", surface: string): void {
+  send({ kind: "builder_cta", props: { action, surface } });
 }
 
 export function trackApworldDownloadClicked(name: string, version: string, surface: string): void {

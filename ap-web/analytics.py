@@ -20,12 +20,13 @@ What it never records
   POST /api/events and for nothing else; it is never passed to the recorder
   and never reaches Postgres. Only `cf_country`, the two-letter country code
   Cloudflare supplies, is stored.
-- **No User-Agent string.** Only a three-value class: desktop / mobile / bot.
+- **No User-Agent string.** Only a coarse class: desktop / mobile / bot,
+  unknown, or synthetic when a secret verification header matches.
 - **No cookie, no localStorage, no sessionStorage, no fingerprint.** The
   `visit_id` is a random value created in the page's JavaScript memory and
   passed along with client events; it is never written to the device and does
   not survive a reload, so it cannot link two visits or two devices.
-- **No free-form text.** Props are validated against a per-kind allowlist
+- **No free-form content.** Props are validated against a per-kind allowlist
   below; unknown keys are dropped, strings are length-capped. Usernames,
   e-mail addresses, YAML contents and validator prose never enter an event.
 
@@ -39,8 +40,9 @@ GDPR posture
   event to an unlinkable counter. That is honoured on server-side events too,
   not just on the client endpoint.
 - **Storage limitation, Art. 5(1)(e):** raw rows are pruned past
-  `ANALYTICS_RETENTION_DAYS`; the surviving `events_daily` rollup is counts
-  only and relates to no identifiable person.
+  `ANALYTICS_RETENTION_DAYS`; Builder rows with attempt ids expire after
+  `ANALYTICS_ATTEMPT_RETENTION_DAYS`. The surviving daily rollups are counts
+  only and relate to no identifiable person.
 - **Erasure, Art. 17:** `db.delete_events_for_user` removes a logged-in
   user's rows outright. The public /privacy page documents how to ask.
 - **Transparency, Art. 13:** the /privacy page describes this module in plain
@@ -60,6 +62,7 @@ from __future__ import annotations
 import queue
 import secrets
 import threading
+import hmac
 from typing import Any
 
 import config
@@ -76,31 +79,66 @@ _STR = "str"
 _INT = "int"
 _BOOL = "bool"
 _STR_LIST = "str_list"
+_ATTEMPT_ID = "attempt_id"
+
+
+def _enum(*values: str) -> frozenset[str]:
+    return frozenset(values)
 
 KIND_SPECS: dict[str, dict[str, Any]] = {
     # ── Client-postable: what only the browser can see ──
-    # from_path: how this document was reached (internal path, or the literal
-    # "external"). from_view: the previous view inside this document. At most
-    # one is ever set. Both are edges between pages, not a trail belonging to
-    # a person - neither survives a page load.
+    # from_path is a same-origin bare path; entry_channel is a locally derived
+    # coarse category for external/direct arrivals. The external hostname and
+    # URL never reach the server. from_view is the previous coarse SPA view.
     "page_view": {
         "client": True,
-        "props": {"view": _STR, "from_path": _STR, "from_view": _STR},
+        "props": {
+            "view": _STR,
+            "from_path": _STR,
+            "from_view": _STR,
+            "entry_channel": _enum(
+                "direct", "internal", "search", "social", "community",
+                "other_external", "unknown",
+            ),
+        },
     },
     "builder_opened": {
         "client": True,
-        "props": {"game": _STR, "version": _STR, "surface": _STR},
+        "props": {"game": _STR, "version": _STR, "surface": _STR, "attempt_id": _ATTEMPT_ID},
+    },
+    "builder_stage_reached": {
+        "client": True,
+        "props": {"game": _STR, "version": _STR,
+                  "stage": _enum("preset", "options", "review"),
+                  "attempt_id": _ATTEMPT_ID},
     },
     # `edited` marks a YAML that was hand-edited in the review step rather
     # than produced by the form alone. It is the demand signal for what the
     # form does not cover yet (weights, item links, plando, triggers).
     "builder_yaml_emitted": {
         "client": True,
-        "props": {"game": _STR, "version": _STR, "action": _STR, "edited": _BOOL},
+        "props": {"game": _STR, "version": _STR,
+                  "action": _enum("download", "submit", "add_to_room", "create_room"),
+                  "edited": _BOOL, "attempt_id": _ATTEMPT_ID},
     },
     "builder_abandoned": {
         "client": True,
-        "props": {"game": _STR, "version": _STR, "stage": _STR},
+        "props": {"game": _STR, "version": _STR,
+                  "stage": _enum("preset", "options", "review"),
+                  "reason": _enum("page_closed", "navigated_away", "version_changed", "game_changed"),
+                  "attempt_id": _ATTEMPT_ID},
+    },
+    "builder_failed": {
+        "client": True,
+        "props": {"game": _STR, "version": _STR,
+                  "stage": _enum("preset", "options", "review"),
+                  "reason": _enum("schema_load_failed", "schema_unsupported", "validation_blocked",
+                                  "download_failed", "submit_failed"),
+                  "attempt_id": _ATTEMPT_ID},
+    },
+    "builder_cta": {
+        "client": True,
+        "props": {"action": _enum("impression", "activation"), "surface": _STR},
     },
     "apworld_download_clicked": {
         "client": True,
@@ -363,7 +401,12 @@ def _request_context(req) -> dict:
         # and neither is worth storing.
         if len(country) == 2 and country not in ("XX", "T1"):
             ctx["cf_country"] = country
-        ctx["ua_class"] = _ua_class(req.headers.get("User-Agent") or "")
+        synthetic = (req.headers.get("X-AP-Pie-Synthetic") or "").strip()
+        expected = config.ANALYTICS_SYNTHETIC_TOKEN
+        if expected and synthetic and hmac.compare_digest(synthetic, expected):
+            ctx["ua_class"] = "synthetic"
+        else:
+            ctx["ua_class"] = _ua_class(req.headers.get("User-Agent") or "")
         ctx["objection"] = objection_signalled(req)
         from flask import g
         ctx["request_id"] = getattr(g, "request_id", None)
@@ -385,7 +428,7 @@ def sanitize_props(kind: str, props: dict | None) -> dict:
     spec = KIND_SPECS.get(kind)
     if not spec or not isinstance(props, dict):
         return {}
-    allowed: dict[str, str] = spec["props"]
+    allowed: dict[str, Any] = spec["props"]
     out: dict[str, Any] = {}
     for key, want in allowed.items():
         if key not in props:
@@ -413,6 +456,12 @@ def sanitize_props(kind: str, props: dict | None) -> dict:
                     str(v)[:_MAX_STR] for v in val[:_MAX_LIST]
                     if isinstance(v, (str, int, float)) and not isinstance(v, bool)
                 ]
+            elif want == _ATTEMPT_ID:
+                if isinstance(val, str) and len(val) == 16 and all(c in "0123456789abcdef" for c in val):
+                    out[key] = val
+            elif isinstance(want, frozenset):
+                if isinstance(val, str) and val in want:
+                    out[key] = val
         except Exception:
             continue
     return out
@@ -492,6 +541,10 @@ def record_event(
         if not config.ANALYTICS_VISIT_ID:
             visit_id = None
 
+        clean_props = sanitize_props(kind, props)
+        if ctx["objection"]:
+            clean_props.pop("attempt_id", None)
+
         row = {
             "kind": kind,
             "user_id": user_id,
@@ -501,7 +554,7 @@ def record_event(
             "ua_class": ctx["ua_class"],
             "request_id": ctx["request_id"],
             "visit_id": (str(visit_id)[:64] if visit_id else None),
-            "props": sanitize_props(kind, props),
+            "props": clean_props,
         }
 
         start_writer()

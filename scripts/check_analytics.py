@@ -97,6 +97,26 @@ fields = analytics.sanitize_props(
 )
 check("list props keep only scalars", fields["fields"] == ["name", "description", "7"])
 
+builder_props = analytics.sanitize_props(
+    "builder_failed",
+    {
+        "game": "Crash Team Racing",
+        "version": "0.2.0-alpha7",
+        "stage": "review",
+        "reason": "submit_failed",
+        "attempt_id": "0123456789abcdef",
+    },
+)
+check("Builder attempt ids accept only fixed random hex", builder_props["attempt_id"] == "0123456789abcdef")
+check(
+    "Builder failure reasons are controlled enums",
+    analytics.sanitize_props("builder_failed", {"reason": "the YAML contained secret text"}) == {},
+)
+check(
+    "entry channels are controlled enums",
+    analytics.sanitize_props("page_view", {"entry_channel": "https://example.com/private?q=x"}) == {},
+)
+
 # ── 3: unknown kinds are refused ─────────────────────────────────
 with app.test_request_context("/x"):
     analytics.record_event("definitely_not_a_kind", props={"a": 1})
@@ -131,18 +151,20 @@ for header in ({"Sec-GPC": "1"}, {"DNT": "1"}):
     before = len(captured)
     with app.test_request_context("/apworlds", headers=header):
         analytics.record_event(
-            "builder_schema_served",
+            "builder_opened",
             user_id=42,
-            props={"game": "Crash Team Racing", "version": "0.1.5", "derivable": True},
+            props={"game": "Crash Team Racing", "version": "0.1.5",
+                   "surface": "apworlds", "attempt_id": "0123456789abcdef"},
             visit_id="abc123",
         )
     drain(before + 1)
     r = captured[-1]
     name = list(header)[0]
-    check(f"{name}: counter still recorded", r.get("kind") == "builder_schema_served")
+    check(f"{name}: counter still recorded", r.get("kind") == "builder_opened")
     check(f"{name}: user_id stripped", r.get("user_id") is None)
     check(f"{name}: visit_id stripped", r.get("visit_id") is None)
-    check(f"{name}: props kept (no personal data in them)", r["props"]["game"] == "Crash Team Racing")
+    check(f"{name}: safe props kept", r["props"]["game"] == "Crash Team Racing")
+    check(f"{name}: attempt id stripped", "attempt_id" not in r["props"])
 
 # ── 6: failure posture ───────────────────────────────────────────
 raise_on_write = True
@@ -159,6 +181,22 @@ raise_on_write = False
 check("bot UA classified", analytics._ua_class("Googlebot/2.1") == "bot")
 check("desktop UA classified", analytics._ua_class("Mozilla/5.0 (Windows NT 10.0)") == "desktop")
 check("empty UA tolerated", analytics._ua_class("") == "unknown")
+
+original_synthetic_token = analytics.config.ANALYTICS_SYNTHETIC_TOKEN
+analytics.config.ANALYTICS_SYNTHETIC_TOKEN = "test-secret"
+with app.test_request_context(
+    "/yaml-builder",
+    headers={"X-AP-Pie-Synthetic": "test-secret", "User-Agent": "Mozilla/5.0"},
+):
+    synthetic_context = analytics._request_context(None)
+check("matching secret classifies a verification request as synthetic", synthetic_context["ua_class"] == "synthetic")
+with app.test_request_context(
+    "/yaml-builder",
+    headers={"X-AP-Pie-Synthetic": "wrong", "User-Agent": "Mozilla/5.0"},
+):
+    ordinary_context = analytics._request_context(None)
+check("wrong synthetic marker cannot reclassify traffic", ordinary_context["ua_class"] == "desktop")
+analytics.config.ANALYTICS_SYNTHETIC_TOKEN = original_synthetic_token
 
 # Every client-postable kind must also be a known kind.
 check(

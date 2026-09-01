@@ -1,6 +1,6 @@
 Archipelago Pie is run by one person as a hobby project. This page explains exactly what the site records, what it deliberately does not record, and what you can ask for. It is written to be checkable: everything described here corresponds to code you can read in the public repository at [github.com/dowlle/ap-pie](https://github.com/dowlle/ap-pie).
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-09-01
 
 ## The short version
 
@@ -19,10 +19,10 @@ The site keeps a server-side log of things that happen on it, so its own funnel 
 - what happened, as a short code such as `guide_view` or `submit_rejected`
 - when it happened
 - the page path it happened on
-- which page on this site you came from, as a bare path such as `/guides/ctr`. If you arrived from somewhere else on the internet, the record says only the word `external`; the address you came from is discarded and never stored, because it can contain search terms
+- which page on this site you came from, as a bare path such as `/guides/ctr`. On the app's first page view, an outside source is reduced in your browser to `search`, `community`, `other_external`, or `direct`. The source address is discarded and never sent because it can contain search terms
 - a two-letter country code, supplied by Cloudflare
-- whether the device looked like a desktop, a mobile, or a bot
-- a small set of technical details for that event type, such as a game name, a version number, a rejection reason code, whether a YAML was hand-edited rather than built from the form, or that a community preset was used
+- whether the device looked like a desktop, a mobile, a bot, or a recognised synthetic test
+- a small set of technical details for that event type, such as a game name, a version number, a rejection reason code, whether a YAML was hand-edited rather than built from the form, or that a community preset was used. Builder events may also carry a random attempt value so one opening, its furthest stage, and its outcome are counted together
 - your account id, **only if you were signed in**
 
 That is the whole record. In particular it does **not** contain:
@@ -30,10 +30,10 @@ That is the whole record. In particular it does **not** contain:
 - **your IP address.** It is used momentarily to apply rate limits and is never written to the database
 - **your browser's User-Agent string.** Only the three-way desktop / mobile / bot classification is kept
 - **any tracking identifier on your device.** No analytics cookie, no localStorage, no sessionStorage, no fingerprint. To measure how far people get in a single visit, the page generates a random value that lives only in the browser tab's memory and disappears the moment you reload or close it. It cannot connect two visits, two devices, or two browsers
-- **the address of the site that sent you here**, when that site is not this one. Only the word `external` is recorded
+- **the address of the site that sent you here**, when that site is not this one. Only a broad source category is recorded
 - **the contents of anything you write.** YAML files, room names, room descriptions and player names never enter the analytics log
 
-Because the visit value cannot survive a page load, the log has no concept of a session. It can say that fifty people arrived at a page from a guide; it cannot follow one person from one page to the next. That limitation is deliberate, and it is what the site gives up in exchange for having no cookie banner.
+Because the visit and Builder attempt values cannot survive a page load, the log has no concept of a durable session. It can connect steps inside the current page load, but cannot follow one person across reloads, tabs, devices, or later visits. That limitation is deliberate.
 
 If you are signed in, page views on the guides and the Crash Team Racing pages are recorded with your account id, the same as the rest of your activity on the site. Signed out, they are not linked to anything.
 
@@ -67,7 +67,7 @@ If your browser sends a Global Privacy Control (`Sec-GPC`) or Do Not Track (`DNT
 
 ## How long it is kept
 
-Raw analytics rows are deleted automatically after 180 days. What survives is a daily table of counts per event type, which contains no account ids, no room ids and nothing relating to an identifiable person.
+Raw analytics rows are deleted automatically after 180 days. Builder rows carrying an attempt value are deleted after 30 days. What survives is a daily table of counts per event type and traffic class, which contains no account ids, room ids, visit values, or attempt values.
 
 Your account and the things you create are kept until you delete them or schedule account deletion. Scheduling deletion locks the account immediately and starts a seven-day recovery period. No account data is removed during those seven days: signing in again with the same Discord identity lets you cancel the request. After the displayed deadline, the account and the personal content controlled by Archipelago Pie are permanently deleted from the live service and can no longer be restored through the site.
 
