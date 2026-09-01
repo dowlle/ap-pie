@@ -187,4 +187,9 @@ The scoped Steam test confirmed that the phase-2 CTR Challenge route stays open 
 
 This does not make Alpha 7 a stable release. The custom-content preview still needs broader community testing, Slide Coliseum and Turbo Track do not yet have standalone Trophy or CTR Challenge events, and the remaining 0.2.0 acceptance work continues.
 
-Download the current test build from the [0.2.0 Alpha 7 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7). If a problem appears, include the platform, seed or YAML, exact build version, what happened, and the generated support bundle.
+## Known issues
+
+- A racer can be invisible on the post-race podium. Nitros Oxide in first place is confirmed: the retail game has no win-dance model for him, so nothing is drawn. Reports of Papu Papu after a Gem Cup and Komodo Joe after a relic race are separate and not yet reproduced. Tracked as [#282](https://github.com/dowlle/ctr-native-ap/issues/282).
+- On Steam Deck, enabling Fullscreen in the graphics options can cause heavy lag. Leave the default windowed mode on the Deck. Tracked as [#260](https://github.com/dowlle/ctr-native-ap/issues/260).
+
+Download the current test build from the [0.2.0 Alpha 7 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7). If a problem appears, [open an issue on GitHub](https://github.com/dowlle/ctr-native-ap/issues/new/choose) and include the platform, seed or YAML, exact build version, what happened, and the generated support bundle. Questions go to the [Crash Team Racing channel](https://discord.com/channels/731205301247803413/1222304293751750777) on the Archipelago Discord.
