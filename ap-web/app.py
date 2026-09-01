@@ -29,8 +29,17 @@ SPA_STATIC_PATHS = {
     "presets", "summary", "style-guide", "account-recovery",
 }
 SPA_DYNAMIC_PATHS = (
-    re.compile(r"(?:market|play|r|rooms|yaml-builder|my|apworlds)/[^/]+"),
+    re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
     re.compile(r"games/[^/]+(?:/market)?"),
+)
+# Routes that exist on beta only. APWorldDetailPreview is still a preview:
+# production 404s every /apworlds/<slug>, including the two curated
+# PUBLIC_ROUTE_SEO entries, which carry beta_only together with a noindex
+# robots value. Without a generic pattern beta served only those two hardcoded
+# slugs, so the preview could not be opened against a real world. Beta accepts
+# any slug; production behaviour is unchanged.
+SPA_BETA_DYNAMIC_PATHS = (
+    re.compile(r"apworlds/[^/]+"),
 )
 
 PUBLIC_ROUTE_SEO = {
@@ -178,8 +187,12 @@ def _public_spa_response(path: str) -> Response:
 def _is_spa_route(path: str) -> bool:
     """Keep direct links working while giving genuinely unknown URLs a 404."""
     normalized = path.strip("/")
-    return normalized in SPA_STATIC_PATHS or any(
-        pattern.fullmatch(normalized) for pattern in SPA_DYNAMIC_PATHS
+    if normalized in SPA_STATIC_PATHS:
+        return True
+    if any(pattern.fullmatch(normalized) for pattern in SPA_DYNAMIC_PATHS):
+        return True
+    return config.DEPLOYMENT_LABEL == "beta" and any(
+        pattern.fullmatch(normalized) for pattern in SPA_BETA_DYNAMIC_PATHS
     )
 
 

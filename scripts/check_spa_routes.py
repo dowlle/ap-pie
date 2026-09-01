@@ -5,6 +5,11 @@ unknown paths as 404. React owns the actual client route table, so this check
 keeps Flask's allowlist in sync without importing the application or needing
 its database/runtime configuration.
 
+Some routes are served on beta and withheld from production on purpose, which
+is what SPA_BETA_DYNAMIC_PATHS records. Those count as covered here, and are
+listed separately in the output so the gate stays visible rather than reading
+as an accidental gap.
+
 Run from the repository root:
 
     python scripts/check_spa_routes.py
@@ -22,10 +27,28 @@ FLASK_APP = ROOT / "ap-web" / "app.py"
 REACT_APP = ROOT / "ap-web" / "frontend" / "src" / "App.tsx"
 
 
-def flask_route_policy() -> tuple[set[str], tuple[re.Pattern[str], ...]]:
+def _compiled_patterns(value: ast.expr) -> list[re.Pattern[str]]:
+    if not isinstance(value, ast.Tuple):
+        return []
+    patterns = []
+    for item in value.elts:
+        if (
+            isinstance(item, ast.Call)
+            and isinstance(item.func, ast.Attribute)
+            and item.func.attr == "compile"
+            and item.args
+        ):
+            patterns.append(re.compile(ast.literal_eval(item.args[0])))
+    return patterns
+
+
+def flask_route_policy() -> tuple[
+    set[str], tuple[re.Pattern[str], ...], tuple[re.Pattern[str], ...]
+]:
     tree = ast.parse(FLASK_APP.read_text(encoding="utf-8"))
     static_paths: set[str] | None = None
     dynamic_patterns: list[re.Pattern[str]] = []
+    beta_patterns: list[re.Pattern[str]] = []
 
     for node in tree.body:
         if not isinstance(node, ast.Assign):
@@ -33,19 +56,14 @@ def flask_route_policy() -> tuple[set[str], tuple[re.Pattern[str], ...]]:
         names = {target.id for target in node.targets if isinstance(target, ast.Name)}
         if "SPA_STATIC_PATHS" in names:
             static_paths = set(ast.literal_eval(node.value))
-        elif "SPA_DYNAMIC_PATHS" in names and isinstance(node.value, ast.Tuple):
-            for item in node.value.elts:
-                if (
-                    isinstance(item, ast.Call)
-                    and isinstance(item.func, ast.Attribute)
-                    and item.func.attr == "compile"
-                    and item.args
-                ):
-                    dynamic_patterns.append(re.compile(ast.literal_eval(item.args[0])))
+        elif "SPA_DYNAMIC_PATHS" in names:
+            dynamic_patterns = _compiled_patterns(node.value)
+        elif "SPA_BETA_DYNAMIC_PATHS" in names:
+            beta_patterns = _compiled_patterns(node.value)
 
     if static_paths is None or not dynamic_patterns:
         raise RuntimeError("Could not read Flask SPA route policy")
-    return static_paths, tuple(dynamic_patterns)
+    return static_paths, tuple(dynamic_patterns), tuple(beta_patterns)
 
 
 def react_paths() -> set[str]:
@@ -62,14 +80,19 @@ def example_path(route: str) -> str:
     return re.sub(r":[^/]+", "route-value", route).strip("/")
 
 
-static_paths, dynamic_patterns = flask_route_policy()
+static_paths, dynamic_patterns, beta_patterns = flask_route_policy()
 client_paths = react_paths()
-uncovered = sorted(
-    route
-    for route in client_paths
-    if example_path(route) not in static_paths
-    and not any(pattern.fullmatch(example_path(route)) for pattern in dynamic_patterns)
-)
+
+uncovered = []
+beta_only = []
+for route in sorted(client_paths):
+    example = example_path(route)
+    if example in static_paths or any(p.fullmatch(example) for p in dynamic_patterns):
+        continue
+    if any(p.fullmatch(example) for p in beta_patterns):
+        beta_only.append(route)
+    else:
+        uncovered.append(route)
 
 if uncovered:
     print("FAIL  React routes missing from Flask's SPA allowlist:")
@@ -77,4 +100,7 @@ if uncovered:
         print(f"  - {route}")
     raise SystemExit(1)
 
-print(f"PASS  all {len(client_paths)} React routes receive the SPA shell")
+everywhere = len(client_paths) - len(beta_only)
+print(f"PASS  {everywhere} React routes receive the SPA shell in every environment")
+for route in beta_only:
+    print(f"      {route} is served on beta only, by SPA_BETA_DYNAMIC_PATHS")
