@@ -1,3 +1,7 @@
+/* Must stay first: @import is only valid ahead of other rules. Vite inlines
+   this into the built stylesheet, so it costs no extra request. */
+@import "./fonts.css";
+
 :root {
   /* Shared visual-foundation roles. Legacy aliases below keep existing
      surfaces working while representative pages migrate to semantic names. */
@@ -93,6 +97,46 @@ body { margin: 0; }
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Server-rendered crawl fallback. ap-web/app.py substitutes this block into
+   #root for every SPA route so a non-rendering crawler still gets a heading,
+   an intro and the route's links. React throws it away on mount, but the
+   window between first paint and mount is visible to a human on a reload -
+   without these rules it painted as browser-default text jammed into the
+   top-left corner by the `* { margin: 0; padding: 0 }` reset. Keep it close
+   to the public hero type so the swap reads as the page settling, not as a
+   broken page. */
+.route-html-fallback {
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.route-html-fallback h1 {
+  font-size: 2.4rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 0;
+}
+.route-html-fallback p {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.route-html-fallback ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+@media (max-width: 640px) {
+  .route-html-fallback { padding: 2.5rem 1.25rem; }
+  .route-html-fallback h1 { font-size: 1.9rem; }
 }
 
 a { color: var(--accent-light); text-decoration: none; }

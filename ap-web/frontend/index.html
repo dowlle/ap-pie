@@ -14,10 +14,13 @@
     <!-- ROUTE_META -->
     <meta name="theme-color" content="#15131a" />
 
-    <!-- Type system: Bricolage Grotesque (display) + Inter Tight (body) + JetBrains Mono (code) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Type system: Bricolage Grotesque (display) + Inter Tight (body) + JetBrains Mono (code).
+         Self-hosted from /fonts via src/fonts.css, so first paint no longer waits on a
+         stylesheet from fonts.googleapis.com. Only the two latin faces that every page
+         uses are preloaded; the other subsets and JetBrains Mono load on demand through
+         their unicode-range and the rules that ask for them. -->
+    <link rel="preload" href="/fonts/inter-tight-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/bricolage-grotesque-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
   </head>
   <body>
     <div id="root"><!-- ROUTE_CONTENT --></div>

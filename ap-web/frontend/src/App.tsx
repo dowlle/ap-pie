@@ -1,30 +1,36 @@
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, NavLink, Navigate, Link, useLocation } from "react-router-dom";
+// The two views behind "/" stay in the entry chunk: they are what a reload of
+// ap-pie.com paints, so making them wait on a second request would only move
+// the delay. Every other route is a lazy chunk, which keeps react-markdown,
+// js-yaml/yaml and diff - the builder, guide and room dependencies - out of
+// the bundle a first-time visitor must download and parse before the app can
+// replace the server-rendered fallback.
 import GameList from "./pages/GameList";
-import GameDetail from "./pages/GameDetail";
-import Summary from "./pages/Summary";
-import Servers from "./pages/Servers";
-import APWorlds from "./pages/APWorlds";
-import Market from "./pages/Market";
-import MarketLanding from "./pages/MarketLanding";
-import MarketTracker from "./pages/MarketTracker";
-import Rooms from "./pages/Rooms";
-import RoomDetail from "./pages/RoomDetail";
-import RoomPublic from "./pages/RoomPublic";
-import TrackerPage from "./pages/Tracker";
-import Admin from "./pages/Admin";
-import AdminApworldRequests from "./pages/AdminApworldRequests";
-import Play from "./pages/Play";
 import Landing from "./pages/Landing";
-import MyArea from "./pages/MyArea";
-import YamlBuilderPage from "./pages/YamlBuilderPage";
-import YamlBuilderLanding from "./pages/YamlBuilderLanding";
-import NotFound from "./pages/NotFound";
-import StyleGuide from "./pages/StyleGuide";
-import APWorldDetailPreview from "./pages/APWorldDetailPreview";
-import AccountRecovery from "./pages/AccountRecovery";
+const GameDetail = lazy(() => import("./pages/GameDetail"));
+const Summary = lazy(() => import("./pages/Summary"));
+const Servers = lazy(() => import("./pages/Servers"));
+const APWorlds = lazy(() => import("./pages/APWorlds"));
+const Market = lazy(() => import("./pages/Market"));
+const MarketLanding = lazy(() => import("./pages/MarketLanding"));
+const MarketTracker = lazy(() => import("./pages/MarketTracker"));
+const Rooms = lazy(() => import("./pages/Rooms"));
+const RoomDetail = lazy(() => import("./pages/RoomDetail"));
+const RoomPublic = lazy(() => import("./pages/RoomPublic"));
+const TrackerPage = lazy(() => import("./pages/Tracker"));
+const Admin = lazy(() => import("./pages/Admin"));
+const AdminApworldRequests = lazy(() => import("./pages/AdminApworldRequests"));
+const Play = lazy(() => import("./pages/Play"));
+const MyArea = lazy(() => import("./pages/MyArea"));
+const YamlBuilderPage = lazy(() => import("./pages/YamlBuilderPage"));
+const YamlBuilderLanding = lazy(() => import("./pages/YamlBuilderLanding"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const StyleGuide = lazy(() => import("./pages/StyleGuide"));
+const APWorldDetailPreview = lazy(() => import("./pages/APWorldDetailPreview"));
+const AccountRecovery = lazy(() => import("./pages/AccountRecovery"));
 import PublicLayout from "./components/PublicLayout";
 import { refreshData } from "./api";
-import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { FeaturesProvider, useFeature } from "./context/FeaturesContext";
 import { DeploymentProvider } from "./context/DeploymentContext";
@@ -228,9 +234,15 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       <DeploymentBanner />
       <NavBar />
       <ApprovalToast />
-      <main className="container">{children}</main>
+      {/* The boundary sits inside the shell so a lazy route chunk loads with
+          the banner and nav already on screen instead of blanking the page. */}
+      <main className="container"><Suspense fallback={<RouteChunkFallback />}>{children}</Suspense></main>
     </>
   );
+}
+
+function RouteChunkFallback() {
+  return <p className="loading">Loading...</p>;
 }
 
 /**
@@ -323,7 +335,11 @@ function App() {
           <BrowserRouter>
             <PublicRouteHead />
             <RouteAnalytics />
-            <AppRoutes />
+            {/* Outer boundary for the public routes, which render through
+                PublicLayout rather than AdminShell. */}
+            <Suspense fallback={<RouteChunkFallback />}>
+              <AppRoutes />
+            </Suspense>
           </BrowserRouter>
         </DeploymentProvider>
       </FeaturesProvider>
