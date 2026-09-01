@@ -1,8 +1,20 @@
 CTR Archipelago 0.2.0 adds many new ways to build a seed. Item boxes and CTR letters can become checks, racers and weapons can enter the item pool, and received items can unlock your kart's boost and stats. Gem Cup tracks can also be randomized, and several victory conditions can be combined. Every major addition is optional and configured per YAML.
 
-> **0.2.0 is still a preview.** Alpha 5 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
+> **0.2.0 is still a preview.** Alpha 7 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
 
-**[Download Alpha 5](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha5)** · **[Build a CTR YAML](/apworlds?build=ctr)**
+**[Download Alpha 7](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7)** · **[Build an Alpha 7 YAML](/apworlds?build=ctr&version=0.2.0-alpha7)** · **[Setup guide](/guides/ctr)**
+
+## Alpha 7 corrections
+
+Alpha 7 tightens the new per-track Reach 10 Wumpa checks introduced during the Alpha 6 preview:
+
+- A Wumpa check is created only when that track has a playable Trophy or arcade-style race in the seed. Slide Coliseum and Turbo Track therefore do not create unreachable Wumpa checks while they remain relic-only.
+- The same track-owned check can be collected through its standalone race or through any Gem Cup leg that runs the track. Repeated Cup appearances remain alternative routes to one check.
+- An unchecked Wumpa location keeps the appropriate standalone route replayable: the plain Trophy Race route during pad phase 1 and the CTR Challenge side during phase 2.
+- A completed Gem Cup remains Raceable while a distinct track in its resolved legs still has an unchecked Wumpa location.
+- The experimental custom track participates only when its recognized descriptor is active and its measured capabilities say ten Wumpa can be collected.
+
+These corrections do not add Trophy Race or CTR Challenge events to Slide Coliseum or Turbo Track. Those events remain later 0.2.0 work.
 
 ## At a glance
 
@@ -35,13 +47,19 @@ The C, T, and R letters on the 16 CTR Token Challenge tracks can remain vanilla,
 
 ### Wumpa progression
 
-0.2.0 adds a configurable Wumpa family: starting-Wumpa progression, bundle filler items, and a `Reach 10 Wumpa` check. Alpha 4 uses one global check rather than a separate check for each track. Starting Wumpa is restored after a pause-menu restart and the world protects required Wumpa items when fitting a large item pool.
+0.2.0 adds a configurable Wumpa family: starting-Wumpa progression, bundle filler items, and `Reach 10 Wumpa` checks. The check can be off, global for the whole seed, or separate for each eligible track. Starting Wumpa is restored after a pause-menu restart and the world protects required Wumpa items when fitting a large item pool. Alpha 7's route and eligibility corrections are summarized above.
 
 ### Turbo Grant and Tizi Helper
 
 `Turbo Grant` is a received weapon item that gives the player a Turbo when it can be delivered safely. If the player is outside a race or the weapon slot is occupied, the grant waits instead of being discarded.
 
 The optional `Tizi Helper` makes the first four boxes after the Papu's Pyramid starting line give Masks for the Tiziano shortcut. With Itemsanity enabled, it also requires ownership of the Mask weapon. The helper is intentionally excluded from logic.
+
+### Experimental custom content
+
+Alpha 6 added the first deliberately narrow custom-track preview. A seed may replace the Purple Gem Cup destination with one recognized Baby T Park package. The client verifies the package identity, file hashes and measured capabilities before enabling it, and the Custom Content menu reports whether the local installation is Ready. No custom-track files are included in CTR Archipelago.
+
+This is not yet a general custom-track library. Arcade, Time Trial, multiplayer, arbitrary package pools, custom Cups and broader destination randomization remain future work. Custom content stays off unless the generated seed explicitly selects it.
 
 ## Characters and kart progression
 
@@ -157,14 +175,16 @@ This upstream sync is compile-tested in the exact Alpha 4 package. It remains on
 
 A 0.2.0 client can open 0.1.5 seeds using compatibility fallbacks. A 0.1.5 client cannot understand a 0.2.0 seed and may make it impossible to finish.
 
-Use the same version when generating and playing a seed. Install the client and APWorld from the same release, back up an existing folder before replacing it, and do not mix Alpha 5 with an earlier 0.2.0 preview.
+Use the same version when generating and playing a seed. Install the client and APWorld from the same release, back up an existing folder before replacing it, and do not mix Alpha 7 with an earlier 0.2.0 preview.
 
 The client still requires a disc image made from your own North American Crash Team Racing disc. No game data is included.
 
-## Alpha 5 testing status
+## Alpha 7 testing status
 
-The matched Alpha 5 pair passed fresh 32-bit Archipelago and vanilla Linux builds, a fresh Windows Archipelago build, all ten CTR APWorld fuzz jobs, focused correctness and graphics harnesses, and an integrated Steam runtime pass. The runtime pass covered the graphics options, Blue Fire U-turn repair, composed Oxide gating, and Gem Cup AP-box access.
+The matched Alpha 7 pair passed 1,379 APWorld tests with one expected skip, 15,000 fuzz generations with zero failures or timeouts, focused native correctness harnesses, clean custom-enabled Linux and Windows builds, a Windows vanilla build, package extraction and a thirteen-profile client verifier sweep. Every verifier profile reported the goal reachable and `solo: definitive`.
 
-This does not make it a stable release. The upstream engine sync still needs broader runtime coverage, the racer-ownership reload repair is not included, and the remaining 0.2.0 acceptance work continues before the stable release.
+The scoped Steam test confirmed that the phase-2 CTR Challenge route stays open for an unchecked track-owned Wumpa location, reaching ten sends that check immediately, and a completed Gem Cup stays Raceable while distinct leg Wumpa locations remain unchecked. The phase-1 path is covered by the focused native lifecycle harness.
 
-Download the current test build from the [0.2.0 Alpha 5 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha5). If a problem appears, include the platform, seed or YAML, exact build version, what happened, and the generated support bundle.
+This does not make Alpha 7 a stable release. The custom-content preview still needs broader community testing, Slide Coliseum and Turbo Track do not yet have standalone Trophy or CTR Challenge events, and the remaining 0.2.0 acceptance work continues.
+
+Download the current test build from the [0.2.0 Alpha 7 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7). If a problem appears, include the platform, seed or YAML, exact build version, what happened, and the generated support bundle.
