@@ -46,7 +46,7 @@ You can also start from the [template YAML published as a separate release asset
 
 ## When something goes wrong
 
-The game tells you what is missing and why, and the [setup guide's troubleshooting section](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the common cases. For crashes or a seed that looks impossible, run `support-bundle.bat` (Windows) or `support-bundle.sh` (Linux) next to the executable and bring the archive it makes to Discord or a [GitHub issue](https://github.com/dowlle/ctr-native-ap/issues). It contains your logs with the password stripped out, and no game data.
+The game tells you what is missing and why, and the [setup guide's troubleshooting section](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers the common cases. For crashes or a seed that looks impossible, run `support-bundle.bat` (Windows) or `support-bundle.sh` (Linux) next to the executable and attach the archive it makes to a [GitHub issue](https://github.com/dowlle/ctr-native-ap/issues/new/choose), or bring it to the [Crash Team Racing channel](https://discord.com/channels/731205301247803413/1222304293751750777) on the Archipelago Discord. It contains your logs with the password stripped out, and no game data.
 
 ## Come say hi
 
