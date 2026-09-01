@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { getRoomTracker, getPublicRoomTracker, type RoomTrackerData, type PlayerInfo } from "../api";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { getGeneratedSlots, getRoomTracker, getPublicRoomTracker, type GeneratedSlot, type RoomTrackerData, type PlayerInfo } from "../api";
 import {
   filterAndSortPlayers,
   nextTrackerSort,
@@ -45,9 +45,11 @@ function barColor(pct: number): string {
 
 function PlayerCard({
   player,
+  coordination,
   onClick,
 }: {
   player: PlayerInfo;
+  coordination?: GeneratedSlot;
   /** When set, the card becomes clickable (FEAT-14 modal). When omitted,
    *  renders as a static div for tracker sources that don't yet support
    *  per-slot detail. */
@@ -71,6 +73,13 @@ function PlayerCard({
       <div className="tracker-card-status">
         {statusIcon(player.status_label)} {statusDisplay(player.status_label)}
       </div>
+      {coordination && (coordination.bk_since || coordination.go_mode_since || coordination.slot_note) && (
+        <div className="tracker-card-coordination" aria-label="Player coordination state">
+          {coordination.bk_since && <span className="badge badge-progress">BK</span>}
+          {coordination.go_mode_since && <span className="badge badge-done">Go mode</span>}
+          {coordination.slot_note && <span className="badge">Note</span>}
+        </div>
+      )}
     </>
   );
   if (onClick) {
@@ -127,6 +136,7 @@ export default function LiveTracker({
   viewerSlotNames?: string[];
 }) {
   const [data, setData] = useState<RoomTrackerData | null>(null);
+  const [generatedSlots, setGeneratedSlots] = useState<GeneratedSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<number | null>(null);
   // UX-09: search + sort state. Default sort is null (preserves backend
@@ -138,10 +148,12 @@ export default function LiveTracker({
   // FEAT-14: which slot's detail modal is open, if any.
   const [openPlayer, setOpenPlayer] = useState<PlayerInfo | null>(null);
   const { user } = useAuth();
-  const hasMineFilter = !!viewerSlotNames && viewerSlotNames.length > 0;
-  const mineSet = hasMineFilter ? new Set(viewerSlotNames) : null;
+  const registryMine = generatedSlots.filter((slot) => slot.is_mine).map((slot) => slot.player_name);
+  const effectiveMineNames = registryMine.length > 0 ? registryMine : (viewerSlotNames ?? []);
+  const hasMineFilter = effectiveMineNames.length > 0;
+  const mineSet = hasMineFilter ? new Set(effectiveMineNames) : null;
 
-  const fetchTracker = () => {
+  const fetchTracker = useCallback(() => {
     const fetcher = publicMode ? getPublicRoomTracker(roomId) : getRoomTracker(roomId);
     fetcher
       .then((d) => {
@@ -156,13 +168,16 @@ export default function LiveTracker({
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  };
+    getGeneratedSlots(roomId)
+      .then((result) => setGeneratedSlots(result.slots))
+      .catch(() => setGeneratedSlots([]));
+  }, [roomId, publicMode]);
 
   useEffect(() => {
     fetchTracker();
     intervalRef.current = window.setInterval(fetchTracker, 15000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [roomId, publicMode]);
+  }, [fetchTracker]);
 
   if (loading) return <p className="loading">Loading tracker...</p>;
   if (!data) return null;
@@ -268,7 +283,7 @@ export default function LiveTracker({
               aria-pressed={onlyMine}
               title="Show only the slots whose name matches a YAML you submitted to this room"
             >
-              My slots ({viewerSlotNames!.length})
+              My slots ({effectiveMineNames.length})
             </button>
           )}
           <div className="tracker-sort-row" role="group" aria-label="Sort players by">
@@ -310,6 +325,7 @@ export default function LiveTracker({
           <PlayerCard
             key={p.slot}
             player={p}
+            coordination={generatedSlots.find((slot) => slot.team === 0 && slot.slot === p.slot)}
             onClick={isExternal ? setOpenPlayer : undefined}
           />
         ))}
@@ -321,6 +337,7 @@ export default function LiveTracker({
           player={openPlayer}
           publicMode={publicMode}
           viewerUserId={user?.id ?? null}
+          onCoordinationChanged={fetchTracker}
           onClose={() => setOpenPlayer(null)}
         />
       )}

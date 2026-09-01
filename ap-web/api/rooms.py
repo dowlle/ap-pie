@@ -1364,6 +1364,29 @@ def _attribute_slot_to_submitter(room_id: str, slot_name: str | None) -> dict:
     }
 
 
+def _coordination_slot_overlay(room_id: str, team: int, slot: int) -> dict | None:
+    """Return stable ownership/self-state for a generated slot, if attached."""
+    from db import get_room_slot
+    row = get_room_slot(room_id, team, slot)
+    if not row:
+        return None
+    return {
+        "team": row["team"],
+        "slot": row["slot"],
+        "player_name": row["player_name"],
+        "game": row.get("game") or "",
+        "claimed": row.get("owner_user_id") is not None,
+        "owner_user_id": row.get("owner_user_id"),
+        "owner_username": row.get("owner_username"),
+        "owner_source": row.get("owner_source"),
+        "bk_since": row.get("bk_since"),
+        "bk_confirmed_at": row.get("bk_confirmed_at"),
+        "go_mode_since": row.get("go_mode_since"),
+        "slot_note": row.get("slot_note") or "",
+        "state_updated_at": row.get("state_updated_at"),
+    }
+
+
 def _augment_slot_with_ws(room_id: str, slot: int, data: dict) -> dict:
     """FEAT-17 V1.4: overlay WS state on top of the HTML scrape result.
 
@@ -1433,7 +1456,13 @@ def room_tracker_slot(room_id: str, slot: int):
     from tracker import fetch_slot_data
     data = fetch_slot_data(tracker_url, team, slot)
     if "error" not in data:
-        data.update(_attribute_slot_to_submitter(room_id, data.get("name")))
+        coordination = _coordination_slot_overlay(room_id, team, slot)
+        if coordination:
+            data["coordination"] = coordination
+            data["submitter_user_id"] = coordination.get("owner_user_id")
+            data["submitter_username"] = coordination.get("owner_username")
+        else:
+            data.update(_attribute_slot_to_submitter(room_id, data.get("name")))
         data = _augment_slot_with_ws(room_id, slot, data)
     return jsonify(data)
 
@@ -1479,6 +1508,116 @@ import threading
 _item_tracker_cache: dict[str, tuple[float, dict]] = {}
 _item_tracker_lock = threading.Lock()
 _ITEM_TRACKER_CACHE_MAX = 100
+
+
+@bp.route("/api/rooms/<room_id>/generated-room/preview", methods=["POST"])
+@requires_db
+def generated_room_preview(room_id: str):
+    """Fetch a tracker roster and propose exact YAML-to-slot mappings."""
+    room = get_room(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    data = request.get_json() or {}
+    tracker_url = str(data.get("tracker_url") or room.get("tracker_url") or "").strip()
+    if not tracker_url:
+        return jsonify({"error": "A tracker URL is required"}), 400
+    from tracker import fetch_tracker_data, parse_tracker_url
+    parsed = parse_tracker_url(tracker_url)
+    if not parsed:
+        return jsonify({"error": "Use an archipelago.gg tracker URL"}), 400
+    tracker_data = fetch_tracker_data(tracker_url, force=True)
+    if "error" in tracker_data:
+        return jsonify({"error": tracker_data["error"]}), 400
+    from room_coordination import build_roster_preview
+    yamls = get_yamls_with_submitters(room_id)
+    roster = build_roster_preview(tracker_data.get("players", []), yamls)
+    return jsonify({
+        "tracker_url": tracker_url,
+        "tracker_room_id": tracker_data.get("room_id") or parsed.get("room_id"),
+        "roster": roster,
+        "yamls": [
+            {
+                "id": y["id"], "player_name": y["player_name"], "game": y["game"],
+                "submitter_username": y.get("submitter_username"),
+                "has_owner": y.get("submitter_user_id") is not None,
+            }
+            for y in yamls
+        ],
+    })
+
+
+@bp.route("/api/rooms/<room_id>/generated-room", methods=["PUT"])
+@requires_db
+def generated_room_confirm(room_id: str):
+    """Confirm the live roster, persist stable slots, and enter playing state."""
+    room = get_room(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    user = _current_user() or {}
+    data = request.get_json() or {}
+    tracker_url = str(data.get("tracker_url") or "").strip()
+    if not tracker_url:
+        return jsonify({"error": "A tracker URL is required"}), 400
+    from tracker import fetch_tracker_data, parse_tracker_url
+    parsed = parse_tracker_url(tracker_url)
+    if not parsed:
+        return jsonify({"error": "Use an archipelago.gg tracker URL"}), 400
+    tracker_data = fetch_tracker_data(tracker_url, force=True)
+    if "error" in tracker_data:
+        return jsonify({"error": tracker_data["error"]}), 400
+    from room_coordination import apply_host_mappings, build_roster_preview
+    from db import associate_generated_room
+    yamls = get_yamls_with_submitters(room_id)
+    preview = build_roster_preview(tracker_data.get("players", []), yamls)
+    if not preview:
+        return jsonify({"error": "The tracker does not expose any generated slots yet"}), 400
+    try:
+        slots = apply_host_mappings(preview, yamls, data.get("mappings") or [])
+    except (KeyError, TypeError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    persisted = associate_generated_room(
+        room_id, tracker_url, tracker_data.get("room_id") or parsed.get("room_id"),
+        int(user["id"]) if user.get("id") is not None else None, slots,
+    )
+    updated = update_room(room_id, tracker_url=tracker_url, status="playing")
+    add_activity(
+        room_id, "generated_room_attached",
+        f"{user.get('discord_username') or 'Host'} attached the generated room with {len(persisted)} slots",
+    )
+    _maybe_reschedule_tracker_ws(updated)
+    return jsonify({"room": updated, "slots": persisted})
+
+
+@bp.route("/api/rooms/<room_id>/slots/<int:team>/<int:slot>/owner", methods=["PUT"])
+@requires_db
+def generated_slot_owner(room_id: str, team: int, slot: int):
+    """Host/admin ownership override with an auditable event."""
+    room = get_room(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    user = _current_user() or {}
+    data = request.get_json() or {}
+    raw_owner = data.get("owner_user_id")
+    try:
+        owner_user_id = int(raw_owner) if raw_owner is not None else None
+    except (TypeError, ValueError):
+        return jsonify({"error": "owner_user_id must be an integer or null"}), 400
+    if owner_user_id is not None:
+        from db import get_user
+        if not get_user(owner_user_id):
+            return jsonify({"error": "User not found"}), 404
+    from db import assign_room_slot_owner
+    updated = assign_room_slot_owner(
+        room_id, team, slot, owner_user_id,
+        int(user["id"]) if user.get("id") is not None else None,
+    )
+    if not updated:
+        return jsonify({"error": "Generated slot not found"}), 404
+    add_activity(
+        room_id, "slot_owner_changed",
+        f"{user.get('discord_username') or 'Host'} {'assigned' if owner_user_id else 'cleared'} ownership for {updated['player_name']}",
+    )
+    return jsonify(updated)
 
 
 @bp.route("/api/rooms/<room_id>/tracker/items")

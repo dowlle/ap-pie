@@ -31,6 +31,7 @@ export default function StyleGuide() {
         <a href="#foundation">Foundation</a>
         <a href="#components">Components</a>
         <a href="#review">Module patterns</a>
+        <a href="#room-coordination">Room coordination proposal</a>
         <a href="#density">Page families</a>
         <a href="#apworld">APWorld example</a>
       </nav>
@@ -169,6 +170,40 @@ export default function StyleGuide() {
               <div className="sg-review-feed"><span className="sg-label">Activity</span><p><time>12:42</time><span><strong>Appletini</strong> found Morph Ball for Berry.</span></p><p><time>12:41</time><span><strong>Berry</strong> connected.</span></p></div>
               <div className="sg-review-toast" role="status"><span className="sg-review-toast-icon">✓</span><div><strong>YAML downloaded</strong><small>Appletini_Super_Metroid.yaml</small></div><button type="button" aria-label="Dismiss notification">×</button></div>
             </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="room-coordination" className="sg-section">
+        <div className="sg-section-heading">
+          <span className="sg-review-flag is-proposed">Proposed</span>
+          <div>
+            <h2>Generated-room identity and player coordination</h2>
+            <p>Two additions for async rooms, composed from approved workspace, table, badge, notice and action primitives.</p>
+          </div>
+        </div>
+        <div className="sg-review-grid">
+          <article className="surface sg-review-card sg-review-card-wide">
+            <header className="sg-review-card-head"><div><span className="sg-label">Roster reconciliation</span><h3>Review identity before play starts</h3></div><span className="badge badge-progress">Proposed</span></header>
+            <div className="table-wrapper">
+              <table className="game-table"><thead><tr><th>Generated slot</th><th>Game</th><th>YAML owner</th><th>Status</th></tr></thead><tbody>
+                <tr><td><strong>Appletini</strong><small>team 0, slot 12</small></td><td>Super Metroid</td><td><select defaultValue="appletini"><option value="appletini">Appletini · @apple</option></select></td><td><span className="badge badge-done">Exact</span></td></tr>
+                <tr><td><strong>Berry_2</strong><small>team 0, slot 13</small></td><td>ANIMAL WELL</td><td><select defaultValue=""><option value="">Unassigned</option><option>Berry · @berry</option></select></td><td><span className="badge badge-progress">Review</span></td></tr>
+              </tbody></table>
+            </div>
+            <div className="notice notice-warning"><strong>Review before confirming.</strong><span>Exact names may be suggested. Ambiguous slots remain unassigned and existing claims survive later refreshes.</span></div>
+            <div className="sg-row"><button type="button" className="btn btn-primary">Attach generated room</button><button type="button" className="btn btn-quiet">Cancel</button></div>
+          </article>
+          <article className="surface sg-review-card sg-review-card-wide">
+            <header className="sg-review-card-head"><div><span className="sg-label">Slot coordination</span><h3>Ownership, BK, go mode and notes</h3></div><span className="badge badge-progress">Proposed</span></header>
+            <div className="slot-coordination-summary surface">
+              <div><span className="muted">Ownership</span><strong>This is your slot</strong></div>
+              <div><span className="muted">BK</span><strong>Since today, 12:40</strong></div>
+              <div><span className="muted">Go mode</span><strong>Not set</strong></div>
+            </div>
+            <div className="sg-row"><button type="button" className="btn btn-primary">Still BK</button><button type="button" className="btn btn-quiet">Clear BK</button><button type="button" className="btn">Enter go mode</button></div>
+            <label className="field"><span>Slot note</span><textarea rows={3} defaultValue="Waiting for Gravity Suit. Back Thursday evening." /></label>
+            <p className="sg-caption">Proposal: BK uses warning semantics, go mode uses success semantics, and notes remain text rather than a badge-only message. Status is never communicated by color alone.</p>
           </article>
         </div>
       </section>
