@@ -6,7 +6,7 @@ Before you start, install Archipelago itself from the [official releases page](h
 
 ## Step 1: collect the YAMLs
 
-Each player normally submits one YAML for each world they bring, and [Setting up your YAML](/guides/setting-up-your-yaml) explains that side. You can collect the files however you like, but chasing attachments through chat gets old fast. [How to host a room on Archipelago Pie](/guides/hosting-on-archipelago-pie) covers creating a collection room, sharing one link, checking submissions, closing at the deadline, and downloading the complete stack.
+Each player normally submits one YAML for each world they bring, and [Setting up your YAML](/guides/setting-up-your-yaml) explains that side. Players who do not want to edit the file by hand can use the [guided YAML Builder](/yaml-builder). You can collect the files however you like, but chasing attachments through chat gets old fast. [How to host a room on Archipelago Pie](/guides/hosting-on-archipelago-pie) covers creating a collection room, sharing one link, checking submissions, closing at the deadline, and downloading the complete stack.
 
 ## Step 2: generate the game
 

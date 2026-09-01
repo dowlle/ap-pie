@@ -54,7 +54,7 @@ Read the whole announcement before making your YAML. The host may limit how many
 
 > **Need to make your YAML?**
 >
-> Find the game, choose the version requested by the host, and select **Create YAML**. You can download it or send it straight to one of your Archipelago Pie rooms. [Open the YAML builder →](/apworlds)
+> Find the game, choose the version requested by the host, and select **Create YAML**. You can download it or send it straight to one of your Archipelago Pie rooms. [Open the YAML Builder →](/yaml-builder)
 
 ![An anonymized YAML collection room highlighting the deadline and rules, version policy, submitted worlds, and the checklist for custom APWorlds.](/img/guides/collector-checklist.svg)
 

@@ -543,6 +543,7 @@ def llms() -> Response:
         "## App",
         "",
         f"- [YAML room collector]({_canonical('/')}): host rooms and collect player YAMLs",
+        f"- [Archipelago YAML Builder]({_canonical('/yaml-builder')}): choose a game, configure player options, and download a guided YAML",
         f"- [Community APWorld index]({_canonical('/apworlds')}): browse community game integrations",
     ]
     return Response("\n".join(lines) + "\n", mimetype="text/plain")

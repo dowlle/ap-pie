@@ -2,7 +2,7 @@ CTR Archipelago 0.2.0 adds many new ways to build a seed. Item boxes and CTR let
 
 > **0.2.0 is still a preview.** Alpha 7 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
 
-**[Download Alpha 7](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7)** · **[Build an Alpha 7 YAML](/apworlds?build=ctr&version=0.2.0-alpha7)** · **[Setup guide](/guides/ctr)**
+**[Download Alpha 7](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7)** · **[Build an Alpha 7 YAML](/yaml-builder/ctr?version=0.2.0-alpha7)** · **[Setup guide](/guides/ctr)**
 
 ## Alpha 7 corrections
 

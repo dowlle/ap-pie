@@ -28,6 +28,8 @@ Sign in to Archipelago Pie with Discord. Any signed-in user can create collectio
 
 Players do not need to sign in to open a shared room, build a YAML, or submit to a room that accepts anonymous submissions.
 
+Players who need a file before they receive the room link can use the [guided YAML Builder](/yaml-builder). Share that page with the room rules so they can choose their game, review the generated file, and bring it back to the collector.
+
 ## Step 2: create the collection room
 
 Open **Rooms**, select **Create Room**, and complete the form.
@@ -129,6 +131,7 @@ Ionium Lobby is open source at [ionium-ap/Archipelago-lobby](https://github.com/
 
 - [Getting started with Archipelago](/guides/getting-started) explains the player journey and terminology.
 - [Setting up your YAML](/guides/setting-up-your-yaml) covers player configuration in more detail.
+- The [guided YAML Builder](/yaml-builder) lets players create a file without editing YAML by hand.
 - [Setting up an Archipelago game client](/guides/setting-up-a-game-client) covers the player handoff, connection patterns, and pre-play testing.
 - [Hosting a multiworld](/guides/hosting-a-multiworld) continues with generation, server hosting, and host commands.
 - The [official setup guide](https://archipelago.gg/tutorial/Archipelago/setup_en) is the canonical reference for local generation and server connection.

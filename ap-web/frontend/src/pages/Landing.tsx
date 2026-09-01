@@ -111,6 +111,11 @@ export default function Landing() {
             <h3>APWorld index</h3>
             <p>The community catalog of game integrations, with per-version downloads.</p>
           </a>
+          <a className="lp-tool" href="/yaml-builder">
+            <span className="lp-k">Configure</span>
+            <h3>YAML Builder</h3>
+            <p>Choose a game, set your player options, and download a YAML ready for your host.</p>
+          </a>
         </div>
 
         <div className="lp-sect">Projects</div>

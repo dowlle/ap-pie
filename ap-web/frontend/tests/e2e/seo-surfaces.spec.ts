@@ -183,6 +183,40 @@ test("Poképelago setup guide is published through every guide surface", async (
   expect(machineIndex).toContain("[Poképelago setup](https://ap-pie.com/guides/pokepelago)");
 });
 
+test("contextual pages link directly to the YAML Builder", async ({ page, request }) => {
+  const expectedGuideLinks = [
+    ["/guides/getting-started", 'href="/yaml-builder"'],
+    ["/guides/ctr", 'href="/yaml-builder/ctr"'],
+    ["/guides/hosting-on-archipelago-pie", 'href="/yaml-builder"'],
+    ["/guides/hosting-a-multiworld", 'href="/yaml-builder"'],
+    ["/ctr/reference/randomized-content", 'href="/yaml-builder/ctr"'],
+    ["/ctr/reference/0-2-0-release-notes", 'href="/yaml-builder/ctr?version=0.2.0-alpha7"'],
+  ] as const;
+
+  for (const [path, link] of expectedGuideLinks) {
+    const html = await (await request.get(path)).text();
+    expect(html, `${path} should contain ${link}`).toContain(link);
+  }
+
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: /YAML Builder/ }).last()).toHaveAttribute("href", "/yaml-builder");
+
+  await page.goto("/ctr");
+  await expect(page.getByRole("link", { name: "Build your CTR YAML" }).first()).toHaveAttribute(
+    "href",
+    "/yaml-builder/ctr",
+  );
+
+  await page.goto("/ctr/download");
+  await expect(page.getByRole("link", { name: /Build a .* YAML in your browser/ })).toHaveAttribute(
+    "href",
+    /\/yaml-builder\/ctr\?version=/,
+  );
+
+  const machineIndex = await (await request.get("/llms.txt")).text();
+  expect(machineIndex).toContain("[Archipelago YAML Builder](https://ap-pie.com/yaml-builder)");
+});
+
 test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ request }) => {
   const cases = [
     { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },

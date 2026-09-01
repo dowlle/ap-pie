@@ -42,4 +42,6 @@ Trap items can temporarily change the way a race plays. The stable release inclu
 
 CTR Archipelago does not distribute Crash Team Racing game data. It runs as a native client but still needs a disc image made from your own North American copy.
 
+Ready to choose which of these systems appear in your world? [Configure them in the guided CTR YAML Builder](/yaml-builder/ctr), review the generated file, and download it for your host.
+
 Archipelago randomizes progression and selected gameplay systems. It does not automatically randomize every visual, track layout, opponent, or physics value. The YAML builder shows the options supported by the version your host is using.
