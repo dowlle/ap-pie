@@ -37,6 +37,7 @@ import DropZone from "../components/DropZone";
 import LiveTracker from "../components/LiveTracker";
 import GameCell from "../components/GameCell";
 import { useAPWorldLookup } from "../lib/apworldLookup";
+import SearchToolbar from "../components/SearchToolbar";
 
 /**
  * Public room landing page. No auth required.
@@ -625,21 +626,14 @@ function RoomPublic() {
         <div className="accordion-body">
         {yamls.length > 0 && (
           <div className="yaml-list-header">
-            <div className="yaml-toolbar">
-              <input
-                type="search"
+              <SearchToolbar
                 value={yamlSearch}
-                onChange={(e) => setYamlSearch(e.target.value)}
+                onChange={setYamlSearch}
                 placeholder="Search player, game, or file…"
-                aria-label="Search YAMLs"
-                className="yaml-search"
+                label="Search submitted YAMLs"
+                resultCount={displayedYamls.length}
+                totalCount={yamls.length}
               />
-              {yamlSearch.trim() && (
-                <span className="muted yaml-count">
-                  {displayedYamls.length} of {yamls.length}
-                </span>
-              )}
-            </div>
           </div>
         )}
         {yamls.length === 0 ? (
@@ -729,7 +723,11 @@ function RoomPublic() {
                     </td>
                     {!!user && (
                       <td className="muted">
-                        {y.submitter_username ?? (room.claim_mode ? "-" : "-")}
+                        {y.submitter_username ?? "-"}
+                        {user && (
+                          (y.submitter_user_id != null && y.submitter_user_id === user.id) ||
+                          (!!y.submitter_username && y.submitter_username === user.discord_username)
+                        ) && <span className="uploader-you">You</span>}
                       </td>
                     )}
                     <td className="yaml-row-actions-cell">

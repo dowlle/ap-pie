@@ -23,6 +23,36 @@ class RoomCoordinationRouteTests(unittest.TestCase):
         with self.client.session_transaction() as session:
             session["user_id"] = user_id
 
+    @patch.object(public.analytics, "record_event")
+    @patch.object(public, "get_yamls", return_value=[])
+    @patch.object(public, "maybe_auto_close_room", return_value={
+        "id": "room", "name": "Room", "description": "", "status": "closed",
+        "host_name": "Host", "host_user_id": 7,
+    })
+    def test_anonymous_room_capabilities_do_not_grant_host_access(self, _room, _yamls, _analytics):
+        response = self.client.get("/api/public/rooms/room")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertFalse(payload["viewer_capabilities"]["can_manage_room"])
+        self.assertNotIn("host_user_id", payload)
+
+    @patch.object(public.analytics, "record_event")
+    @patch.object(public, "get_yamls_with_submitters", return_value=[])
+    @patch.object(public, "get_user", return_value={"id": 7, "discord_username": "Host"})
+    @patch.object(public, "maybe_auto_close_room", return_value={
+        "id": "room", "name": "Room", "description": "", "status": "closed",
+        "host_name": "Host", "host_user_id": 7,
+    })
+    def test_host_receives_manage_capability_without_owner_identifier(
+        self, _room, _user, _yamls, _analytics,
+    ):
+        self.login()
+        response = self.client.get("/api/public/rooms/room")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["viewer_capabilities"]["can_manage_room"])
+        self.assertNotIn("host_user_id", payload)
+
     @patch.object(public, "get_room", return_value={"id": "room", "host_user_id": 1})
     def test_anonymous_claim_is_rejected(self, _get_room):
         response = self.client.post("/api/public/rooms/room/slots/0/1/claim")

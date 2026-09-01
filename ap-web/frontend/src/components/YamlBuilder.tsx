@@ -1695,20 +1695,30 @@ function OptionControl({
         (k) => dictVal[k] === undefined || typeof dictVal[k] === "number",
       );
       if (
-        option.dict_kind === "counter"
+        (option.dict_kind === "counter" || option.mapping_value_kind === "number")
         && allNumeric
         && keys.length > 0
         && typeof value !== "string"
       ) {
         return (
-          <div className="yaml-builder-counter">
+          <div
+            className={`yaml-builder-counter${option.mapping_value_kind === "number" ? " yaml-builder-weight-map" : ""}`}
+            data-editor-kind={option.mapping_value_kind === "number" ? "weight-map" : "counter"}
+          >
             {keys.map((k) => (
               <label key={k} className="yaml-builder-counter-row">
-                <code>{k}</code>
+                <span className="yaml-builder-weight-key">
+                  <strong>{k.replaceAll("_", " ")}</strong>
+                  <code>{k}</code>
+                </span>
                 <input
                   type="number"
                   min={0}
-                  value={typeof dictVal[k] === "number" ? (dictVal[k] as number) : 0}
+                  value={typeof dictVal[k] === "number"
+                    ? (dictVal[k] as number)
+                    : typeof (option.default as Record<string, unknown>)?.[k] === "number"
+                      ? ((option.default as Record<string, number>)[k])
+                      : 0}
                   onChange={(e) =>
                     onChange({ ...dictVal, [k]: Number(e.target.value) })
                   }

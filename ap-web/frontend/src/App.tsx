@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, NavLink, Navigate, Link, useLocation } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 // The two views behind "/" stay in the entry chunk: they are what a reload of
 // ap-pie.com paints, so making them wait on a second request would only move
 // the delay. Every other route is a lazy chunk, which keeps react-markdown,
@@ -16,8 +16,8 @@ const Market = lazy(() => import("./pages/Market"));
 const MarketLanding = lazy(() => import("./pages/MarketLanding"));
 const MarketTracker = lazy(() => import("./pages/MarketTracker"));
 const Rooms = lazy(() => import("./pages/Rooms"));
-const RoomDetail = lazy(() => import("./pages/RoomDetail"));
-const RoomPublic = lazy(() => import("./pages/RoomPublic"));
+const RoomWorkspace = lazy(() => import("./pages/RoomWorkspace"));
+const LegacyRoomRedirect = lazy(() => import("./pages/RoomWorkspace").then((module) => ({ default: module.LegacyRoomRedirect })));
 const TrackerPage = lazy(() => import("./pages/Tracker"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminApworldRequests = lazy(() => import("./pages/AdminApworldRequests"));
@@ -30,155 +30,13 @@ const StyleGuide = lazy(() => import("./pages/StyleGuide"));
 const APWorldDetailPreview = lazy(() => import("./pages/APWorldDetailPreview"));
 const AccountRecovery = lazy(() => import("./pages/AccountRecovery"));
 import PublicLayout from "./components/PublicLayout";
-import { refreshData } from "./api";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { FeaturesProvider, useFeature } from "./context/FeaturesContext";
 import { DeploymentProvider } from "./context/DeploymentContext";
-import AuthButton from "./components/AuthButton";
 import DeploymentBanner from "./components/DeploymentBanner";
+import SiteHeader from "./components/SiteHeader";
 import { trackPageView } from "./lib/analytics";
 import PublicRouteHead from "./lib/PublicRouteHead";
-
-function NavBar() {
-  const { user, authEnabled, loading, isOwner, viewAs, setViewAs } = useAuth();
-  const generationOn = useFeature("generation");
-  const [refreshing, setRefreshing] = useState(false);
-  // FEAT-27: hamburger drawer for narrow viewports. CSS hides the toggle
-  // button above 768px and forces the drawer open, so this state is a no-op
-  // on desktop.
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [menuOpen]);
-
-  const closeMenu = () => setMenuOpen(false);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await refreshData();
-      window.location.reload();
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // MVP scope: Archipelago Pie ships as a YAML collector. When open room
-  // creation is enabled, every signed-in user sees Rooms; everything else
-  // (Market, Tracker, Games, Servers,
-  // Summary, Refresh) is admin-only chrome. When auth is disabled (dev) or
-  // still resolving, treat it as full-access so the nav doesn't flash empty
-  // during boot. When the generation feature flag is OFF, the AP-server-
-  // related links are hidden even from admins - there's nothing on those
-  // pages without server-side gen.
-  //
-  // `user` here is the *effective* user from AuthContext - already accounts
-  // for the owner-only view-as override, so flipping the toggle to "host" or
-  // "user" hides the admin nav exactly as it would for a real host or user.
-  const isAdmin = !!user?.is_admin;
-  const isApproved = !!(user?.is_approved || user?.is_admin);
-  const openRoomCreation = useFeature("open_room_creation");
-  const canUseRooms = !!user && (isApproved || openRoomCreation);
-  const authBypassed = !authEnabled || loading;
-  const showRoomsLink = authBypassed || canUseRooms;
-  const showAdminTools = authBypassed || isAdmin;
-
-  return (
-    <nav className="navbar">
-      <Link to={canUseRooms ? "/rooms" : "/"} className="nav-brand" onClick={closeMenu}>Archipelago Pie</Link>
-      <button
-        type="button"
-        className="nav-hamburger"
-        aria-expanded={menuOpen}
-        aria-controls="nav-drawer"
-        aria-label={menuOpen ? "Close menu" : "Open menu"}
-        onClick={() => setMenuOpen(o => !o)}
-      >
-        <span className="nav-hamburger-bar" />
-        <span className="nav-hamburger-bar" />
-        <span className="nav-hamburger-bar" />
-      </button>
-      <div
-        id="nav-drawer"
-        className="nav-links"
-        data-open={menuOpen ? "true" : undefined}
-        onClick={(e) => {
-          // Close the drawer when a NavLink (or any anchor / button) inside
-          // it is clicked - keeps the route-change UX self-evident on
-          // mobile without wiring a router listener.
-          const target = e.target as HTMLElement;
-          if (target.closest("a, button")) closeMenu();
-        }}
-      >
-        {/* FEAT-39: Guides are server-rendered pages outside the SPA, so this
-            is a plain anchor (full navigation), not a NavLink. Visible to
-            everyone and rides the hamburger drawer on mobile. */}
-        <a href="/guides">Guides</a>
-        {showRoomsLink && <NavLink to="/rooms">Rooms</NavLink>}
-        {/* FEAT-39 (Stef 2026-07-22): the APWorld index browser is public.
-            The backing list + download APIs never required a session; the
-            community index is part of the site's public catalog and the
-            guides link to it. Note for FEAT-38: when the /apworlds Create
-            YAML buttons land, they must handle anonymous users (their
-            backend is session-gated). */}
-        <NavLink to="/apworlds">APWorlds</NavLink>
-        <NavLink to="/yaml-builder">YAML Builder</NavLink>
-        {user && <NavLink to="/my/yamls">My</NavLink>}
-        {showAdminTools && (
-          <>
-            <NavLink to="/market">Market</NavLink>
-            {generationOn && <NavLink to="/tracker">Tracker</NavLink>}
-            {generationOn && <NavLink to="/" end>Games</NavLink>}
-            {generationOn && <NavLink to="/servers">Servers</NavLink>}
-            {generationOn && <NavLink to="/summary">Summary</NavLink>}
-            {generationOn && (
-              <button onClick={handleRefresh} disabled={refreshing} className="btn btn-sm">
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </button>
-            )}
-          </>
-        )}
-        {user?.is_admin && <NavLink to="/admin">Admin</NavLink>}
-        {/* Owner-only role-preview toggle (DEVEX-02). Renders nothing for
-            non-owners. Frontend-only override; backend always trusts the
-            real session, so server-gated behaviour (FEAT-13 sanitisation,
-            /api/admin middleware) is unaffected. Public preview is served
-            by opening /r/<id> in an incognito tab. */}
-        {isOwner && <ViewAsToggle viewAs={viewAs} setViewAs={setViewAs} />}
-        <AuthButton />
-      </div>
-    </nav>
-  );
-}
-
-function ViewAsToggle({
-  viewAs,
-  setViewAs,
-}: {
-  viewAs: "admin" | "host" | "user";
-  setViewAs: (role: "admin" | "host" | "user") => void;
-}) {
-  return (
-    <label
-      className="view-as-toggle"
-      title="Preview the UI as a different role. Frontend-only - backend permissions are unaffected. Open /r/<id> in an incognito tab to preview the public (logged-out) experience."
-    >
-      <span className="view-as-label">View as</span>
-      <select
-        value={viewAs}
-        onChange={(e) => setViewAs(e.target.value as "admin" | "host" | "user")}
-      >
-        <option value="admin">Admin</option>
-        <option value="host">Host</option>
-        <option value="user">User</option>
-      </select>
-    </label>
-  );
-}
 
 /**
  * The `/` landing decides per audience:
@@ -224,15 +82,14 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Renders the admin nav + container + approval toast for non-public routes.
- * Public routes (/r and /play) opt out via the PublicLayout wrapper, which
- * gives them a stripped-down shell appropriate for invited players.
+ * Renders the application canvas and approval toast. PublicLayout shares the
+ * same header but uses the room-oriented public canvas.
  */
 function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <DeploymentBanner />
-      <NavBar />
+      <SiteHeader />
       <ApprovalToast />
       {/* The boundary sits inside the shell so a lazy route chunk loads with
           the banner and nav already on screen instead of blanking the page. */}
@@ -280,20 +137,20 @@ function RouteAnalytics() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes - minimal shell, no admin nav. */}
+      {/* Public routes use the shared header and privacy-filtered loaders. */}
       <Route element={<PublicLayout />}>
         <Route path="/play/:seed" element={<Play />} />
-        <Route path="/r/:id" element={<RoomPublic />} />
+        <Route path="/r/:id" element={<RoomWorkspace />} />
       </Route>
 
-      {/* Admin / authenticated routes - full chrome. */}
+      {/* Application and compatibility routes. */}
       <Route path="/market" element={<AdminShell><MarketLanding /></AdminShell>} />
       <Route path="/market/:trackerId" element={<AdminShell><MarketTracker /></AdminShell>} />
       <Route path="/admin" element={<AdminShell><RequireAdmin><Admin /></RequireAdmin></AdminShell>} />
       <Route path="/admin/apworld-requests" element={<AdminShell><RequireAdmin><AdminApworldRequests /></RequireAdmin></AdminShell>} />
       <Route path="/" element={<AdminShell><HomeView /></AdminShell>} />
       <Route path="/rooms" element={<AdminShell><RequireRoomAccess><Rooms /></RequireRoomAccess></AdminShell>} />
-      <Route path="/rooms/:id" element={<AdminShell><RequireRoomAccess><RoomDetail /></RequireRoomAccess></AdminShell>} />
+      <Route path="/rooms/:id" element={<LegacyRoomRedirect />} />
       <Route path="/tracker" element={<AdminShell><RequireApproval><TrackerPage /></RequireApproval></AdminShell>} />
       <Route path="/games/:seed" element={<AdminShell><RequireApproval><GameDetail /></RequireApproval></AdminShell>} />
       <Route path="/games/:seed/market" element={<AdminShell><RequireApproval><Market /></RequireApproval></AdminShell>} />

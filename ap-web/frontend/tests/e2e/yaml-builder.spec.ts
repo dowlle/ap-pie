@@ -53,6 +53,17 @@ async function mockDictKindsSchema(page: Page) {
             default: { slow: 2, spin: 1 },
           },
           {
+            name: "requirement_weights",
+            display_name: "Requirement Weights",
+            type: "dict",
+            dict_kind: "mapping",
+            mapping_value_kind: "number",
+            valid_keys: ["easy_requirement", "hard_requirement"],
+            category: "Composite",
+            description: "Flat numeric requirement weights.",
+            default: {},
+          },
+          {
             name: "legacy_mapping",
             display_name: "Legacy Mapping",
             type: "dict",
@@ -288,6 +299,13 @@ test("dict controls use explicit mapping and counter semantics", async ({ page }
   await expect(trapWeights.locator('input[type="number"]')).toHaveCount(2);
   await expect(trapWeights.locator('input[type="number"]').nth(0)).toHaveValue("2");
   await expect(trapWeights.locator('input[type="number"]').nth(1)).toHaveValue("1");
+
+  const requirementWeights = page.locator(".yaml-builder-option").filter({ hasText: "Requirement Weights" });
+  await expect(requirementWeights.locator('[data-editor-kind="weight-map"]')).toBeVisible();
+  await expect(requirementWeights.locator('input[type="number"]')).toHaveCount(2);
+  await expect(requirementWeights.locator('input[type="number"]').nth(0)).toHaveValue("0");
+  await requirementWeights.locator('input[type="number"]').nth(0).fill("7");
+  await expect(page.locator(".yaml-builder-live-editor")).toHaveValue(/requirement_weights:\n\s+easy_requirement: 7/);
 
   const legacyMapping = page.locator(".yaml-builder-option").filter({ hasText: "Legacy Mapping" });
   await expect(legacyMapping.getByRole("textbox", { name: "Legacy Mapping" })).toBeVisible();

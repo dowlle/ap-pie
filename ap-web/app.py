@@ -29,7 +29,7 @@ SPA_STATIC_PATHS = {
     "presets", "summary", "style-guide", "account-recovery",
 }
 SPA_DYNAMIC_PATHS = (
-    re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
+    re.compile(r"(?:market|play|r|rooms|yaml-builder|my|apworlds)/[^/]+"),
     re.compile(r"games/[^/]+(?:/market)?"),
 )
 

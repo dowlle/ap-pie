@@ -1126,6 +1126,9 @@ export interface TemplateOption {
   /** Dict editing semantics derived from the resolved Archipelago base
    *  class. Absent on legacy schemas, which the UI treats as a mapping. */
   dict_kind?: "mapping" | "counter";
+  /** Presentation capability for flat OptionDict values. Semantic mapping
+   *  identity remains separate so nested mappings never become counters. */
+  mapping_value_kind?: "number";
 }
 
 export interface ParsedTemplate {
@@ -1269,6 +1272,13 @@ export interface PublicRoom {
   created_at: string | null;
   yamls: PublicRoomYaml[];
   player_count: number;
+  /** Session-relative capabilities. These expose permissions, never private
+   *  owner identifiers, and let the canonical room route choose its tools. */
+  viewer_capabilities?: {
+    can_manage_room: boolean;
+    can_submit: boolean;
+    can_coordinate: boolean;
+  };
 }
 
 export async function getPublicRoom(id: string): Promise<PublicRoom> {

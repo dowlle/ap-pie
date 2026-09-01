@@ -57,11 +57,17 @@ class _BaseCustomTracks(OptionDict):
 class CustomTracks(_BaseCustomTracks):
     pass
 
+class RequirementWeights(OptionDict):
+    display_name = "Requirement Weights"
+    valid_keys = ["easy", "hard"]
+    default = {}
+
 @dataclass
 class FixtureOptions(PerGameCommonOptions):
     regions: Regions
     trap_weights: TrapWeights
     custom_tracks: CustomTracks
+    requirement_weights: RequirementWeights
 """,
         )
     return output.getvalue()
@@ -101,6 +107,17 @@ class APWorldOptionsParser(unittest.TestCase):
         self.assertEqual(option["dict_kind"], "mapping")
         self.assertEqual(option["default"], {})
         self.assertEqual(option["valid_keys"], ["baby-t-park"])
+        self.assertNotIn("mapping_value_kind", option)
+
+    def test_flat_numeric_option_dict_emits_weight_map_capability(self) -> None:
+        schema = parse_apworld_options_bytes(_fixture_apworld(), stem_hint="fixture")
+
+        self.assertIsNotNone(schema)
+        assert schema is not None
+        option = next(o for o in schema["options"] if o["name"] == "requirement_weights")
+        self.assertEqual(option["dict_kind"], "mapping")
+        self.assertEqual(option["mapping_value_kind"], "number")
+        self.assertEqual(option["valid_keys"], ["easy", "hard"])
 
 
 if __name__ == "__main__":
