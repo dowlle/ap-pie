@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 4
+BUILDER_SCHEMA_FORMAT_VERSION = 5
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
