@@ -604,6 +604,7 @@ _LITERAL_CONSTRUCTORS = {
 def _get_literal(
     node: ast.AST | None,
     literal_names: dict[str, object] | None = None,
+    local_names: dict[str, object] | None = None,
 ):
     """Safely evaluate a constant/literal AST node.
 
@@ -614,19 +615,51 @@ def _get_literal(
     2026-07-22)."""
     if node is None:
         return None
+    if isinstance(node, ast.Name) and local_names is not None and node.id in local_names:
+        return local_names[node.id]
     if isinstance(node, ast.Name) and literal_names is not None:
         return literal_names.get(node.id)
+    if isinstance(node, ast.Attribute):
+        owner = _get_literal(node.value, literal_names, local_names)
+        if isinstance(owner, dict):
+            return owner.get(node.attr)
     try:
         return ast.literal_eval(node)
     except (ValueError, TypeError, SyntaxError):
         pass
-    if isinstance(node, ast.Call) and not node.keywords and len(node.args) <= 1:
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        values = [_get_literal(item, literal_names, local_names) for item in node.elts]
+        if any(value is None for value in values):
+            return None
+        if isinstance(node, ast.List):
+            return values
+        if isinstance(node, ast.Tuple):
+            return tuple(values)
+        return set(values)
+    if isinstance(node, ast.Dict):
+        keys = [_get_literal(item, literal_names, local_names) for item in node.keys]
+        values = [_get_literal(item, literal_names, local_names) for item in node.values]
+        if any(item is None for item in keys + values):
+            return None
+        return dict(zip(keys, values))
+    if isinstance(node, ast.Call) and not node.keywords:
         fn = _get_name(node.func)
+        record_fields = (literal_names or {}).get("__static_record_fields__", {})
+        if fn in record_fields:
+            fields = record_fields[fn]
+            if len(node.args) != len(fields):
+                return None
+            values = [_get_literal(arg, literal_names, local_names) for arg in node.args]
+            if any(value is None for value in values):
+                return None
+            return dict(zip(fields, values))
+        if len(node.args) > 1:
+            return None
         ctor = _LITERAL_CONSTRUCTORS.get(fn or "")
         if ctor is not None:
             if not node.args:
                 return ctor()
-            inner = _get_literal(node.args[0], literal_names)
+            inner = _get_literal(node.args[0], literal_names, local_names)
             if inner is not None:
                 try:
                     return ctor(inner)
@@ -637,9 +670,50 @@ def _get_literal(
             and node.func.attr in {"keys", "values"}
             and not node.args
         ):
-            owner = _get_literal(node.func.value, literal_names)
+            owner = _get_literal(node.func.value, literal_names, local_names)
             if isinstance(owner, dict):
                 return owner.keys() if node.func.attr == "keys" else owner.values()
+    if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
+        if len(node.generators) != 1:
+            return None
+        generator = node.generators[0]
+        if generator.is_async or not isinstance(generator.target, ast.Name):
+            return None
+        source = _get_literal(generator.iter, literal_names, local_names)
+        if not isinstance(source, (list, tuple, set, frozenset)):
+            return None
+        values = []
+        pairs = []
+        for item in source:
+            scope = {**(local_names or {}), generator.target.id: item}
+            include = True
+            for condition in generator.ifs:
+                result = _get_literal(condition, literal_names, scope)
+                if result is None:
+                    return None
+                if not result:
+                    include = False
+                    break
+            if not include:
+                continue
+            if isinstance(node, ast.DictComp):
+                key = _get_literal(node.key, literal_names, scope)
+                value = _get_literal(node.value, literal_names, scope)
+                if key is None or value is None:
+                    return None
+                pairs.append((key, value))
+            else:
+                value = _get_literal(node.elt, literal_names, scope)
+                if value is None:
+                    return None
+                values.append(value)
+        if isinstance(node, ast.DictComp):
+            return dict(pairs)
+        if isinstance(node, ast.SetComp):
+            return set(values)
+        if isinstance(node, ast.ListComp):
+            return values
+        return iter(values)
     return None
 
 
@@ -653,6 +727,7 @@ def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object
     and ``dict.keys()/values()`` are evaluated.
     """
     assignments: list[tuple[str, ast.AST]] = []
+    record_fields: dict[str, list[str]] = {}
     for member in _module_py_files(zf, stem):
         source = _read_member(zf, member)
         if not source:
@@ -661,6 +736,18 @@ def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object
             tree = ast.parse(source)
         except SyntaxError:
             continue
+        for node in tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            if not any(_get_name(base) == "NamedTuple" for base in node.bases):
+                continue
+            fields = [
+                name for item in node.body
+                if isinstance(item, ast.AnnAssign)
+                and (name := _get_name(item.target)) is not None
+            ]
+            if fields:
+                record_fields[node.name] = fields
         for node in tree.body:
             if isinstance(node, ast.Assign) and len(node.targets) == 1:
                 name = _get_name(node.targets[0])
@@ -671,7 +758,7 @@ def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object
                 if name and node.value is not None:
                     assignments.append((name, node.value))
 
-    resolved: dict[str, object] = {}
+    resolved: dict[str, object] = {"__static_record_fields__": record_fields}
     pending = assignments
     for _ in range(8):
         next_pending: list[tuple[str, ast.AST]] = []

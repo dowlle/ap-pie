@@ -73,6 +73,51 @@ class FixtureOptions(PerGameCommonOptions):
     return output.getvalue()
 
 
+def _derived_weight_fixture_apworld() -> bytes:
+    """Match CTR Alpha 6's registry-derived OptionDict metadata shape."""
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w") as archive:
+        archive.writestr(
+            "fixture/__init__.py",
+            'class FixtureWorld:\n    game = "Fixture Game"\n',
+        )
+        archive.writestr(
+            "fixture/traps.py",
+            """from typing import NamedTuple
+
+class TrapEntry(NamedTuple):
+    key: str
+    weight: int
+    buildable: bool
+
+TRAP_REGISTRY = (
+    TrapEntry("slow", 5, True),
+    TrapEntry("spin", 2, True),
+    TrapEntry("reserved", 9, False),
+)
+TRAP_WEIGHT_KEYS = tuple(entry.key for entry in TRAP_REGISTRY if entry.buildable)
+DEFAULT_TRAP_WEIGHTS = {entry.key: entry.weight for entry in TRAP_REGISTRY if entry.buildable}
+""",
+        )
+        archive.writestr(
+            "fixture/Options.py",
+            """from dataclasses import dataclass
+from Options import OptionDict, PerGameCommonOptions
+from .traps import DEFAULT_TRAP_WEIGHTS, TRAP_WEIGHT_KEYS
+
+class TrapWeights(OptionDict):
+    display_name = "Trap Weights"
+    default = dict(DEFAULT_TRAP_WEIGHTS)
+    valid_keys = list(TRAP_WEIGHT_KEYS)
+
+@dataclass
+class FixtureOptions(PerGameCommonOptions):
+    trap_weights: TrapWeights
+""",
+        )
+    return output.getvalue()
+
+
 class APWorldOptionsParser(unittest.TestCase):
     def test_imported_literal_collection_becomes_choices(self) -> None:
         schema = parse_apworld_options_bytes(_fixture_apworld(), stem_hint="fixture")
@@ -118,6 +163,19 @@ class APWorldOptionsParser(unittest.TestCase):
         self.assertEqual(option["dict_kind"], "mapping")
         self.assertEqual(option["mapping_value_kind"], "number")
         self.assertEqual(option["valid_keys"], ["easy", "hard"])
+
+    def test_registry_derived_weight_map_matches_ctr_alpha6_shape(self) -> None:
+        schema = parse_apworld_options_bytes(
+            _derived_weight_fixture_apworld(), stem_hint="fixture"
+        )
+
+        self.assertIsNotNone(schema)
+        assert schema is not None
+        option = next(o for o in schema["options"] if o["name"] == "trap_weights")
+        self.assertEqual(option["dict_kind"], "mapping")
+        self.assertEqual(option["mapping_value_kind"], "number")
+        self.assertEqual(option["valid_keys"], ["slow", "spin"])
+        self.assertEqual(option["default"], {"slow": 5, "spin": 2})
 
 
 if __name__ == "__main__":

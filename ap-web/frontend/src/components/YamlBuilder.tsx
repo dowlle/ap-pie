@@ -1709,7 +1709,6 @@ function OptionControl({
               <label key={k} className="yaml-builder-counter-row">
                 <span className="yaml-builder-weight-key">
                   <strong>{k.replaceAll("_", " ")}</strong>
-                  <code>{k}</code>
                 </span>
                 <input
                   type="number"
