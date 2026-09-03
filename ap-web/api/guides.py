@@ -119,7 +119,7 @@ GUIDES: list[dict[str, str]] = [
             "run the session for your group."
         ),
         "published": "2026-07-22",
-        "updated": "2026-08-19",
+        "updated": "2026-09-03",
         "project": "ap",
         "kicker": "Hosting",
         "featured": False,

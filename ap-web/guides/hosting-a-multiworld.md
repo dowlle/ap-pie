@@ -8,9 +8,21 @@ Before you start, install Archipelago itself from the [official releases page](h
 
 Each player normally submits one YAML for each world they bring, and [Setting up your YAML](/guides/setting-up-your-yaml) explains that side. Players who do not want to edit the file by hand can use the [guided YAML Builder](/yaml-builder). You can collect the files however you like, but chasing attachments through chat gets old fast. [How to host a room on Archipelago Pie](/guides/hosting-on-archipelago-pie) covers creating a collection room, sharing one link, checking submissions, closing at the deadline, and downloading the complete stack.
 
+![The Players folder inside an Archipelago install, holding one YAML file for each player in the multiworld.](/img/guides/hosting-players-folder.png)
+
+*However you collect them, you end up with one YAML per world, ready for the `Players` folder in your Archipelago install.*
+
 ## Step 2: generate the game
 
 Put all the YAML files in the `Players` folder inside your Archipelago install, then open the Archipelago Launcher and click **Generate**. The generator reads every YAML, weaves the worlds together, and writes a zip into the `output` folder. That zip is your whole multiworld in one file.
+
+![The Archipelago Launcher window with the Generate button in the list of tools.](/img/guides/hosting-launcher-generate.png)
+
+*Generate is in the Archipelago Launcher, alongside the clients and the other tools.*
+
+![The output folder after a successful generation, showing the generated multiworld zip file.](/img/guides/hosting-generate-output.png)
+
+*A successful run leaves one zip in the `output` folder. That single file is the whole multiworld.*
 
 If generation fails, the error usually names the YAML that caused it. You can also check any single file beforehand at [archipelago.gg/check](https://archipelago.gg/check).
 
@@ -18,7 +30,15 @@ If generation fails, the error usually names the YAML that caused it. You can al
 
 The easy route is letting archipelago.gg host for you. Go to the [Host Game page](https://archipelago.gg/uploads), upload the zip from your `output` folder, and the site creates a room page. That web page shows the server address and port and, when available, lets each player download the data file generated for their slot. Hosted rooms may sleep after inactivity and resume when somebody opens the room page, so players should use the current connection details shown there.
 
+![The Host Game page on archipelago.gg, with the Upload File button that takes the generated zip.](/img/guides/hosting-upload-form.png)
+
+*The Host Game page takes the zip straight from your `output` folder. Upload File is the only control you need.*
+
 You can also host on your own machine. Extract the `.archipelago` file from the output zip and double-click it, which starts the bundled Archipelago server on port 38281. Players outside your network can only reach it if you forward that port, so for most groups the archipelago.gg route is less hassle.
+
+![The bundled Archipelago server console running locally, reporting the port it is listening on.](/img/guides/hosting-local-console.png)
+
+*A self-hosted server runs in a console window and prints the port it listens on.*
 
 ## Step 4: share and play
 
@@ -32,6 +52,10 @@ Give every player a complete handoff:
 - the exact slot name from the generated seed;
 - the room password, if it uses one;
 - the support channel and any synchronized-start rules.
+
+![An archipelago.gg room page, with the server address and port line players need to connect.](/img/guides/hosting-room-page.png)
+
+*The room page carries the address and port, the player list, and the data files each slot can download.*
 
 From there each game's client, mod, or connector takes over. [Setting up an Archipelago game client](/guides/setting-up-a-game-client) explains the common patterns and a pre-play test. Exact installation steps belong in the game-specific guide.
 
