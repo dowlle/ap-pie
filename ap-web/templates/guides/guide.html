@@ -14,7 +14,7 @@
         <a href="/guides">Guides</a>{% if project_name %}<span class="sep">/</span>{{ project_name }}{% endif %}
       </nav>
       <h1>{{ h1 }}</h1>
-      <p class="guide-byline">By Appie · Updated {{ date_modified }}</p>
+      <p class="guide-byline">By Appie · Published <time datetime="{{ date_published }}">{{ date_published }}</time> · Updated <time datetime="{{ date_modified }}">{{ date_modified }}</time></p>
       {% if video_url %}
       <div class="video-embed">
         <button type="button" class="video-facade"

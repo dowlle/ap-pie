@@ -37,7 +37,7 @@
     <article>
       <nav class="crumbs" aria-label="Breadcrumb"><a href="/ctr">CTR Archipelago</a><span class="sep">/</span><a href="/ctr/reference">Reference</a><span class="sep">/</span>{{ page.short_title }}</nav>
       <h1>{{ page.title }}</h1>
-      <div class="reference-version badge">{{ page.status_label }} · Verified against {{ page.verified_against }} · Updated {{ page.updated }}</div>
+      <div class="reference-version badge">{{ page.status_label }} · Verified against {{ page.verified_against }} · Published <time datetime="{{ page.published }}">{{ page.published }}</time> · Updated <time datetime="{{ page.updated }}">{{ page.updated }}</time></div>
       <div class="guide-body">{{ body_html|safe }}</div>
       <div class="related-block">
         <div class="related-label">More CTR reference pages</div>
