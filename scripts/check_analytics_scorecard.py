@@ -23,9 +23,19 @@ if not database_url:
 db.init_db(database_url)
 conn = db._get_conn()
 with conn.cursor() as cur:
+    # This is explicitly a disposable-database check. Isolate its exact-count
+    # assertions from any analytics written by checks that ran before it.
+    cur.execute(
+        """TRUNCATE events, events_daily, events_daily_segments,
+                    guide_entry_daily, analytics_write_buckets RESTART IDENTITY"""
+    )
     cur.execute(
         """INSERT INTO users (discord_id, discord_username, is_admin, is_approved)
            VALUES ('analytics-check-admin', 'Analytics check', TRUE, TRUE)
+           ON CONFLICT (discord_id) DO UPDATE
+               SET discord_username = EXCLUDED.discord_username,
+                   is_admin = TRUE,
+                   is_approved = TRUE
            RETURNING id"""
     )
     admin_id = int(cur.fetchone()[0])
@@ -48,6 +58,9 @@ db.insert_event(
 )
 db.insert_event("page_view", ua_class="bot", props={"view": "yaml_builder"})
 db.insert_event("page_view", ua_class="synthetic", props={"view": "yaml_builder"})
+db.increment_guide_entry_daily("analytics-check-ctr", "search")
+db.increment_guide_entry_daily("analytics-check-ctr", "search")
+db.increment_guide_entry_daily("analytics-check-getting-started", "internal")
 
 by_kind = {row["kind"]: row for row in db.events_counts_by_kind(1)}
 page_views = by_kind["page_view"]
@@ -66,6 +79,22 @@ assert device["attempts"] == 1, device
 assert device["outputs"] == 1, device
 game = scorecard["builder_games"][0]
 assert game["game"] == "Check Game" and game["attempts"] == 1 and game["outputs"] == 1, game
+guide_entries = {
+    (row["guide_slug"], row["entry_channel"]): row["entries"]
+    for row in scorecard["guide_entries"]
+}
+assert guide_entries[("analytics-check-ctr", "search")] == 2, guide_entries
+assert guide_entries[("analytics-check-getting-started", "internal")] == 1, guide_entries
+
+with conn.cursor() as cur:
+    cur.execute(
+        """SELECT column_name
+             FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'guide_entry_daily'
+         ORDER BY ordinal_position"""
+    )
+    guide_columns = [row[0] for row in cur.fetchall()]
+assert guide_columns == ["day", "guide_slug", "entry_channel", "entry_count"], guide_columns
 
 with conn.cursor() as cur:
     cur.execute(

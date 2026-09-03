@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "ap-web"))
 # Stub the storage layer before analytics imports it: the writer thread
 # resolves `db` lazily, so this captures rows instead of hitting Postgres.
 captured: list[dict] = []
+captured_guide_entries: list[dict] = []
 raise_on_write = False
 
 
@@ -38,8 +39,15 @@ def _insert_event(kind, **kwargs):
     captured.append({"kind": kind, **kwargs})
 
 
+def _increment_guide_entry_daily(slug, entry_channel):
+    if raise_on_write:
+        raise RuntimeError("simulated database failure")
+    captured_guide_entries.append({"slug": slug, "entry_channel": entry_channel})
+
+
 db_stub = types.ModuleType("db")
 db_stub.insert_event = _insert_event  # type: ignore[attr-defined]
+db_stub.increment_guide_entry_daily = _increment_guide_entry_daily  # type: ignore[attr-defined]
 sys.modules["db"] = db_stub
 
 import analytics  # noqa: E402
@@ -59,6 +67,12 @@ def drain(expected: int, timeout: float = 2.0) -> None:
     """Wait for the async writer to flush."""
     deadline = time.time() + timeout
     while len(captured) < expected and time.time() < deadline:
+        time.sleep(0.01)
+
+
+def drain_guide_entries(expected: int, timeout: float = 2.0) -> None:
+    deadline = time.time() + timeout
+    while len(captured_guide_entries) < expected and time.time() < deadline:
         time.sleep(0.01)
 
 
@@ -245,6 +259,61 @@ check(
     "duckduckgo" not in repr(captured[-1]) and "archipelago+yaml" not in repr(captured[-1]),
 )
 check("bucket value is stored instead", captured[-1]["props"]["from_path"] == "external")
+
+# Guide acquisition uses a separate aggregate-at-write path. The raw referrer
+# is classified in request memory and never appears in the queued DB call.
+channel_cases = [
+    (None, "direct"),
+    ("https://ap-pie.com/ctr?download=secret", "internal"),
+    ("https://www.google.nl/search?q=archipelago+yaml", "search"),
+    ("https://discord.gg/private-invite", "community"),
+    ("https://github.com/dowlle/ctr/releases/tag/private", "project_release"),
+    ("https://archipelago.gg/tutorial/Secret", "ap_ecosystem"),
+    ("https://example.org/private/path?q=secret", "other_external"),
+    ("not a url", "unknown"),
+]
+for referrer, expected_channel in channel_cases:
+    headers = {"Referer": referrer} if referrer is not None else {}
+    with app.test_request_context(
+        "/guides/ctr", base_url="https://ap-pie.com", headers=headers,
+    ):
+        check(
+            f"guide entry classifies {expected_channel}",
+            analytics.entry_channel() == expected_channel,
+        )
+
+before = len(captured_guide_entries)
+with app.test_request_context(
+    "/guides/ctr",
+    base_url="https://ap-pie.com",
+    headers={"Referer": "https://www.google.com/search?q=private+terms"},
+):
+    analytics.record_guide_entry("ctr")
+drain_guide_entries(before + 1)
+guide_entry = captured_guide_entries[-1]
+check("guide acquisition aggregate is recorded", guide_entry == {"slug": "ctr", "entry_channel": "search"})
+check("guide aggregate contains no raw referrer", "google" not in repr(guide_entry) and "private" not in repr(guide_entry))
+
+for header in ({"Sec-GPC": "1"}, {"DNT": "1"}):
+    before = len(captured_guide_entries)
+    with app.test_request_context(
+        "/guides/ctr",
+        base_url="https://ap-pie.com",
+        headers={**header, "Referer": "https://www.google.com/search?q=private"},
+    ):
+        analytics.record_guide_entry("ctr")
+    time.sleep(0.05)
+    check(f"{list(header)[0]}: guide channel omitted", len(captured_guide_entries) == before)
+
+before = len(captured_guide_entries)
+with app.test_request_context(
+    "/guides/ctr",
+    base_url="https://ap-pie.com",
+    headers={"User-Agent": "Googlebot/2.1", "Referer": "https://www.google.com/"},
+):
+    analytics.record_guide_entry("ctr")
+time.sleep(0.05)
+check("bots do not enter guide acquisition aggregates", len(captured_guide_entries) == before)
 
 # ── 8: every caller actually imports the module ──────────────────
 # The recorders are one-liners dropped into existing routes, which makes it

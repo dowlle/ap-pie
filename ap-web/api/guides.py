@@ -362,6 +362,10 @@ def guide_page(slug: str) -> str:
     if not md_path.is_file():
         abort(404)
     body_html, sections = _render_markdown(md_path)
+    # Acquisition is reduced to a fixed bucket in request memory and written
+    # only as a daily aggregate. GPC/DNT, bots, and synthetic checks are
+    # excluded; no raw referrer or request-level context reaches that table.
+    analytics.record_guide_entry(slug, request)
     # FEAT-31: guides are server-rendered, so a read is visible here without
     # any client-side script. `from_path` records the internal page the
     # reader arrived from (external referrers collapse to "external"), which
