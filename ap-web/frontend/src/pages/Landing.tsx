@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeaturesContext";
 
@@ -7,8 +8,10 @@ import { useFeature } from "../context/FeaturesContext";
  * - Unauthenticated visitors: see what Archipelago Pie is + a Discord login CTA.
  * - Logged-in but unapproved while open access is disabled: same page, but
  *   the CTA becomes a waiting-for-approval notice.
+ * - Signed-in members who can reach /rooms: same page, with every sign-in call
+ *   to action replaced by a link into their own rooms and YAMLs.
  *
- * Signed-in room hosts and admins never see this - App.tsx routes them onward.
+ * Admins still get GameList at the root; App.tsx routes them onward.
  *
  * FEAT-39 design pass (ruled 2026-07-22): project-showcase layout from the
  * approved homepage mockup. Hero with the connected-islands motif, "Host a
@@ -20,6 +23,9 @@ export default function Landing() {
   const { user, login } = useAuth();
   const openRoomCreation = useFeature("open_room_creation");
   const pending = !!user && !user.is_approved && !user.is_admin && !openRoomCreation;
+  // Mirrors RequireRoomAccess in App.tsx. Members who can reach /rooms get links
+  // into their own area; everyone else keeps the sign-in call to action.
+  const canUseRooms = !!user && (user.is_approved || user.is_admin || openRoomCreation);
 
   return (
     <div className="lp">
@@ -36,10 +42,19 @@ export default function Landing() {
           Learn Archipelago, organize a multiworld, or explore community game integrations.
         </p>
         <div className="lp-cta">
-          <button type="button" className="btn btn-primary lp-btn" onClick={() => login("/")}>
-            Create a collection room
-          </button>
-          <a href="/guides" className="btn lp-btn lp-btn-ghost">Start with the guides</a>
+          {canUseRooms ? (
+            <>
+              <Link className="btn btn-primary lp-btn" to="/rooms">Your rooms</Link>
+              <Link className="btn lp-btn lp-btn-ghost" to="/my/yamls">Your YAMLs</Link>
+            </>
+          ) : (
+            <>
+              <button type="button" className="btn btn-primary lp-btn" onClick={() => login("/rooms")}>
+                Create a collection room
+              </button>
+              <a href="/guides" className="btn lp-btn lp-btn-ghost">Start with the guides</a>
+            </>
+          )}
         </div>
 
         {pending && (
@@ -85,22 +100,39 @@ export default function Landing() {
               <p>Learn the basics, then follow the path for joining a group, playing solo, or organizing a multiworld.</p>
               <span className="lp-path-link">Start with Archipelago →</span>
             </a>
-            <button type="button" className="lp-path" onClick={() => login("/rooms")}>
-              <span className="lp-k">Organizing a multiworld?</span>
-              <h3>Collect each world's settings</h3>
-              <p>Create a collection room where players can submit and check their configurations before generation.</p>
-              <span className="lp-path-link">Create a collection room →</span>
-            </button>
+            {canUseRooms ? (
+              <Link className="lp-path" to="/rooms">
+                <span className="lp-k">Organizing a multiworld?</span>
+                <h3>Collect each world's settings</h3>
+                <p>Create a collection room where players can submit and check their configurations before generation.</p>
+                <span className="lp-path-link">Go to your rooms →</span>
+              </Link>
+            ) : (
+              <button type="button" className="lp-path" onClick={() => login("/rooms")}>
+                <span className="lp-k">Organizing a multiworld?</span>
+                <h3>Collect each world's settings</h3>
+                <p>Create a collection room where players can submit and check their configurations before generation.</p>
+                <span className="lp-path-link">Create a collection room →</span>
+              </button>
+            )}
           </div>
         </section>
 
         <div className="lp-sect">Tools for every multiworld</div>
         <div className="lp-tools">
-          <button type="button" className="lp-tool" onClick={() => login("/rooms")}>
-            <span className="lp-k">Hosting</span>
-            <h3>Collection rooms</h3>
-            <p>Set a deadline and let players submit world configurations in the browser instead of chasing files in DMs.</p>
-          </button>
+          {canUseRooms ? (
+            <Link className="lp-tool" to="/rooms">
+              <span className="lp-k">Hosting</span>
+              <h3>Collection rooms</h3>
+              <p>Set a deadline and let players submit world configurations in the browser instead of chasing files in DMs.</p>
+            </Link>
+          ) : (
+            <button type="button" className="lp-tool" onClick={() => login("/rooms")}>
+              <span className="lp-k">Hosting</span>
+              <h3>Collection rooms</h3>
+              <p>Set a deadline and let players submit world configurations in the browser instead of chasing files in DMs.</p>
+            </button>
+          )}
           <a className="lp-tool" href="/guides">
             <span className="lp-k">Learn</span>
             <h3>Guides</h3>

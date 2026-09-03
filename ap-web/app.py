@@ -24,8 +24,8 @@ DIST_DIR = Path(__file__).parent / "frontend" / "dist"
 STATE_DIR = Path(__file__).parent / ".state"
 
 SPA_STATIC_PATHS = {
-    "", "market", "admin", "admin/apworld-requests", "rooms", "tracker",
-    "servers", "apworlds", "yaml-builder", "rooms/templates", "my",
+    "", "market", "admin", "admin/apworld-requests", "games", "rooms",
+    "tracker", "servers", "apworlds", "yaml-builder", "rooms/templates", "my",
     "presets", "summary", "style-guide", "account-recovery",
 }
 SPA_DYNAMIC_PATHS = (

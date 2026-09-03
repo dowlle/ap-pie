@@ -46,12 +46,15 @@ import PublicRouteHead from "./lib/PublicRouteHead";
  *     (marketing + Discord CTA and, when applicable, the legacy beta notice)
  */
 function HomeView() {
-  const { user, authEnabled, loading } = useAuth();
-  const openRoomCreation = useFeature("open_room_creation");
+  const { authEnabled, loading } = useAuth();
   if (loading) return null;
+  // Local development with auth disabled keeps the operator view at the root.
   if (!authEnabled) return <GameList />;
-  if (user?.is_admin) return <GameList />;
-  if (user?.is_approved || (user && openRoomCreation)) return <Navigate to="/rooms" replace />;
+  // Everyone signed in gets the landing page, admins included. It used to
+  // redirect members to /rooms and hand admins the generated-games list, so
+  // neither could reach the homepage. The generated-games list now lives at
+  // /games, and Landing swaps its sign-in calls to action for links into the
+  // viewer's own rooms.
   return <Landing />;
 }
 
@@ -149,6 +152,7 @@ function AppRoutes() {
       <Route path="/admin" element={<AdminShell><RequireAdmin><Admin /></RequireAdmin></AdminShell>} />
       <Route path="/admin/apworld-requests" element={<AdminShell><RequireAdmin><AdminApworldRequests /></RequireAdmin></AdminShell>} />
       <Route path="/" element={<AdminShell><HomeView /></AdminShell>} />
+      <Route path="/games" element={<AdminShell><RequireAdmin><GameList /></RequireAdmin></AdminShell>} />
       <Route path="/rooms" element={<AdminShell><RequireRoomAccess><Rooms /></RequireRoomAccess></AdminShell>} />
       <Route path="/rooms/:id" element={<LegacyRoomRedirect />} />
       <Route path="/tracker" element={<AdminShell><RequireApproval><TrackerPage /></RequireApproval></AdminShell>} />
