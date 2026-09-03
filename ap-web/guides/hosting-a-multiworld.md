@@ -81,7 +81,7 @@ The slot name is the one detail players ask about most. It is the `name` field f
 
 ![An archipelago.gg room page showing the connect line with the address and port, the slot table, and the server log.](/img/guides/hosting-room-page.png)
 
-*The room page carries the connect line players need, the slot table with each slot name and any downloadable data file, and a console for host commands.*
+*The room page carries the connect line players need, the slot table with each slot name and any downloadable data file, and a console for host commands. The port is blanked out here because every room gets its own.*
 
 From there each game's client, mod, or connector takes over. [Setting up an Archipelago game client](/guides/setting-up-a-game-client) explains the common patterns and a pre-play test. Exact installation steps belong in the game-specific guide.
 
