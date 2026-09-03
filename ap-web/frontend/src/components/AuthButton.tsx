@@ -8,7 +8,7 @@ export default function AuthButton() {
 
   if (!isAuthenticated) {
     return (
-      <button onClick={() => login()} className="btn btn-sm btn-primary">
+      <button onClick={() => login("/rooms")} className="btn btn-sm btn-primary">
         Sign in with Discord
       </button>
     );

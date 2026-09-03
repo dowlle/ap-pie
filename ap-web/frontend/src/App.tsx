@@ -47,11 +47,12 @@ import PublicRouteHead from "./lib/PublicRouteHead";
  */
 function HomeView() {
   const { user, authEnabled, loading } = useAuth();
-  const openRoomCreation = useFeature("open_room_creation");
   if (loading) return null;
   if (!authEnabled) return <GameList />;
   if (user?.is_admin) return <GameList />;
-  if (user?.is_approved || (user && openRoomCreation)) return <Navigate to="/rooms" replace />;
+  // Signed-in members used to be redirected straight to /rooms, which left them
+  // with no way back to the landing page. They get the landing page instead, and
+  // Landing swaps its sign-in calls to action for links into their own rooms.
   return <Landing />;
 }
 

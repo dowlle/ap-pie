@@ -43,7 +43,7 @@ export default function SiteHeader() {
 
   return (
     <nav className="navbar" aria-label="Main navigation">
-      <Link to={canUseRooms ? "/rooms" : "/"} className="nav-brand" onClick={() => setMenuOpen(false)}>
+      <Link to="/" className="nav-brand" onClick={() => setMenuOpen(false)}>
         Archipelago Pie
       </Link>
       <button
