@@ -79,4 +79,4 @@ The validator at [archipelago.gg/check](https://archipelago.gg/check) catches ma
 
 ## Handing it in
 
-Send the file to whoever hosts your game. If they use this site, they will give you a collection-room link where you submit it in the browser. [Hosting a multiworld](/guides/hosting-a-multiworld) shows what happens on the host's side. After generation, use the maintained setup guide and [game-client guide](/guides/setting-up-a-game-client) to get connected.
+Send the file to whoever hosts your game. If they use this site, they will give you a collection-room link where you submit it in the browser. [Hosting an Archipelago multiworld](/guides/hosting-a-multiworld) shows what happens on the host's side. After generation, use the maintained setup guide and [game-client guide](/guides/setting-up-a-game-client) to get connected.

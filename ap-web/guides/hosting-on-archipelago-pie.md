@@ -133,5 +133,5 @@ Ionium Lobby is open source at [ionium-ap/Archipelago-lobby](https://github.com/
 - [Setting up your YAML](/guides/setting-up-your-yaml) covers player configuration in more detail.
 - The [guided YAML Builder](/yaml-builder) lets players create a file without editing YAML by hand.
 - [Setting up an Archipelago game client](/guides/setting-up-a-game-client) covers the player handoff, connection patterns, and pre-play testing.
-- [Hosting a multiworld](/guides/hosting-a-multiworld) continues with generation, server hosting, and host commands.
+- [Hosting an Archipelago multiworld](/guides/hosting-a-multiworld) continues with generation, server hosting, and host commands.
 - The [official setup guide](https://archipelago.gg/tutorial/Archipelago/setup_en) is the canonical reference for local generation and server connection.
