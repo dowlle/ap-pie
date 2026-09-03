@@ -29,6 +29,10 @@ What it never records
 - **No free-form content.** Props are validated against a per-kind allowlist
   below; unknown keys are dropped, strings are length-capped. Usernames,
   e-mail addresses, YAML contents and validator prose never enter an event.
+- **No raw acquisition source.** Guide acquisition is reduced in request
+  memory to a fixed channel, then incremented directly in a daily aggregate.
+  No referrer URL, hostname, timestamp, request id, account id, country,
+  device class, or visitor id enters that aggregate.
 
 GDPR posture
 ------------
@@ -59,11 +63,13 @@ does not raise, ever.
 
 from __future__ import annotations
 
+import hmac
 import queue
+import re
 import secrets
 import threading
-import hmac
 from typing import Any
+from urllib.parse import urlparse
 
 import config
 
@@ -84,6 +90,18 @@ _ATTEMPT_ID = "attempt_id"
 
 def _enum(*values: str) -> frozenset[str]:
     return frozenset(values)
+
+
+GUIDE_ENTRY_CHANNELS = _enum(
+    "internal",
+    "direct",
+    "search",
+    "community",
+    "project_release",
+    "ap_ecosystem",
+    "other_external",
+    "unknown",
+)
 
 KIND_SPECS: dict[str, dict[str, Any]] = {
     # ── Client-postable: what only the browser can see ──
@@ -324,8 +342,6 @@ def entry_path(req=None) -> str | None:
         ref = (req.headers.get("Referer") or "").strip()
         if not ref:
             return None
-        from urllib.parse import urlparse
-
         parsed = urlparse(ref)
         if not parsed.netloc:
             return None
@@ -334,6 +350,75 @@ def entry_path(req=None) -> str | None:
         return (parsed.path or "/")[:120]
     except Exception:
         return None
+
+
+def _host_matches(host: str, *domains: str) -> bool:
+    """Exact domain or subdomain match, never a loose suffix match."""
+    return any(host == domain or host.endswith(f".{domain}") for domain in domains)
+
+
+def entry_channel(req=None) -> str:
+    """Reduce a referrer to one fixed acquisition bucket in request memory.
+
+    The raw URL and hostname are local variables only. They are never returned,
+    queued, logged, or written to Postgres. Query strings and fragments are not
+    inspected. No network lookup is made.
+    """
+    req = _current_request(req)
+    if req is None:
+        return "unknown"
+    try:
+        ref = (req.headers.get("Referer") or "").strip()
+        if not ref:
+            return "direct"
+        parsed = urlparse(ref)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            return "unknown"
+        host = parsed.hostname.lower().rstrip(".")
+        request_host = (urlparse(req.host_url).hostname or "").lower().rstrip(".")
+
+        if host == request_host or _host_matches(host, "ap-pie.com"):
+            return "internal"
+
+        if (
+            host == "google.com"
+            or re.fullmatch(r"(?:www|news|search)\.google\.[a-z.]{2,12}", host)
+            or _host_matches(
+                host,
+                "bing.com",
+                "duckduckgo.com",
+                "search.brave.com",
+                "ecosia.org",
+                "search.yahoo.com",
+                "kagi.com",
+                "startpage.com",
+                "qwant.com",
+            )
+        ):
+            return "search"
+
+        if _host_matches(host, "archipelago.gg"):
+            return "ap_ecosystem"
+
+        if _host_matches(host, "github.com", "gitlab.com", "codeberg.org"):
+            return "project_release"
+
+        if _host_matches(
+            host,
+            "discord.com",
+            "discord.gg",
+            "reddit.com",
+            "bsky.app",
+            "mastodon.social",
+            "youtube.com",
+            "youtu.be",
+            "twitch.tv",
+        ):
+            return "community"
+
+        return "other_external"
+    except Exception:
+        return "unknown"
 
 
 def objection_signalled(req=None) -> bool:
@@ -471,22 +556,25 @@ def sanitize_props(kind: str, props: dict | None) -> dict:
 
 
 def _writer_loop() -> None:
-    from db import insert_event
+    from db import increment_guide_entry_daily, insert_event
 
     while True:
         row = _queue.get()
         try:
-            insert_event(
-                row["kind"],
-                user_id=row.get("user_id"),
-                room_id=row.get("room_id"),
-                path=row.get("path"),
-                cf_country=row.get("cf_country"),
-                ua_class=row.get("ua_class"),
-                request_id=row.get("request_id"),
-                visit_id=row.get("visit_id"),
-                props=row.get("props"),
-            )
+            if row.get("aggregate") == "guide_entry_daily":
+                increment_guide_entry_daily(row["slug"], row["entry_channel"])
+            else:
+                insert_event(
+                    row["kind"],
+                    user_id=row.get("user_id"),
+                    room_id=row.get("room_id"),
+                    path=row.get("path"),
+                    cf_country=row.get("cf_country"),
+                    ua_class=row.get("ua_class"),
+                    request_id=row.get("request_id"),
+                    visit_id=row.get("visit_id"),
+                    props=row.get("props"),
+                )
         except Exception as e:
             # Best-effort by contract: a failed write is logged once and
             # forgotten. Never retried, never surfaced to the request.
@@ -506,6 +594,51 @@ def start_writer() -> None:
 
 
 # ── Public API ───────────────────────────────────────────────────
+
+
+def record_guide_entry(slug: str, req=None) -> None:
+    """Increment an anonymous daily guide acquisition counter.
+
+    This deliberately bypasses the raw events table. The queue receives only
+    the canonical guide slug and a fixed acquisition enum. Requests carrying
+    GPC or DNT, bots, and recognised synthetic checks do not contribute.
+    """
+    try:
+        if not config.ANALYTICS_ENABLED:
+            return
+        req = _current_request(req)
+        if req is None or objection_signalled(req):
+            return
+
+        synthetic = (req.headers.get("X-AP-Pie-Synthetic") or "").strip()
+        expected = config.ANALYTICS_SYNTHETIC_TOKEN
+        if expected and synthetic and hmac.compare_digest(synthetic, expected):
+            return
+        if _ua_class(req.headers.get("User-Agent") or "") == "bot":
+            return
+
+        clean_slug = str(slug)[:120]
+        channel = entry_channel(req)
+        if not clean_slug or channel not in GUIDE_ENTRY_CHANNELS:
+            return
+
+        start_writer()
+        try:
+            _queue.put_nowait(
+                {
+                    "aggregate": "guide_entry_daily",
+                    "slug": clean_slug,
+                    "entry_channel": channel,
+                }
+            )
+        except queue.Full:
+            global _dropped
+            with _dropped_lock:
+                _dropped += 1
+                if _dropped % 100 == 1:
+                    _log(f"analytics: queue full, dropped {_dropped} event(s)")
+    except Exception as e:  # pragma: no cover
+        _log(f"analytics: guide entry recording failed: {e}")
 
 
 def record_event(

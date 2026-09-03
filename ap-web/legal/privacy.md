@@ -1,6 +1,6 @@
 Archipelago Pie is run by one person as a hobby project. This page explains exactly what the site records, what it deliberately does not record, and what you can ask for. It is written to be checkable: everything described here corresponds to code you can read in the public repository at [github.com/dowlle/ap-pie](https://github.com/dowlle/ap-pie).
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-03
 
 ## The short version
 
@@ -24,6 +24,16 @@ The site keeps a server-side log of things that happen on it, so its own funnel 
 - whether the device looked like a desktop, a mobile, a bot, or a recognised synthetic test
 - a small set of technical details for that event type, such as a game name, a version number, a rejection reason code, whether a YAML was hand-edited rather than built from the form, or that a community preset was used. Builder events may also carry a random attempt value so one opening, its furthest stage, and its outcome are counted together
 - your account id, **only if you were signed in**
+
+Guide arrivals have one additional, aggregate-only measurement. When a guide
+loads, the referring address is examined briefly in server memory and reduced
+to one of eight fixed categories: internal, direct, search, community, project
+or release, Archipelago ecosystem, other external, or unknown. The raw address
+and hostname are then discarded. Postgres receives only a daily counter keyed
+by date, guide slug, and category. That counter has no exact time, account id,
+request id, country, device class, visit value, or other request-level data.
+Requests carrying Global Privacy Control or Do Not Track do not contribute to
+this acquisition counter at all.
 
 That is the whole record. In particular it does **not** contain:
 

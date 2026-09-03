@@ -97,13 +97,32 @@ class SecurityControls(unittest.TestCase):
         conn.rollback()
 
     def test_global_analytics_ceiling(self) -> None:
-        config.ANALYTICS_EVENTS_GLOBAL_PER_MINUTE = 2
-        for _ in range(3):
-            db.insert_event("page_view", props={})
+        original = config.ANALYTICS_EVENTS_GLOBAL_PER_MINUTE
         conn = db._get_conn()
         with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM analytics_write_buckets WHERE minute = date_trunc('minute', NOW())"
+            )
             cur.execute("SELECT COUNT(*) FROM events")
-            self.assertEqual(cur.fetchone()[0], 2)
+            events_before = int(cur.fetchone()[0])
+            cur.execute("SELECT COALESCE(SUM(entry_count), 0) FROM guide_entry_daily")
+            entries_before = int(cur.fetchone()[0])
+        conn.commit()
+
+        config.ANALYTICS_EVENTS_GLOBAL_PER_MINUTE = 2
+        try:
+            db.insert_event("page_view", props={})
+            db.increment_guide_entry_daily("security-check", "search")
+            db.insert_event("page_view", props={})
+        finally:
+            config.ANALYTICS_EVENTS_GLOBAL_PER_MINUTE = original
+
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM events")
+            events_after = int(cur.fetchone()[0])
+            cur.execute("SELECT COALESCE(SUM(entry_count), 0) FROM guide_entry_daily")
+            entries_after = int(cur.fetchone()[0])
+        self.assertEqual((events_after - events_before) + (entries_after - entries_before), 2)
 
 
 if __name__ == "__main__":

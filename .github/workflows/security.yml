@@ -67,6 +67,8 @@ jobs:
           cache: pip
           cache-dependency-path: ap-web/requirements.txt
       - run: python -m pip install -r ap-web/requirements.txt ./ap-lib
+      - run: python scripts/check_analytics.py
+      - run: python scripts/check_analytics_scorecard.py
       - run: python scripts/test_security_controls.py
       - run: python scripts/test_open_room_creation.py
       - run: python scripts/test_account_lifecycle.py

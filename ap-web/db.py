@@ -763,6 +763,22 @@ def init_db(db_url: str) -> None:
                 PRIMARY KEY (day, kind, traffic_class)
             )
         """)
+        # Guide acquisition is aggregate at write time. This table never
+        # receives a raw referrer, hostname, timestamp, request/account id,
+        # country, device class, or visitor id. Its only dimensions are the
+        # local calendar day, canonical guide slug, and fixed coarse channel.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS guide_entry_daily (
+                day           DATE NOT NULL,
+                guide_slug    TEXT NOT NULL CHECK (length(guide_slug) <= 120),
+                entry_channel TEXT NOT NULL CHECK (entry_channel IN (
+                    'internal', 'direct', 'search', 'community',
+                    'project_release', 'ap_ecosystem', 'other_external', 'unknown'
+                )),
+                entry_count   INTEGER NOT NULL CHECK (entry_count >= 0),
+                PRIMARY KEY (day, guide_slug, entry_channel)
+            )
+        """)
         # SEC-43: a DB-shared ceiling covers every server-side recorder and
         # remains global if gunicorn later gains more workers.
         cur.execute("""
@@ -2002,6 +2018,48 @@ def insert_event(
     conn.commit()
 
 
+def increment_guide_entry_daily(guide_slug: str, entry_channel: str) -> None:
+    """Increment a privacy-minimised guide acquisition counter.
+
+    Callers pass only a canonical slug and a fixed category. The shared
+    analytics ceiling still applies, but no request-level row is created.
+    """
+    import config
+
+    channels = {
+        "internal", "direct", "search", "community", "project_release",
+        "ap_ecosystem", "other_external", "unknown",
+    }
+    guide_slug = str(guide_slug)[:120]
+    if not guide_slug or entry_channel not in channels:
+        return
+
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """WITH bucket AS (
+                   INSERT INTO analytics_write_buckets (minute, event_count)
+                   VALUES (date_trunc('minute', NOW()), 1)
+                   ON CONFLICT (minute) DO UPDATE
+                       SET event_count = analytics_write_buckets.event_count + 1
+                       WHERE analytics_write_buckets.event_count < %s
+                   RETURNING 1
+               )
+               INSERT INTO guide_entry_daily
+                   (day, guide_slug, entry_channel, entry_count)
+               SELECT (NOW() AT TIME ZONE 'Europe/Amsterdam')::date, %s, %s, 1
+                 FROM bucket
+               ON CONFLICT (day, guide_slug, entry_channel) DO UPDATE
+                   SET entry_count = guide_entry_daily.entry_count + 1""",
+            (max(1, config.ANALYTICS_EVENTS_GLOBAL_PER_MINUTE),
+             guide_slug, entry_channel),
+        )
+        cur.execute(
+            "DELETE FROM analytics_write_buckets WHERE minute < NOW() - INTERVAL '2 hours'"
+        )
+    conn.commit()
+
+
 def query_events(
     *,
     kind: str | None = None,
@@ -2131,6 +2189,23 @@ def events_scorecard(days: int = 7) -> dict:
         )
         out["builder_sources"] = [
             {"source": r["source"], "page_views": int(r["page_views"]), "observable_visits": int(r["visits"])}
+            for r in _dictrow(cur)
+        ]
+
+        cur.execute(
+            """SELECT guide_slug, entry_channel, SUM(entry_count) AS entries
+                 FROM guide_entry_daily
+                WHERE day >= (NOW() AT TIME ZONE 'Europe/Amsterdam')::date - (%s - 1)
+             GROUP BY guide_slug, entry_channel
+             ORDER BY entries DESC, guide_slug, entry_channel""",
+            (days,),
+        )
+        out["guide_entries"] = [
+            {
+                "guide_slug": r["guide_slug"],
+                "entry_channel": r["entry_channel"],
+                "entries": int(r["entries"]),
+            }
             for r in _dictrow(cur)
         ]
 
