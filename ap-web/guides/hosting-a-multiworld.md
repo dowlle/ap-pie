@@ -66,16 +66,7 @@ Players outside your network can only reach a self-hosted server if you forward 
 
 ## Step 4: share and play
 
-Give every player a complete handoff:
-
-- the exact game, Archipelago, and APWorld version;
-- the maintained game-specific setup guide;
-- any generated player-specific patch, mod, or other output;
-- the room page link, so players can see current connection information and retrieve available data files;
-- the server address and port from the current room page;
-- the exact slot name from the generated seed;
-- the room password, if it uses one;
-- the support channel and any synchronized-start rules.
+Share the room page link with your players. Everything they need to connect is on that page: the server address and port, every slot name, and any data file a slot has to download. If the room has a password, send that along with the link, and point each player at the setup guide for their game so they know which client to use.
 
 The slot name is the one detail players ask about most. It is the `name` field from that player's own YAML, copied exactly, and it is what the client asks for when connecting. It is not the game name and not their Discord name. The room page lists every slot name in the multiworld, so you can read them off there if a player is unsure.
 
