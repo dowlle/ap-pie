@@ -19,6 +19,13 @@ def website_id(base_url: str) -> str:
     return f"{_base(base_url)}/#website"
 
 
+#: One sentence pair naming what Archipelago Pie does and does not do. Kept
+#: here so the structured data, llms.txt and the on-page copy cannot drift.
+CAPABILITY_STATEMENT = (
+    "Archipelago Pie collects player YAMLs in a collection room, and gives you the reviewed APWorld catalog and a YAML Builder for making them. It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine."
+)
+
+
 def author_id(base_url: str) -> str:
     return f"{_base(base_url)}/#appie"
 
@@ -33,6 +40,10 @@ def graph(base_url: str, *nodes: dict) -> dict:
                 "@id": organization_id(base),
                 "name": "Archipelago Pie",
                 "url": f"{base}/",
+                # Stated on every page so answer engines have a quotable
+                # capability boundary. AP-Pie is repeatedly described by AI
+                # answers as a multiworld host, which it is not.
+                "description": CAPABILITY_STATEMENT,
                 "logo": {
                     "@type": "ImageObject",
                     "url": f"{base}/archipelago-favicon.png",
@@ -43,6 +54,7 @@ def graph(base_url: str, *nodes: dict) -> dict:
                 "@id": website_id(base),
                 "name": "Archipelago Pie",
                 "url": f"{base}/",
+                "description": CAPABILITY_STATEMENT,
                 "publisher": {"@id": organization_id(base)},
                 "inLanguage": "en",
             },

@@ -4395,6 +4395,14 @@ details.collapsible-section > .accordion-body {
 .lp-btn { padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; }
 .lp-btn-ghost { background: transparent; color: var(--accent-light); border: 1px solid var(--border-strong); }
 .lp-btn-ghost:hover { border-color: var(--accent); }
+.lp-capability {
+  position: relative;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  max-width: 42rem;
+  margin: 0 auto 2rem;
+}
 .lp-hint { position: relative; color: var(--text-muted); font-size: 0.9rem; max-width: 30rem; margin: 1.5rem auto 0; }
 .lp-hint strong { color: var(--text-h); }
 .lp .landing-pending { position: relative; margin: 1.5rem auto 0; max-width: 32rem; text-align: left; }

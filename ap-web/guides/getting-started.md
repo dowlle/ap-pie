@@ -102,7 +102,7 @@ Choose this path when you are the person bringing everyone's YAMLs together and 
 
 > **Ready to organize a game?**
 >
-> Set the rules, collect YAMLs, keep APWorld versions together, and download everything for generation. [Host a room on Archipelago Pie →](/guides/hosting-on-archipelago-pie)
+> Set the rules, collect YAMLs, keep APWorld versions together, and download everything for generation. [Collect YAMLs in a collection room →](/guides/hosting-on-archipelago-pie)
 
 ## Words you will see
 

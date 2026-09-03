@@ -1,3 +1,7 @@
+> **What Archipelago Pie does and does not do**
+>
+> Archipelago Pie collects player YAMLs in a collection room, and gives you the reviewed APWorld catalog and a YAML Builder for making them. It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine.
+
 ## What this room is for
 
 An Archipelago Pie room is a **collection room**. It gives your group one public page for rules, deadlines, YAML submissions, APWorld versions, and early checks before you generate the multiworld.
@@ -60,7 +64,7 @@ The default policy pins specific versions and shows players which version to ins
 
 Flexible or latest-version policies are available for groups that deliberately accept version drift. State that choice in the rules so players do not assume that every version is interchangeable.
 
-Select **Create** when the room is ready. If you host similar events repeatedly, save the settings as a reusable room template.
+Select **Create** when the room is ready. If you run similar events repeatedly, save the settings as a reusable room template.
 
 ## Step 3: share the public room
 
@@ -78,7 +82,7 @@ Copy the room's public link into the Discord announcement. Ask each player to:
 
 ## Step 4: review submissions and APWorlds
 
-The host room shows every submitted slot. Check player names, games, validation status, warnings, and duplicate or unexpected submissions while players can still correct them.
+The collection room shows every submitted slot. Check player names, games, validation status, warnings, and duplicate or unexpected submissions while players can still correct them.
 
 Archipelago Pie checks known file structure and option values, but those checks are advisory. A green submission is not proof that the complete multiworld will generate. Custom forks, weighted options, triggers, meta settings, and interactions between worlds may only fail during generation.
 
@@ -104,7 +108,7 @@ The output zip is the generated multiworld. Do not share connection details unti
 
 Upload the successful output zip through the official [Host Game page](https://archipelago.gg/uploads). Archipelago creates the playable server room and provides its address and port.
 
-Share the server address, exact slot names, optional password, and any tracker links with the group. You can also add the external host and port in the Archipelago Pie room settings so the collection page points players toward the live server.
+Share the server address, exact slot names, optional password, and any tracker links with the group. You can also add the server address and port in the Archipelago Pie collection room settings, so the collection page points players toward the live server.
 
 Before announcing that the game is ready, check that:
 
