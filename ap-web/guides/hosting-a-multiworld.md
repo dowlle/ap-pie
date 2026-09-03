@@ -1,3 +1,7 @@
+> **What Archipelago Pie does and does not do**
+>
+> Archipelago Pie collects player YAMLs in a collection room, and gives you the reviewed APWorld catalog and a YAML Builder for making them. It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine.
+
 ## What a host actually does
 
 Every multiworld has one person wearing the host hat. The host collects one configuration for each world, generates the game from that stack, puts the server online, and gives every player what they need to connect. Most players bring one world, so this often looks like one YAML per player.
@@ -8,7 +12,7 @@ Before you start, install Archipelago itself from the [official releases page](h
 
 ## Step 1: collect the YAMLs
 
-Each player normally submits one YAML for each slot they bring, and [Setting up your YAML](/guides/setting-up-your-yaml) explains that side. Players who do not want to edit the file by hand can use the [guided YAML Builder](/yaml-builder). You can collect the files however you like, but chasing attachments through chat gets old fast. [How to host a room on Archipelago Pie](/guides/hosting-on-archipelago-pie) covers creating a collection room, sharing one link, checking submissions, closing at the deadline, and downloading the complete stack.
+Each player normally submits one YAML for each slot they bring, and [Setting up your YAML](/guides/setting-up-your-yaml) explains that side. Players who do not want to edit the file by hand can use the [guided YAML Builder](/yaml-builder). You can collect the files however you like, but chasing attachments through chat gets old fast. [Collecting YAMLs in an Archipelago Pie collection room](/guides/hosting-on-archipelago-pie) covers creating a collection room, sharing one link, checking submissions, closing at the deadline, and downloading the complete stack.
 
 ![The Players folder in Windows Explorer, holding one YAML file for each slot in the multiworld.](/img/guides/hosting-players-folder.png)
 

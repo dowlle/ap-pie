@@ -35,6 +35,10 @@ export default function Landing() {
         <p className="lp-sub">
           Learn Archipelago, organize a multiworld, or explore community game integrations.
         </p>
+        <p className="lp-capability">
+          Archipelago Pie collects player YAMLs in a collection room, and gives you the reviewed APWorld catalog and a YAML Builder for making them.{" "}
+          It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine.
+        </p>
         <div className="lp-cta">
           <button type="button" className="btn btn-primary lp-btn" onClick={() => login("/")}>
             Create a collection room
@@ -47,7 +51,7 @@ export default function Landing() {
             <strong>You're logged in as {user?.discord_username}.</strong>
             <span>
               Archipelago Pie is in <em>closed beta</em>, so room creation is gated. If you'd
-              like to host rooms, ping <strong>Appie</strong> on Discord and I'll add you
+              like to create collection rooms, ping <strong>Appie</strong> on Discord and I'll add you
               manually. You can already drop YAMLs in any room someone has shared with you
               - that part doesn't need approval. This page auto-refreshes once you're added.
             </span>
@@ -55,13 +59,13 @@ export default function Landing() {
         )}
         {!user && openRoomCreation && (
           <p className="lp-hint">
-            Room creation is open. Sign in with Discord to create and manage your own collection rooms.
+            Collection room creation is open. Sign in with Discord to create and manage your own.
           </p>
         )}
         {!user && !openRoomCreation && (
           <p className="lp-hint">
             Archipelago Pie is in <strong>closed beta</strong>. Sign in with Discord to browse
-            and submit to existing rooms straight away. To host your own, ping
+            and submit to existing collection rooms straight away. To create your own, ping
             <strong> Appie</strong> on Discord after signing in.
           </p>
         )}
@@ -97,7 +101,7 @@ export default function Landing() {
         <div className="lp-sect">Tools for every multiworld</div>
         <div className="lp-tools">
           <button type="button" className="lp-tool" onClick={() => login("/rooms")}>
-            <span className="lp-k">Hosting</span>
+            <span className="lp-k">Collecting</span>
             <h3>Collection rooms</h3>
             <p>Set a deadline and let players submit world configurations in the browser instead of chasing files in DMs.</p>
           </button>

@@ -87,19 +87,19 @@ GUIDES: list[dict[str, str]] = [
     {
         "slug": "hosting-on-archipelago-pie",
         "file": "hosting-on-archipelago-pie.md",
-        "h1": "How to host a room on Archipelago Pie",
-        "page_title": "Host a Collection Room | Archipelago Pie",
+        "h1": "Collecting YAMLs in an Archipelago Pie collection room",
+        "page_title": "Collect Player YAMLs in a Collection Room | Archipelago Pie",
         "meta_description": (
             "Create an Archipelago Pie collection room, choose APWorld versions, "
             "collect player YAMLs, then download everything for generation."
         ),
-        "card_title": "Host a room on Archipelago Pie",
+        "card_title": "Collecting YAMLs in a collection room",
         "card_blurb": (
             "Create a collection room, share it with players, review submissions, "
             "and download everything for local generation."
         ),
         "published": "2026-08-19",
-        "updated": "2026-08-19",
+        "updated": "2026-09-03",
         "project": "ap",
         "kicker": "Archipelago Pie",
         "featured": False,
@@ -424,6 +424,31 @@ def guide_page(slug: str) -> str:
         guide["meta_description"],
     )
     page_node["mainEntity"] = {"@id": f"{canonical_url}#article"}
+    faq = None
+    if slug == "hosting-a-multiworld":
+        faq = {
+            "@type": "FAQPage",
+            "@id": f"{canonical_url}#faq",
+            "isPartOf": {"@id": f"{canonical_url}#page"},
+            "inLanguage": "en",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "Can I host my multiworld on ap-pie.com?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": (
+                            "No. Archipelago Pie does not run Archipelago game servers and has "
+                            "no multiworld upload page, so there is no ap-pie.com server address "
+                            "to connect to. It collects player YAMLs in a collection room and "
+                            "publishes the reviewed APWorld catalog and the YAML Builder. "
+                            "Generate the multiworld locally with the Archipelago Launcher, then "
+                            "host the server on archipelago.gg or on your own machine."
+                        ),
+                    },
+                }
+            ],
+        }
     breadcrumb = {
         "@type": "BreadcrumbList",
         "@id": f"{canonical_url}#breadcrumb",
@@ -455,6 +480,7 @@ def guide_page(slug: str) -> str:
             page_node,
             article,
             breadcrumb,
+            *( [faq] if faq else [] ),
         ),
         video_url=guide.get("video_url"),
         video_title=guide.get("video_title"),
@@ -518,6 +544,8 @@ def llms() -> Response:
         "including Crash Team Racing on PC. Guides are server-rendered plain "
         "HTML and safe to cite.",
         "",
+        seo.CAPABILITY_STATEMENT,
+        "",
         "## Guides",
         "",
     ]
@@ -542,7 +570,7 @@ def llms() -> Response:
         "",
         "## App",
         "",
-        f"- [YAML room collector]({_canonical('/')}): host rooms and collect player YAMLs",
+        f"- [Collection rooms]({_canonical('/')}): collect player YAMLs for a multiworld before generation; not a game server",
         f"- [Archipelago YAML Builder]({_canonical('/yaml-builder')}): choose a game, configure player options, and download a guided YAML",
         f"- [Community APWorld index]({_canonical('/apworlds')}): browse community game integrations",
     ]
