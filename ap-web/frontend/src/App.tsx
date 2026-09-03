@@ -58,14 +58,6 @@ function HomeView() {
   return <Landing />;
 }
 
-/** Generated games are not a public surface. The list is admin-only and only
- *  exists while generation is switched on, matching the nav link's condition. */
-function RequireGeneration({ children }: { children: React.ReactNode }) {
-  const generationOn = useFeature("generation");
-  if (!generationOn) return <Navigate to="/" replace />;
-  return <>{children}</>;
-}
-
 function RequireApproval({ children }: { children: React.ReactNode }) {
   const { user, authEnabled, loading } = useAuth();
   if (loading) return null;
@@ -160,7 +152,7 @@ function AppRoutes() {
       <Route path="/admin" element={<AdminShell><RequireAdmin><Admin /></RequireAdmin></AdminShell>} />
       <Route path="/admin/apworld-requests" element={<AdminShell><RequireAdmin><AdminApworldRequests /></RequireAdmin></AdminShell>} />
       <Route path="/" element={<AdminShell><HomeView /></AdminShell>} />
-      <Route path="/games" element={<AdminShell><RequireAdmin><RequireGeneration><GameList /></RequireGeneration></RequireAdmin></AdminShell>} />
+      <Route path="/games" element={<AdminShell><RequireAdmin><GameList /></RequireAdmin></AdminShell>} />
       <Route path="/rooms" element={<AdminShell><RequireRoomAccess><Rooms /></RequireRoomAccess></AdminShell>} />
       <Route path="/rooms/:id" element={<LegacyRoomRedirect />} />
       <Route path="/tracker" element={<AdminShell><RequireApproval><TrackerPage /></RequireApproval></AdminShell>} />
