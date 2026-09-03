@@ -43,7 +43,7 @@ export default function SiteHeader() {
 
   return (
     <nav className="navbar" aria-label="Main navigation">
-      <Link to={canUseRooms ? "/rooms" : "/"} className="nav-brand" onClick={() => setMenuOpen(false)}>
+      <Link to="/" className="nav-brand" onClick={() => setMenuOpen(false)}>
         Archipelago Pie
       </Link>
       <button
@@ -74,7 +74,7 @@ export default function SiteHeader() {
         {showAdminTools && generationOn && (
           <>
             <NavLink to="/tracker">Tracker</NavLink>
-            <NavLink to="/" end>Games</NavLink>
+            <NavLink to="/games">Games</NavLink>
             <NavLink to="/servers">Servers</NavLink>
             <NavLink to="/summary">Summary</NavLink>
             <button onClick={handleRefresh} disabled={refreshing} className="btn btn-sm">
