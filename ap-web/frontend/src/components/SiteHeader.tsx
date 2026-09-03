@@ -74,7 +74,7 @@ export default function SiteHeader() {
         {showAdminTools && generationOn && (
           <>
             <NavLink to="/tracker">Tracker</NavLink>
-            <NavLink to="/" end>Games</NavLink>
+            <NavLink to="/games">Games</NavLink>
             <NavLink to="/servers">Servers</NavLink>
             <NavLink to="/summary">Summary</NavLink>
             <button onClick={handleRefresh} disabled={refreshing} className="btn btn-sm">

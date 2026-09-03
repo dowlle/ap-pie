@@ -46,14 +46,25 @@ import PublicRouteHead from "./lib/PublicRouteHead";
  *     (marketing + Discord CTA and, when applicable, the legacy beta notice)
  */
 function HomeView() {
+  const { authEnabled, loading } = useAuth();
+  if (loading) return null;
+  // Local development with auth disabled keeps the operator view at the root.
+  if (!authEnabled) return <GameList />;
+  // Everyone signed in gets the landing page, admins included. It used to
+  // redirect members to /rooms and hand admins the generated-games list, so
+  // neither could reach the homepage. The generated-games list now lives at
+  // /games, and Landing swaps its sign-in calls to action for links into the
+  // viewer's own rooms.
+  return <Landing />;
+}
+
+/** Who could reach the generated-games list back when it lived at the root. */
+function RequireGameList({ children }: { children: React.ReactNode }) {
   const { user, authEnabled, loading } = useAuth();
   if (loading) return null;
-  if (!authEnabled) return <GameList />;
-  if (user?.is_admin) return <GameList />;
-  // Signed-in members used to be redirected straight to /rooms, which left them
-  // with no way back to the landing page. They get the landing page instead, and
-  // Landing swaps its sign-in calls to action for links into their own rooms.
-  return <Landing />;
+  if (!authEnabled) return <>{children}</>;
+  if (!user?.is_admin) return <Navigate to="/" replace />;
+  return <>{children}</>;
 }
 
 function RequireApproval({ children }: { children: React.ReactNode }) {
@@ -150,6 +161,7 @@ function AppRoutes() {
       <Route path="/admin" element={<AdminShell><RequireAdmin><Admin /></RequireAdmin></AdminShell>} />
       <Route path="/admin/apworld-requests" element={<AdminShell><RequireAdmin><AdminApworldRequests /></RequireAdmin></AdminShell>} />
       <Route path="/" element={<AdminShell><HomeView /></AdminShell>} />
+      <Route path="/games" element={<AdminShell><RequireGameList><GameList /></RequireGameList></AdminShell>} />
       <Route path="/rooms" element={<AdminShell><RequireRoomAccess><Rooms /></RequireRoomAccess></AdminShell>} />
       <Route path="/rooms/:id" element={<LegacyRoomRedirect />} />
       <Route path="/tracker" element={<AdminShell><RequireApproval><TrackerPage /></RequireApproval></AdminShell>} />
