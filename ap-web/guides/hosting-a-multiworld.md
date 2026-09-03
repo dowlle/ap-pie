@@ -8,11 +8,11 @@ Before you start, install Archipelago itself from the [official releases page](h
 
 ## Step 1: collect the YAMLs
 
-Each player normally submits one YAML for each world they bring, and [Setting up your YAML](/guides/setting-up-your-yaml) explains that side. Players who do not want to edit the file by hand can use the [guided YAML Builder](/yaml-builder). You can collect the files however you like, but chasing attachments through chat gets old fast. [How to host a room on Archipelago Pie](/guides/hosting-on-archipelago-pie) covers creating a collection room, sharing one link, checking submissions, closing at the deadline, and downloading the complete stack.
+Each player normally submits one YAML for each slot they bring, and [Setting up your YAML](/guides/setting-up-your-yaml) explains that side. Players who do not want to edit the file by hand can use the [guided YAML Builder](/yaml-builder). You can collect the files however you like, but chasing attachments through chat gets old fast. [How to host a room on Archipelago Pie](/guides/hosting-on-archipelago-pie) covers creating a collection room, sharing one link, checking submissions, closing at the deadline, and downloading the complete stack.
 
-![The Players folder in Windows Explorer, holding one YAML file for each world in the multiworld.](/img/guides/hosting-players-folder.png)
+![The Players folder in Windows Explorer, holding one YAML file for each slot in the multiworld.](/img/guides/hosting-players-folder.png)
 
-*However you collect them, you end up with one YAML per world. This stack is two worlds from two players.*
+*However you collect them, you end up with one YAML per slot. This stack is two slots from two players.*
 
 ## Step 2: generate the game
 
@@ -58,7 +58,7 @@ You can also host on your own machine. Click **Host** in the Archipelago Launche
 
 ![The bundled Archipelago server console running locally, reporting the address and port it is hosting on.](/img/guides/hosting-local-console.png)
 
-*A self-hosted server runs in a console window and prints the address and port it listens on. The address here is painted out.*
+*A self-hosted server runs in a console window and prints the address and port it listens on.*
 
 Warnings at the top of that console are normal. Lines about custom worlds with a missing manifest, or worlds that were not loaded because the game is already loaded, do not stop the server. The line that matters is `Hosting game at <address>:38281`, and that address and port are what your players connect to.
 

@@ -107,13 +107,13 @@ GUIDES: list[dict[str, str]] = [
     {
         "slug": "hosting-a-multiworld",
         "file": "hosting-a-multiworld.md",
-        "h1": "Hosting a multiworld",
+        "h1": "Hosting an Archipelago multiworld",
         "page_title": "How to Host an Archipelago Multiworld | Archipelago Pie",
         "meta_description": (
             "Collect player YAMLs, generate the game, bring the Archipelago server "
             "online, and run a synchronized or asynchronous multiworld."
         ),
-        "card_title": "Hosting a multiworld",
+        "card_title": "Hosting an Archipelago multiworld",
         "card_blurb": (
             "Collect the YAMLs, generate the game, put the server online, and "
             "run the session for your group."
