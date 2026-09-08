@@ -5,9 +5,10 @@ import {
   getApworldBuilderSchema,
   getMyYamls,
   getRoomBuilderSchemas,
-  getRooms,
+  getMyRooms,
   submitYamlContentToRoom,
   type BuilderSchemaEntry,
+  type MyRoom,
   type Room,
 } from "../api";
 import CreateRoomModal from "../components/CreateRoomModal";
@@ -273,7 +274,7 @@ function RoomAttach({
   canCreateRoom: boolean;
   onCreateRoom: (yamlContent: string) => void;
 }) {
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [rooms, setRooms] = useState<MyRoom[]>([]);
   const [selected, setSelected] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -281,9 +282,9 @@ function RoomAttach({
 
   useEffect(() => {
     let cancelled = false;
-    getRooms("open")
-      .then((result) => { if (!cancelled) setRooms(result); })
-      .catch(() => {});
+    getMyRooms()
+      .then((result) => { if (!cancelled) setRooms(result.filter((room) => room.status === "open" && (!room.submit_deadline || Date.parse(room.submit_deadline) > Date.now()))); })
+      .catch(() => { if (!cancelled) setError("Could not load your rooms. Try reopening the builder."); });
     return () => { cancelled = true; };
   }, []);
 
@@ -309,12 +310,12 @@ function RoomAttach({
       <h3>Use this YAML</h3>
       {added ? (
         <p className="settings-aux-note" style={{ margin: 0, color: "var(--green)" }}>
-          ✓ {added.message}. <Link to={`/rooms/${added.roomId}`}>Open the room</Link>
+          ✓ {added.message}. <Link to={`/r/${added.roomId}`}>Open the room</Link>
         </p>
       ) : (
         <>
           <div className="settings-controls">
-            <select value={selected} onChange={(event) => setSelected(event.target.value)}>
+            <select aria-label="Room to send YAML to" value={selected} onChange={(event) => setSelected(event.target.value)}>
               <option value="">{rooms.length ? "Select one of your open rooms…" : "No open rooms"}</option>
               {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
             </select>
@@ -328,6 +329,7 @@ function RoomAttach({
             )}
           </div>
           <p className="settings-hint">
+            Join a room from its shared link to see it here. <Link to="/my/rooms">My rooms</Link>.{" "}
             {canCreateRoom
               ? "Or download the file and use it anywhere."
               : "New room creation is disabled for this account. You can still add the YAML to an existing room or download it."}

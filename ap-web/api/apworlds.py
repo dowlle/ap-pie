@@ -574,7 +574,7 @@ def builder_schemas_for_pins(
             # Parser improvements can add machine-readable controls without
             # changing the APWorld artifact hash. Re-derive older positive
             # schemas once instead of serving their stale shape forever.
-            if cached_schema is None or (
+            if (cached_schema is None and cached.get("parser_version") == BUILDER_SCHEMA_FORMAT_VERSION) or (
                 isinstance(cached_schema, dict)
                 and cached_schema.get("_format_version") == BUILDER_SCHEMA_FORMAT_VERSION
             ):

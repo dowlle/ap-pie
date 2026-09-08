@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import ast
 import io
+import json
 import re
 import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 5
+BUILDER_SCHEMA_FORMAT_VERSION = 6
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -132,7 +133,7 @@ def _read_member(zf: zipfile.ZipFile, name: str) -> str | None:
             raw = fh.read(_MAX_MEMBER_BYTES + 1)
         if len(raw) > _MAX_MEMBER_BYTES:
             return None
-        return raw.decode("utf-8", errors="replace")
+        return raw.decode("utf-8-sig", errors="replace")
     except Exception:
         return None
 
@@ -147,6 +148,21 @@ def _extract_game_name(zf: zipfile.ZipFile, stem: str) -> str | None:
     (non-test) sources, __init__.py first, literals before constant
     resolution.
     """
+    # Modern worlds declare identity in their packaged manifest, sometimes
+    # without any literal Python game assignment. Read data, never import code.
+    for manifest_path in (f"{stem}/archipelago.json", "archipelago.json"):
+        manifest_src = _read_member(zf, manifest_path)
+        if not manifest_src:
+            continue
+        try:
+            manifest = json.loads(manifest_src.lstrip("\ufeff"))
+        except (ValueError, RecursionError):
+            manifest = None
+        if isinstance(manifest, dict):
+            game = manifest.get("game")
+            if isinstance(game, str) and game.strip():
+                return game
+
     files = _module_py_files(zf, stem)
     init_name = f"{stem}/__init__.py"
     if init_name in files:
@@ -182,7 +198,53 @@ def _extract_game_name(zf: zipfile.ZipFile, stem: str) -> str | None:
             cm = const_re.search(src)
             if cm:
                 return cm.group(1)
-    return None
+    # Older packages also use literal dictionaries and class namespaces for
+    # identity (Air Delivery and shapez 2). Resolve only data literals and
+    # simple indexing, and reject ambiguous names instead of guessing.
+    constants: dict[str, list[object]] = {}
+    game_expressions: list[ast.AST] = []
+    for src in sources.values():
+        try:
+            tree = ast.parse(src)
+        except SyntaxError:
+            continue
+        for node in tree.body:
+            if isinstance(node, (ast.Assign, ast.AnnAssign)):
+                target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+                if isinstance(target, ast.Name) and node.value is not None:
+                    try:
+                        constants.setdefault(target.id, []).append(ast.literal_eval(node.value))
+                    except (ValueError, TypeError, SyntaxError):
+                        pass
+            if isinstance(node, ast.ClassDef):
+                fields = {}
+                for item in node.body:
+                    if not isinstance(item, (ast.Assign, ast.AnnAssign)) or item.value is None:
+                        continue
+                    target = item.targets[0] if isinstance(item, ast.Assign) else item.target
+                    if not isinstance(target, ast.Name):
+                        continue
+                    if target.id == "game":
+                        game_expressions.append(item.value)
+                    try:
+                        fields[target.id] = ast.literal_eval(item.value)
+                    except (ValueError, TypeError, SyntaxError):
+                        pass
+                constants.setdefault(node.name, []).append(fields)
+    names = set()
+    for expression in game_expressions:
+        if isinstance(expression, ast.Attribute) and isinstance(expression.value, ast.Name):
+            owner, key = expression.value.id, expression.attr
+        elif (isinstance(expression, ast.Subscript) and isinstance(expression.value, ast.Name)
+              and isinstance(expression.slice, ast.Constant) and isinstance(expression.slice.value, str)):
+            owner, key = expression.value.id, expression.slice.value
+        else:
+            continue
+        for value in constants.get(owner, []):
+            game = value.get(key) if isinstance(value, dict) else None
+            if isinstance(game, str) and game.strip():
+                names.add(game)
+    return next(iter(names)) if len(names) == 1 else None
 
 
 def _module_py_files(zf: zipfile.ZipFile, stem: str) -> list[str]:
@@ -213,11 +275,75 @@ def _find_options_source(zf: zipfile.ZipFile, stem: str) -> str | None:
             n.count("/"),
         )
     )
+    # Options can be defined in Settings.py or the world module itself.
+    for name in _module_py_files(zf, stem):
+        if name in candidates:
+            continue
+        src = _read_member(zf, name)
+        if src and re.search(r"class\s+\w+\([^\n]*\b(?:PerGameCommonOptions|CommonOptions)\b", src):
+            candidates.append(name)
+    # Prefer the actual options dataclass over an unrelated constants/options.py.
+    candidates.sort(key=lambda name: 0 if re.search(
+        r"class\s+\w+\([^\n]*\b(?:PerGameCommonOptions|CommonOptions)\b",
+        _read_member(zf, name) or "",
+    ) else 1)
     for name in candidates:
         src = _read_member(zf, name)
         if src:
-            return src
+            return _include_option_imports(zf, stem, name, src)
     return None
+
+
+def _include_option_imports(zf: zipfile.ZipFile, stem: str, name: str, src: str) -> str:
+    """Read explicit in-package imports so split option classes stay visible.
+
+    Only source text is assembled. External imports, import hooks, and world
+    code are never executed. First definitions retain precedence.
+    """
+    seen = {name}
+    sources = [src]
+    pending = [(name, src)]
+    total = len(src)
+    while pending and len(seen) < 100:
+        member, source = pending.pop(0)
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        for node in tree.body:
+            if not isinstance(node, ast.ImportFrom) or not node.module:
+                continue
+            if node.level:
+                parts = member.split("/")[:-node.level]
+                parts += node.module.split(".")
+            else:
+                parts = node.module.split(".")
+                if parts[0] == "worlds":
+                    parts = parts[1:]
+            if not parts or parts[0] != stem:
+                continue
+            path = "/".join(parts)
+            path = next((p for p in (path + ".py", path + "/__init__.py") if p in zf.namelist()), "")
+            if not path or path in seen:
+                continue
+            seen.add(path)
+            imported = _read_member(zf, path)
+            if not imported or total + len(imported) > 2 * _MAX_MEMBER_BYTES:
+                continue
+            try:
+                imported_tree = ast.parse(imported)
+            except SyntaxError:
+                continue
+            # Alias only explicitly imported classes, leaving shared globals
+            # untouched. Literal-name collection remains the existing path.
+            aliases = {alias.name: alias.asname for alias in node.names if alias.asname}
+            for item in imported_tree.body:
+                if isinstance(item, ast.ClassDef) and item.name in aliases:
+                    item.name = aliases[item.name]
+            sources.append(ast.unparse(imported_tree))
+            pending.append((path, imported))
+            total += len(imported)
+    return "\n".join(sources)
 
 
 # Map of AP option base classes to our template types. Values match what
@@ -327,16 +453,26 @@ def _parse_options_source(
     # Snake-casing the class name emits keys the generator silently ignores,
     # so when the dataclass is present it also decides membership + order.
     field_map: list[tuple[str, str]] = []  # (yaml_key, class_name), dataclass order
+    def inherited_fields(cls_name: str, seen: set[str]) -> dict[str, str]:
+        if cls_name in seen or cls_name not in class_defs:
+            return {}
+        seen = seen | {cls_name}
+        node = class_defs[cls_name]
+        fields = {}
+        for base in reversed(node.bases):
+            fields.update(inherited_fields(_get_name(base), seen))
+        for item in node.body:
+            if isinstance(item, ast.AnnAssign):
+                key, ann = _get_name(item.target), _get_name(item.annotation)
+                if key and ann:
+                    fields[key] = ann
+        return fields
+
     for cls_name in order:
         node = class_defs[cls_name]
         if not any(_get_name(b) in ("PerGameCommonOptions", "CommonOptions") for b in node.bases):
             continue
-        for item in node.body:
-            if isinstance(item, ast.AnnAssign):
-                key = _get_name(item.target)
-                ann = _get_name(item.annotation)
-                if key and ann:
-                    field_map.append((key, ann))
+        field_map = list(inherited_fields(cls_name, set()).items())
         if field_map:
             break
 

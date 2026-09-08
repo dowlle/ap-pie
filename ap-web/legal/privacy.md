@@ -1,6 +1,6 @@
 Archipelago Pie is run by one person as a hobby project. This page explains exactly what the site records, what it deliberately does not record, and what you can ask for. It is written to be checkable: everything described here corresponds to code you can read in the public repository at [github.com/dowlle/ap-pie](https://github.com/dowlle/ap-pie).
 
-**Last updated:** 2026-09-03
+**Last updated:** 2026-09-08
 
 ## The short version
 
@@ -60,6 +60,8 @@ If you sign in, the site stores your Discord user id and display name so it can 
 Rooms you host and YAML files you submit are stored so the site can do its job. Those are visible to the room's host and, depending on the room's settings, to other players in that room. Saved YAMLs, private and published presets, and room templates are tied to your account so you can reuse and manage them from the My area.
 
 Room activity records short human-readable messages such as who uploaded, edited, claimed, released or deleted a YAML. New entries also keep structured account and YAML references so an account deletion can remove the right history without relying only on the message text.
+
+Favorite games and rooms you explicitly join are saved with your account id and the time you saved or joined them. These private lists let you find games again and choose a room in the YAML builder before uploading anything. They are included in your account export and removed when you remove the saved entry or permanently delete your account. Leaving a room does not remove YAMLs you have already submitted there.
 
 Starting the destructive account flow is limited to five attempts per 15 minutes. The current window time and count are stored against your account only to enforce that limit, are included in your account export, and disappear with the account.
 

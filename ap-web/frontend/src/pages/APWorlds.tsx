@@ -14,6 +14,8 @@ import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
 import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
+import FavoriteGameButton from "../components/FavoriteGameButton";
+import { useFavoriteGames } from "../lib/useFavoriteGames";
 import { trackBuilderCta } from "../lib/analytics";
 
 /**
@@ -460,6 +462,7 @@ function WorldCard({
   detailHref,
   detailRouteKind = "spa",
   detailLabel,
+  favoriteControl,
 }: {
   world: APWorldInfo;
   installed: InstalledAPWorld | undefined;
@@ -472,6 +475,7 @@ function WorldCard({
   detailHref?: string;
   detailRouteKind?: "spa" | "server";
   detailLabel?: string;
+  favoriteControl?: ReactElement;
 }) {
   const versions = useMemo(
     () => [...world.versions].sort((a, b) => compareVersions(b.version, a.version)),
@@ -537,7 +541,8 @@ function WorldCard({
             {latestDownloadable && (
               <button
                 type="button"
-                className="btn btn-sm"
+                className="btn btn-sm apworld-action"
+                data-tooltip="Choose your options and download a YAML"
                 onClick={() => onBuild(world.name, latestDownloadable.version)}
                 disabled={buildingVersion === latestDownloadable.version}
               >
@@ -546,15 +551,16 @@ function WorldCard({
             )}
             {latestDownloadable && (
               <a
-                className="btn btn-sm apworld-download-btn"
+                className="btn btn-sm apworld-download-btn apworld-action"
                 href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
                 download
-                title={`Download ${world.display_name} v${latestDownloadable.version}`}
+                data-tooltip={`Download APWorld v${latestDownloadable.version}`}
                 aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
               >
                 <DownloadIcon />
               </a>
             )}
+            {favoriteControl}
           </div>
         </div>
 
@@ -614,6 +620,7 @@ function WorldCard({
 }
 
 export default function APWorlds() {
+  const favorites = useFavoriteGames();
   const generationOn = useFeature("generation");
   // Refresh button is admin-only (matches the @requires_admin gate on
   // POST /api/apworlds/refresh added 2026-05-03 - approved non-admin
@@ -945,6 +952,7 @@ export default function APWorlds() {
         </p>
       ) : (
         <>
+          {favorites.error && <p role="alert" className="error">{favorites.error}</p>}
           <p className="muted apworlds-count">
             {visible.length === available.length
               ? `${available.length} APWorlds`
@@ -955,6 +963,9 @@ export default function APWorlds() {
               <WorldCard
                 key={w.name}
                 world={w}
+                favoriteControl={user && !w.disabled ? <FavoriteGameButton iconOnly name={w.display_name}
+                  saved={favorites.games.includes(w.name)} disabled={favorites.loading || favorites.pending !== null}
+                  onClick={() => void favorites.toggle(w.name)} /> : undefined}
                 installed={installedMap.get(w.name)}
                 installingVersion={
                   installing && installing.startsWith(`${w.name}@`)

@@ -787,6 +787,25 @@ def init_db(db_url: str) -> None:
                 event_count INTEGER NOT NULL CHECK (event_count >= 0)
             )
         """)
+        # Version negative results too, so a parser repair retries each old
+        # artifact once instead of keeping an unversioned failure forever.
+        cur.execute("ALTER TABLE apworld_builder_schemas ADD COLUMN IF NOT EXISTS parser_version INTEGER NOT NULL DEFAULT 0")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_favorite_games (
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                apworld_name TEXT NOT NULL CHECK (length(apworld_name) BETWEEN 1 AND 200),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (user_id, apworld_name)
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS room_memberships (
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                room_id TEXT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+                joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (user_id, room_id)
+            )
+        """)
     conn.autocommit = False
     conn.close()
     _db_url = db_url
@@ -2545,7 +2564,7 @@ def get_builder_schema(sha256: str) -> dict | None:
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT sha256, apworld_name, version, schema, parsed_at "
+            "SELECT sha256, apworld_name, version, schema, parsed_at, parser_version "
             "FROM apworld_builder_schemas WHERE sha256 = %s",
             (sha256,),
         )
@@ -2559,7 +2578,7 @@ def get_builder_schema_by_version(apworld_name: str, version: str) -> dict | Non
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT sha256, apworld_name, version, schema, parsed_at "
+            "SELECT sha256, apworld_name, version, schema, parsed_at, parser_version "
             "FROM apworld_builder_schemas "
             "WHERE apworld_name = %s AND version = %s "
             "ORDER BY parsed_at DESC LIMIT 1",
@@ -2575,19 +2594,22 @@ def set_builder_schema(
     """Upsert a parsed schema (or a null negative) for an artifact.
     Idempotent - re-parsing the same bytes refreshes parsed_at."""
     import json
+    from apworld_options_parser import BUILDER_SCHEMA_FORMAT_VERSION
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
-            """INSERT INTO apworld_builder_schemas (sha256, apworld_name, version, schema)
-               VALUES (%s, %s, %s, %s)
+            """INSERT INTO apworld_builder_schemas (sha256, apworld_name, version, schema, parser_version)
+               VALUES (%s, %s, %s, %s, %s)
                ON CONFLICT (sha256) DO UPDATE
                  SET apworld_name = EXCLUDED.apworld_name,
                      version = EXCLUDED.version,
                      schema = EXCLUDED.schema,
+                     parser_version = EXCLUDED.parser_version,
                      parsed_at = NOW()""",
             (
                 sha256, apworld_name, version,
                 json.dumps(schema) if schema is not None else None,
+                BUILDER_SCHEMA_FORMAT_VERSION,
             ),
         )
     conn.commit()
@@ -2970,6 +2992,76 @@ def get_user_by_discord_id(discord_id: str) -> dict:
     return _serialize(rows[0]) if rows else {}
 
 
+def get_my_rooms(user_id: int) -> list[dict]:
+    """Safe room summaries for hosts, submitters and explicit members.
+
+    Membership grants discoverability only, never host permissions.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT r.id, r.name, r.status, r.submit_deadline,
+                   r.host_user_id = %s AS is_host,
+                   EXISTS (SELECT 1 FROM room_memberships m WHERE m.room_id = r.id AND m.user_id = %s) AS joined
+            FROM rooms r
+            WHERE r.host_user_id = %s
+               OR EXISTS (SELECT 1 FROM room_memberships m WHERE m.room_id = r.id AND m.user_id = %s)
+               OR EXISTS (SELECT 1 FROM room_yamls y WHERE y.room_id = r.id AND y.submitter_user_id = %s)
+            ORDER BY r.created_at DESC
+        """, (user_id,) * 5)
+        return [_serialize(row) for row in _dictrow(cur)]
+
+
+def set_room_membership(user_id: int, room_id: str, joined: bool) -> None:
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            if joined:
+                cur.execute("SELECT id FROM users WHERE id = %s FOR UPDATE", (user_id,))
+                cur.execute("SELECT id FROM rooms WHERE id = %s AND status = 'open' AND (submit_deadline IS NULL OR submit_deadline > NOW()) FOR UPDATE", (room_id,))
+                if not cur.fetchone():
+                    raise ValueError("This room is not open for joining.")
+                cur.execute("SELECT COUNT(*) FROM room_memberships WHERE user_id = %s", (user_id,))
+                if cur.fetchone()[0] >= 1000:
+                    cur.execute("SELECT 1 FROM room_memberships WHERE user_id = %s AND room_id = %s", (user_id, room_id))
+                    if not cur.fetchone():
+                        raise ValueError("You can join up to 1,000 rooms.")
+                cur.execute("INSERT INTO room_memberships (user_id, room_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (user_id, room_id))
+            else:
+                cur.execute("DELETE FROM room_memberships WHERE user_id = %s AND room_id = %s", (user_id, room_id))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def get_favorite_games(user_id: int) -> list[str]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute("SELECT apworld_name FROM user_favorite_games WHERE user_id = %s ORDER BY apworld_name", (user_id,))
+        return [row[0] for row in cur.fetchall()]
+
+
+def set_favorite_game(user_id: int, apworld_name: str, favorite: bool) -> None:
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            if favorite:
+                cur.execute("SELECT id FROM users WHERE id = %s FOR UPDATE", (user_id,))
+                cur.execute("SELECT COUNT(*) FROM user_favorite_games WHERE user_id = %s", (user_id,))
+                if cur.fetchone()[0] >= 1000:
+                    cur.execute("SELECT 1 FROM user_favorite_games WHERE user_id = %s AND apworld_name = %s", (user_id, apworld_name))
+                    if not cur.fetchone():
+                        raise ValueError("You can save up to 1,000 favorite games.")
+                cur.execute("INSERT INTO user_favorite_games (user_id, apworld_name) VALUES (%s, %s) ON CONFLICT DO NOTHING", (user_id, apworld_name))
+            else:
+                cur.execute("DELETE FROM user_favorite_games WHERE user_id = %s AND apworld_name = %s", (user_id, apworld_name))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
 def get_account_summary(user_id: int) -> dict:
     """Identity plus the exact counts shown before scheduled deletion."""
     conn = _get_conn()
@@ -2989,6 +3081,10 @@ def get_account_summary(user_id: int) -> dict:
                         WHERE p.author_user_id = u.id) AS presets,
                       (SELECT COUNT(*) FROM user_room_templates t
                         WHERE t.user_id = u.id) AS room_templates,
+                      (SELECT COUNT(*) FROM user_favorite_games f
+                        WHERE f.user_id = u.id) AS favorite_games,
+                      (SELECT COUNT(*) FROM room_memberships m
+                        WHERE m.user_id = u.id) AS joined_rooms,
                       (SELECT COUNT(*) FROM apworld_index_requests q
                         WHERE q.requester_user_id = u.id) AS apworld_requests
                  FROM users u WHERE u.id = %s""",
@@ -3000,7 +3096,7 @@ def get_account_summary(user_id: int) -> dict:
     row = _serialize(rows[0])
     count_keys = (
         "rooms", "hosted_submissions", "saved_yamls", "submissions",
-        "presets", "room_templates", "apworld_requests",
+        "presets", "room_templates", "apworld_requests", "favorite_games", "joined_rooms",
     )
     return {
         "account": {k: v for k, v in row.items() if k not in count_keys},
@@ -3199,6 +3295,12 @@ def export_account_data(user_id: int) -> dict:
         discord_id = account[0]["discord_id"]
         return {
             "exported_at": datetime.now(timezone.utc).isoformat(),
+            "room_memberships": query(
+                cur, "SELECT room_id, joined_at FROM room_memberships WHERE user_id = %s ORDER BY joined_at", (user_id,)
+            ),
+            "favorite_games": query(
+                cur, "SELECT apworld_name, created_at FROM user_favorite_games WHERE user_id = %s ORDER BY apworld_name", (user_id,)
+            ),
             "account": account[0],
             "hosted_rooms": query(
                 cur, "SELECT * FROM rooms WHERE host_user_id = %s ORDER BY created_at", (user_id,)

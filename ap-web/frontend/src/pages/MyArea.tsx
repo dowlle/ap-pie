@@ -14,6 +14,8 @@ import { usePageTitle } from "../lib/usePageTitle";
 import MyPresets from "./MyPresets";
 import MyRoomTemplates from "./MyRoomTemplates";
 import AccountTab from "./AccountTab";
+import MyFavoriteGames from "./MyFavoriteGames";
+import MyJoinedRooms from "./MyJoinedRooms";
 
 /**
  * FEAT-43: one personal area instead of three scattered "my" pages.
@@ -30,6 +32,8 @@ import AccountTab from "./AccountTab";
  */
 
 const TABS = [
+  { key: "rooms", label: "Rooms" },
+  { key: "favorites", label: "Favorite games" },
   { key: "yamls", label: "YAMLs" },
   { key: "presets", label: "Presets" },
   { key: "templates", label: "Room templates" },
@@ -91,6 +95,8 @@ export default function MyArea() {
       </div>
 
       {active === "yamls" && <MyYamlsTab />}
+      {active === "favorites" && <MyFavoriteGames />}
+      {active === "rooms" && <MyJoinedRooms />}
       {active === "presets" && <MyPresets embedded />}
       {active === "templates" && (isApproved || openRoomCreation) && <MyRoomTemplates embedded />}
       {active === "account" && <AccountTab />}
