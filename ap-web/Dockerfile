@@ -28,6 +28,7 @@ COPY ap-web/api/ ./api/
 # would 500 on /guides in the built image.
 COPY ap-web/templates/ ./templates/
 COPY ap-web/guides/ ./guides/
+COPY ap-web/site_pages/ ./site_pages/
 # FEAT-31: /privacy renders from repo-controlled markdown the same way.
 COPY ap-web/legal/ ./legal/
 # Reviewed APWorld metadata is version-controlled alongside backend code. The

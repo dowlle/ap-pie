@@ -1,0 +1,8 @@
+{% extends "guides/base.html" %}
+{% block main %}
+<article>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">/</span>{{ h1 }}</nav>
+  <h1>{{ h1 }}</h1>
+  <div class="guide-body">{{ body_html|safe }}</div>
+</article>
+{% endblock %}

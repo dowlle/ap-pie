@@ -1,0 +1,47 @@
+name: Report an AP-Pie problem
+description: Report a problem with the site, YAML Builder or collection rooms.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Reports are public. Remove private room links, player details and secrets from any logs, YAMLs or screenshots."
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the exact error message, if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you click or change? Can you reproduce it again?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: game
+    attributes:
+      label: Game and APWorld version
+      description: For Builder or generation problems, include both.
+  - type: input
+    id: archipelago
+    attributes:
+      label: Archipelago version
+      description: For generation or connection problems.
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings and examples
+      description: Did you use the Builder defaults? List changes and attach a small redacted example if useful.
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, device and site
+      placeholder: "For example: Firefox on Windows, ap-pie.com"
