@@ -3171,9 +3171,26 @@ a.btn:hover { text-decoration: none; }
   padding: 0;
   border: none;
   background: transparent;
-  cursor: help;
+  cursor: pointer;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  vertical-align: middle;
+  border-radius: 4px;
   line-height: 1;
 }
+.fuzz-pill:hover { background: color-mix(in srgb, currentColor 15%, transparent); }
+.fuzz-pill:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.fuzzer-modal h2 { margin: 0; font-size: 1.2rem; flex: 1; }
+.fuzzer-modal h3 { margin: 0.8rem 0 0.4rem; }
+.fuzzer-modal .settings-modal-body { overflow-y: auto; line-height: 1.55; }
+.fuzzer-record { padding: 0.8rem; border: 1px solid var(--border); border-radius: 8px; }
+.fuzzer-record dl { margin: 0.8rem 0; }
+.fuzzer-record dl > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.3rem 1rem; padding: 0.25rem 0; }
+.fuzzer-record dd { margin: 0; overflow-wrap: anywhere; }
+.fuzzer-record small { display: inline-block; }
+.fuzzer-meanings { padding-left: 1.25rem; }
+.fuzzer-modal .settings-modal-footer { flex-wrap: wrap; }
 .fuzz-pill-dot {
   display: inline-block;
   width: 0.55rem;
@@ -4779,12 +4796,17 @@ details.yaml-builder-group > summary .muted {
   gap: 0.3rem;
 }
 .yaml-builder-counter-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
   align-items: center;
   gap: 0.6rem;
 }
 .yaml-builder-counter-row code { min-width: 8rem; font-size: 0.78rem; }
-.yaml-builder-counter-row input { width: 6rem; }
+.yaml-builder-option-control .yaml-builder-counter-row input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
 
 .yaml-builder-preview {
   background: var(--bg);
@@ -5815,6 +5837,7 @@ details.yaml-builder-group > summary .muted {
   flex: 1;
   min-width: 0;
   text-transform: capitalize;
+  overflow-wrap: anywhere;
 }
 
 .yaml-builder-weight-map .yaml-builder-counter-row input {
