@@ -119,10 +119,16 @@ GUIDES: list[dict[str, str]] = [
             "run the session for your group."
         ),
         "published": "2026-07-22",
-        "updated": "2026-09-03",
+        "updated": "2026-09-08",
         "project": "ap",
         "kicker": "Hosting",
         "featured": False,
+        "video_url": "https://www.youtube-nocookie.com/embed/CpRbyRodayM",
+        "video_title": "How to Host an Archipelago Multiworld (Step-by-Step)",
+        "video_thumb": "/img/guides/hosting-video-thumb.jpg",
+        "video_watch_url": "https://youtu.be/CpRbyRodayM",
+        "video_intro": "Follow the written steps below, or watch Appie set up Crash Team Racing and Poképelago in one multiworld.",
+        "video_duration_label": "8 min",
     },
     {
         "slug": "setting-up-your-yaml",
@@ -489,6 +495,9 @@ def guide_page(slug: str) -> str:
         video_url=guide.get("video_url"),
         video_title=guide.get("video_title"),
         video_thumb=guide.get("video_thumb"),
+        video_watch_url=guide.get("video_watch_url"),
+        video_intro=guide.get("video_intro"),
+        video_duration_label=guide.get("video_duration_label"),
         path_tabs=guide.get("path_tabs", False),
     )
 

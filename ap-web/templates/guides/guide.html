@@ -16,7 +16,14 @@
       <h1>{{ h1 }}</h1>
       <p class="guide-byline">By Appie · Published <time datetime="{{ date_published }}">{{ date_published }}</time> · Updated <time datetime="{{ date_modified }}">{{ date_modified }}</time></p>
       {% if video_url %}
-      <div class="video-embed">
+      {% if video_intro %}
+      <p>{{ video_intro }}</p>
+      <nav class="guide-format-links" aria-label="Read or watch this guide">
+        <a href="#guide-video">Watch the walkthrough{% if video_duration_label %} ({{ video_duration_label }}){% endif %}</a>
+        <a href="#guide-content">Read the guide</a>
+      </nav>
+      {% endif %}
+      <div class="video-embed" id="guide-video" tabindex="-1">
         <button type="button" class="video-facade"
                 data-embed-src="{{ video_url }}?autoplay=1"
                 data-embed-title="{{ video_title|default(h1) }}"
@@ -26,8 +33,11 @@
           <span class="facade-note">Loads a video from YouTube on click</span>
         </button>
       </div>
+      {% if video_watch_url %}
+      <p class="guide-video-caption">Prefer YouTube? <a href="{{ video_watch_url }}">Open the video with chapters and subtitles</a>.</p>
       {% endif %}
-      <div class="guide-body">
+      {% endif %}
+      <div class="guide-body" id="guide-content" tabindex="-1">
         {{ body_html|safe }}
       </div>
       {% if path_tabs %}
