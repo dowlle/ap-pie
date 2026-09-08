@@ -516,7 +516,6 @@ function WorldCard({
       <div className="apworld-card-icon-tile" aria-hidden="true">{initials || "AP"}</div>
       <div className="apworld-card-main">
         <header className="apworld-card-head">
-          {favoriteControl}
           <div className="apworld-card-title">
             <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
             <code className="apworld-card-key">{world.name}</code>
@@ -542,7 +541,8 @@ function WorldCard({
             {latestDownloadable && (
               <button
                 type="button"
-                className="btn btn-sm"
+                className="btn btn-sm apworld-action"
+                data-tooltip="Choose your options and download a YAML"
                 onClick={() => onBuild(world.name, latestDownloadable.version)}
                 disabled={buildingVersion === latestDownloadable.version}
               >
@@ -551,15 +551,16 @@ function WorldCard({
             )}
             {latestDownloadable && (
               <a
-                className="btn btn-sm apworld-download-btn"
+                className="btn btn-sm apworld-download-btn apworld-action"
                 href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
                 download
-                title={`Download ${world.display_name} v${latestDownloadable.version}`}
+                data-tooltip={`Download APWorld v${latestDownloadable.version}`}
                 aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
               >
                 <DownloadIcon />
               </a>
             )}
+            {favoriteControl}
           </div>
         </div>
 
@@ -962,7 +963,7 @@ export default function APWorlds() {
               <WorldCard
                 key={w.name}
                 world={w}
-                favoriteControl={user && !w.disabled ? <FavoriteGameButton name={w.display_name}
+                favoriteControl={user && !w.disabled ? <FavoriteGameButton iconOnly name={w.display_name}
                   saved={favorites.games.includes(w.name)} disabled={favorites.loading || favorites.pending !== null}
                   onClick={() => void favorites.toggle(w.name)} /> : undefined}
                 installed={installedMap.get(w.name)}

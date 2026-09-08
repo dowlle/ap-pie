@@ -3041,6 +3041,37 @@ a.btn:hover { text-decoration: none; }
   flex: 0 0 auto;
 }
 .apworld-card-primary-actions .btn { min-height: 2.25rem; white-space: nowrap; }
+.apworld-card-primary-actions .apworld-download-btn,
+.apworld-card-primary-actions .apworld-favorite-btn { width: 2.25rem; padding: 0; }
+.apworld-favorite-btn[aria-pressed="true"] { color: var(--color-accent); }
+.favorite-game-button { gap: 0.35rem; }
+.apworld-action { position: relative; }
+.apworld-action:not(:disabled):hover,
+.apworld-action:focus-visible { border-color: var(--color-accent); color: var(--color-accent); background: var(--color-surface-raised); }
+.apworld-action::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  z-index: 5;
+  width: max-content;
+  max-width: min(15rem, 75vw);
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+  visibility: hidden;
+}
+.apworld-action:not(:disabled):hover::after,
+.apworld-action:focus-visible::after { visibility: visible; }
+.apworld-card-primary-actions > .apworld-action:first-child::after { left: 0; right: auto; }
 .apworld-card-detail-button { color: var(--text-h); }
 .apworld-card-detail-link {
   align-self: flex-start;
