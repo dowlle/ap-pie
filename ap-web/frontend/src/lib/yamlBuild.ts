@@ -11,11 +11,11 @@ import type { ParsedTemplate, TemplateOption } from "../api";
  */
 export function buildYamlContent(input: {
   playerName: string;
-  /** YAML `game:` string (the index game_name). */
+  /** YAML game identity derived from the APWorld, not its catalog label. */
   game: string;
-  /** APWorld version for `requires.game.<game>` - the room's pin (room
-   *  flow) or the version the user picked on /apworlds (index flow).
-   *  Empty string omits the requires block. */
+  /** Generator-recognized world version from the schema, when known.
+   *  An index release label is not evidence that Archipelago recognizes
+   *  that version. Empty string omits the world requirement. */
   worldVersion: string;
   template: ParsedTemplate;
   /** Minimum Archipelago version this apworld was built against, from the

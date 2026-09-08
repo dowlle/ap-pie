@@ -534,7 +534,7 @@ export default function YamlBuilder({
     return buildYamlContent({
       playerName: playerName.trim() || "Player1",
       game: entry.game,
-      worldVersion: entry.version,
+      worldVersion: entry.schema.world_version,
       template: entry.schema,
       apVersion: entry.schema.ap_version,
       values,
