@@ -494,7 +494,7 @@ def builder_schemas_for_pins(
     One entry per pin that still resolves against the index:
 
         [{
-            game,           # YAML `game:` string (index game_name)
+            game,           # YAML identity from the archive when schema exists
             apworld_name,   # index key
             display_name,
             version,        # the resolved pin (or latest under force_latest)
@@ -618,6 +618,12 @@ def builder_schemas_for_pins(
         finally:
             _COLD_DERIVE_SLOTS.release()
 
+    # Index names can be display aliases. YAML identity must match the
+    # downloaded archive, including on a warm schema-cache response.
+    for entry in out:
+        schema = entry.get("schema")
+        if isinstance(schema, dict) and schema.get("game"):
+            entry["game"] = schema["game"]
     return out
 
 

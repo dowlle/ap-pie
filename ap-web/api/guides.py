@@ -64,6 +64,19 @@ PROJECTS: list[dict] = [
 
 GUIDES: list[dict[str, str]] = [
     {
+        "slug": "what-is-the-fuzzer",
+        "file": "what-is-the-fuzzer.md",
+        "h1": "What is the APWorld fuzzer?",
+        "page_title": "APWorld Fuzzer: Clean, Flaky and Broken Explained | Archipelago Pie",
+        "meta_description": "Understand APWorld fuzz testing, what clean, flaky and broken badges mean, and how to read generation failure rates before your multiworld session.",
+        "card_title": "What is the fuzzer?",
+        "card_blurb": "Understand the coloured APWorld badges, recorded failure rates and what generation tests can tell you.",
+        "published": "2026-09-08",
+        "updated": "2026-09-08",
+        "project": "ap",
+        "kicker": "APWorlds",
+    },
+    {
         "slug": "getting-started",
         "file": "getting-started.md",
         "h1": "Getting started with the Archipelago randomizer",
