@@ -517,6 +517,7 @@ def guide_page(slug: str) -> str:
 
 @bp.route("/sitemap.xml")
 def sitemap() -> Response:
+    from api.site_info import PAGES as SITE_PAGES, PAGES_UPDATED as SITE_UPDATED
     from api.ctr import CTR_PAGES, PAGES_UPDATED as CTR_UPDATED
     from api.legal import PRIVACY_PATH as LEGAL_PRIVACY_PATH
     from api.legal import PRIVACY_UPDATED as LEGAL_PRIVACY_UPDATED
@@ -535,6 +536,7 @@ def sitemap() -> Response:
     ] + [
         {"loc": _canonical(LEGAL_PRIVACY_PATH), "lastmod": LEGAL_PRIVACY_UPDATED},
     ]
+    entries.extend({"loc": _canonical(path), "lastmod": SITE_UPDATED} for path in SITE_PAGES)
     xml = render_template("guides/sitemap.xml", entries=entries)
     return Response(xml, mimetype="application/xml")
 

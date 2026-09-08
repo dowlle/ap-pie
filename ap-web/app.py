@@ -525,6 +525,7 @@ def create_app() -> Flask:
     from api.deployment import bp as deployment_bp
     from api.room_templates import bp as room_templates_bp
     from api.guides import bp as guides_bp
+    from api.site_info import bp as site_info_bp
     from api.ctr import bp as ctr_bp
     from api.events import bp as events_bp
     from api.presets import bp as presets_bp
@@ -554,6 +555,7 @@ def create_app() -> Flask:
     # SPA catch-all below so /guides, /guides/<slug>, and /sitemap.xml resolve
     # to full server-rendered HTML instead of the client-side router.
     app.register_blueprint(guides_bp)
+    app.register_blueprint(site_info_bp)
     # FEAT-40: server-rendered CTR section (/ctr, /ctr/download + stable
     # download redirects). Same before-the-catch-all rule as guides.
     app.register_blueprint(ctr_bp)
