@@ -10,9 +10,53 @@ from flask import Blueprint, g, jsonify, request, send_file, session
 
 import config
 from auth import requires_auth
-from db import export_account_data, get_account_summary, schedule_account_deletion
+from db import export_account_data, get_account_summary, schedule_account_deletion, get_favorite_games, set_favorite_game
 
 bp = Blueprint("account", __name__)
+
+
+@bp.route("/api/my/rooms")
+@requires_auth
+def my_rooms():
+    from db import get_my_rooms
+    return jsonify({"rooms": get_my_rooms(g.user["id"])})
+
+
+@bp.route("/api/my/rooms/<room_id>", methods=["PUT", "DELETE"])
+@requires_auth
+def room_membership(room_id: str):
+    from db import get_my_rooms, set_room_membership
+    if not request.is_json:
+        return jsonify({"error": "Expected application/json"}), 415
+    try:
+        set_room_membership(g.user["id"], room_id, request.method == "PUT")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 409
+    return jsonify({"rooms": get_my_rooms(g.user["id"])})
+
+
+@bp.route("/api/my/favorite-games")
+@requires_auth
+def favorite_games():
+    return jsonify({"games": get_favorite_games(g.user["id"])})
+
+
+@bp.route("/api/my/favorite-games/<name>", methods=["PUT", "DELETE"])
+@requires_auth
+def favorite_game(name: str):
+    if not request.is_json:
+        return jsonify({"error": "Expected application/json"}), 415
+    if len(name) > 200:
+        return jsonify({"error": "Invalid game name"}), 400
+    if request.method == "PUT":
+        from api.apworlds import _get_index_worlds
+        if not any(world.name == name and not world.disabled for world in _get_index_worlds()):
+            return jsonify({"error": "Game not found"}), 404
+    try:
+        set_favorite_game(g.user["id"], name, request.method == "PUT")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 409
+    return jsonify({"games": get_favorite_games(g.user["id"])})
 
 
 @bp.route("/api/my/account")

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import sys
 import unittest
@@ -119,6 +120,62 @@ class FixtureOptions(PerGameCommonOptions):
 
 
 class APWorldOptionsParser(unittest.TestCase):
+    def fixture_identity(self, source, manifest=None, root=False, extra=None):
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive:
+            archive.writestr("fixture/__init__.py", source)
+            if manifest is not None:
+                archive.writestr("archipelago.json" if root else "fixture/archipelago.json", manifest)
+            if extra:
+                archive.writestr("fixture/constants.py", extra)
+        return parse_apworld_options_bytes(output.getvalue())
+
+    def test_manifest_identity_without_executing_world(self):
+        schema = self.fixture_identity('raise RuntimeError("must not execute")\nclass W:\n    game = constants.GAME_NAME\n', json.dumps({"game": "Lego Star Wars: The Complete Saga"}))
+        self.assertEqual(schema["game"], "Lego Star Wars: The Complete Saga")
+
+    def test_root_manifest_identity(self):
+        self.assertEqual(self.fixture_identity('class W: pass', '{"game":"Root Game"}', root=True)["game"], "Root Game")
+
+    def test_invalid_manifests_preserve_legacy_fallback(self):
+        for manifest in ('invalid', '[]', '{"game":null}', '{"game":42}', '{"game":"  "}'):
+            with self.subTest(manifest=manifest):
+                self.assertEqual(self.fixture_identity('class W:\n    game = "Legacy"\n', manifest)["game"], "Legacy")
+
+    def test_literal_class_namespace(self):
+        schema = self.fixture_identity('class W:\n    game = SPZ.game_name\n', extra='class SPZ:\n    game_name = "shapez 2"\n')
+        self.assertEqual(schema["game"], "shapez 2")
+
+    def test_literal_dictionary_identity(self):
+        schema = self.fixture_identity('data = {"game_name": "Air Delivery", "unused": None}\nclass W:\n    game = data["game_name"]\n')
+        self.assertEqual(schema["game"], "Air Delivery")
+
+    def test_dynamic_and_ambiguous_identity_remain_unsupported(self):
+        self.assertIsNone(self.fixture_identity('class W:\n    game = load_game()\n'))
+        self.assertIsNone(self.fixture_identity('data={"game":"A"}\nclass W:\n    game=data["game"]\n', extra='data={"game":"B"}\n'))
+
+    def test_split_options_bom_and_dataclass_preference(self):
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive:
+            archive.writestr("fixture/__init__.py", 'class W:\n    game = "Fixture"\n')
+            archive.writestr("fixture/constants/options.py", 'class Constants:\n    title = "Wrong file"\n')
+            archive.writestr("fixture/gameoptions.py", '\ufefffrom Options import PerGameCommonOptions\nfrom .fields import Lives as StartingLives\nclass Settings(PerGameCommonOptions):\n    lives: StartingLives\n')
+            archive.writestr("fixture/fields.py", 'raise RuntimeError("never execute")\nfrom Options import Range\nclass Lives(Range):\n    range_start=1\n    range_end=9\n    default=3\n')
+        options = parse_apworld_options_bytes(output.getvalue())["options"]
+        self.assertEqual([o["name"] for o in options], ["lives"])
+        self.assertEqual(options[0]["default"], 3)
+
+    def test_alternate_source_and_inherited_fields(self):
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive:
+            archive.writestr("fixture/__init__.py", 'class W:\n    game = "Fixture"\n')
+            archive.writestr("fixture/Settings.py", 'from Options import Toggle, PerGameCommonOptions\nclass Enabled(Toggle):\n    pass\nclass SharedFields:\n    enabled: Enabled\nclass Settings(SharedFields, PerGameCommonOptions):\n    pass\n')
+        options = parse_apworld_options_bytes(output.getvalue())["options"]
+        self.assertEqual([o["name"] for o in options], ["enabled"])
+
+    def test_no_options_is_a_valid_empty_schema(self):
+        self.assertEqual(self.fixture_identity('class W:\n    game = "No options"\n')["options"], [])
+
     def test_imported_literal_collection_becomes_choices(self) -> None:
         schema = parse_apworld_options_bytes(_fixture_apworld(), stem_hint="fixture")
 

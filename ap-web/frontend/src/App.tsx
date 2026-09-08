@@ -35,6 +35,7 @@ import { FeaturesProvider, useFeature } from "./context/FeaturesContext";
 import { DeploymentProvider } from "./context/DeploymentContext";
 import DeploymentBanner from "./components/DeploymentBanner";
 import SiteHeader from "./components/SiteHeader";
+import SiteFooter from "./components/SiteFooter";
 import { trackPageView } from "./lib/analytics";
 import PublicRouteHead from "./lib/PublicRouteHead";
 
@@ -97,6 +98,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       {/* The boundary sits inside the shell so a lazy route chunk loads with
           the banner and nav already on screen instead of blanking the page. */}
       <main className="container"><Suspense fallback={<RouteChunkFallback />}>{children}</Suspense></main>
+      <SiteFooter />
     </>
   );
 }

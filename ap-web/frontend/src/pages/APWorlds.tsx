@@ -14,6 +14,8 @@ import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
 import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
+import FavoriteGameButton from "../components/FavoriteGameButton";
+import { useFavoriteGames } from "../lib/useFavoriteGames";
 import { trackBuilderCta } from "../lib/analytics";
 
 /**
@@ -460,6 +462,7 @@ function WorldCard({
   detailHref,
   detailRouteKind = "spa",
   detailLabel,
+  favoriteControl,
 }: {
   world: APWorldInfo;
   installed: InstalledAPWorld | undefined;
@@ -472,6 +475,7 @@ function WorldCard({
   detailHref?: string;
   detailRouteKind?: "spa" | "server";
   detailLabel?: string;
+  favoriteControl?: ReactElement;
 }) {
   const versions = useMemo(
     () => [...world.versions].sort((a, b) => compareVersions(b.version, a.version)),
@@ -512,6 +516,7 @@ function WorldCard({
       <div className="apworld-card-icon-tile" aria-hidden="true">{initials || "AP"}</div>
       <div className="apworld-card-main">
         <header className="apworld-card-head">
+          {favoriteControl}
           <div className="apworld-card-title">
             <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
             <code className="apworld-card-key">{world.name}</code>
@@ -614,6 +619,7 @@ function WorldCard({
 }
 
 export default function APWorlds() {
+  const favorites = useFavoriteGames();
   const generationOn = useFeature("generation");
   // Refresh button is admin-only (matches the @requires_admin gate on
   // POST /api/apworlds/refresh added 2026-05-03 - approved non-admin
@@ -945,6 +951,7 @@ export default function APWorlds() {
         </p>
       ) : (
         <>
+          {favorites.error && <p role="alert" className="error">{favorites.error}</p>}
           <p className="muted apworlds-count">
             {visible.length === available.length
               ? `${available.length} APWorlds`
@@ -955,6 +962,9 @@ export default function APWorlds() {
               <WorldCard
                 key={w.name}
                 world={w}
+                favoriteControl={user && !w.disabled ? <FavoriteGameButton name={w.display_name}
+                  saved={favorites.games.includes(w.name)} disabled={favorites.loading || favorites.pending !== null}
+                  onClick={() => void favorites.toggle(w.name)} /> : undefined}
                 installed={installedMap.get(w.name)}
                 installingVersion={
                   installing && installing.startsWith(`${w.name}@`)

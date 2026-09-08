@@ -73,6 +73,7 @@ jobs:
       - run: python scripts/test_open_room_creation.py
       - run: python scripts/test_account_lifecycle.py
       - run: python scripts/test_apworld_options_parser.py
+      - run: python scripts/test_builder_favorites_membership.py
       # OPS-21 refresh endpoint: auth fails closed, and a failed git sync
       # can't report success. Needs no database, but rides along here so
       # there is one place that runs the backend checks.

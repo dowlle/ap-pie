@@ -92,6 +92,8 @@ export default function AccountTab() {
           <Link to="/my/yamls"><strong>{counts.submissions}</strong><span>Submissions</span></Link>
           <Link to="/my/presets"><strong>{counts.presets}</strong><span>Presets</span></Link>
           <Link to="/my/templates"><strong>{counts.room_templates}</strong><span>Room templates</span></Link>
+          <Link to="/my/favorites"><strong>{counts.favorite_games ?? 0}</strong><span>Favorite games</span></Link>
+          <Link to="/my/rooms"><strong>{counts.joined_rooms ?? 0}</strong><span>Joined rooms</span></Link>
         </div>
         <div className="account-actions">
           <a className="btn btn-sm" href="/api/my/account/export" download>
@@ -123,6 +125,7 @@ export default function AccountTab() {
           in other rooms, {counts.saved_yamls} saved YAML{counts.saved_yamls === 1 ? "" : "s"},
           {` ${counts.presets}`} preset{counts.presets === 1 ? "" : "s"}, and
           {` ${counts.room_templates}`} room template{counts.room_templates === 1 ? "" : "s"}.
+          {" "}Your saved favorite games and room memberships are also deleted.
         </p>
         <p className="settings-hint">
           Scheduling deletion also signs this browser out of sibling AP-Pie services

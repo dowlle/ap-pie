@@ -26,7 +26,7 @@ _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 bp = Blueprint("legal", __name__, template_folder=str(_TEMPLATES_DIR))
 
 # Bump when the statement's content changes; drives the byline and sitemap.
-PRIVACY_UPDATED = "2026-08-31"
+PRIVACY_UPDATED = "2026-09-08"
 PRIVACY_PATH = "/privacy"
 
 

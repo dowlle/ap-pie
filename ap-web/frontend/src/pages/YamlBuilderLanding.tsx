@@ -130,6 +130,7 @@ export default function YamlBuilderLanding() {
   return (
     <div className="yaml-builder-landing">
       <header className="yaml-builder-landing-hero">
+        {user && <Link to="/my/favorites">My favorite games</Link>}
         <h1>Build a player YAML</h1>
         <p>
           {roomContext

@@ -2,6 +2,19 @@
    this into the built stylesheet, so it costs no extra request. */
 @import "./fonts.css";
 
+.app-site-footer {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.favorite-games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1rem; }
+.favorite-game-card { padding: 1.25rem; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+.favorite-game-card h3 { margin-top: 0; overflow-wrap: anywhere; }
+.favorite-game-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.apworld-card-head { flex-wrap: wrap; gap: 0.5rem; }
+
 :root {
   /* Shared visual-foundation roles. Legacy aliases below keep existing
      surfaces working while representative pages migrate to semantic names. */

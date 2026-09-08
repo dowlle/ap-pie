@@ -1,5 +1,36 @@
 const BASE = "/api";
 
+export interface MyRoom {
+  id: string; name: string; status: string; submit_deadline: string | null;
+  is_host: boolean; joined: boolean;
+}
+
+export async function getMyRooms(): Promise<MyRoom[]> {
+  return (await fetchJson<{ rooms: MyRoom[] }>(`${BASE}/my/rooms`)).rooms;
+}
+
+export async function setRoomMembership(id: string, joined: boolean): Promise<MyRoom[]> {
+  const response = await fetch(`${BASE}/my/rooms/${encodeURIComponent(id)}`, {
+    method: joined ? "PUT" : "DELETE", headers: { "Content-Type": "application/json" }, body: "{}",
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "Could not update room membership");
+  return result.rooms;
+}
+
+export async function getFavoriteGames(): Promise<string[]> {
+  return (await fetchJson<{ games: string[] }>(`${BASE}/my/favorite-games`)).games;
+}
+
+export async function setFavoriteGame(name: string, favorite: boolean): Promise<string[]> {
+  const response = await fetch(`${BASE}/my/favorite-games/${encodeURIComponent(name)}`, {
+    method: favorite ? "PUT" : "DELETE", headers: { "Content-Type": "application/json" }, body: "{}",
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "Could not save favorite game");
+  return result.games;
+}
+
 // ── Feature flags ─────────────────────────────────────────────────
 
 export interface Features {
@@ -1873,6 +1904,8 @@ export async function deleteMyYaml(id: number): Promise<void> {
 // ── Personal account controls ────────────────────────────────────
 
 export interface AccountCounts {
+  favorite_games?: number;
+  joined_rooms?: number;
   rooms: number;
   hosted_submissions: number;
   saved_yamls: number;

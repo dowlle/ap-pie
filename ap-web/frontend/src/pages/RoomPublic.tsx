@@ -38,6 +38,7 @@ import LiveTracker from "../components/LiveTracker";
 import GameCell from "../components/GameCell";
 import { useAPWorldLookup } from "../lib/apworldLookup";
 import SearchToolbar from "../components/SearchToolbar";
+import JoinRoomButton from "../components/JoinRoomButton";
 
 /**
  * Public room landing page. No auth required.
@@ -536,6 +537,7 @@ function RoomPublic() {
           <CopyButton value={shareUrl} label="Copy room link" copiedLabel="Link copied!" />
         </div>
         <h1 style={{ marginBottom: "0.5rem" }}>{room.name}</h1>
+        <JoinRoomButton key={`${id}:${user?.id ?? "anonymous"}`} roomId={id} open={room.status === "open"} />
         <p className="play-hint" style={{ margin: 0 }}>
           Hosted by <strong style={{ color: "var(--text-h)" }}>{room.host_name}</strong>
           {room.race_mode && <> · race mode</>}
