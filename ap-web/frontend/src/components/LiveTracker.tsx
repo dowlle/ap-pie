@@ -11,6 +11,7 @@ import {
 import SlotDetailModal from "./SlotDetailModal";
 import ActivityFeed from "./ActivityFeed";
 import { useAuth } from "../context/AuthContext";
+import { gameJoinUrl } from "../lib/gameJoin";
 
 function statusIcon(label: string) {
   // Status labels match the archipelago.gg tracker page vocabulary now:
@@ -47,9 +48,11 @@ function PlayerCard({
   player,
   coordination,
   onClick,
+  joinUrl,
 }: {
   player: PlayerInfo;
   coordination?: GeneratedSlot;
+  joinUrl?: string | null;
   /** When set, the card becomes clickable (FEAT-14 modal). When omitted,
    *  renders as a static div for tracker sources that don't yet support
    *  per-slot detail. */
@@ -58,7 +61,15 @@ function PlayerCard({
   const className = `tracker-card${player.goal_completed ? " tracker-card-completed" : ""}${onClick ? " tracker-card-clickable" : ""}`;
   const inner = (
     <>
-      <div className="tracker-card-name">{player.name}</div>
+      <div className="tracker-card-name">
+        {joinUrl ? (
+          <a href={joinUrl} target="_blank" rel="noopener noreferrer"
+            title={`Join ${player.game} as ${player.name} (opens a new tab)`}
+            aria-label={`Join ${player.game} as ${player.name} (opens a new tab)`}>
+            {player.name} ↗
+          </a>
+        ) : player.name}
+      </div>
       <div className="tracker-card-game">{player.game}</div>
       <div className="completion-bar">
         <div
@@ -82,6 +93,17 @@ function PlayerCard({
       )}
     </>
   );
+  if (joinUrl) {
+    return (
+      <div className={`tracker-card${player.goal_completed ? " tracker-card-completed" : ""}`}>
+        {inner}
+        {onClick && <button type="button" className="btn btn-sm tracker-card-details"
+          onClick={() => onClick(player)} aria-label={`Open detail for ${player.name} (${player.game})`}>
+          Details
+        </button>}
+      </div>
+    );
+  }
   if (onClick) {
     return (
       <button
@@ -325,6 +347,7 @@ export default function LiveTracker({
           <PlayerCard
             key={p.slot}
             player={p}
+            joinUrl={gameJoinUrl(p.game, (isExternal ? p.connect_name : p.name) ?? "", data.connection_url)}
             coordination={generatedSlots.find((slot) => slot.team === 0 && slot.slot === p.slot)}
             onClick={isExternal ? setOpenPlayer : undefined}
           />
@@ -362,7 +385,7 @@ export default function LiveTracker({
       {isExternal && data.players.length > 0 && !isLiveTracked && (
         <p className="muted" style={{ marginTop: "0.5rem" }}>
           Per-slot items aren't shown - archipelago.gg's tracker page
-          only exposes the per-player checks roll-up. Click any slot to see
+          only exposes the per-player checks roll-up. Open a slot's details to see
           received items, locations and hints scraped on demand.
         </p>
       )}

@@ -1094,6 +1094,7 @@ def grid_overrides(room_id: str) -> Optional[dict[int, dict]]:
             checked = state.checked_locations.get(slot_id) or set()
             label, goal = _ws_status_label(status, bool(checked))
             out[slot_id] = {
+                "connect_name": state.slot_info[slot_id].get("name"),
                 "client_status": status,
                 "status_label": label,
                 "goal_completed": goal,

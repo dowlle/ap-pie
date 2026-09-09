@@ -57,6 +57,8 @@ export async function getDeployment(): Promise<Deployment> {
 export interface PlayerInfo {
   slot: number;
   name: string;
+  /** Original login identity, independent of tracker display aliases. */
+  connect_name?: string | null;
   game: string;
   checks_done: number;
   checks_total: number;

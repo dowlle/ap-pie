@@ -124,7 +124,6 @@ export default function RoomSettingsModal({
           <>
             <DiscordLoginSection room={room} onUpdate={onUpdate} />
             <ClaimModeSection room={room} onUpdate={onUpdate} />
-            <ExternalServerSection room={room} onUpdate={onUpdate} />
             <PerUserCapSection room={room} onUpdate={onUpdate} />
           </>
         )}
@@ -136,6 +135,7 @@ export default function RoomSettingsModal({
         )}
         {tab === "tracker" && (
           <>
+            <ExternalServerSection room={room} onUpdate={onUpdate} />
             <TrackerUrlSection room={room} onUpdate={onUpdate} />
             <GeneratedRoomSection room={room} onUpdate={onUpdate} />
             <TrackerSlotOverrideSection room={room} onUpdate={onUpdate} />
@@ -392,7 +392,11 @@ function ExternalServerSection({ room, onUpdate }: { room: Room; onUpdate: () =>
     try {
       const trimmedHost = host.trim();
       const portNum = port.trim() === "" ? null : Number(port);
-      if (trimmedHost && (portNum === null || isNaN(portNum) || portNum < 1 || portNum > 65535)) {
+      if (!trimmedHost && portNum !== null) {
+        setErr("Enter a host as well as a port.");
+        return;
+      }
+      if (trimmedHost && (portNum === null || !Number.isInteger(portNum) || portNum < 1 || portNum > 65535)) {
         setErr("Port must be 1-65535");
         setSaving(false);
         return;
@@ -430,13 +434,14 @@ function ExternalServerSection({ room, onUpdate }: { room: Room; onUpdate: () =>
   return (
     <section className="settings-section">
       <SectionHeader
-        title="External AP server"
-        hint="Where the Archipelago server runs (your machine or a hosted instance). Players see this on the room page so they can connect."
+        title="Game server host and port"
+        hint="Enter the Archipelago server address and port, separately from the tracker URL. Players can copy this address or click a supported game's slot name to join directly. Passwords are entered in the game client."
       />
       <div className="settings-controls">
         <input
           type="text"
           placeholder="host or ap.example.com"
+          aria-label="Game server host"
           value={host}
           onChange={(e) => setHost(e.target.value)}
           disabled={saving}
@@ -444,6 +449,7 @@ function ExternalServerSection({ room, onUpdate }: { room: Room; onUpdate: () =>
         <input
           type="number"
           placeholder="port"
+          aria-label="Game server port"
           value={port}
           onChange={(e) => setPort(e.target.value)}
           disabled={saving}
