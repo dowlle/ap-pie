@@ -1220,6 +1220,7 @@ def _external_tracker_to_room_shape(room: dict, tracker_url: str) -> dict:
         players_out.append({
             "slot": slot,
             "name": p.get("name") or "",
+            "connect_name": (ov.get("connect_name") if ov else None) or p.get("connect_name"),
             "game": p.get("game") or "",
             "checks_done": done,
             "checks_total": total,

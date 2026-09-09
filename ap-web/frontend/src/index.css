@@ -1477,6 +1477,7 @@ a.btn:hover { text-decoration: none; }
 
 .tracker-connection {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
@@ -1485,6 +1486,7 @@ a.btn:hover { text-decoration: none; }
   border-radius: 8px;
   margin-bottom: 0.75rem;
 }
+.tracker-connection .connection-url { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .tracker-connect-label {
   color: var(--text-muted);
   font-size: 0.85rem;
@@ -1539,6 +1541,9 @@ a.btn:hover { text-decoration: none; }
   color: var(--text-muted);
   font-size: 0.8rem;
 }
+.tracker-card-name { overflow-wrap: anywhere; }
+.tracker-card-name a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.tracker-card-details { align-self: flex-start; margin-top: auto; }
 .tracker-card-checks {
   color: var(--blue);
   font-size: 0.8rem;

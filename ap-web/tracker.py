@@ -225,6 +225,7 @@ def _normalize_tracker_data(data: dict, parsed: dict) -> dict:
         players.append({
             "slot": slot_info.get("slot", slot_info.get("team", 0)),
             "name": slot_info.get("name", slot_info.get("player", "")),
+            "connect_name": slot_info.get("name", slot_info.get("player", "")),
             "game": slot_info.get("game", ""),
             "checks_done": slot_info.get("checks_done", slot_info.get("checked_locations", 0)),
             "checks_total": slot_info.get("checks_total", slot_info.get("total_locations", 0)),
@@ -299,6 +300,9 @@ def _parse_tracker_html(html: str) -> list[dict]:
         players.append({
             "slot": slot,
             "name": name,
+            # HTML renders aliases as "Alias (Original)". Parentheses may
+            # also belong to the real name; do not guess a login identity.
+            "connect_name": None if name.endswith(")") and " (" in name else name,
             "game": game,
             "checks_done": checks_done,
             "checks_total": checks_total,
