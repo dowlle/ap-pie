@@ -32,6 +32,7 @@ type ClientEventKind =
   | "builder_stage_reached"
   | "builder_yaml_emitted"
   | "builder_abandoned"
+  | "builder_saved"
   | "builder_failed"
   | "builder_cta"
   | "apworld_download_clicked";
@@ -194,6 +195,10 @@ export function trackBuilderOpened(game: string, version: string, surface: strin
 
 export function trackBuilderStage(game: string, version: string, stage: string, attemptId: string, roomId?: string): void {
   send({ kind: "builder_stage_reached", room_id: roomId, props: { game, version, stage, attempt_id: attemptId } });
+}
+
+export function trackBuilderSaved(game: string, version: string, attemptId: string, roomId?: string): void {
+  send({ kind: "builder_saved", room_id: roomId, props: { game, version, attempt_id: attemptId } });
 }
 
 /** action: download | submit | add_to_room | create_room */

@@ -120,6 +120,34 @@ class FixtureOptions(PerGameCommonOptions):
 
 
 class APWorldOptionsParser(unittest.TestCase):
+    def test_package_resource_range_and_dictionary_groups(self):
+        for resource, expected in [("data/pads.json", 3), ("../outside.json", None)]:
+            output = io.BytesIO()
+            with zipfile.ZipFile(output, "w") as archive:
+                archive.writestr("fixture/__init__.py", 'class World:\n game = "Resource Game"\n')
+                archive.writestr("fixture/data/pads.json", '{"pads": [1, 2, 3]}')
+                archive.writestr("outside.json", '{"pads": [1, 2]}')
+                archive.writestr("fixture/characters.py", f'''import json, pkgutil
+PHYSICAL_PAD_COUNT = len(json.loads(pkgutil.get_data(__package__, "{resource}").decode("utf-8"))["pads"])
+raise RuntimeError("Archive source must never execute")
+''')
+                archive.writestr("fixture/Options.py", '''from Options import Range, PerGameCommonOptions
+from . import characters
+class RacerLocks(Range):
+    range_start = 0
+    range_end = characters.PHYSICAL_PAD_COUNT
+    default = 0
+class Settings(PerGameCommonOptions):
+    racer_locked_pads: RacerLocks
+option_groups = {"Characters": [RacerLocks]}
+''')
+            schema = parse_apworld_options_bytes(output.getvalue())
+            if expected is None:
+                self.assertEqual(schema["options"], [])
+            else:
+                self.assertEqual(schema["options"][0]["max"], expected)
+                self.assertEqual(schema["options"][0]["category"], "Characters")
+
     def fixture_identity(self, source, manifest=None, root=False, extra=None):
         output = io.BytesIO()
         with zipfile.ZipFile(output, "w") as archive:
