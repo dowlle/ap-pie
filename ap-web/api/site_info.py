@@ -7,7 +7,7 @@ import config
 import seo
 
 bp = Blueprint("site_info", __name__)
-PAGES_UPDATED = "2026-09-08"
+PAGES_UPDATED = "2026-09-10"
 PAGES = {
     "/changelog": ("Changelog", "Recent updates and fixes to Archipelago Pie.", "changelog.md"),
     "/report-issue": ("Report an issue", "Report a problem with Archipelago Pie or find the right place for an APWorld issue.", "report-issue.md"),
