@@ -4,6 +4,8 @@ Recent changes to AP-Pie. Found something that does not work as expected? [Repor
 
 ### CTR Archipelago 0.2.0
 
+The release notes now lead with the main features and three starting paths: joining, preparing a YAML or hosting. Upgrade advice and the Steam Deck fullscreen workaround are easier to find. The Builder now exposes all 52 CTR options, including Racer-Locked Warp Pads from 0 to 27, with the character settings grouped together.
+
 CTR 0.2.0 is now the stable download for Windows, Linux and Steam Deck, with the matching APWorld and YAML template. The [full release notes](/ctr/reference/0-2-0-release-notes), [setup guide](/guides/ctr) and [reference pages](/ctr/reference) explain the new options, twenty traps, experimental recorded AI and remaining community testing.
 
 Use the [0.2.0 YAML Builder](/yaml-builder/ctr?version=0.2.0) for new games. The setup and hosting guides link to Appie's YouTube walkthroughs; a dedicated CTR 0.2.0 YAML explanation video is coming soon.
