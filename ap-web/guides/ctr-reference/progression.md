@@ -1,6 +1,6 @@
 CTR Archipelago can turn Adventure Mode rewards and even parts of your kart into items. The exact progression model is chosen when the world is generated.
 
-> This page includes 0.2.0 preview systems. They are available to testers but are not part of the current 0.1.5 stable release.
+> This page describes stable 0.2.0. See the [release notes](/ctr/reference/0-2-0-release-notes) for experimental features and remaining testing coverage.
 
 ## Adventure progression
 
@@ -24,7 +24,7 @@ Progressive Stats applies separate upgrade chains to Top Speed, Acceleration, an
 4. High
 5. Very High
 
-You begin at Very Low and each received copy raises that stat by one rank. Very High sits above the best normal character value for that stat. The Garage bars show the effective Archipelago ranks while this system is active.
+You begin at Very Low and each received copy raises that stat by one rank. Very High sits above the best normal character value for that stat. The pause-menu character screen shows the effective Archipelago ranks while this system is active.
 
 ## Shared or per character
 
@@ -34,7 +34,7 @@ In shared mode, receiving Progressive Top Speed improves Top Speed for every cha
 
 In per-character mode, every racer owns separate versions of all three chains. An upgrade for Crash does not improve Coco or Tiny. This creates a much larger item pool and makes the characters develop independently.
 
-When Progressive Stats is off, every character keeps the original game's stat table. If a seed also enables editable stats, progressive ownership takes priority and the Garage editor remains read-only.
+When Progressive Stats is off, the seed's character and stat settings apply. Editable stats are accessed through the pause-menu character screen; progressive ownership takes priority when enabled.
 
 ## What happens on reconnect
 

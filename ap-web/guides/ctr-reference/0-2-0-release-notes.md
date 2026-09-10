@@ -1,8 +1,24 @@
 CTR Archipelago 0.2.0 adds many new ways to build a seed. Item boxes and CTR letters can become checks, racers and weapons can enter the item pool, and received items can unlock your kart's boost and stats. Gem Cup tracks can also be randomized, and several victory conditions can be combined. Every major addition is optional and configured per YAML.
 
-> **0.2.0 is still a preview.** Alpha 7 is published for testing, not as the new stable release. The final 0.2.0 may contain further corrections. Always use the client and APWorld from the same release.
+> **0.2.0 is the current stable release, published September 10, 2026.** It brings the Alpha work together as a community-tested baseline. Automated checks pass, while remaining gameplay and client-verifier coverage will continue through community reports and versioned fixes. Always use the client and APWorld from the same release.
 
-**[Download Alpha 7](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7)** · **[Build an Alpha 7 YAML](/yaml-builder/ctr?version=0.2.0-alpha7)** · **[Setup guide](/guides/ctr)**
+**[Download 0.2.0](/ctr/download)** · **[Build a 0.2.0 YAML](/yaml-builder/ctr?version=0.2.0)** · **[Setup guide](/guides/ctr)** · **[Release assets and checksums](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0)**
+
+## Setup, hosting and YAML videos
+
+- [CTR setup walkthrough on YouTube](https://youtu.be/9x63P6JP93E): install the client and join a multiworld. The video predates 0.2.0; follow the current downloads and [written setup guide](/guides/ctr) alongside it.
+- [Hosting an Archipelago multiworld on YouTube](https://youtu.be/CpRbyRodayM): collect YAMLs, generate the game and host the server. There is also a [written hosting guide](/guides/hosting-a-multiworld).
+- A dedicated CTR 0.2.0 YAML explanation video is coming soon. For now, use the [0.2.0 YAML Builder](/yaml-builder/ctr?version=0.2.0), its option help and the [written YAML guide](/guides/setting-up-your-yaml).
+
+## Final 0.2.0 corrections
+
+The final release adds more forgiving AP-box contact for karts and direct projectiles, remote Lettersanity notifications, visual-trap pause corrections and clearer racer-lock wording. Oxide can now be left as optional content or disabled entirely, separately from the Boss and Gem goal conditions. Goal and relic-invitation handling have also been reconciled between the client and generator.
+
+Secure AP connections now verify the certificate's server name as well as its trust chain. Datapackage-cache paths reject unsafe components. These targeted corrections do not mean every trust boundary or gameplay path has been tested.
+
+Recorded-AI playback remains experimental and off by default. Its current shared-line behavior and the planned 0.2.1 corrections are explained below. Generalized custom-track work stays separate for 0.3.0.
+
+With much of my attention on my partner's recovery, I've relied more than usual on AI assistance for this release. Astra coordinated implementation, reviews and release preparation around plans and priorities we had already agreed on. Automated checks cover part of that work; community testing will help us find what they miss.
 
 ## Alpha 7 corrections
 
@@ -14,7 +30,7 @@ Alpha 7 tightens the new per-track Reach 10 Wumpa checks introduced during the A
 - A completed Gem Cup remains Raceable while a distinct track in its resolved legs still has an unchecked Wumpa location.
 - The experimental custom track participates only when its recognized descriptor is active and its measured capabilities say ten Wumpa can be collected.
 
-These corrections do not add Trophy Race or CTR Challenge events to Slide Coliseum or Turbo Track. Those events remain later 0.2.0 work.
+These corrections do not add standalone Trophy Race or CTR Challenge events to Slide Coliseum or Turbo Track. Those additional events are not part of this release.
 
 ## At a glance
 
@@ -47,11 +63,11 @@ The C, T, and R letters on the 16 CTR Token Challenge tracks can remain vanilla,
 
 ### Wumpa progression
 
-0.2.0 adds a configurable Wumpa family: starting-Wumpa progression, bundle filler items, and `Reach 10 Wumpa` checks. The check can be off, global for the whole seed, or separate for each eligible track. Starting Wumpa is restored after a pause-menu restart and the world protects required Wumpa items when fitting a large item pool. Alpha 7's route and eligibility corrections are summarized above.
+0.2.0 adds a configurable Wumpa family: starting-Wumpa progression, bundle filler items, and `Reach 10 Wumpa` checks. The check can be off, global for the whole seed, or separate for each eligible track. Starting Wumpa is restored after a pause-menu restart and the world protects required Wumpa items when fitting a large item pool. The Alpha 7 route and eligibility corrections are retained, and boss races are also modeled as routes to their track's per-track Wumpa check.
 
 ### Turbo Grant and Tizi Helper
 
-`Turbo Grant` is a received weapon item that gives the player a Turbo when it can be delivered safely. If the player is outside a race or the weapon slot is occupied, the grant waits instead of being discarded.
+The `Turbo Grant` option adds received `Turbo` filler items. A Turbo is delivered when it can be used safely; if the player is outside a race or the weapon slot is occupied, the grant waits instead of being discarded.
 
 The optional `Tizi Helper` makes the first four boxes after the Papu's Pyramid starting line give Masks for the Tiziano shortcut. With Itemsanity enabled, it also requires ownership of the Mask weapon. The helper is intentionally excluded from logic.
 
@@ -104,7 +120,7 @@ The old single goal choice is replaced by three conditions that can be combined:
 
 Every enabled condition must be met. The final Oxide unlock can separately require configured relic types and counts, and the Final Challenge location now follows the selected unlock mode.
 
-Alpha 5 fixes the Oxide garage and Final Challenge presentation so neither appears before every configured goal requirement is complete. This changes the premature boss presentation only. It does not add automatic hub or boss-door teleports.
+`oxide_goal: none` keeps both Oxide races as optional checks. `oxide_goal: disabled` closes the garage and removes both races entirely, so at least one Boss or Gem condition is required. With an Oxide goal, the configured Boss and Gem conditions participate in the finale flow; with optional Oxide, they do not gate those optional races.
 
 ### Capability-aware logic
 
@@ -114,13 +130,13 @@ The two-stage fill probe now mirrors the real multiworld and companion pre-fill 
 
 ### Relic behavior
 
-Relic tiers are counted independently. A better result still satisfies a lower-tier gate without making the higher-tier count incorrect. For example, earning a Gold relic cannot make a requirement for one Sapphire-tier result impossible.
+Relic items and race-result checks are different. Received Sapphire, Gold and Platinum relic items are counted independently for item requirements: a Platinum item does not count as a Gold item. Beating a Platinum target time can still send that track's Gold and Sapphire result checks as well.
 
 Removed Time Trial relics are granted locally, relic races use the AP box gate, and the award ceremony can cycle through multiple distinct award lines. Relic-tier logic and the client verifier use the same boost rules.
 
 ## Traps and comfort items
 
-The five working traps remain Icy Road, Low Gravity, Forced USF, Forced Boost, and First Person. `trap_weights` can now make each one more common, less common, or absent. Alpha 4 adds a client-side trap-duration setting with short, normal, and long timing presets.
+The release includes twenty trap effects: Icy Road, Low Gravity, Forced USF, Forced Boost, First Person, Wumpa Wipeout, Flatten, Item Reroll, Forced Use, Empty Crates, Weakened Kart, Boost Blocker, Wireframe, Nitro Drop, Reverse Steering, Red Potion, Upside Down, Mirror Mode, Warpball Ambush and Demo Camera. `trap_weights` can make individual traps more common, less common, or absent. The client also offers short, normal and long trap-duration presets. The complete combination of effects and race contexts still needs community gameplay coverage.
 
 The trap names were cleaned up for 0.2.0. Existing item ids did not move:
 
@@ -129,9 +145,10 @@ The trap names were cleaned up for 0.2.0. Existing item ids did not move:
 - Auto-Use Trap is now Forced Use;
 - No Boost Trap is now Boost Blocker;
 - Reverse Controls Trap is now Reverse Steering;
+- Nitro is now Nitro Drop;
 - the `Trap` suffix was removed from the whole family.
 
-Additional names are reserved in the datapackage for future effects, including Wumpa Wipeout, Flatten, Item Reroll, Forced Use, Empty Crates, Weakened Kart, Boost Blocker, Wireframe, Nitro, Reverse Steering, Red Potion, Upside Down, Mirror Mode, and Warpball Ambush. They are not drawn into current preview seeds because their effects are not yet part of the complete shipped pair.
+These effects are implemented in the matching 0.2.0 pair. Nitro Drop and Red Potion balance improvements remain planned for 0.2.1.
 
 The working effects were rebuilt around a scheduler with corrected activation, pause, reconnect, ownership, and race-transition behavior. Received traps can arm during a race and wait for a safe moment when necessary. Timers suspend while paused, and trap state resets on a new connection so stale effects do not leak between sessions.
 
@@ -159,37 +176,41 @@ The client also includes safer object-pool rollback, spawn-pointer invalidation,
 
 ## Optional AI lap recording
 
-AI lap recording is an optional tool for capturing routes that computer-controlled racers can use later.
+AI lap recording captures your driving lines for computer-controlled racers to use later. Recording and playback are separate options under **Options → Authoring**, both off by default.
 
-`Save AI Lap Recordings` writes completed AI navigation laps to a local collection for the selected difficulty levels. `Use Recorded AI Laps` allows compatible local recordings to be used for AI navigation playback. Both options are off by default, and the pause menu shows a read-only status row.
+Enable **Save AI Lap Recordings**, complete a multi-lap race and continue to the results. Up to three eligible clean laps are saved in `ap-navpaths` beside the active `config.ini`; the standing-start lap is excluded. Nothing is uploaded. Add compatible `.navlap` files while the game is closed, then enable **Use Recorded AI Laps** and start a race on that track. The [versioned recording instructions](https://github.com/dowlle/ctr-native-ap/blob/v0.2.0/SETUP.md#experimental-recorded-ai-laps) explain filenames, driver names and troubleshooting.
 
-The recorder stores versioned lap data with driver, character, difficulty, timing, cleanliness and shortcut metadata. A built-in library of shared recordings, automatic importing, named AI drivers and pace control are not shipped in the current preview.
+Playback currently chooses up to three usable recordings from a bounded newest-first search and shares those lines across opponents. Contributor names can repeat. It does not yet give each opponent a distinct randomly selected recording, and recorded lines do not guarantee the original lap time. Per-racer assignment, broader contributor-pool selection, finish-line smoothing and ordinary-crate interactions are planned corrections for 0.2.1. AI racers cannot collect AP check boxes. Turn playback off and start a new race to use the track's normal AI lines again.
 
 ## Native engine update
 
 Alpha 4 incorporates the current upstream ctr-native rendering and retail-parity work. This includes a GPU-backed rendering path, persistent OpenGL state, asynchronous GPU timing, improved VRAM synchronization and feedback, and a broad set of corrections that restore retail menu, HUD, vehicle, navigation, visibility, audio, pause, and Adventure behavior.
 
-This upstream sync is compile-tested in the exact Alpha 4 package. It remains one of the areas where tester runtime reports are especially useful.
+That work is retained in 0.2.0 and the final Windows/Linux AP and vanilla configurations all compile. Runtime reports remain useful for rendering, input and game transitions.
 
 ## Compatibility and upgrading
 
 A 0.2.0 client can open 0.1.5 seeds using compatibility fallbacks. A 0.1.5 client cannot understand a 0.2.0 seed and may make it impossible to finish.
 
-Use the same version when generating and playing a seed. Install the client and APWorld from the same release, back up an existing folder before replacing it, and do not mix Alpha 7 with an earlier 0.2.0 preview.
+For new games, use the matching 0.2.0 client and APWorld pair, the 0.2.0 YAML template or Builder, and fresh seeds. Back up an existing folder before replacing it. For an ongoing room, coordinate with the host before changing versions; do not assume every Alpha seed is interchangeable with the final schema-9 pair.
 
 The client still requires a disc image made from your own North American Crash Team Racing disc. No game data is included.
 
-## Alpha 7 testing status
+## Testing status
 
-The matched Alpha 7 pair passed 1,379 APWorld tests with one expected skip, 15,000 fuzz generations with zero failures or timeouts, focused native correctness harnesses, clean custom-enabled Linux and Windows builds, a Windows vanilla build, package extraction and a thirteen-profile client verifier sweep. Every verifier profile reported the goal reachable and `solo: definitive`.
+The final merged pair passed the native regression suite, targeted TLS/cache and packaging checks, APWorld regression tests and all eleven generation fuzz checks. All four Windows/Linux AP and vanilla builds passed. The complete eleven-asset release was assembled on GitHub, then downloaded and verified again after publication, including matched versions, checksums and exact debug symbols.
 
-The scoped Steam test confirmed that the phase-2 CTR Challenge route stays open for an unchecked track-owned Wumpa location, reaching ten sends that check immediately, and a completed Gem Cup stays Raceable while distinct leg Wumpa locations remain unchecked. The phase-1 path is covered by the focused native lifecycle harness.
+Earlier Alpha gameplay tests supply useful evidence, including Wumpa replay routes and several trap effects, but they are not a full gameplay pass on the final release binaries. The full final gameplay matrix and client-verifier sweep remain community testing work. Untested scenarios have not been relabeled as passes.
 
-This does not make Alpha 7 a stable release. The custom-content preview still needs broader community testing, Slide Coliseum and Turbo Track do not yet have standalone Trophy or CTR Challenge events, and the remaining 0.2.0 acceptance work continues.
+0.2.0 is published as stable with these limits documented. Reports will feed into reproduced, verified fixes in matching 0.2.x client/APWorld releases.
 
 ## Known issues
+
+- Recorded-AI playback is experimental and off by default, with the limitations above.
+- Large reconnect backlogs still need gameplay coverage. Per-item console logging is reduced, but network parsing remains on the game thread. Include the support bundle if reconnecting causes a long freeze.
+- Optional checks for breaking every time crate in a Relic Race are deferred to 0.2.1. Generalized custom-track support is planned for 0.3.0.
 
 - A racer can be invisible on the post-race podium. Nitros Oxide in first place is confirmed: the retail game has no win-dance model for him, so nothing is drawn. Reports of Papu Papu after a Gem Cup and Komodo Joe after a relic race are separate and not yet reproduced. Tracked as [#282](https://github.com/dowlle/ctr-native-ap/issues/282).
 - On Steam Deck, enabling Fullscreen in the graphics options can cause heavy lag. Leave the default windowed mode on the Deck. Tracked as [#260](https://github.com/dowlle/ctr-native-ap/issues/260).
 
-Download the current test build from the [0.2.0 Alpha 7 GitHub release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7). If a problem appears, [open an issue on GitHub](https://github.com/dowlle/ctr-native-ap/issues/new/choose) and include the platform, seed or YAML, exact build version, what happened, and the generated support bundle. Questions go to the [Crash Team Racing channel](https://discord.com/channels/731205301247803413/1222304293751750777) on the Archipelago Discord.
+Download the [stable 0.2.0 release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0). If a problem appears, [open an issue on GitHub](https://github.com/dowlle/ctr-native-ap/issues/new/choose) and include the platform, seed or YAML, exact build version, what happened, and the generated support bundle. Questions go to the [Crash Team Racing channel](https://discord.com/channels/731205301247803413/1222304293751750777) on the Archipelago Discord.
