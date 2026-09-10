@@ -190,7 +190,7 @@ test("contextual pages link directly to the YAML Builder", async ({ page, reques
     ["/guides/hosting-on-archipelago-pie", 'href="/yaml-builder"'],
     ["/guides/hosting-a-multiworld", 'href="/yaml-builder"'],
     ["/ctr/reference/randomized-content", 'href="/yaml-builder/ctr"'],
-    ["/ctr/reference/0-2-0-release-notes", 'href="/yaml-builder/ctr?version=0.2.0-alpha7"'],
+    ["/ctr/reference/0-2-0-release-notes", 'href="/yaml-builder/ctr?version=0.2.0"'],
   ] as const;
 
   for (const [path, link] of expectedGuideLinks) {

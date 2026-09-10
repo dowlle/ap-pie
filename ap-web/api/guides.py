@@ -258,7 +258,7 @@ GUIDES: list[dict[str, str]] = [
             "connected to your multiworld room."
         ),
         "published": "2026-07-22",
-        "updated": "2026-08-16",
+        "updated": "2026-09-10",
         "project": "ctr",
         "kicker": "Randomizer",
         "featured": True,

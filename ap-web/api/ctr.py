@@ -37,13 +37,13 @@ _RELEASE_BASE = "https://github.com/dowlle/ctr-native-ap/releases/download"
 # Release. The visible page version and the redirect targets both read from
 # here so they cannot drift apart.
 STABLE: dict = {
-    "version": "0.1.5",
-    "released": "2026-08-06",
+    "version": "0.2.0",
+    "released": "2026-09-10",
     "downloads": {
-        "windows": f"{_RELEASE_BASE}/v0.1.5/ctr-archipelago-v0.1.5-windows-x86.zip",
-        "linux": f"{_RELEASE_BASE}/v0.1.5/ctr-archipelago-v0.1.5-linux-x86.tar.gz",
-        "apworld": f"{_RELEASE_BASE}/v0.1.5/ctr.apworld",
-        "template": f"{_RELEASE_BASE}/v0.1.5/Crash.Team.Racing.yaml",
+        "windows": f"{_RELEASE_BASE}/v0.2.0/ctr-archipelago-v0.2.0-windows-x86.zip",
+        "linux": f"{_RELEASE_BASE}/v0.2.0/ctr-archipelago-v0.2.0-linux-x86.tar.gz",
+        "apworld": f"{_RELEASE_BASE}/v0.2.0/ctr.apworld",
+        "template": f"{_RELEASE_BASE}/v0.2.0/Crash.Team.Racing.yaml",
     },
 }
 
@@ -53,25 +53,22 @@ STABLE: dict = {
 # and the card renders with the client/seed compatibility warning. Testing
 # builds deliberately get no stable redirect aliases: stable URLs are for
 # tutorials, and tutorials only ever reference the stable channel.
-PRERELEASE: dict | None = {
-    "version": "0.2.0 Alpha 7",
-    "url": "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.2.0-alpha7",
-}
+PRERELEASE: dict | None = None
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-09-01"
+PAGES_UPDATED = "2026-09-10"
 
 REFERENCE_PAGES: list[dict] = [
     {
         "slug": "0-2-0-release-notes",
         "title": "What changed in 0.2.0?",
         "short_title": "0.2.0 release notes",
-        "blurb": "The complete player-facing changelog from 0.1.5 through the current 0.2.0 Alpha 7 preview.",
-        "description": "A player-first guide to every major CTR Archipelago change since 0.1.5, including new checks, racers, kart progression, custom content, goals and Alpha 7 testing.",
+        "blurb": "The complete player-facing changelog from 0.1.5 to stable 0.2.0, with setup, videos and known limitations.",
+        "description": "Everything new in CTR Archipelago 0.2.0: checks, racers, kart progression, twenty traps, goals, experimental recorded AI and community testing.",
         "file": "0-2-0-release-notes.md",
         "published": "2026-08-25",
-        "updated": "2026-09-01",
-        "verified_against": "0.2.0 Alpha 7",
+        "updated": "2026-09-10",
+        "verified_against": "0.2.0",
         "status_label": "Full release notes",
     },
     {
@@ -82,9 +79,9 @@ REFERENCE_PAGES: list[dict] = [
         "description": "Learn how randomized warp-pad requirements work in CTR Archipelago and how to read the icons shown above each pad.",
         "file": "warp-pads.md",
         "published": "2026-08-20",
-        "updated": "2026-08-20",
-        "verified_against": "0.2.0 Alpha 4",
-        "status_label": "0.2.0 preview",
+        "updated": "2026-09-10",
+        "verified_against": "0.2.0",
+        "status_label": "Current stable",
     },
     {
         "slug": "progression",
@@ -94,9 +91,9 @@ REFERENCE_PAGES: list[dict] = [
         "description": "Understand item progression, kart upgrades, Progressive Boost and Progressive Stats in CTR Archipelago.",
         "file": "progression.md",
         "published": "2026-08-20",
-        "updated": "2026-08-20",
-        "verified_against": "0.2.0 Alpha 4",
-        "status_label": "0.2.0 preview",
+        "updated": "2026-09-10",
+        "verified_against": "0.2.0",
+        "status_label": "Current stable",
     },
     {
         "slug": "randomized-content",
@@ -106,9 +103,9 @@ REFERENCE_PAGES: list[dict] = [
         "description": "See which parts of Crash Team Racing can change in a CTR Archipelago world, from warp pads and locations to kart capabilities.",
         "file": "randomized-content.md",
         "published": "2026-08-20",
-        "updated": "2026-08-20",
-        "verified_against": "0.2.0 Alpha 4",
-        "status_label": "0.2.0 preview",
+        "updated": "2026-09-10",
+        "verified_against": "0.2.0",
+        "status_label": "Current stable",
     },
 ]
 
