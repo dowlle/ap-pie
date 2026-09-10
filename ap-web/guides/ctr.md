@@ -2,7 +2,15 @@
 
 [CTR Archipelago](/ctr) turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own, so you do not need an emulator, ROM patching, or a separate client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
 
-New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. It explains rooms, YAML files, and slots. This page gets the game itself running. And if you only want plain Crash Team Racing on PC without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc) instead.
+New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. A **check** is an action that awards an **item**, such as winning a race; the item may go to any player in the multiworld. This page gets the game itself running. For plain CTR without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc).
+
+## Choose your next step
+
+- **Your room is already generated:** follow the installation and connection steps below. You need the game client, your disc image and the connection details from the host.
+- **Your host is collecting players:** make a [0.2.0 YAML](/yaml-builder/ctr?version=0.2.0), the file containing your player name and settings, and send it to them before generation.
+- **You are generating or hosting:** install the matching [APWorld](/ctr/download/apworld), the package that adds CTR to Archipelago, and follow the [hosting guide](/guides/hosting-a-multiworld). Players joining your room do not need to install this package themselves.
+
+**Updating an existing install?** Back up its folder, including settings and saves. For a new game, use the matching 0.2.0 client, APWorld and YAML. For an ongoing room, check with the host before updating; older Alpha seeds are not automatically interchangeable with the final release.
 
 ## What you need
 
@@ -39,6 +47,8 @@ Hit **Connect** and watch the status line on the same screen. Once it says conne
 ## Playing on Linux and Steam Deck
 
 The Linux build ships as a `.tar.gz` with a `ctr_native_ap` executable inside; extract it and run it the same way as the Windows build. On Steam Deck it works without a keyboard: add the game to Steam, launch it from Gaming Mode, and focusing any connection field brings up the on-screen keyboard. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) has the details.
+
+**Steam Deck fullscreen:** if turning on Fullscreen causes heavy lag, leave it off and use the default windowed setting. This is a known issue tracked in [#260](https://github.com/dowlle/ctr-native-ap/issues/260).
 
 ## Your YAML
 
