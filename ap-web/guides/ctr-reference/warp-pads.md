@@ -24,6 +24,8 @@ If that requirement is still unmet, the pad closes again and displays what you n
 
 ## Race, arena, trial, and cup pads
 
+With racer-locked pads, the display also names the required character. `REQUIRES <CHARACTER>` means that racer has not been received yet; the manual character selector uses `NOT UNLOCKED`. Receiving the racer allows the pad to load its race with that character, subject to the other requirements.
+
 Randomized requirements are not limited to the sixteen ordinary Trophy Race pads. A seed can include Crystal Challenges, Slide Coliseum and Turbo Track, and Gem Cups in the same system. Their physical location still matters: you must be able to reach the hub or Cups Room before its pads matter.
 
 ## If a pad looks wrong

@@ -6,7 +6,11 @@ New to Archipelago itself? Read [Getting started with Archipelago](/guides/getti
 
 ## What you need
 
-**The game client**, from the [download page](/ctr/download). Download the latest stable release and unzip it into a folder of its own. There is nothing else to install, and you do not need Python.
+**0.2.0 is the current stable release.** Read the [full release notes](/ctr/reference/0-2-0-release-notes) for the new settings, experimental features and remaining testing coverage. Use a matching 0.2.0 client and APWorld when generating a new game, with fresh seeds.
+
+Prefer video? [Watch Appie's CTR setup walkthrough](https://youtu.be/9x63P6JP93E). It predates 0.2.0, so use the current downloads and written instructions alongside it. If you are organizing the multiworld, the [hosting video](https://youtu.be/CpRbyRodayM) and [written hosting guide](/guides/hosting-a-multiworld) cover generation and running the server.
+
+**The game client**, from the [download page](/ctr/download). Download the latest stable release and unzip it into a folder of its own. The raw `.bin` setup needs no Python; `.chd` extraction uses the tools described below.
 
 > **Bring your own disc.** No game data is included. You need a disc image of your own North American (NTSC-U) Crash Team Racing disc, usually a `.bin` file. A `.cue` plus `.bin`, a single `.bin`, or a `.chd` all work. The European and Japanese releases are detected and refused, so it really has to be the North American disc.
 >
@@ -18,9 +22,9 @@ Run `ctr_native_ap.exe` (Windows) or `ctr_native_ap` (Linux) once. On a fresh st
 
 ## Step 2: drop in your disc image
 
-Copy your disc image into that `assets` folder. The filename does not matter: the game scans the folder and recognizes a valid North American disc automatically. Launch again and the game boots to the main menu.
+Copy your raw `.bin` disc image into that `assets` folder. The filename does not matter: the game scans the `.bin` files and recognizes a valid North American disc automatically. Launch again and the game boots to the main menu.
 
-If your image is a `.chd`, or something goes wrong here, the [full setup guide](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) covers every variant.
+For a `.chd`, use the bundled `extract_assets.py` with Python and `chdman`, following the [extraction instructions](https://github.com/dowlle/ctr-native-ap/blob/v0.2.0/SETUP.md#appendix-extracting-the-assets-most-people-should-skip-this). The automatic drop-in path above is for raw `.bin` images.
 
 ## Step 3: connect to your room
 
@@ -43,6 +47,8 @@ If somebody already generated the multiworld for your group, you can skip this s
 The easiest way is the browser builder: **[open the CTR YAML Builder](/yaml-builder/ctr)** and it starts right away, no searching needed. Set your name, pick your goal, and the rest of the options come filled in with sensible defaults you can adjust as you like. Review the result, download it, and hand it to your host.
 
 You can also start from the [template YAML published as a separate release asset](/ctr/download/template) and edit it by hand if you would rather; [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth. Use the template that matches the CTR APWorld version your host is generating with. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) has the full details.
+
+A dedicated CTR 0.2.0 YAML explanation video is coming soon. Until then, the [0.2.0 Builder](/yaml-builder/ctr?version=0.2.0), its option help and the [CTR reference](/ctr/reference) cover the available settings.
 
 ## When something goes wrong
 
