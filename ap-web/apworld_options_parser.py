@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 6
+BUILDER_SCHEMA_FORMAT_VERSION = 7
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -409,6 +409,16 @@ def _parse_option_groups(sources: list[str]) -> dict[str, str]:
             continue
         for node in ast.walk(tree):
             value = getattr(node, "value", None)
+            # Some worlds publish the groups as a literal name -> classes
+            # mapping and construct OptionGroup objects in a helper later.
+            if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(value, ast.Dict):
+                target_names = [_get_name(t) for t in node.targets] if isinstance(node, ast.Assign) else [_get_name(node.target)]
+                if any(name and "option_groups" in name for name in target_names):
+                    for key, members in zip(value.keys, value.values):
+                        if isinstance(key, ast.Constant) and isinstance(key.value, str) and isinstance(members, (ast.List, ast.Tuple)):
+                            for member in members.elts:
+                                if cls_name := _get_name(member):
+                                    groups[cls_name] = key.value
             if not isinstance(node, (ast.Assign, ast.AnnAssign)) or not isinstance(value, ast.List):
                 continue
             for el in value.elts:
@@ -759,6 +769,14 @@ def _get_literal(
         owner = _get_literal(node.value, literal_names, local_names)
         if isinstance(owner, dict):
             return owner.get(node.attr)
+    if isinstance(node, ast.Subscript):
+        owner = _get_literal(node.value, literal_names, local_names)
+        key = _get_literal(node.slice, literal_names, local_names)
+        if isinstance(owner, (dict, list, tuple)) and isinstance(key, (str, int)):
+            try:
+                return owner[key]
+            except (KeyError, IndexError, TypeError):
+                return None
     try:
         return ast.literal_eval(node)
     except (ValueError, TypeError, SyntaxError):
@@ -780,6 +798,16 @@ def _get_literal(
         return dict(zip(keys, values))
     if isinstance(node, ast.Call) and not node.keywords:
         fn = _get_name(node.func)
+        if isinstance(node.func, ast.Name) and fn == "len" and len(node.args) == 1:
+            value = _get_literal(node.args[0], literal_names, local_names)
+            return len(value) if isinstance(value, (str, bytes, dict, list, tuple, set, frozenset)) else None
+        if ast.unparse(node.func) == "json.loads" and len(node.args) == 1:
+            value = _get_literal(node.args[0], literal_names, local_names)
+            if isinstance(value, str) and len(value) <= _MAX_MEMBER_BYTES:
+                try:
+                    return json.loads(value)
+                except (ValueError, RecursionError):
+                    return None
         record_fields = (literal_names or {}).get("__static_record_fields__", {})
         if fn in record_fields:
             fields = record_fields[fn]
@@ -853,6 +881,31 @@ def _get_literal(
     return None
 
 
+def _resource_literals(node: ast.AST, zf: zipfile.ZipFile, package: str) -> ast.AST:
+    """Replace only an archive-local UTF-8 resource read with literal text.
+
+    No Python imports or package functions are executed. Reject traversal,
+    external packages, other encodings and oversized members.
+    """
+    class Resources(ast.NodeTransformer):
+        def visit_Call(self, call):
+            if (isinstance(call.func, ast.Attribute) and call.func.attr == "decode"
+                    and len(call.args) == 1 and isinstance(call.args[0], ast.Constant)
+                    and call.args[0].value == "utf-8" and not call.keywords):
+                read = call.func.value
+                if (isinstance(read, ast.Call) and ast.unparse(read.func) == "pkgutil.get_data"
+                        and len(read.args) == 2 and not read.keywords
+                        and isinstance(read.args[0], ast.Name) and read.args[0].id == "__package__"
+                        and isinstance(read.args[1], ast.Constant) and isinstance(read.args[1].value, str)):
+                    path = read.args[1].value
+                    if not path.startswith("/") and "\\" not in path and all(p not in ("", ".", "..") for p in path.split("/")):
+                        text = _read_member(zf, f"{package}/{path}")
+                        if text is not None:
+                            return ast.copy_location(ast.Constant(text), call)
+            return self.generic_visit(call)
+    return Resources().visit(node)
+
+
 def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object]:
     """Resolve safe module constants used by option metadata.
 
@@ -862,7 +915,7 @@ def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object
     code is executed here; only AST literals, safe container constructors,
     and ``dict.keys()/values()`` are evaluated.
     """
-    assignments: list[tuple[str, ast.AST]] = []
+    assignments: list[tuple[str, str, ast.AST]] = []
     record_fields: dict[str, list[str]] = {}
     for member in _module_py_files(zf, stem):
         source = _read_member(zf, member)
@@ -872,6 +925,8 @@ def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object
             tree = ast.parse(source)
         except SyntaxError:
             continue
+        module = Path(member).stem
+        package = str(Path(member).parent)
         for node in tree.body:
             if not isinstance(node, ast.ClassDef):
                 continue
@@ -888,23 +943,26 @@ def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object
             if isinstance(node, ast.Assign) and len(node.targets) == 1:
                 name = _get_name(node.targets[0])
                 if name:
-                    assignments.append((name, node.value))
+                    assignments.append((module, name, _resource_literals(node.value, zf, package)))
             elif isinstance(node, ast.AnnAssign):
                 name = _get_name(node.target)
                 if name and node.value is not None:
-                    assignments.append((name, node.value))
+                    assignments.append((module, name, _resource_literals(node.value, zf, package)))
 
     resolved: dict[str, object] = {"__static_record_fields__": record_fields}
     pending = assignments
     for _ in range(8):
-        next_pending: list[tuple[str, ast.AST]] = []
+        next_pending: list[tuple[str, str, ast.AST]] = []
         progressed = False
-        for name, value_node in pending:
+        for module, name, value_node in pending:
             value = _get_literal(value_node, resolved)
             if value is None:
-                next_pending.append((name, value_node))
+                next_pending.append((module, name, value_node))
                 continue
             resolved[name] = value
+            namespace = resolved.setdefault(module, {})
+            if isinstance(namespace, dict):
+                namespace[name] = value
             progressed = True
         pending = next_pending
         if not progressed:
