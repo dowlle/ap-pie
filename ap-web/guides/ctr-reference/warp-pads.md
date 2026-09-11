@@ -12,15 +12,15 @@ A pad that is free has no item requirement. A requirement that you already satis
 
 The requirement belongs to the pad you are standing in front of. The destination can also be shuffled, depending on the generated settings. This means the Crash Cove pad may lead somewhere unexpected while still using the requirement assigned to that physical spot.
 
-Hub doors remain structural. You still move between the Adventure hubs with Keys, while the pads inside each reachable area follow the generated rules.
+You still need Keys to move between the Adventure hubs. Shuffling a pad's destination does not move the pad itself or remove the need to reach it.
 
 ## The second phase can have its own lock
 
-A race pad has two phases. The first phase contains the Trophy Race and any custom box checks placed on that track. The second phase contains the track's CTR Challenge and Relic Race, and a generated world can give this phase a separate requirement.
+A pad leading to a Trophy track starts with its Trophy Race. The track's CTR Challenge and Relic Race come next, and your settings can give them a separate entry requirement.
 
-The pad does not close as soon as you win the Trophy Race. It stays available while the first phase still has unchecked locations, including custom box checks. Once every available first-phase location has been checked, the game evaluates the second-phase requirement.
+After you clear the Trophy Race, those second-phase races become available when that requirement is met. You do not need to break every AP box first. If the pad has no second requirement, clearing the Trophy Race is enough.
 
-If that requirement is still unmet, the pad closes again and displays what you need before the CTR Challenge and Relic Race become available. If you satisfy the second-phase requirement before clearing the first phase, the pad does not close between phases. Winning the Trophy Race then gives you access to the second-phase races normally.
+If the second requirement is still unmet, unfinished AP boxes or a per-track Wumpa check keep the ordinary race available. Once those are cleared, the pad can close again and display what you need for the CTR Challenge and Relic Race. Meeting that requirement opens the second phase without waiting for any remaining AP boxes.
 
 ## Race, arena, trial, and cup pads
 

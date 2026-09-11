@@ -48,7 +48,7 @@ Only the local player can break an AP crate. Once checked, it stays gone for tha
 
 ### Itemsanity
 
-`itemsanity` can make CTR's 11 Adventure weapons received unlocks, add checks for using them, or enable both. Each weapon has a normal-use check and a juiced-use check requiring ten Wumpa when fired, for up to 22 checks. Weapon rolls respect the weapons you own, including in arenas.
+With `itemsanity` enabled, CTR's 11 Adventure weapons become unlocks you receive from the multiworld. Using each weapon sends a check, with another for using it while holding ten Wumpa. The weapon unlocks and all 22 firing checks are enabled together. Weapon rolls respect the weapons you own, including in arenas.
 
 ### Lettersanity
 
