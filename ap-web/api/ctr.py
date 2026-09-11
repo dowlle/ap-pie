@@ -56,7 +56,7 @@ STABLE: dict = {
 PRERELEASE: dict | None = None
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-09-10"
+PAGES_UPDATED = "2026-09-11"
 
 REFERENCE_PAGES: list[dict] = [
     {
@@ -67,7 +67,7 @@ REFERENCE_PAGES: list[dict] = [
         "description": "Everything new in CTR Archipelago 0.2.0: checks, racers, kart progression, twenty traps, goals, experimental recorded AI and community testing.",
         "file": "0-2-0-release-notes.md",
         "published": "2026-08-25",
-        "updated": "2026-09-10",
+        "updated": "2026-09-11",
         "verified_against": "0.2.0",
         "status_label": "Full release notes",
     },
@@ -79,7 +79,7 @@ REFERENCE_PAGES: list[dict] = [
         "description": "Learn how randomized warp-pad requirements work in CTR Archipelago and how to read the icons shown above each pad.",
         "file": "warp-pads.md",
         "published": "2026-08-20",
-        "updated": "2026-09-10",
+        "updated": "2026-09-11",
         "verified_against": "0.2.0",
         "status_label": "Current stable",
     },
@@ -91,7 +91,7 @@ REFERENCE_PAGES: list[dict] = [
         "description": "Understand item progression, kart upgrades, Progressive Boost and Progressive Stats in CTR Archipelago.",
         "file": "progression.md",
         "published": "2026-08-20",
-        "updated": "2026-09-10",
+        "updated": "2026-09-11",
         "verified_against": "0.2.0",
         "status_label": "Current stable",
     },
@@ -99,11 +99,11 @@ REFERENCE_PAGES: list[dict] = [
         "slug": "randomized-content",
         "title": "What can be randomized?",
         "short_title": "Randomized content",
-        "blurb": "A player-first map of progression, checks, characters, kart capabilities, traps, and goals.",
+        "blurb": "Choose which rewards, racers, kart upgrades, traps and goals appear in your world.",
         "description": "See which parts of Crash Team Racing can change in a CTR Archipelago world, from warp pads and locations to kart capabilities.",
         "file": "randomized-content.md",
         "published": "2026-08-20",
-        "updated": "2026-09-10",
+        "updated": "2026-09-11",
         "verified_against": "0.2.0",
         "status_label": "Current stable",
     },
