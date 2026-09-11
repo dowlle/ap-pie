@@ -7,6 +7,7 @@ async function fixtures(page: Page, signedIn = true) {
   const events: string[] = [];
   const user = { id: 424242, discord_username: "JourneyTest", is_admin: false, is_approved: true };
   const saved = { id: 71, apworld_name: "ctr", version: "0.2.0-alpha7", player_name: "ExistingSetup", label: "Weekend setup", kind: "simple", values: { racer_locked_pads: 7 }, latest_version: "0.2.0-alpha7", outdated: false, warnings: [] };
+  const library: Record<string, unknown>[] = [saved];
   await page.route("**/api/**", async route => {
     const request = route.request(); const url = new URL(request.url()); const path = url.pathname;
     if (path === "/api/auth/login") { signed = true; return route.fulfill({ status: 302, headers: { location: url.searchParams.get("next") || "/" } }); }
@@ -15,13 +16,20 @@ async function fixtures(page: Page, signedIn = true) {
     if (path === '/api/deployment') return route.fulfill({ json: { label: 'beta' } });
     if (path === '/api/presets') return route.fulfill({ json: { presets: [] } });
     if (path === "/api/events") { events.push(request.postDataJSON().kind); return route.fulfill({ status: 204 }); }
-    if (path === "/api/my/yamls" && request.method() === "GET") return route.fulfill({ json: { yamls: [saved] } });
+    if (path === "/api/my/yamls" && request.method() === "GET") return route.fulfill({ json: { yamls: library } });
     if (path === "/api/my/submissions") return route.fulfill({ json: { submissions: [] } });
     if (path === "/api/my/rooms") return route.fulfill({ json: { rooms: [{ id: "journey-room", name: "Journey room", status: "open", joined: true, is_host: false, submit_deadline: null }] } });
     if (path === '/api/public/rooms/journey-room') return route.fulfill({ json: { id: 'journey-room', name: 'Journey room', status: 'open', submit_deadline: '2027-01-01T12:00:00Z', yamls: [] } });
     if (!['GET', 'HEAD'].includes(request.method())) {
       writes.push({ method: request.method(), path, body: request.postDataJSON() });
-      if (path.startsWith('/api/my/yamls')) return route.fulfill({ json: { ...saved, ...request.postDataJSON(), id: path.endsWith('/71') ? 71 : 72 } });
+      if (path.startsWith('/api/my/yamls')) {
+        const id = request.method() === 'POST' ? 72 + library.length - 1 : Number(path.split('/').pop());
+        const entry = { ...saved, ...request.postDataJSON(), id };
+        const index = library.findIndex(item => item.id === id);
+        if (index >= 0) library[index] = entry;
+        else library.push(entry);
+        return route.fulfill({ json: entry });
+      }
       if (path === '/api/submit/journey-room' || path === '/api/rooms/journey-room/yamls/create') return route.fulfill({ json: { player_name: 'ExistingSetup', game: 'Crash Team Racing', validation_status: 'valid' } });
       return route.fulfill({ status: 403, json: { error: 'Unexpected mutation blocked by test' } });
     }
@@ -39,8 +47,33 @@ async function fixtures(page: Page, signedIn = true) {
     return route.fulfill({ status: 404, json: { error: 'No test fixture for this read' } });
   });
   page.on('dialog', dialog => dialog.accept());
-  return { writes, events };
+  return { writes, events, library };
 }
+
+for (const firstSave of [false, true]) test(`${firstSave ? 'first save' : 'save a copy'} keeps the saved identity through reload and draft recovery`, async ({ page }) => {
+  const { writes, library } = await fixtures(page);
+  await page.goto(firstSave ? '/yaml-builder/ctr' : '/yaml-builder/ctr?version=0.2.0-alpha7&from=71');
+  if (firstSave) await page.getByRole('button', { name: 'Start with the game defaults' }).click();
+  await page.locator('input[placeholder^="Your slot name"]').fill('NewSavedSetup');
+  await page.getByRole('button', { name: 'Review YAML', exact: false }).click();
+  await page.getByRole('button', { name: firstSave ? 'Save to my YAMLs' : 'Save a copy', exact: true }).click();
+  await expect(page).toHaveURL(/from=72/);
+  expect(new URL(page.url()).searchParams.get('version')).toBe('0.2.0-alpha7');
+  await expect(page.getByText('Saved to My YAMLs.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeVisible();
+  expect(writes[0].method).toBe('POST');
+  await page.reload();
+  await expect(page.locator('input[placeholder^="Your slot name"]')).toHaveValue('NewSavedSetup');
+  await page.locator('input[placeholder^="Your slot name"]').fill('UnsavedCopyEdit');
+  await page.reload();
+  await expect(page.locator('input[placeholder^="Your slot name"]')).toHaveValue('UnsavedCopyEdit');
+  await page.getByRole('button', { name: 'Review YAML', exact: false }).click();
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect.poll(() => writes.length).toBe(2);
+  expect(writes[1].path).toBe('/api/my/yamls/72');
+  expect(library.find(item => item.id === 71)?.player_name).toBe('ExistingSetup');
+  expect(library.find(item => item.id === 72)?.player_name).toBe('UnsavedCopyEdit');
+});
 
 for (const context of ['public-room', 'host-room']) test(`${context} keeps destination visible and reports completion`, async ({ page }) => {
   const { writes, events } = await fixtures(page);

@@ -79,8 +79,25 @@ export default function YamlBuilderPage() {
   const [failedCreatedRoom, setFailedCreatedRoom] = useState<Room | null>(null);
   const [attachmentError, setAttachmentError] = useState("");
   const [attachmentBusy, setAttachmentBusy] = useState(false);
+  // A successful save already gives us the document. Follow its new URL
+  // without reloading the source and resetting the editor's review state.
+  const savedNavigationRef = useRef<string | null>(null);
+  const [savingFromDraft, setSavingFromDraft] = useState<string | null>(null);
   const selectedVersion = games.find((entry) => entry.apworld_name === apworld)?.version ?? version ?? "room";
-  const draftKey = `ap-pie:yaml-builder:${user?.id ?? "anonymous"}:${context}:${roomId || "standalone"}:${apworld}:${selectedVersion}${sourceId ? `:saved:${sourceId}` : ""}`;
+  const draftBase = `ap-pie:yaml-builder:${user?.id ?? "anonymous"}:${context}:${roomId || "standalone"}:${apworld}:${selectedVersion}`;
+  const draftKey = `${draftBase}${sourceId ? `:saved:${sourceId}` : ""}`;
+
+  const handleSaved = (saved: UserYaml) => {
+    setSavedSource(saved);
+    const next = new URLSearchParams(searchParams);
+    next.set("from", String(saved.id));
+    if (context === "standalone") next.set("version", saved.version);
+    if (next.toString() === searchParams.toString()) return;
+    setSavingFromDraft(draftKey);
+    savedNavigationRef.current = JSON.stringify([apworld, context, roomId, String(saved.id), next.get("version") ?? undefined]);
+    setReadyDraft(`${draftBase}:saved:${saved.id}`);
+    navigate({ search: `?${next}` }, { replace: true });
+  };
 
   useEffect(() => {
     if (loading || !identityReady) return;
@@ -92,6 +109,7 @@ export default function YamlBuilderPage() {
     }
     if (incoming) finishBuilderDraftHandoff(draftKey, true);
     setReadyDraft(draftKey);
+    setSavingFromDraft(null);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [draftKey, loading, identityReady]);
@@ -124,6 +142,9 @@ export default function YamlBuilderPage() {
 
   useEffect(() => {
     if (!identityReady) return;
+    const savedNavigation = savedNavigationRef.current;
+    savedNavigationRef.current = null;
+    if (savedNavigation === JSON.stringify([apworld, context, roomId, sourceId, version])) return;
     let cancelled = false;
     failedLoadAttemptRef.current = createBuilderAttemptId();
 
@@ -230,7 +251,7 @@ export default function YamlBuilderPage() {
     navigate(`/rooms/${room.id}`);
   };
 
-  if (loading || (!error && readyDraft !== draftKey && !draftConflict)) {
+  if (loading || (!error && readyDraft !== draftKey && savingFromDraft !== draftKey && !draftConflict)) {
     return (
       <div className="yaml-builder-route-state" role="status">
         <h1>Preparing your YAML builder</h1>
@@ -304,7 +325,7 @@ export default function YamlBuilderPage() {
         <span>Review and submit here. You can return to the room to check validation and edit your submission.</span>
       </aside>}
       <YamlBuilder
-        key={draftKey}
+        key={user?.id ?? "anonymous"}
         open
         presentation="page"
         games={games}
@@ -324,7 +345,7 @@ export default function YamlBuilderPage() {
         defaultPlayerName={defaultPlayerName}
         draftKey={draftKey}
         savedSource={savedSource}
-        onSaved={setSavedSource}
+        onSaved={handleSaved}
         submit={submit}
         reviewExtra={context === "standalone" ? (yamlContent, _playerName, complete) => (
           user ? (
