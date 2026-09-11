@@ -10,11 +10,16 @@ import {
   type BuilderSchemaEntry,
   type MyRoom,
   type Room,
+  type UserYaml,
+  getPublicRoom,
+  type PublicRoom,
 } from "../api";
 import CreateRoomModal from "../components/CreateRoomModal";
 import YamlBuilder from "../components/YamlBuilder";
 import { useAuth } from "../context/AuthContext";
 import { createBuilderAttemptId, trackBuilderFailed } from "../lib/analytics";
+import { finishBuilderDraftHandoff, pendingBuilderDraft, signInWithBuilderDraft } from "../lib/builderDraft";
+import { yamlOutcome } from "../lib/yamlOutcome";
 
 type BuilderContext = "standalone" | "public-room" | "host-room";
 
@@ -64,6 +69,50 @@ export default function YamlBuilderPage() {
   const [error, setError] = useState("");
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [pendingYaml, setPendingYaml] = useState<string | null>(null);
+  const [savedSource, setSavedSource] = useState<UserYaml | null>(null);
+  const [room, setRoom] = useState<PublicRoom | null>(null);
+  const completeRef = useRef<((action: string) => void) | null>(null);
+  const [readyDraft, setReadyDraft] = useState("");
+  const [draftConflict, setDraftConflict] = useState(false);
+  const [versionReview, setVersionReview] = useState<{ saved: UserYaml; target: string; changes: string[] } | null>(null);
+  const [versionAccepted, setVersionAccepted] = useState(false);
+  const [failedCreatedRoom, setFailedCreatedRoom] = useState<Room | null>(null);
+  const [attachmentError, setAttachmentError] = useState("");
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
+  // A successful save already gives us the document. Follow its new URL
+  // without reloading the source and resetting the editor's review state.
+  const savedNavigationRef = useRef<string | null>(null);
+  const [savingFromDraft, setSavingFromDraft] = useState<string | null>(null);
+  const selectedVersion = games.find((entry) => entry.apworld_name === apworld)?.version ?? version ?? "room";
+  const draftBase = `ap-pie:yaml-builder:${user?.id ?? "anonymous"}:${context}:${roomId || "standalone"}:${apworld}:${selectedVersion}`;
+  const draftKey = `${draftBase}${sourceId ? `:saved:${sourceId}` : ""}`;
+
+  const handleSaved = (saved: UserYaml) => {
+    setSavedSource(saved);
+    const next = new URLSearchParams(searchParams);
+    next.set("from", String(saved.id));
+    if (context === "standalone") next.set("version", saved.version);
+    if (next.toString() === searchParams.toString()) return;
+    setSavingFromDraft(draftKey);
+    savedNavigationRef.current = JSON.stringify([apworld, context, roomId, String(saved.id), next.get("version") ?? undefined]);
+    setReadyDraft(`${draftBase}:saved:${saved.id}`);
+    navigate({ search: `?${next}` }, { replace: true });
+  };
+
+  useEffect(() => {
+    if (loading || !identityReady) return;
+    const timer = window.setTimeout(() => {
+    const incoming = pendingBuilderDraft(draftKey);
+    if (incoming && sessionStorage.getItem(draftKey) && sessionStorage.getItem(draftKey) !== incoming) {
+      setDraftConflict(true);
+      return;
+    }
+    if (incoming) finishBuilderDraftHandoff(draftKey, true);
+    setReadyDraft(draftKey);
+    setSavingFromDraft(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [draftKey, loading, identityReady]);
   const failedLoadAttemptRef = useRef(createBuilderAttemptId());
 
   const returnPath = useMemo(() => {
@@ -93,15 +142,29 @@ export default function YamlBuilderPage() {
 
   useEffect(() => {
     if (!identityReady) return;
+    const savedNavigation = savedNavigationRef.current;
+    savedNavigationRef.current = null;
+    if (savedNavigation === JSON.stringify([apworld, context, roomId, sourceId, version])) return;
     let cancelled = false;
     failedLoadAttemptRef.current = createBuilderAttemptId();
 
     const run = async () => {
+      setLoading(true);
+      setError("");
+      setInitialYaml(null);
+      setInitialValues(null);
+      setInitialPlayerName(null);
+      setSavedSource(null);
+      if (!roomId) setRoom(null);
       if ((context === "public-room" || context === "host-room") && !roomId) {
         throw new Error("This builder link is missing its room.");
       }
       if (context === "standalone" && choosing) {
         throw new Error("Choose a game from the APWorld index before opening the builder.");
+      }
+      if (roomId) {
+        const details = await getPublicRoom(roomId);
+        if (!cancelled) setRoom(details);
       }
 
       const entries = context === "standalone"
@@ -119,6 +182,26 @@ export default function YamlBuilderPage() {
       if (sourceId) {
         const saved = (await getMyYamls()).find((item) => String(item.id) === sourceId);
         if (!saved) throw new Error("That saved YAML could not be found.");
+        const target = buildable.find(entry => entry.apworld_name === apworld)!;
+        if (!cancelled) setSavedSource(context === "standalone" && saved.version === target.version ? saved : null);
+        if (saved.version !== target.version) {
+          const changes: string[] = [];
+          let previous: BuilderSchemaEntry | null = null;
+          try { previous = await loadStandaloneSchema(saved.apworld_name, saved.version); }
+          catch { changes.push("The original version's schema is unavailable. Compare your saved values carefully; its file remains in My YAMLs."); }
+          const before = previous?.schema?.options ?? [];
+          const after = target.schema!.options;
+          for (const option of before) {
+            const next = after.find(item => item.name === option.name);
+            if (!next) changes.push(`${option.display_name || option.name}: no longer offered by the new form; a form-built copy will omit it.`);
+            else {
+              if (JSON.stringify([option.type, option.min, option.max, option.choices, option.valid_keys]) !== JSON.stringify([next.type, next.min, next.max, next.choices, next.valid_keys])) changes.push(`${option.display_name || option.name}: accepted values or control type changed. Review your current value.`);
+              if (JSON.stringify(option.default) !== JSON.stringify(next.default)) changes.push(`${option.display_name || option.name}: default changed from ${JSON.stringify(option.default)} to ${JSON.stringify(next.default)}. Your saved value is retained where supported.`);
+            }
+          }
+          for (const option of after) if (before.length && !before.some(old => old.name === option.name)) changes.push(`${option.display_name || option.name}: new option, initially ${JSON.stringify(option.default)}.`);
+          if (!cancelled) { setVersionReview({ saved, target: target.version, changes }); setVersionAccepted(false); }
+        } else if (!cancelled) { setVersionReview(null); setVersionAccepted(false); }
         if (saved.kind === "advanced" && saved.yaml_content) {
           if (!cancelled) setInitialYaml(saved.yaml_content);
         } else if (saved.values) {
@@ -151,22 +234,24 @@ export default function YamlBuilderPage() {
   const handleRoomCreated = async (room: Room) => {
     setCreateRoomOpen(false);
     const yaml = pendingYaml;
-    setPendingYaml(null);
+    setAttachmentBusy(true);
     if (yaml) {
       try {
         await submitYamlContentToRoom(room.id, yaml);
+        completeRef.current?.("create_room");
       } catch (reason) {
-        window.alert(
-          `Room created, but the YAML could not be added automatically: ${
-            reason instanceof Error ? reason.message : "submission failed"
-          }. You can upload it on the room page.`,
-        );
+        setFailedCreatedRoom(room);
+        setAttachmentError(`The room was created, but adding this YAML failed: ${reason instanceof Error ? reason.message : "submission failed"}. Your YAML is still here.`);
+        setAttachmentBusy(false);
+        return;
       }
     }
+    setPendingYaml(null);
+    setAttachmentBusy(false);
     navigate(`/rooms/${room.id}`);
   };
 
-  if (loading) {
+  if (loading || (!error && readyDraft !== draftKey && savingFromDraft !== draftKey && !draftConflict)) {
     return (
       <div className="yaml-builder-route-state" role="status">
         <h1>Preparing your YAML builder</h1>
@@ -179,18 +264,37 @@ export default function YamlBuilderPage() {
     return (
       <div className="yaml-builder-route-state">
         <h1>We could not open this builder</h1>
+        {room && <p>For {room.name} · {room.status} · APWorld v{selectedVersion}{room.submit_deadline && <> · Deadline {new Date(room.submit_deadline).toLocaleString()}</>}</p>}
         <p className="error">{error}</p>
         <Link className="btn" to={returnPath}>Go back</Link>
+        <button className="btn" onClick={() => location.reload()}>Try again</button>
+        <a className="btn" href="/guides/setting-up-your-yaml">Get a template another way</a>
+        {sourceId && <Link className="btn" to="/my/yamls">Return to your saved YAMLs</Link>}
       </div>
     );
   }
+  if (draftConflict) return <section className="yaml-builder-route-state">
+    <h1>Choose which draft to continue</h1>
+    <p>You have an existing signed-in draft and the draft you just brought through sign-in. Neither has been overwritten.</p>
+    <button className="btn btn-primary" onClick={() => { finishBuilderDraftHandoff(draftKey, true); setDraftConflict(false); setReadyDraft(draftKey); }}>Continue the draft from before sign-in</button>
+    <button className="btn" onClick={() => { finishBuilderDraftHandoff(draftKey, false); setDraftConflict(false); setReadyDraft(draftKey); }}>Keep my signed-in draft</button>
+  </section>;
+  if (versionReview && !versionAccepted) return <section className="yaml-builder-route-state">
+    <h1>Review the version change</h1>
+    <p>{versionReview.saved.label || versionReview.saved.apworld_name}: v{versionReview.saved.version} → v{versionReview.target}{room ? ` for ${room.name}` : ""}.</p>
+    <p>Your original stays unchanged in My YAMLs. Continue to review a separate copy against the new version. Nothing is submitted automatically.</p>
+    {versionReview.changes.length ? <ul>{versionReview.changes.map((change, index) => <li key={index}>{change}</li>)}</ul> : <p>No differences were found in the available option metadata. Generation behavior may still differ.</p>}
+    <button className="btn btn-primary" onClick={() => setVersionAccepted(true)}>Review a copy with v{versionReview.target}</button>
+    <Link className="btn" to={`/yaml-builder/${encodeURIComponent(versionReview.saved.apworld_name)}?version=${encodeURIComponent(versionReview.saved.version)}&from=${versionReview.saved.id}`}>Keep v{versionReview.saved.version}</Link>
+    {room && <Link className="btn" to={returnPath}>Return to {room.name}</Link>}
+  </section>;
 
   const submit = context === "public-room"
     ? {
         label: "Submit to this room",
         run: async (yamlContent: string) => {
           const result = await submitYamlContentToRoom(roomId, yamlContent);
-          return `Submitted ${result.player_name} (${result.game}) - ${result.validation_status}`;
+          return `Submitted ${yamlOutcome(result)}`;
         },
       }
     : context === "host-room"
@@ -202,16 +306,26 @@ export default function YamlBuilderPage() {
               game,
               yaml_content: yamlContent,
             });
-            return `Created ${result.player_name} (${result.game}) - ${result.validation_status}`;
+            return `Created ${yamlOutcome(result)}`;
           },
         }
       : undefined;
-  const selectedVersion = games.find((entry) => entry.apworld_name === apworld)?.version ?? version ?? "room";
-  const draftKey = `ap-pie:yaml-builder:${user?.id ?? "anonymous"}:${context}:${roomId || "standalone"}:${apworld}:${selectedVersion}`;
 
   return (
     <>
+      {failedCreatedRoom && <section className="settings-section" role="alert">
+        <p>{attachmentError}</p>
+        <button className="btn" disabled={attachmentBusy} onClick={() => void handleRoomCreated(failedCreatedRoom)}>Retry adding YAML</button>
+        <Link to={`/r/${failedCreatedRoom.id}`}>Open the created room</Link>
+      </section>}
+      {room && <aside className="yaml-room-context" aria-label="Submission destination">
+        <strong>For {room.name}</strong> · {room.status} · APWorld v{selectedVersion}
+        {room.submit_deadline && <> · Deadline {new Date(room.submit_deadline).toLocaleString()}</>}
+        <Link to={returnPath}>Return to room</Link>
+        <span>Review and submit here. You can return to the room to check validation and edit your submission.</span>
+      </aside>}
       <YamlBuilder
+        key={user?.id ?? "anonymous"}
         open
         presentation="page"
         games={games}
@@ -230,14 +344,18 @@ export default function YamlBuilderPage() {
         initialPlayerName={initialPlayerName}
         defaultPlayerName={defaultPlayerName}
         draftKey={draftKey}
+        savedSource={savedSource}
+        onSaved={handleSaved}
         submit={submit}
-        reviewExtra={context === "standalone" ? (yamlContent) => (
+        reviewExtra={context === "standalone" ? (yamlContent, _playerName, complete) => (
           user ? (
             <RoomAttach
               yamlContent={yamlContent}
               canCreateRoom={!user.room_creation_blocked}
+              onCompleted={() => complete("add_to_room")}
               onCreateRoom={(yaml) => {
                 setPendingYaml(yaml);
+                completeRef.current = complete;
                 setCreateRoomOpen(true);
               }}
             />
@@ -246,7 +364,7 @@ export default function YamlBuilderPage() {
               <h3>Use this YAML</h3>
               <p className="settings-hint" style={{ margin: 0 }}>
                 Download it for any room, or{" "}
-                <a href={`/api/auth/login?next=${encodeURIComponent(location.pathname + location.search)}`}>
+                <a href={`/api/auth/login?next=${encodeURIComponent(location.pathname + location.search)}`} onClick={(event) => { event.preventDefault(); signInWithBuilderDraft(draftKey); }}>
                   sign in with Discord
                 </a>{" "}
                 to add it to one of your rooms.
@@ -258,7 +376,7 @@ export default function YamlBuilderPage() {
       />
       <CreateRoomModal
         open={createRoomOpen}
-        onClose={() => { setCreateRoomOpen(false); setPendingYaml(null); }}
+        onClose={() => setCreateRoomOpen(false)}
         onCreated={handleRoomCreated}
       />
     </>
@@ -269,10 +387,12 @@ function RoomAttach({
   yamlContent,
   canCreateRoom,
   onCreateRoom,
+  onCompleted,
 }: {
   yamlContent: string;
   canCreateRoom: boolean;
   onCreateRoom: (yamlContent: string) => void;
+  onCompleted: () => void;
 }) {
   const [rooms, setRooms] = useState<MyRoom[]>([]);
   const [selected, setSelected] = useState("");
@@ -294,9 +414,10 @@ function RoomAttach({
     setError("");
     try {
       const result = await submitYamlContentToRoom(selected, yamlContent);
+      onCompleted();
       setAdded({
         roomId: selected,
-        message: `Added ${result.player_name} (${result.game}) - ${result.validation_status}`,
+        message: `Added ${yamlOutcome(result)}`,
       });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Failed to add YAML to the room");

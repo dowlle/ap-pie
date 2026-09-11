@@ -1,7 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import type { BuilderSchemaEntry, Preset, TemplateOption } from "../api";
-import { createPreset, getPresets, recordPresetUse, saveMyYaml } from "../api";
+import type { BuilderSchemaEntry, Preset, TemplateOption, UserYaml } from "../api";
+import { createPreset, getPresets, recordPresetUse, saveMyYaml, updateMyYaml } from "../api";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { signInWithBuilderDraft } from "../lib/builderDraft";
 import { dump, load } from "js-yaml";
 import { parseDocument } from "yaml";
 import { buildYamlContent, downloadYaml, isRandomValue } from "../lib/yamlBuild";
@@ -16,6 +19,7 @@ import {
   trackBuilderFailed,
   trackBuilderOpened,
   trackBuilderStage,
+  trackBuilderSaved,
 } from "../lib/analytics";
 import type { ParseResponse } from "../workers/yamlParseWorker";
 
@@ -51,6 +55,8 @@ export default function YamlBuilder({
   presentation = "modal",
   draftKey,
   onGameChange,
+  savedSource,
+  onSaved,
 }: {
   open: boolean;
   games: BuilderSchemaEntry[];
@@ -64,7 +70,7 @@ export default function YamlBuilder({
   };
   /** Rendered in the review step above the footer - the /apworlds flow
    *  injects its "Add to room / Create room" actions here. */
-  reviewExtra?: (yamlContent: string, playerName: string) => ReactNode;
+  reviewExtra?: (yamlContent: string, playerName: string, complete: (action: string) => void) => ReactNode;
   onClose: () => void;
   /** FEAT-31: which mount opened the builder - "room_public", "room_detail"
    *  or "apworlds". Recorded as a plain label so builder usage can be split
@@ -91,7 +97,19 @@ export default function YamlBuilder({
   /** sessionStorage key for route-level crash/refresh recovery. */
   draftKey?: string;
   onGameChange?: (apworldName: string) => void;
+  savedSource?: UserYaml | null;
+  onSaved?: (entry: UserYaml) => void;
 }) {
+  const { user } = useAuth();
+  useEffect(() => {
+    if (presentation !== "page") return;
+    const viewport = window.visualViewport;
+    const update = () => document.documentElement.style.setProperty("--builder-keyboard", `${Math.max(0, window.innerHeight - (viewport?.height ?? window.innerHeight) - (viewport?.offsetTop ?? 0))}px`);
+    viewport?.addEventListener("resize", update);
+    viewport?.addEventListener("scroll", update);
+    update();
+    return () => { viewport?.removeEventListener("resize", update); viewport?.removeEventListener("scroll", update); document.documentElement.style.removeProperty("--builder-keyboard"); };
+  }, [presentation]);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const liveHighlightRef = useRef<HTMLPreElement>(null);
   const onCloseRef = useRef(onClose);
@@ -124,6 +142,9 @@ export default function YamlBuilder({
   const [presetFilter, setPresetFilter] = useState("");
   const [showAllPresets, setShowAllPresets] = useState(false);
   const [presetSaved, setPresetSaved] = useState("");
+  const [librarySaved, setLibrarySaved] = useState("");
+  const [downloaded, setDownloaded] = useState("");
+  const documentFingerprint = JSON.stringify([playerName, values, coreValues, manualYaml]);
   const active = presentation === "page" || open;
   const yamlEditPendingRef = useRef(false);
   const applyingYamlRef = useRef(false);
@@ -154,6 +175,9 @@ export default function YamlBuilder({
   // recorded with the step they were on. Refs, not state: these must be
   // readable from the unload path without re-rendering.
   const emittedRef = useRef(false);
+  // A successful destination completes that document, not every later edit
+  // made in the same Builder. New edits must become recoverable drafts again.
+  useEffect(() => { emittedRef.current = false; }, [playerName, values, coreValues, manualYaml]);
   const abandonReportedRef = useRef(false);
   const attemptIdRef = useRef("");
   const reachedStagesRef = useRef(new Set<string>());
@@ -164,6 +188,7 @@ export default function YamlBuilder({
   const noteEmitted = (action: string) => {
     if (!entry) return;
     emittedRef.current = true;
+    if (action === "download") setDownloaded(documentFingerprint);
     if (draftKey) sessionStorage.removeItem(draftKey);
     trackBuilderEmitted(
       entry.game, entry.version, action, attemptIdRef.current, roomId, manualYaml !== null,
@@ -478,22 +503,35 @@ export default function YamlBuilder({
   /** FEAT-43: keep this YAML in your own library. Distinct from saving a
    *  preset: a library entry carries your slot name and is yours, a preset
    *  is a configuration you may publish for other people. */
-  const handleSaveToLibrary = async () => {
+  const handleSaveToLibrary = async (copy = false) => {
     if (!entry) return;
+    if (!user) {
+      if (draftKey) sessionStorage.setItem(draftKey, JSON.stringify({ playerName, values, coreValues, manualYaml, step }));
+      signInWithBuilderDraft(draftKey);
+      return;
+    }
     setBusy(true);
     setError("");
     try {
-      await saveMyYaml({
+      const payload = {
         apworld_name: entry.apworld_name,
         version: entry.version,
         player_name: submittedIdentity.playerName,
-        label: `${entry.display_name} - ${submittedIdentity.playerName}`,
-        kind: manualYaml !== null ? "advanced" : "simple",
+        label: savedSource ? `${savedSource.label}${copy ? " (copy)" : ""}` : `${entry.display_name} - ${submittedIdentity.playerName}`,
+        kind: manualYaml !== null ? "advanced" as const : "simple" as const,
         ...(manualYaml !== null
           ? { yaml_content: manualYaml }
           : { values: { ...coreValues, ...values } }),
-      });
-      setPresetSaved("Saved to My stuff. You can reopen it in the builder any time.");
+      };
+      const saved = savedSource && !copy
+        ? await updateMyYaml(savedSource.id, payload)
+        : await saveMyYaml(payload);
+      onSaved?.(saved);
+      emittedRef.current = true;
+      if (draftKey) sessionStorage.removeItem(draftKey);
+      trackBuilderSaved(entry.game, entry.version, attemptIdRef.current, roomId);
+      setLibrarySaved(documentFingerprint);
+      setPresetSaved("Saved to My YAMLs. Sign in on your computer to continue with this setup.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally {
@@ -941,11 +979,12 @@ export default function YamlBuilder({
                     type="button"
                     className="btn btn-sm"
                     disabled={busy || !canFinalize}
-                    onClick={handleSaveToLibrary}
+                    onClick={() => void handleSaveToLibrary()}
                     title="Keep this YAML in your own library so you can reopen or reuse it"
                   >
-                    Save to my YAMLs
+                    {!user ? "Sign in and save" : savedSource ? "Save changes" : "Save to my YAMLs"}
                   </button>
+                  {user && savedSource && <button type="button" className="btn btn-sm" disabled={busy || !canFinalize} onClick={() => void handleSaveToLibrary(true)}>Save a copy</button>}
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -968,9 +1007,8 @@ export default function YamlBuilder({
               </div>
               <p className="settings-hint">
                 This is the YAML that will be {submit ? "submitted" : "downloaded"}.
-                The version pin (v{entry.version}) matches what this{" "}
-                {submit ? "room runs" : "builder was opened for"}, so it
-                validates without version-mismatch warnings.
+                Options come from v{entry.version}. The room checks your submission;
+                final compatibility is confirmed when the host generates the multiworld.
               </p>
               {savingPreset && (
                 <div className="preset-save-row">
@@ -998,11 +1036,13 @@ export default function YamlBuilder({
                   </button>
                 </div>
               )}
-              {presetSaved && (
+              {presetSaved && (!librarySaved || librarySaved === documentFingerprint) && (
                 <p className="settings-aux-note" style={{ color: "var(--green)" }}>
                   ✓ {presetSaved}
                 </p>
               )}
+              {librarySaved === documentFingerprint && <p role="status"><Link to="/my/yamls">Open My YAMLs</Link> to reopen or send this setup to a room. Saving does not submit it.</p>}
+              {downloaded === documentFingerprint && <p role="status">Your browser has started the download. Send the YAML to your host or upload it to your collection room. <a href="/guides/setting-up-your-yaml#handing-it-in">What happens next</a></p>}
               {editing ? (
                 <textarea
                   className="yaml-builder-editor"
@@ -1051,14 +1091,14 @@ export default function YamlBuilder({
                 </p>
               )}
             </section>
-            {reviewExtra && !success && canFinalize && reviewExtra(yamlContent, submittedIdentity.playerName)}
+            {reviewExtra && !success && canFinalize && reviewExtra(yamlContent, submittedIdentity.playerName, noteEmitted)}
           </>
         )}
 
         {error && <p className="settings-error" style={{ margin: 0 }}>{error}</p>}
         {success && (
-          <p className="settings-aux-note" style={{ margin: 0, color: "var(--green)" }}>
-            ✓ {success}
+          <p className="settings-aux-note" role="status" style={{ margin: 0 }}>
+            {success} {roomId && <Link to={`/r/${roomId}`}>Open room</Link>}
           </p>
         )}
       </div>
@@ -1218,7 +1258,7 @@ function CoreOptionsForm({
   setValues: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }) {
   return (
-    <details className="settings-section yaml-builder-group" open>
+    <details className="settings-section yaml-builder-group">
       <summary>
         {CORE_CATEGORY} <span className="muted">({CORE_OPTIONS.length})</span>
       </summary>
@@ -1326,7 +1366,7 @@ function OptionsForm({
         const opts = schema.options.filter((o) => o.category === cat && matches(o));
         if (opts.length === 0) return null;
         return (
-          <details key={cat} className="settings-section yaml-builder-group" open>
+          <details key={cat} className="settings-section yaml-builder-group" open={!!filter}>
             <summary>
               {cat} <span className="muted">({opts.length})</span>
             </summary>
@@ -1398,7 +1438,8 @@ function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "cu
     case "choice":
       return typeof value === "string" && option.choices?.includes(value) ? "form" : "invalid";
     case "range":
-      return typeof value === "number" && value >= (option.min ?? value) && value <= (option.max ?? value)
+      return (typeof value === "string" && Object.hasOwn(option.named_values ?? {}, value)) ||
+        (typeof value === "number" && Number.isInteger(value) && value >= (option.min ?? value) && value <= (option.max ?? value))
         ? "form"
         : "invalid";
     case "list":
@@ -1556,7 +1597,8 @@ function OptionControl({
         : rangeMatch
         ? "random-range"
         : String(value);
-      const num = typeof value === "number" ? value : Number(option.default);
+      const num = typeof value === "number" ? value : (named?.[String(value)] ?? Number(option.default));
+      const custom = !isRandom && typeof value !== "number" && !Object.hasOwn(named ?? {}, String(value));
       const outside = !isRandom && typeof value === "number" && (
         value < (option.min ?? value) || value > (option.max ?? value)
       );
@@ -1608,6 +1650,7 @@ function OptionControl({
 
           {!isRandom && (
             <>
+              {custom && <p className="yaml-builder-value-warning">Saved YAML value: {JSON.stringify(value)}. It is preserved as written. Enter a number to replace it; older versions may interpret this value differently.</p>}
               {outside && (
                 <div className="yaml-builder-value-warning">
                   <span>{String(value)} is outside {option.min}–{option.max}.</span>
@@ -1624,7 +1667,7 @@ function OptionControl({
                 type="number"
                 min={option.min}
                 max={option.max}
-                value={Number.isFinite(num) ? num : ""}
+                value={!custom && Number.isFinite(num) ? num : ""}
                 onChange={(e) => onChange(Number(e.target.value))}
               />
               <input
@@ -1634,6 +1677,7 @@ function OptionControl({
                 value={Number.isFinite(num) ? num : option.min}
                 onChange={(e) => onChange(Number(e.target.value))}
                 className="range-slider"
+                disabled={custom}
               />
               {named && Object.keys(named).length > 0 && (
                 <select

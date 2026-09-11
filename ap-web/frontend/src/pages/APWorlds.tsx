@@ -542,7 +542,7 @@ function WorldCard({
               <button
                 type="button"
                 className="btn btn-sm apworld-action"
-                data-tooltip="Choose your options and download a YAML"
+                data-tooltip="Choose options, save a setup or download a YAML"
                 onClick={() => onBuild(world.name, latestDownloadable.version)}
                 disabled={buildingVersion === latestDownloadable.version}
               >

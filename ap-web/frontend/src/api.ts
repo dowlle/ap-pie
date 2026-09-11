@@ -1884,7 +1884,7 @@ export async function saveMyYaml(input: {
 
 export async function updateMyYaml(
   id: number,
-  patch: { label?: string; player_name?: string; values?: Record<string, unknown>; yaml_content?: string },
+  patch: { label?: string; player_name?: string; values?: Record<string, unknown>; yaml_content?: string; kind?: "simple" | "advanced"; version?: string },
 ): Promise<UserYaml> {
   const res = await fetch(`${BASE}/my/yamls/${id}`, {
     method: "PATCH",

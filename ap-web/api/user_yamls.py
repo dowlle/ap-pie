@@ -199,6 +199,18 @@ def edit(yaml_id: int):
 
     body = request.get_json(silent=True) or {}
     updates: dict = {}
+    kind = body.get("kind", entry["kind"])
+    if kind not in ("simple", "advanced"):
+        return jsonify({"error": "kind must be simple or advanced"}), 400
+    if kind != entry["kind"]:
+        required = "values" if kind == "simple" else "yaml_content"
+        if required not in body:
+            return jsonify({"error": "Supply the complete configuration when changing its format"}), 400
+        updates.update(kind=kind, option_values=None, yaml_content=None)
+    # Version upgrades are saved as a new copy by the UI; an update must
+    # never silently reinterpret the existing setup against another release.
+    if "version" in body and body["version"] != entry["version"]:
+        return jsonify({"error": "Save a copy to keep this configuration for another version"}), 400
     if "label" in body:
         updates["label"] = (body.get("label") or "").strip()[:MAX_LABEL]
     if "player_name" in body:
@@ -206,16 +218,20 @@ def edit(yaml_id: int):
         if not name:
             return jsonify({"error": "A slot name cannot be empty"}), 400
         updates["player_name"] = name
-    if "values" in body and entry["kind"] == "simple":
+    if "values" in body and kind == "simple":
         if not isinstance(body["values"], dict):
             return jsonify({"error": "values must be an object"}), 400
         if _option_values_too_large(body["values"]):
             return jsonify({"error": "Those option values are too large to save"}), 400
         updates["option_values"] = body["values"]
-    if "yaml_content" in body and entry["kind"] == "advanced":
+    if "yaml_content" in body and kind == "advanced":
         text = body["yaml_content"]
-        if not isinstance(text, str) or len(text.encode("utf-8")) > MAX_YAML_BYTES:
+        if not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > MAX_YAML_BYTES:
             return jsonify({"error": "Invalid YAML content"}), 400
+        try:
+            yaml.safe_load(text)
+        except yaml.YAMLError:
+            return jsonify({"error": "Fix the YAML syntax before saving. Your current text remains in the editor."}), 400
         updates["yaml_content"] = text
     if "version" in body:
         updates["version"] = (body.get("version") or "").strip() or entry["version"]

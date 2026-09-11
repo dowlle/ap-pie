@@ -139,6 +139,10 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
                   "action": _enum("download", "submit", "add_to_room", "create_room"),
                   "edited": _BOOL, "attempt_id": _ATTEMPT_ID},
     },
+    "builder_saved": {
+        "client": True,
+        "props": {"game": _STR, "version": _STR, "attempt_id": _ATTEMPT_ID},
+    },
     "builder_abandoned": {
         "client": True,
         "props": {"game": _STR, "version": _STR,
