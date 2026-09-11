@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import JourneyEntry from "../components/JourneyEntry";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeaturesContext";
 
@@ -122,6 +123,7 @@ export default function Landing() {
           </div>
         </section>
 
+        <JourneyEntry />
         <div className="lp-sect">Tools for every multiworld</div>
         <div className="lp-tools">
           {canUseRooms ? (

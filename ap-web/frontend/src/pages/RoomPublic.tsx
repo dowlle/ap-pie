@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import MarkdownText from "../components/MarkdownText";
+import SavedYamlPicker from "../components/SavedYamlPicker";
 import {
   claimYaml,
   deletePublicYaml,
@@ -178,6 +179,7 @@ function SubmissionForm({
   return (
     <section className="play-card public-section">
       <h2>Submit your YAML</h2>
+      <SavedYamlPicker roomId={room.id} />
       <p className="play-hint" style={{ marginBottom: "0.85rem" }}>
         Drop <code>.yaml</code> files anywhere on this page, click below to browse,
         or paste the contents directly.

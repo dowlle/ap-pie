@@ -5,6 +5,8 @@ import {
   getMySubmissions,
   getMyYamls,
   updateMyYaml,
+  getMyRooms,
+  type MyRoom,
   type UserSubmission,
   type UserYaml,
 } from "../api";
@@ -16,6 +18,7 @@ import MyRoomTemplates from "./MyRoomTemplates";
 import AccountTab from "./AccountTab";
 import MyFavoriteGames from "./MyFavoriteGames";
 import MyJoinedRooms from "./MyJoinedRooms";
+import { downloadYaml } from "../lib/yamlBuild";
 
 /**
  * FEAT-43: one personal area instead of three scattered "my" pages.
@@ -105,15 +108,22 @@ export default function MyArea() {
 }
 
 function MyYamlsTab() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [yamls, setYamls] = useState<UserYaml[]>([]);
   const [submissions, setSubmissions] = useState<UserSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [rooms, setRooms] = useState<MyRoom[]>([]);
+  const [pendingRemoval, setPendingRemoval] = useState<UserYaml | null>(null);
+  const [sending, setSending] = useState<UserYaml | null>(null);
+  const [destination, setDestination] = useState("");
+  const [loadedAt] = useState(() => Date.now());
+  const drafts = Object.keys(sessionStorage).filter(key => key.startsWith(`ap-pie:yaml-builder:${user?.id}:`));
 
   useEffect(() => {
-    Promise.all([getMyYamls(), getMySubmissions()])
-      .then(([y, s]) => { setYamls(y); setSubmissions(s); })
+    Promise.all([getMyYamls(), getMySubmissions(), getMyRooms()])
+      .then(([y, s, r]) => { setYamls(y); setSubmissions(s); setRooms(r); })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
       .finally(() => setLoading(false));
   }, []);
@@ -126,6 +136,7 @@ function MyYamlsTab() {
   const remove = async (y: UserYaml) => {
     try {
       await deleteMyYaml(y.id);
+      setPendingRemoval(null);
       setYamls((prev) => prev.filter((x) => x.id !== y.id));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to delete");
@@ -146,6 +157,30 @@ function MyYamlsTab() {
   return (
     <>
       {error && <p className="error">{error}</p>}
+      <section className="settings-section">
+        <h2>Continue where you left off</h2>
+        <p>Saved YAMLs are available on any device after sign-in. Browser-tab drafts stay on this device.</p>
+        {drafts.length > 0 && <p><Link to="/yaml-builder">Continue a browser-tab draft</Link> ({drafts.length})</p>}
+        {submissions.some(s => s.validation_status === "failed" || !!s.option_warnings?.length) && <p><a href="#yaml-submissions">Review submissions needing attention</a></p>}
+        {[...rooms].filter(room => room.status === "open" && room.submit_deadline).sort((a, b) => a.submit_deadline!.localeCompare(b.submit_deadline!)).slice(0, 3).map(room => <p key={room.id}><Link to={`/r/${room.id}`}>{room.name}</Link> · Submit by {new Date(room.submit_deadline!).toLocaleString()}</p>)}
+        <Link className="btn" to="/yaml-builder">Prepare another YAML</Link>
+      </section>
+      {pendingRemoval && <section className="settings-section" role="status">
+        <p>Delete “{pendingRemoval.label || pendingRemoval.apworld_name}”? Your room submissions will remain.</p>
+        <button className="btn" onClick={() => setPendingRemoval(null)}>Keep this YAML</button>
+        <button className="btn btn-danger" onClick={() => void remove(pendingRemoval)}>Delete permanently</button>
+      </section>}
+      {sending && <section className="settings-section">
+        <h3>Send {sending.label || sending.apworld_name} to a room</h3>
+        <p>Your saved original stays unchanged. Review the room's required version before submitting.</p>
+        <select aria-label="Destination room" value={destination} onChange={event => setDestination(event.target.value)}>
+          <option value="">Select an open room…</option>
+          {rooms.filter(room => room.status === "open" && (!room.submit_deadline || Date.parse(room.submit_deadline) > loadedAt)).map(room => <option key={room.id} value={room.id}>{room.name}</option>)}
+        </select>
+        <button className="btn btn-primary" disabled={!destination} onClick={() => navigate(`/yaml-builder/${encodeURIComponent(sending.apworld_name)}?context=public-room&room=${encodeURIComponent(destination)}&from=${sending.id}`)}>Review and submit</button>
+        <button className="btn" onClick={() => setSending(null)}>Cancel</button>
+        <p>Missing a room? Open its invitation and join it first.</p>
+      </section>}
 
       <section className="settings-section">
         <h3>Saved</h3>
@@ -198,8 +233,11 @@ function MyYamlsTab() {
                 </div>
                 <div className="my-yaml-actions">
                   <button type="button" className="btn btn-sm" onClick={() => openInBuilder(y)}>
-                    Open in builder
+                    {y.outdated ? `Keep v${y.version}` : "Open in builder"}
                   </button>
+                  {y.outdated && <button className="btn btn-sm" onClick={() => navigate(`/yaml-builder/${encodeURIComponent(y.apworld_name)}?version=${encodeURIComponent(y.latest_version!)}&from=${y.id}`)}>Review v{y.latest_version} changes</button>}
+                  <button className="btn btn-sm" onClick={() => { setSending(y); setDestination(""); }}>Send to room</button>
+                  {y.kind === "advanced" && y.yaml_content && <button className="btn btn-sm" onClick={() => downloadYaml(y.yaml_content!, y.player_name, y.apworld_name)}>Download saved file</button>}
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -210,7 +248,7 @@ function MyYamlsTab() {
                   >
                     Rename
                   </button>
-                  <button type="button" className="btn btn-sm" onClick={() => remove(y)}>
+                  <button type="button" className="btn btn-sm" onClick={() => setPendingRemoval(y)}>
                     Delete
                   </button>
                 </div>
@@ -220,7 +258,7 @@ function MyYamlsTab() {
         )}
       </section>
 
-      <section className="settings-section" style={{ marginTop: "1.25rem" }}>
+      <section id="yaml-submissions" className="settings-section" style={{ marginTop: "1.25rem" }}>
         <h3>Submitted</h3>
         <p className="settings-hint">
           Everything this account has submitted, across every room. Anything
@@ -231,7 +269,7 @@ function MyYamlsTab() {
           <p className="settings-hint" style={{ margin: 0 }}>No submissions yet.</p>
         ) : (
           <ul className="my-yaml-list">
-            {submissions.map((s) => (
+            {[...submissions].sort((a, b) => Number(b.validation_status === "failed" || !!b.option_warnings?.length) - Number(a.validation_status === "failed" || !!a.option_warnings?.length)).map((s) => (
               <li key={s.id} className="my-yaml-row">
                 <div className="my-yaml-text">
                   <div className="my-yaml-head">
@@ -258,7 +296,7 @@ function MyYamlsTab() {
                   ))}
                 </div>
                 <div className="my-yaml-actions">
-                  <Link className="btn btn-sm" to={`/r/${s.room_id}`}>Open room</Link>
+                  <Link className="btn btn-sm" to={`/r/${s.room_id}`}>{s.validation_status === "failed" || s.option_warnings?.length ? "Open room to review and edit" : "Open room"}</Link>
                 </div>
               </li>
             ))}

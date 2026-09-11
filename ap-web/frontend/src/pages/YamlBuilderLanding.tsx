@@ -9,14 +9,17 @@ interface LocalDraft {
   apworld: string;
   version: string;
   playerName: string;
+  sourceId?: string;
+  context: string;
+  roomId: string;
 }
 
-function readStandaloneDrafts(userId: number | undefined): LocalDraft[] {
+function readBuilderDrafts(userId: number | undefined): LocalDraft[] {
   const drafts: LocalDraft[] = [];
   const owner = String(userId ?? "anonymous");
   for (let index = 0; index < sessionStorage.length; index += 1) {
     const key = sessionStorage.key(index);
-    if (!key?.startsWith(`ap-pie:yaml-builder:${owner}:standalone:`)) continue;
+    if (!key?.startsWith(`ap-pie:yaml-builder:${owner}:`)) continue;
     const parts = key.split(":");
     if (parts.length < 7) continue;
     try {
@@ -24,7 +27,10 @@ function readStandaloneDrafts(userId: number | undefined): LocalDraft[] {
       drafts.push({
         key,
         apworld: parts[5],
-        version: parts.slice(6).join(":"),
+        version: parts.slice(6, parts.indexOf("saved") >= 0 ? parts.indexOf("saved") : undefined).join(":"),
+        sourceId: parts.indexOf("saved") >= 0 ? parts[parts.indexOf("saved") + 1] : undefined,
+        context: parts[3],
+        roomId: parts[4],
         playerName: stored.playerName || "Player1",
       });
     } catch {
@@ -74,9 +80,9 @@ export default function YamlBuilderLanding() {
   }, [requestedRoomId, roomContext]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDrafts(readStandaloneDrafts(user?.id)), 0);
+    const timer = window.setTimeout(() => setDrafts(readBuilderDrafts(user?.id).filter(draft => !roomContext || draft.roomId === requestedRoomId)), 0);
     return () => window.clearTimeout(timer);
-  }, [user?.id]);
+  }, [user?.id, roomContext, requestedRoomId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -135,7 +141,7 @@ export default function YamlBuilderLanding() {
         <p>
           {roomContext
             ? "Pick one of this room's APWorlds, choose its options, and add the finished YAML to the room."
-            : "Pick your game, choose its options, and watch the YAML update as you work. Download the finished file or send it to an Archipelago Pie room."}
+            : "Pick your game and choose its options. Save to your account to continue on another device, download a file, or send the YAML directly to a collection room."}
         </p>
         <label className="yaml-builder-game-search">
           <span>Find your game</span>
@@ -153,6 +159,7 @@ export default function YamlBuilderLanding() {
           {user && <Link className="btn" to="/my/yamls">My saved YAMLs</Link>}
         </div>
       </header>
+      {!roomContext && <p>Joining a group? <Link to="/#choose-your-path">Open your room invitation first</Link> to use the versions your host requested.</p>}
 
       {drafts.length > 0 && (
         <section className="yaml-builder-landing-section" aria-labelledby="builder-drafts-title">
@@ -172,7 +179,7 @@ export default function YamlBuilderLanding() {
                 <div className="yaml-builder-draft-actions">
                   <Link
                     className="btn btn-sm btn-primary"
-                    to={`/yaml-builder/${encodeURIComponent(draft.apworld)}?version=${encodeURIComponent(draft.version)}`}
+                    to={`/yaml-builder/${encodeURIComponent(draft.apworld)}?version=${encodeURIComponent(draft.version)}${draft.sourceId ? `&from=${encodeURIComponent(draft.sourceId)}` : ""}${draft.context !== "standalone" ? `&context=${encodeURIComponent(draft.context)}&room=${encodeURIComponent(draft.roomId)}` : ""}`}
                   >
                     Continue
                   </Link>

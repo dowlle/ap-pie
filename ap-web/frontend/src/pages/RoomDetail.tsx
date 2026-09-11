@@ -22,6 +22,7 @@ import ItemTracker from "../components/ItemTracker";
 import ShareGame from "../components/ShareGame";
 import DropOverlay from "../components/DropOverlay";
 import YamlModal from "../components/YamlModal";
+import SavedYamlPicker from "../components/SavedYamlPicker";
 import CopyButton from "../components/CopyButton";
 import RoomSettingsModal from "../components/RoomSettingsModal";
 import RequestApworldUpdateModal from "../components/RequestApworldUpdateModal";
@@ -829,6 +830,7 @@ export default function RoomDetail() {
       </details>
 
       {/* Actions */}
+      {room.status === "open" && <SavedYamlPicker roomId={room.id} host />}
       <div className="room-actions">
         {room.status === "open" && (
           <>

@@ -25,12 +25,13 @@ export default function MyJoinedRooms() {
     <p>Open a host's shared room link and choose “Join room”. You can send a YAML later from the builder.</p>
     {error && <p role="alert" className="error">{error}</p>}
     {loading ? <p>Loading rooms...</p> : rooms.length === 0 ? <p>You haven't joined any rooms yet.</p> :
-      <div className="favorite-games-grid">{rooms.map((room) => <article className="favorite-game-card" key={room.id}>
+      <div className="favorite-games-grid">{[...rooms].sort((a, b) => (a.status === "open" ? 0 : 1) - (b.status === "open" ? 0 : 1) || (a.submit_deadline ?? "9999").localeCompare(b.submit_deadline ?? "9999")).map((room) => <article className="favorite-game-card" key={room.id}>
         <h3><Link to={`/r/${room.id}`}>{room.name}</Link></h3>
         <p>{room.status}{room.is_host ? " · Hosted by you" : ""}</p>
+        {room.submit_deadline && <p>Submission deadline: {new Date(room.submit_deadline).toLocaleString()}</p>}
         <div className="favorite-game-actions">
           <Link className="btn btn-sm" to={`/r/${room.id}`}>Open room</Link>
-          {room.status === "open" && <Link className="btn btn-sm btn-primary" to="/yaml-builder">Build a YAML</Link>}
+          {room.status === "open" && <Link className="btn btn-sm btn-primary" to={`/yaml-builder?context=${room.is_host ? "host-room" : "public-room"}&room=${encodeURIComponent(room.id)}`}>Prepare a YAML for this room</Link>}
           {room.joined && <button className="btn btn-sm" disabled={busy} onClick={() => void leave(room.id)}>Leave room</button>}
         </div>
       </article>)}</div>}

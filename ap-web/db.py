@@ -1694,7 +1694,7 @@ def get_user_yaml(yaml_id: int) -> dict | None:
 
 
 def update_user_yaml(yaml_id: int, **fields) -> dict | None:
-    allowed = {"label", "player_name", "option_values", "yaml_content", "version"}
+    allowed = {"label", "player_name", "option_values", "yaml_content", "version", "kind"}
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return get_user_yaml(yaml_id)
@@ -2166,7 +2166,7 @@ def events_scorecard(days: int = 7) -> dict:
                   FROM events e
                  WHERE {human} AND e.ts > NOW() - make_interval(days => %s)
                    AND e.kind IN ('page_view', 'builder_opened', 'builder_stage_reached',
-                                  'builder_yaml_emitted', 'builder_abandoned', 'builder_failed',
+                                  'builder_yaml_emitted', 'builder_saved', 'builder_abandoned', 'builder_failed',
                                   'builder_cta', 'oauth_login_started', 'oauth_callback_succeeded',
                                   'pokepelago_connect_result', 'pokepelago_goal_reached')
               GROUP BY e.kind ORDER BY events DESC""",
@@ -2183,7 +2183,8 @@ def events_scorecard(days: int = 7) -> dict:
                        COUNT(*) FILTER (WHERE e.kind = 'builder_opened') AS builder_opens,
                        COUNT(*) FILTER (WHERE e.kind = 'builder_yaml_emitted') AS builder_outputs,
                        COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_opened') AS attempts,
-                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_yaml_emitted') AS outputs
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_yaml_emitted') AS outputs,
+                       COUNT(DISTINCT e.props->>'attempt_id') FILTER (WHERE e.kind = 'builder_saved') AS saves
                   FROM events e
                  WHERE {human} AND e.ts > NOW() - make_interval(days => %s)
               GROUP BY e.ua_class ORDER BY page_views DESC""",

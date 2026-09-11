@@ -4856,6 +4856,18 @@ details.yaml-builder-group > summary .muted {
 .yaml-builder-workspace-form {
   display: flex;
   flex-direction: column;
+  overflow: visible;
+}
+
+.journey-entry { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.journey-entry > * { padding: 1.25rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); }
+.journey-entry h2 { font-size: 1.15rem; }
+.journey-entry input { display: block; width: 100%; margin: .5rem 0; }
+.yaml-room-context { display: flex; gap: .75rem; flex-wrap: wrap; padding: 1rem; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1rem; }
+.yaml-room-context span { flex-basis: 100%; }
+@media (max-width: 980px) {
+  .yaml-builder-page { padding-bottom: 100px; transform: none; left: auto; width: 100%; }
+  .yaml-builder-workspace-form > .settings-modal-footer { position: fixed; left: 0; right: 0; bottom: var(--builder-keyboard, 0px); padding-bottom: max(.75rem, env(safe-area-inset-bottom)); background: var(--bg-card); z-index: 20; display: flex; flex-wrap: wrap; justify-content: space-between; border: 1px solid var(--border); }
 }
 .yaml-builder-workspace-form .settings-modal-body {
   overflow: visible;

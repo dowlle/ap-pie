@@ -79,4 +79,10 @@ The validator at [archipelago.gg/check](https://archipelago.gg/check) catches ma
 
 ## Handing it in
 
+You do not need to manage a file on your phone. In the Builder, choose **Sign in and save** or **Save to my YAMLs** on the review step. Your setup is then available in **My YAMLs** after signing in on your computer. Browser-tab drafts are different: they stay in that tab until you save them to your account.
+
+If your host uses an Archipelago Pie collection room, start from its invitation. Choose **Use a saved YAML** or build one for the room, review the requested version, and submit directly. A successful account save does not submit to a room. After submitting, return to the room to check validation and edit your YAML if something needs attention.
+
+When a saved setup has an older APWorld version, **Keep this version** reopens it as saved. **Review changes** lets you inspect a newer version and prepare a separate copy, leaving the original intact. A newer release is not automatically the version your host needs.
+
 Send the file to whoever hosts your game. If they use this site, they will give you a collection-room link where you submit it in the browser. [Hosting an Archipelago multiworld](/guides/hosting-a-multiworld) shows what happens on the host's side. After generation, use the maintained setup guide and [game-client guide](/guides/setting-up-a-game-client) to get connected.
