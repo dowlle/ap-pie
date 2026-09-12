@@ -80,3 +80,4 @@ jobs:
       # can't report success. Needs no database, but rides along here so
       # there is one place that runs the backend checks.
       - run: python scripts/test_index_refresh.py
+      - run: python scripts/test_apworld_version_order.py

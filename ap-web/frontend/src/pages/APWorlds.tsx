@@ -192,6 +192,11 @@ function DownloadIcon() {
 }
 
 function compareVersions(a: string, b: string): number {
+  const [baseA, ...suffixA] = a.split("-");
+  const [baseB, ...suffixB] = b.split("-");
+  if (baseA === baseB && Boolean(suffixA.length) !== Boolean(suffixB.length)) {
+    return suffixA.length ? -1 : 1;
+  }
   const partsA = a.split(/[.-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
   const partsB = b.split(/[.-]/).map((p) => (/^\d+$/.test(p) ? parseInt(p, 10) : p));
   const len = Math.max(partsA.length, partsB.length);

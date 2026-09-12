@@ -161,13 +161,17 @@ def _version_sort_key(ver_str: str) -> tuple:
 
     Handles versions like "0.6.4", "1.0", "0.4.2", and non-numeric suffixes.
     """
-    parts = []
-    for part in re.split(r"[.\-]", ver_str):
-        if part.isdigit():
-            parts.append((0, int(part)))
-        else:
-            parts.append((1, part))
-    return tuple(parts)
+    base, _, suffix = ver_str.partition("-")
+
+    def parts(value: str) -> tuple:
+        return tuple(
+            (0, int(part)) if part.isdigit() else (1, part)
+            for part in re.split(r"[.\-]", value)
+        )
+
+    # Compare the complete base first, then prefer a final release over
+    # prereleases of that base. Keep the existing suffix ordering.
+    return parts(base), not bool(suffix), parts(suffix)
 
 
 def parse_world_toml(key: str, data: dict) -> APWorldInfo:

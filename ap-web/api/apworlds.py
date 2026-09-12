@@ -186,6 +186,10 @@ def _compare_versions(a: str, b: str) -> int:
     Returns negative if a<b, zero if equal, positive if a>b.
     """
     import re
+    base_a, _, suffix_a = a.partition("-")
+    base_b, _, suffix_b = b.partition("-")
+    if base_a == base_b and bool(suffix_a) != bool(suffix_b):
+        return -1 if suffix_a else 1
     pa = re.split(r"[.\-]", a)
     pb = re.split(r"[.\-]", b)
     for i in range(max(len(pa), len(pb))):
