@@ -2943,6 +2943,7 @@ a.btn:hover { text-decoration: none; }
 }
 .apworlds-grid {
   display: grid;
+  align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
 }
@@ -2959,6 +2960,28 @@ a.btn:hover { text-decoration: none; }
   transition: border-color 150ms ease, background 150ms ease;
 }
 .apworld-card:hover { border-color: var(--border-strong); }
+.apworld-catalog-card .apworld-card-title { padding-right: 0; }
+.apworld-catalog-card .apworld-card-head { padding-top: 0; }
+.apworld-card-source, .apworld-card-release { color: var(--text-muted); font-size: 0.75rem; }
+.apworld-card-release { margin-top: 0.3rem; }
+.apworld-evidence-pair { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.apworld-evidence-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.6rem; border: 0; border-radius: 4px; font: 600 0.76rem/1.3 var(--font-body); cursor: pointer; text-align: left; }
+.apworld-evidence-badge > span { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
+.apworld-evidence-badge.is-pending { color: var(--text-muted); background: var(--bg-elevated); }
+.apworld-evidence-badge.is-passed { color: var(--color-success); background: rgba(105,201,157,.09); }
+.apworld-evidence-badge.is-warning { color: var(--color-warning); background: rgba(242,173,85,.09); }
+.apworld-evidence-badge:focus-visible { outline: 2px solid var(--text-h); outline-offset: 3px; }
+.apworld-evidence-date { margin: 0.5rem 0 0; font-size: 0.7rem; color: var(--text-muted); }
+.apworld-evidence-note { margin: 0.7rem 0 0; font-size: 0.8rem; line-height: 1.6; }
+.apworld-evidence-detail { margin-top: 0.7rem; padding: 1rem; border-radius: 6px; background: var(--bg-elevated); font-size: 0.8rem; }
+.apworld-evidence-note { color: var(--text-h); }
+.apworld-catalog-card .apworld-card-primary-actions > .btn-primary { order: -1; }
+.apworld-catalog-card .apworld-action::after { max-width: min(15rem, 100%); white-space: normal; }
+.apworld-catalog-card .apworld-card-primary-actions { margin-top: 1.3rem; justify-content: flex-start; }
+.apworld-builder-blocker { color: var(--text-muted); font-size: 0.75rem; }
+.apworlds-evidence-context { color: var(--text-muted); font-size: 0.8rem; line-height: 1.6; max-width: 48rem; }
+.apworld-catalog-card .apworld-card-primary-actions { align-items: center; }
+.apworld-catalog-card .apworld-card-icons { margin: 0; align-items: center; flex-wrap: wrap; }
 .apworld-card-icon-tile {
   display: grid;
   place-items: center;
