@@ -21,7 +21,7 @@ export default function Tooltip({ label, explanation, tone = "pending", hint, ch
   return <span className="apworld-tooltip-trigger"
     onMouseEnter={event => show(event.currentTarget)}
     onMouseLeave={event => { if (!(event.relatedTarget instanceof Node) || !document.getElementById(id)?.contains(event.relatedTarget)) setPosition(null); }}
-    onFocus={event => show(event.currentTarget)} onBlur={() => setPosition(null)}
+    onFocus={event => { const element = event.currentTarget; requestAnimationFrame(() => { if (element.contains(document.activeElement)) show(element); }); }} onBlur={() => setPosition(null)}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); setPosition(null); } }}
     onClickCapture={() => setPosition(null)}>
     {cloneElement(children as ReactElement<{ "aria-describedby"?: string }>, { "aria-describedby": position ? id : undefined })}

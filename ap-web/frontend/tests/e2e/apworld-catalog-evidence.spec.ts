@@ -31,11 +31,14 @@ for (const width of [1440, 390]) {
     await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open GitHub repository" })).toBeVisible();
     await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open unreviewed setup link recorded in the community index" })).toBeVisible();
     const guideLink = card.getByRole("link", { name: "Open unreviewed setup link recorded in the community index" });
+    await page.setViewportSize({ width, height: 500 });
+    await page.evaluate(() => window.scrollTo(0, 0));
     await guideLink.focus();
     await expect(page.getByRole("tooltip")).toContainText("AP-Pie has not reviewed this link.");
     await expect(guideLink).not.toHaveAttribute("title");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("tooltip")).toHaveCount(0);
+    await page.setViewportSize({ width, height: 1000 });
     const warningCard = page.locator(".apworld-catalog-card").filter({ hasText: "Warning Fixture" });
     await expect(warningCard.locator(".apworld-evidence-note")).toHaveCount(0);
     const warningBadge = warningCard.getByRole("button", { name: "Generation warnings", exact: true });
