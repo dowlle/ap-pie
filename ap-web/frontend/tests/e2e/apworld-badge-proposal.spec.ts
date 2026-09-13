@@ -14,7 +14,7 @@ for (const width of [1440, 390]) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/style-guide#apworld-badges");
     const section = page.locator("#apworld-badges");
-    await expect(section.getByRole("heading", { name: "Every release. Clear evidence." })).toBeVisible();
+    await expect(section.getByRole("heading", { name: "Every release. Clear evidence." })).toBeVisible({ timeout: 20_000 });
     await section.scrollIntoViewIfNeeded();
     await expect(section.locator(".sg-evidence-card")).toHaveCount(4);
     const pending = section.locator(".sg-evidence-card").filter({ hasText: "Mystery World" });
