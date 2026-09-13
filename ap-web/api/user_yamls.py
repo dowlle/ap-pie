@@ -62,8 +62,9 @@ def _schema_for(apworld_name: str, version: str | None):
     if world is None:
         return None, None
     if not version:
-        ver = next((v for v in world.versions if v.url or v.local), None)
-        version = ver.version if ver else None
+        from builtin_builder import build_versions
+        versions = build_versions(world)
+        version = versions[0]["version"] if versions else None
     if not version:
         return world, None
     rows = builder_schemas_for_pins([{"apworld_name": apworld_name, "version": version}])
@@ -81,8 +82,7 @@ def _annotate(entry: dict) -> dict:
     world, schema_row = _schema_for(entry["apworld_name"], None)
     latest = None
     if world is not None:
-        ver = next((v for v in world.versions if v.url or v.local), None)
-        latest = ver.version if ver else None
+        latest = (schema_row or {}).get("version")
     out["latest_version"] = latest
     out["outdated"] = bool(latest and latest != entry["version"])
 

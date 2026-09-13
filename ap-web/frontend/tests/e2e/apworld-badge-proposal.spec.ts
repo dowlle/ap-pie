@@ -1,0 +1,44 @@
+import { expect, test } from "@playwright/test";
+
+for (const width of [1440, 390]) {
+  test(`badge proposal explains evidence and isolates version state at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.route("**/api/**", async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (path === "/api/auth/me") return route.fulfill({ status: 401, json: {} });
+      if (path === "/api/features") return route.fulfill({ json: { generation: false } });
+      if (path === "/api/deployment") return route.fulfill({ json: { label: "beta" } });
+      return route.fulfill({ json: [] });
+    });
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("/style-guide#apworld-badges");
+    const section = page.locator("#apworld-badges");
+    await expect(section.getByRole("heading", { name: "Every release. Clear evidence." })).toBeVisible();
+    await section.scrollIntoViewIfNeeded();
+    await expect(section.locator(".sg-evidence-card")).toHaveCount(4);
+    const pending = section.locator(".sg-evidence-card").filter({ hasText: "Mystery World" });
+    await expect(pending.getByRole("button", { name: "Builder pending" })).toBeDisabled();
+    const badge = pending.getByRole("button", { name: "Security: Awaiting review. Show explanation" });
+    await badge.focus();
+    await page.keyboard.press("Enter");
+    await expect(pending.getByRole("region")).toContainText("has not completed a security review");
+    await badge.click();
+    await expect(pending.getByRole("region")).toHaveCount(0);
+    await pending.getByLabel("Choose version").selectOption("older");
+    await expect(pending.getByRole("button", { name: "Create YAML" })).toBeEnabled();
+    await expect(pending.getByRole("button", { name: "Security: No issues found. Show explanation" })).toBeVisible();
+    await pending.getByLabel("Choose version").selectOption("latest");
+    await expect(pending.getByRole("button", { name: "Builder pending" })).toBeDisabled();
+    const concerns = section.locator(".sg-evidence-card").filter({ hasText: "Action World" });
+    await expect(concerns.getByRole("button", { name: "Download" })).toBeEnabled();
+    await expect(concerns.getByRole("button", { name: "Builder pending" })).toBeDisabled();
+    const warnings = section.locator(".sg-evidence-card").filter({ hasText: "Adventure World" });
+    await expect(warnings.getByRole("button", { name: "Create YAML" })).toBeEnabled();
+    await expect(section.getByRole("link", { name: "Create Super Metroid YAML" })).toHaveAttribute("href", "/yaml-builder/sm?version=0.6.7");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    expect(errors).toEqual([]);
+    await section.scrollIntoViewIfNeeded();
+    await section.screenshot({ path: `/tmp/ap-pie-badge-proposal-${width}.png` });
+  });
+}

@@ -41,7 +41,7 @@ function readBuilderDrafts(userId: number | undefined): LocalDraft[] {
 }
 
 function latestBuildVersion(world: APWorldInfo): string | null {
-  return world.downloadable_versions[0]?.version ?? null;
+  return (world.builder_versions ?? world.downloadable_versions)[0]?.version ?? null;
 }
 
 export default function YamlBuilderLanding() {
@@ -223,7 +223,8 @@ export default function YamlBuilderLanding() {
                   </span>
                   <span className="yaml-builder-game-card-meta">
                     {world.stability && <span className="badge">{world.stability}</span>}
-                    <span>v{version}</span>
+                    {world.is_builtin && <span className="badge badge-builtin">Built in</span>}
+                    <span>{world.is_builtin ? "AP " : "v"}{version}</span>
                     <span aria-hidden="true">→</span>
                   </span>
                 </button>

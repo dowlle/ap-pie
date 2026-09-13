@@ -491,6 +491,7 @@ function WorldCard({
   const [showAllVersions, setShowAllVersions] = useState(false);
   const latestVersion = versions[0];
   const latestDownloadable = downloadable[0];
+  const latestBuilderVersion = (world.builder_versions ?? world.downloadable_versions)[0]?.version;
   const initials = world.display_name
     .split(/\s+/)
     .filter(Boolean)
@@ -543,15 +544,15 @@ function WorldCard({
           <div className="apworld-card-primary-actions">
             {playUrl && <a className="btn btn-primary btn-sm" href={playUrl}>Play Poképelago</a>}
             {detailAction}
-            {latestDownloadable && (
+            {latestBuilderVersion && (
               <button
                 type="button"
                 className="btn btn-sm apworld-action"
                 data-tooltip="Choose options, save a setup or download a YAML"
-                onClick={() => onBuild(world.name, latestDownloadable.version)}
-                disabled={buildingVersion === latestDownloadable.version}
+                onClick={() => onBuild(world.name, latestBuilderVersion)}
+                disabled={buildingVersion === latestBuilderVersion}
               >
-                {buildingVersion === latestDownloadable.version ? "Loading…" : "Create YAML"}
+                {buildingVersion === latestBuilderVersion ? "Loading…" : "Create YAML"}
               </button>
             )}
             {latestDownloadable && (
