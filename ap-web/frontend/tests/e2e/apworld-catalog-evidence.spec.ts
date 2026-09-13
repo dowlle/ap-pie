@@ -11,12 +11,12 @@ for (const width of [1440, 390]) {
       if (path === "/api/auth/me") return route.fulfill({ status: 401, json: {} });
       if (path === "/api/features") return route.fulfill({ json: { generation: false } });
       if (path === "/api/deployment") return route.fulfill({ json: { label: "beta" } });
-      return route.fulfill({ json: path === "/api/apworlds" ? [world] : [] });
+      return route.fulfill({ json: path === "/api/apworlds" ? [world, { ...world, name: "warnings", display_name: "Warning Fixture", versions: [version("1.2.0", { ...result, verdict: "broken", default_rate: 1, worst_hook_rate: 1 })] }] : [] });
     });
     const errors: string[] = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto("/apworlds");
-    const card = page.locator(".apworld-catalog-card");
+    const card = page.locator(".apworld-catalog-card").filter({ hasText: "Evidence Fixture" });
     await expect(card).toBeVisible({ timeout: 20_000 });
     await expect(card.getByRole("button", { name: "Review pending", exact: true })).toBeVisible();
     await expect(card.getByRole("button", { name: "Tests pending", exact: true })).toBeVisible();
@@ -30,6 +30,22 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open GitHub repository" })).toBeVisible();
     await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open unreviewed setup link recorded in the community index" })).toBeVisible();
+    const warningCard = page.locator(".apworld-catalog-card").filter({ hasText: "Warning Fixture" });
+    await expect(warningCard.locator(".apworld-evidence-note")).toHaveCount(0);
+    const warningBadge = warningCard.getByRole("button", { name: "Generation warnings", exact: true });
+    await warningBadge.scrollIntoViewIfNeeded();
+    await warningBadge.focus();
+    const tooltip = page.getByRole("tooltip");
+    await expect(tooltip).toContainText("Some recorded generation checks failed.");
+    await expect(warningBadge).not.toHaveAttribute("title");
+    const bounds = await tooltip.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    await page.keyboard.press("Escape");
+    await expect(tooltip).toHaveCount(0);
+    await warningBadge.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("button", { name: "Close fuzzer explanation" }).click();
     expect(errors).toEqual([]);
   });
 }
