@@ -1,32 +1,14 @@
-import { useEffect, useId, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
+import Tooltip from "./Tooltip";
 import type { APWorldVersion } from "../api";
 import FuzzerModal from "./FuzzerModal";
 
 function EvidenceButton({ label, tone, explanation, expanded, onClick }: {
   label: string; tone: string; explanation: string; expanded: boolean; onClick: () => void;
 }) {
-  const id = useId();
-  const [position, setPosition] = useState<{ left: number; top?: number; bottom?: number } | null>(null);
-  useEffect(() => {
-    if (!position) return;
-    const hide = () => setPosition(null);
-    window.addEventListener("scroll", hide, true);
-    window.addEventListener("resize", hide);
-    return () => { window.removeEventListener("scroll", hide, true); window.removeEventListener("resize", hide); };
-  }, [position]);
-  const show = (element: HTMLButtonElement) => {
-    const rect = element.getBoundingClientRect();
-    const width = Math.min(288, window.innerWidth - 32);
-    setPosition({ left: Math.max(16, Math.min(rect.left, window.innerWidth - width - 16)), ...(rect.top > 180 ? { bottom: window.innerHeight - rect.top + 8 } : { top: rect.bottom + 8 }) });
-  };
-  return <>
-    <button type="button" className={`apworld-evidence-badge is-${tone}`} aria-describedby={position ? id : undefined} aria-expanded={expanded}
-      onMouseEnter={event => show(event.currentTarget)} onMouseLeave={event => { if (!(event.relatedTarget instanceof Element) || event.relatedTarget.id !== id) setPosition(null); }}
-      onFocus={event => show(event.currentTarget)} onBlur={() => setPosition(null)} onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); setPosition(null); } }}
-      onClick={() => { setPosition(null); onClick(); }}><span aria-hidden="true" />{label}</button>
-    {position && createPortal(<div id={id} role="tooltip" className={`apworld-evidence-tooltip is-${tone}`} style={position} onMouseLeave={() => setPosition(null)}><strong>{label}</strong><p>{explanation}</p><small>Activate the badge for details</small></div>, document.body)}
-  </>;
+  return <Tooltip label={label} tone={tone} explanation={explanation} hint="Activate the badge for details">
+    <button type="button" className={`apworld-evidence-badge is-${tone}`} aria-expanded={expanded} onClick={onClick}><span aria-hidden="true" />{label}</button>
+  </Tooltip>;
 }
 
 export default function APWorldEvidence({ version }: { version?: APWorldVersion }) {

@@ -211,6 +211,8 @@ export interface FuzzResult {
   worst_hook_rate: number;
   seeds: number;
   fuzzed_at: string;  // ISO date
+  report_url?: string | null;
+  record_url?: string | null;
 }
 
 export interface APWorldVersion {

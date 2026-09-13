@@ -30,6 +30,7 @@ from ap_lib.apworld_index import (
 import config
 from builtin_builder import builtin_record, build_versions
 from apworld_editorial import join_index_record, load_reviewed_apworlds
+from fuzz_evidence import attach_fuzz_evidence
 
 bp = Blueprint("apworlds", __name__)
 
@@ -136,6 +137,9 @@ def _load_index_into_cache():
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
+        head = index_head_sha(index_dir)
+        for world in worlds:
+            attach_fuzz_evidence(world, head)
         _index_worlds_cache = worlds
         updated = _index_updated_map(index_dir)
         _index_cache = []

@@ -46,6 +46,8 @@ class FuzzResult:
     worst_hook_rate: float
     seeds: int
     fuzzed_at: str  # ISO date
+    report_url: str | None = None
+    record_url: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -55,6 +57,8 @@ class FuzzResult:
             "worst_hook_rate": self.worst_hook_rate,
             "seeds": self.seeds,
             "fuzzed_at": self.fuzzed_at,
+            "report_url": self.report_url,
+            "record_url": self.record_url,
         }
 
 
@@ -210,6 +214,7 @@ def parse_world_toml(key: str, data: dict) -> APWorldInfo:
                         worst_hook_rate=float(entry["worst_hook_rate"]),
                         seeds=int(entry["seeds"]),
                         fuzzed_at=str(entry["fuzzed_at"]),
+                        report_url=entry.get("report_url"),
                     )
                     break
                 except (KeyError, TypeError, ValueError):

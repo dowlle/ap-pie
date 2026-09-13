@@ -15,6 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
 import APWorldEvidence from "../components/APWorldEvidence";
+import Tooltip from "../components/Tooltip";
 import FavoriteGameButton from "../components/FavoriteGameButton";
 import { useFavoriteGames } from "../lib/useFavoriteGames";
 import { trackBuilderCta } from "../lib/analytics";
@@ -403,52 +404,52 @@ function HomeAndIconRow({ world }: { world: APWorldInfo }) {
       {hasIcons && (
         <div className="apworld-card-icons">
           {homeIcon && (
+            <Tooltip label={homeIcon.kind === "github" ? "GitHub repository" : homeIcon.kind === "discord" ? "Community Discord" : "Project homepage"} explanation={homeIcon.kind === "github" ? "Browse the source repository and releases for this APWorld." : homeIcon.kind === "discord" ? "Visit the game’s community Discord for discussion and support." : "Visit the project’s homepage for game information and resources."}>
             <a
               href={homeIcon.href}
               target="_blank"
               rel="noreferrer"
               className="apworld-card-icon"
-              title={homeIcon.title}
               aria-label={homeIcon.label}
             >
               {homeIcon.node}
-            </a>
+            </a></Tooltip>
           )}
           {derivedRepo && (
+            <Tooltip label="Source repository" explanation="Browse the GitHub repository identified by this APWorld’s download source.">
             <a
               href={derivedRepo}
               target="_blank"
               rel="noreferrer"
               className="apworld-card-icon"
-              title={`Source repo (from download URL): ${derivedRepo}`}
               aria-label="Open source GitHub repository"
             >
               <GitHubIcon />
-            </a>
+            </a></Tooltip>
           )}
           {world.setup_guide && (
+            <Tooltip label="Setup guide" explanation="Open the setup link recorded in the community index. AP-Pie has not reviewed this link.">
             <a
               href={world.setup_guide}
               target="_blank"
               rel="noopener noreferrer"
               className="apworld-card-icon"
-              title={`Setup link recorded in the community index; not reviewed by AP-Pie: ${world.setup_guide}`}
               aria-label="Open unreviewed setup link recorded in the community index"
             >
               <SetupGuideIcon />
-            </a>
+            </a></Tooltip>
           )}
           {world.tracker && (
+            <Tooltip label="Tracker" explanation="Open the game’s live tracker or PopTracker pack recorded in the community index.">
             <a
               href={world.tracker}
               target="_blank"
               rel="noopener noreferrer"
               className="apworld-card-icon"
-              title={`Live tracker / PopTracker pack: ${world.tracker}`}
               aria-label="Open tracker"
             >
               <TrackerIcon />
-            </a>
+            </a></Tooltip>
           )}
         </div>
       )}

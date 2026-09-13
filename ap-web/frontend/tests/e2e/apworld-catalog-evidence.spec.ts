@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 for (const width of [1440, 390]) {
   test(`catalog evidence stays tied to the release at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
-    const result = { verdict: "clean", default_rate: 0, worst_hook: "default", worst_hook_rate: 0, seeds: 100, fuzzed_at: "2026-09-13" };
+    const result = { verdict: "clean", default_rate: 0, worst_hook: "default", worst_hook_rate: 0, seeds: 100, fuzzed_at: "2026-09-13", report_url: "https://github.com/dowlle/Archipelago-index/pull/754" };
     const version = (value: string, fuzz: unknown) => ({ version: value, source: "url", url: `https://github.com/example/world/releases/download/${value}/world.apworld`, local: null, sha256: null, fuzz_result: fuzz });
     const world = { name: "fixture", display_name: "Evidence Fixture", game_name: "Evidence Fixture", home: "https://github.com/example/world", tags: [], supported: false, disabled: false, is_builtin: false, has_update: false, stability: "stable", setup_guide: "https://example.com/setup", tracker: null, updated_at: null, editorial: null, versions: [version("1.2.0", null), version("1.1.0", result)], downloadable_versions: [{ version: "1.2.0" }, { version: "1.1.0" }], builder_versions: [{ version: "1.1.0" }] };
     await page.route("**/api/**", route => {
@@ -30,6 +30,12 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open GitHub repository" })).toBeVisible();
     await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open unreviewed setup link recorded in the community index" })).toBeVisible();
+    const guideLink = card.getByRole("link", { name: "Open unreviewed setup link recorded in the community index" });
+    await guideLink.focus();
+    await expect(page.getByRole("tooltip")).toContainText("AP-Pie has not reviewed this link.");
+    await expect(guideLink).not.toHaveAttribute("title");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
     const warningCard = page.locator(".apworld-catalog-card").filter({ hasText: "Warning Fixture" });
     await expect(warningCard.locator(".apworld-evidence-note")).toHaveCount(0);
     const warningBadge = warningCard.getByRole("button", { name: "Generation warnings", exact: true });
@@ -45,6 +51,7 @@ for (const width of [1440, 390]) {
     await expect(tooltip).toHaveCount(0);
     await warningBadge.click();
     await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open GitHub report" })).toHaveAttribute("href", result.report_url);
     await page.getByRole("button", { name: "Close fuzzer explanation" }).click();
     expect(errors).toEqual([]);
   });
