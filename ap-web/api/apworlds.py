@@ -65,6 +65,7 @@ _index_refresh_lock = threading.Lock()
 _review_stamp = None
 _fuzz_stamp = None
 _discovery_stamp = None
+_schema_stamp = None
 
 
 def _fuzz_snapshot():
@@ -159,13 +160,14 @@ def _index_updated_map(index_dir: Path) -> dict[str, str]:
 def _load_index_into_cache():
     """Populate all three index caches in one parse pass. Caller holds the
     lock. Cache is invalidated by `refresh_index` and on first read."""
-    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp, _discovery_stamp
+    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp, _discovery_stamp, _schema_stamp
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
         discovery_path = index_dir.parent / 'discovery.json'
         worlds = discovery.merge(worlds, discovery.load_for_serving(discovery_path))
         _discovery_stamp = security_reviews.fingerprint(discovery_path)
+        _schema_stamp = security_reviews.fingerprint(index_dir.parent / 'discovery-schemas.json')
         head = index_head_sha(index_dir)
         fuzz_stamp, fuzz_records = _fuzz_snapshot()
         for world in worlds:
@@ -211,7 +213,8 @@ def _get_index() -> list:
         stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
         fuzz_stamp, _ = _fuzz_snapshot()
         discovery_stamp = security_reviews.fingerprint(_get_index_dir().parent / 'discovery.json')
-        if _index_cache is None or stamp != _review_stamp or fuzz_stamp != _fuzz_stamp or discovery_stamp != _discovery_stamp:
+        schema_stamp = security_reviews.fingerprint(_get_index_dir().parent / 'discovery-schemas.json')
+        if _index_cache is None or stamp != _review_stamp or fuzz_stamp != _fuzz_stamp or discovery_stamp != _discovery_stamp or schema_stamp != _schema_stamp:
             _load_index_into_cache()
         return _index_cache
 
