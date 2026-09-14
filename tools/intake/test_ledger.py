@@ -5,6 +5,15 @@ from ledger import Ledger
 
 
 class LedgerTests(unittest.TestCase):
+    def test_unattempted_evidence_jobs_are_not_starved_by_due_retries(self):
+        old = self.l.verified(self.candidate(), 'a' * 64)
+        job = self.l.claim('security', now=1)
+        self.l.finish(old, 'security', job['token'], None, error='Source review missing', now=2)
+        cid = self.l.discover('game', '2', 'https://github.com/o/r/releases/download/2/game.apworld', None, origin='index')
+        self.l.db.commit()
+        new = self.l.verified(cid, 'b' * 64)
+        self.assertEqual(self.l.claim('security', now=1000)['release_id'], new)
+
     def test_held_and_queued_updates_precede_newer_upstream_history(self):
         held = self.l.discover('game', 'held', 'https://github.com/o/r/releases/download/held/game.apworld', None, origin='archived-audit')
         queued = self.l.discover('game', 'queued', 'https://github.com/o/r/releases/download/queued/game.apworld', None, origin='pr:61')

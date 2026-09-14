@@ -142,7 +142,7 @@ class Ledger:
         try:
             job = self.db.execute("SELECT * FROM jobs WHERE kind=? AND "
                                   "((state IN ('queued','retry') AND next_attempt<=?) OR "
-                                  "(state='running' AND lease_until<=?)) ORDER BY next_attempt,release_id LIMIT 1",
+                                  "(state='running' AND lease_until<=?)) ORDER BY attempts,next_attempt,release_id LIMIT 1",
                                   (kind, now, now)).fetchone()
             if job is None:
                 self.db.commit()

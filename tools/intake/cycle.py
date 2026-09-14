@@ -15,6 +15,7 @@ import schema_queue
 import guide_queue
 import import_security
 import import_generation
+import cached_security
 from scan_sources import scan
 from verify_queue import run_candidate
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-lib'))
@@ -61,6 +62,7 @@ def main():
     p.add_argument('--generation', type=Path, required=True)
     p.add_argument('--limit', type=int, default=5)
     p.add_argument('--beta-ssh-target', help='Publish discovery before evidence work to the fixed beta container')
+    p.add_argument('--audit-db', type=Path, help='Read-only existing source-review cache')
     a = p.parse_args()
     if not 1 <= a.limit <= 50:
         p.error('limit must be between 1 and 50')
@@ -85,6 +87,8 @@ def main():
 
             def security():
                 records = security_snapshot.load_catalog(a.security)
+                if a.audit_db:
+                    records += cached_security.export(ledger, a.audit_db)
                 completed = import_security.process(ledger, records, limit=a.limit)
                 snapshot.write_atomic(a.out_dir / 'security-evidence.json', security_snapshot.export(ledger, records))
                 return completed
