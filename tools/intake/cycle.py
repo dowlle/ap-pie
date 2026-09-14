@@ -20,6 +20,7 @@ from verify_queue import run_candidate
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-lib'))
 import discovery as discovery_loader
 from publish_beta_discovery import publish as publish_beta_discovery
+from publish_beta_discovery import publish_schemas
 from publish_beta_evidence import publish as publish_beta_evidence
 
 
@@ -97,6 +98,8 @@ def main():
             def schemas():
                 completed = schema_queue.process(ledger, a.archives, limit=a.limit)
                 snapshot.write_atomic(a.out_dir / 'discovery-schemas.json', schema_snapshot.export(ledger))
+                if a.beta_ssh_target:
+                    publish_schemas(a.beta_ssh_target, a.out_dir / 'discovery-schemas.json')
                 return completed
 
             steps = [('security', security), ('generation', generation), ('schema', schemas),
