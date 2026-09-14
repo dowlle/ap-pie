@@ -13,6 +13,20 @@ import test_discovery
 
 
 class IntakeAPITests(unittest.TestCase):
+    def test_explicit_discovered_builder_request_never_fetches_archive(self):
+        (self.root/'index'/'index').mkdir(parents=True)
+        names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
+        previous={name:getattr(apworlds,name) for name in names}
+        try:
+            for name in names: setattr(apworlds,name,None)
+            with self.client.application.app_context(), patch.object(apworlds,'parse_index_dir',return_value=[]), patch.object(apworlds,'_fetch_apworld_bytes',side_effect=AssertionError('must not fetch')):
+                rows=apworlds.builder_schemas_for_pins([{'apworld_name':'game','version':'2'}])
+            self.assertEqual(len(rows),1)
+            self.assertIsNone(rows[0]['schema'])
+            self.assertTrue(rows[0]['pending'])
+        finally:
+            for name,value in previous.items(): setattr(apworlds,name,value)
+
     def test_discovered_download_redirects_to_recorded_source_without_fetching_package(self):
         (self.root/'index'/'index').mkdir(parents=True)
         names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
