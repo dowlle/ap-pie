@@ -2943,7 +2943,7 @@ a.btn:hover { text-decoration: none; }
 }
 .apworlds-grid {
   display: grid;
-  align-items: start;
+  align-items: stretch;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
 }
