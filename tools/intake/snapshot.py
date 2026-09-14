@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import tempfile
 from pathlib import Path
 from ledger import Ledger
 
@@ -30,16 +31,28 @@ def export(ledger):
     return snapshot
 
 
-def write_atomic(path, snapshot):
+def write_atomic(path, snapshot, *, validate=None):
     body = (json.dumps(snapshot, sort_keys=True, separators=(',', ':')) + '\n').encode()
     if len(body) > MAX_BYTES:
         raise ValueError('Discovery snapshot exceeds public metadata budget')
-    temporary = path.with_suffix(path.suffix + '.tmp')
-    with temporary.open('wb') as f:
-        f.write(body)
-        f.flush()
-        os.fsync(f.fileno())
-    temporary.replace(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=path.name + '.', suffix='.tmp', delete=False) as f:
+            temporary = Path(f.name)
+            f.write(body)
+            f.flush()
+            os.fsync(f.fileno())
+        if validate is not None:
+            validate(temporary)
+        temporary.replace(path)
+        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ import fcntl
 import json
 import time
 import uuid
+import sys
 from pathlib import Path
 from ledger import Ledger
 import snapshot
@@ -16,6 +17,8 @@ import import_security
 import import_generation
 from scan_sources import scan
 from verify_queue import run_candidate
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-lib'))
+import discovery as discovery_loader
 
 
 def cycle(ledger, *, scan_sources, verify, publish_discovery, evidence_steps):
@@ -72,7 +75,7 @@ def main():
 
             def discovery():
                 path = a.out_dir / 'discovery.json'
-                snapshot.write_atomic(path, snapshot.export(ledger))
+                snapshot.write_atomic(path, snapshot.export(ledger), validate=discovery_loader.load)
 
             def security():
                 records = security_snapshot.load_catalog(a.security)
