@@ -12,6 +12,13 @@ from builtin_builder import build_versions
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_matching_accepted_bytes_still_receive_the_independent_hold(self):
+        original=APWorldInfo(name='game',display_name='Game',versions=[APWorldVersion('2',url=self.record()['url'],sha256='a'*64)])
+        merged=discovery.merge([original],{'releases':[self.record()]})[0]
+        public=discovery.attach_public_metadata(merged,merged.to_dict())
+        self.assertTrue(public['versions'][0]['discovery']['held'])
+        self.assertEqual(len(merged.versions),1)
+
     def test_invalid_replacement_preserves_last_valid_snapshot_and_removal_rolls_back(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'discovery.json'

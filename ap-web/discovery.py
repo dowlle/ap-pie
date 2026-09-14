@@ -102,6 +102,9 @@ def merge(worlds, data):
             lookup[w.name]=w
         old=next((v for v in w.versions if v.version==r['version']),None)
         if old and old.sha256==r['sha256']:
+            old.discovery_id=r['id']
+            old.discovery_held=r['held']
+            old.discovery_jobs=dict(r.get('jobs', {}))
             continue
         # Full immutable history stays in the snapshot; the version resolver
         # selects the most recently verified bytes for each version label.
@@ -121,7 +124,7 @@ def attach_public_metadata(world, data):
     versions = {v.version: v for v in world.versions}
     for row in data['versions']:
         version = versions[row['version']]
-        if getattr(version, 'discovered', False):
+        if getattr(version, 'discovery_id', None):
             row['discovery'] = {
                 'id': version.discovery_id,
                 'held': version.discovery_held,
