@@ -15,7 +15,6 @@ import {
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
 import { useDeploymentLabel } from "../context/DeploymentContext";
-import FuzzResultPill from "../components/FuzzResultPill";
 import APWorldEvidence from "../components/APWorldEvidence";
 import Tooltip from "../components/Tooltip";
 import FavoriteGameButton from "../components/FavoriteGameButton";
@@ -278,7 +277,7 @@ function VersionRow({
 
   return (
     <li className="apworld-version-row">
-      <span className="apworld-version-label">
+      <div className="apworld-version-label">
         <span
           className="apworld-version-num"
           title={
@@ -295,12 +294,12 @@ function VersionRow({
             {shortSha(v.sha256)}
           </span>
         )}
-        {/* FEAT-35: per-version fuzz verdict. Null fuzz_result renders
-            nothing; clean is a tiny green dot; flaky/broken are coloured
-            pills with worst_hook tooltip. */}
-        <FuzzResultPill fuzz_result={v.fuzz_result} version={v.version} />
+        <APWorldEvidence version={v} builtin={world.is_builtin} />
+        {v.discovery?.held && (
+          <span className="apworld-version-hold" title={v.discovery.policy_summary ?? undefined}>Unresolved hold</span>
+        )}
         {isCurrent && <span className="badge badge-done apworld-version-current">installed</span>}
-      </span>
+      </div>
       <span className="apworld-version-actions">
         {(v.source === "url" || v.source === "local") && (
           <button

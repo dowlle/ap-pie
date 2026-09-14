@@ -3319,6 +3319,11 @@ a.btn:hover { text-decoration: none; }
   color: var(--text-muted);
 }
 .apworld-version-current { font-size: 0.7rem; }
+.apworld-version-hold {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
 .apworld-version-actions {
   display: inline-flex;
   gap: 0.3rem;
