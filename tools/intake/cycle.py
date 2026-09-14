@@ -17,6 +17,7 @@ import guide_queue
 import import_security
 import import_generation
 import cached_security
+import uncached_security
 import collect_generation
 from refresh_sources import refresh
 from scan_sources import scan
@@ -73,12 +74,20 @@ def main():
     p.add_argument('--index-source', type=Path, help='Dedicated canonical-index source checkout')
     p.add_argument('--holds', type=Path, help='Existing policy holds, retained independently')
     p.add_argument('--generation-emitter', type=Path, help='Trusted existing Actions evidence parser; never starts tests')
+    p.add_argument('--review-runner', type=Path, help='Trusted existing source extractor and audit prompt')
+    p.add_argument('--review-runtime', type=Path, help='Native headless review runtime directory')
+    p.add_argument('--review-auth', type=Path, help='Provider-only login file; never application credentials')
+    p.add_argument('--review-limit', type=int, default=1, help='Maximum uncached model reviews per cycle')
     a = p.parse_args()
     if not 1 <= a.limit <= 500 or not 1 <= a.workers <= 8:
         p.error('limit must be 1..500 and workers 1..8')
     evidence_limit = a.limit if a.evidence_limit is None else a.evidence_limit
     if not 1 <= evidence_limit <= 500:
         p.error('evidence-limit must be 1..500')
+    if not 1 <= a.review_limit <= 4:
+        p.error('review-limit must be 1..4')
+    if a.review_runner and not (a.review_runtime and a.review_auth):
+        p.error('review-runner requires review-runtime and review-auth')
     a.out_dir.mkdir(parents=True, exist_ok=True)
     with a.db.with_suffix('.cycle.lock').open('a') as lock:
         try:
@@ -103,7 +112,10 @@ def main():
                 records = security_snapshot.load_catalog(a.security)
                 if a.audit_db:
                     records += cached_security.export(ledger, a.audit_db, a.review_summary)
-                completed = import_security.process(ledger, records, limit=evidence_limit)
+                completed = import_security.process(ledger, records, limit=evidence_limit, cached_only=bool(a.review_runner))
+                if a.review_runner:
+                    completed += uncached_security.process(ledger, a.archives, a.out_dir.parent/'private-reviews',
+                        uncached_security.load_runner(a.review_runner), a.review_runtime, a.review_auth, limit=a.review_limit)
                 snapshot.write_atomic(a.out_dir / 'security-evidence.json', security_snapshot.export(ledger, records))
                 return completed
 

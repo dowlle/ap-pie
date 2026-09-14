@@ -34,6 +34,15 @@ This operational pilot does not prove complete source coverage, uncached
 security review handling or full rollback. Those remain required for the goal.
 Production publication is unavailable through these fixed-container tools.
 
+Uncached reviews use the existing trusted extractor/prompt and an outer bwrap
+worker that cannot see application files, inherited environment, normal home
+or Docker socket. Only provider login, source and private outputs are mounted.
+Configure `--review-runner`, `--review-runtime`, `--review-auth`, and retain
+`--review-limit 1` for bounded recurring model spend. Cache-only imports leave
+missing results for that independent worker. Full reports stay private;
+public evidence contains only exact archive identity, disposition and report
+hash. Weak PASS coverage is downgraded. Existing holds are never cleared.
+
 After the successful 100-candidate bulk receipt
 `3d17c9f8e5d1477c98e2117f9db8cf9b`, recurring throughput is configured for
 100 candidates and four isolated download workers. Selection spreads work

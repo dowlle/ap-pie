@@ -149,17 +149,26 @@ class Ledger:
             self.db.execute("UPDATE candidates SET state='blocked',error='Artifact checksum mismatch',attempts=attempts+1,updated=? WHERE id=? AND (state!='blocked' OR COALESCE(error,'')!='Artifact checksum mismatch')",(time.time(),candidate_id))
         return cid
 
-    def claim(self, kind, *, now=None, lease_seconds=300):
+    def claim(self, kind, *, now=None, lease_seconds=300, release_ids=None):
         if kind not in KINDS:
             raise ValueError('Unknown job kind')
         now = time.time() if now is None else now
+        restriction = ''
+        values = [kind, now, now]
+        if release_ids is not None:
+            ids = list(release_ids)
+            if not ids:return None
+            if len(ids)>20000 or any(not HASH.fullmatch(rid) for rid in ids):
+                raise ValueError('Invalid claim release identities')
+            restriction = ' AND release_id IN (' + ','.join('?' for _ in ids) + ')'
+            values += ids
         token = identity(kind, now, time.monotonic_ns())
         self.db.execute('BEGIN IMMEDIATE')
         try:
             job = self.db.execute("SELECT * FROM jobs WHERE kind=? AND "
                                   "((state IN ('queued','retry') AND next_attempt<=?) OR "
-                                  "(state='running' AND lease_until<=?)) ORDER BY attempts,next_attempt,release_id LIMIT 1",
-                                  (kind, now, now)).fetchone()
+                                  "(state='running' AND lease_until<=?))" + restriction + " ORDER BY attempts,next_attempt,release_id LIMIT 1",
+                                  values).fetchone()
             if job is None:
                 self.db.commit()
                 return None

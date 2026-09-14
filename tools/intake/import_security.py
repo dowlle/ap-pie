@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-web'))
 from security_reviews import validate_catalog
 
 
-def process(ledger, records, *, limit=20):
+def process(ledger, records, *, limit=20, cached_only=False):
     # Validate the entire batch before claiming or changing any queue job.
     records = validate_catalog({'schema': 1, 'records': records})
     lookup={}
@@ -16,8 +16,10 @@ def process(ledger, records, *, limit=20):
         key=(r.get('module'),r.get('version'),r.get('sha256'))
         lookup.setdefault(key,[]).append(r)
     completed=0
+    release_ids = None if not cached_only else [r['id'] for r in ledger.db.execute('SELECT * FROM releases')
+                  if (r['module'],r['version'],r['sha256']) in lookup]
     for _ in range(limit):
-        job=ledger.claim('security')
+        job=ledger.claim('security', release_ids=release_ids)
         if job is None:break
         release=dict(ledger.db.execute('SELECT * FROM releases WHERE id=?',(job['release_id'],)).fetchone())
         matching=lookup.get((release['module'],release['version'],release['sha256']),[])

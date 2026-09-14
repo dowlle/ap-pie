@@ -6,6 +6,21 @@ from coverage import export
 
 
 class CoverageTests(unittest.TestCase):
+    def test_duplicate_pr_checksum_mismatch_is_reconciled_only_with_verified_held_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger=Ledger(Path(tmp)/'state.db');ledger.register('game',{})
+            url='https://github.com/o/r/releases/download/1/game.apworld'
+            original=ledger.discover('game','1',url,'a'*64,origin='pr:1')
+            duplicate=ledger.discover('game','1',url,'a'*64,origin='github',revision='asset')
+            observed=ledger.record_checksum_mismatch(duplicate,'b'*64)
+            self.assertEqual(export(ledger.db,[{'number':1}])['summary']['pr_gaps'],1)
+            ledger.verified(observed,'b'*64)
+            report=export(ledger.db,[{'number':1}])
+            self.assertEqual(report['summary']['pr_gaps'],0)
+            self.assertEqual(report['prs'][0]['candidate_states'],{'quarantined':1})
+            self.assertEqual(ledger.db.execute('SELECT expected FROM candidates WHERE id=?',(original,)).fetchone()[0],'a'*64)
+            self.assertEqual(ledger.status()['holds'],1)
+            ledger.db.close()
     def test_manifest_retains_gaps_and_deduplicates_only_verified_observations(self):
         with tempfile.TemporaryDirectory() as tmp:
             ledger = Ledger(Path(tmp) / 'state.db')
