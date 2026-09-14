@@ -1,4 +1,5 @@
 import sqlite3
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +24,16 @@ class CachedSecurityTests(unittest.TestCase):
                 records = export(ledger, cache)
                 self.assertEqual({r['sha256']: r['status'] for r in records}, {'a' * 64: 'pass', 'b' * 64: 'fail'})
                 self.assertNotIn('private report', str(records))
+                report = Path(tmp) / 'qa.md'
+                report.write_text('private QA explanation')
+                summary = Path(tmp) / 'summary.json'
+                item = {'module': 'game', 'version': '1', 'sha256': 'a' * 64, 'status': 'NEEDS_REVIEW', 'report': str(report), 'qa': True}
+                summary.write_text(json.dumps({'results': [item, dict(item, sha256='c' * 64, report='/missing/private-report')]}))
+                enriched = export(ledger, cache, [summary])
+                self.assertEqual({r['status'] for r in enriched if r['sha256'] == 'a' * 64}, {'pass', 'needs_review'})
+                self.assertEqual(len(enriched), 3)
+                self.assertEqual(enriched[-1]['method'], 'source-review-with-qa')
+                self.assertNotIn('private QA explanation', str(enriched))
                 with sqlite3.connect(cache) as db:
                     self.assertEqual(db.execute('SELECT count(*) FROM audits').fetchone()[0], 2)
             finally:
