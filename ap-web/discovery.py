@@ -100,7 +100,7 @@ def load(path):
             if key in source and not isinstance(source[key],bool):
                 raise ValueError('Invalid source flag')
         jobs=r.get('jobs',{})
-        if not isinstance(jobs,dict) or any(k not in ('security','generation','guide') or v not in ('queued','running','retry','blocked','completed') for k,v in jobs.items()):
+        if not isinstance(jobs,dict) or any(k not in ('security','generation','guide','schema') or v not in ('queued','running','retry','blocked','completed') for k,v in jobs.items()):
             raise ValueError('Invalid discovery jobs')
     return data
 

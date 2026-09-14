@@ -12,7 +12,7 @@ import sqlite3
 import time
 from pathlib import Path
 
-KINDS = ('security', 'generation', 'guide')
+KINDS = ('security', 'generation', 'guide', 'schema')
 HASH = re.compile(r'^[0-9a-f]{64}$')
 MODULE = re.compile(r'^[A-Za-z0-9_ .-]{1,160}$')
 
@@ -59,6 +59,9 @@ class Ledger:
             module TEXT PRIMARY KEY REFERENCES sources(module), state TEXT NOT NULL,
             detail TEXT NOT NULL, updated REAL NOT NULL);
         ''')
+        # Existing verified releases also acquire the independent schema job.
+        with self.db:
+            self.db.execute("INSERT OR IGNORE INTO jobs (release_id,kind) SELECT id,'schema' FROM releases")
 
     def register(self, module, metadata):
         if not MODULE.fullmatch(module):

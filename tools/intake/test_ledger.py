@@ -24,11 +24,11 @@ class LedgerTests(unittest.TestCase):
     def test_unreviewed_verified_release_is_discoverable_and_jobs_independent(self):
         rid = self.l.verified(self.candidate(), 'a' * 64)
         self.assertEqual(self.l.status()['releases'], 1)
-        self.assertEqual(self.l.status()['jobs'], {'queued': 3})
+        self.assertEqual(self.l.status()['jobs'], {'queued': 4})
         job = self.l.claim('security')
         self.l.finish(rid, 'security', job['token'], {'status': 'fail'})
         self.assertEqual(self.l.status()['releases'], 1)
-        self.assertEqual(self.l.status()['jobs'], {'completed': 1, 'queued': 2})
+        self.assertEqual(self.l.status()['jobs'], {'completed': 1, 'queued': 3})
 
     def test_same_bytes_deduplicate_jobs_and_changed_bytes_do_not_inherit_evidence(self):
         cid = self.candidate()
@@ -36,7 +36,7 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(first, self.l.verified(self.candidate(origin='pr:42'), 'a' * 64))
         second = self.l.verified(cid, 'b' * 64)
         self.assertNotEqual(first, second)
-        self.assertEqual(self.l.status()['jobs'], {'queued': 6})
+        self.assertEqual(self.l.status()['jobs'], {'queued': 8})
         self.assertEqual(self.l.db.execute('SELECT count(*) FROM origins').fetchone()[0], 2)
 
     def test_checksum_mismatch_never_publishes(self):

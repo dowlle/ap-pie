@@ -221,7 +221,7 @@ export interface APWorldVersion {
     record_url: string;
     held: boolean;
     policy_summary: string | null;
-    jobs: Partial<Record<"security" | "generation" | "guide", "queued" | "running" | "retry" | "blocked" | "completed">>;
+    jobs: Partial<Record<"security" | "generation" | "guide" | "schema", "queued" | "running" | "retry" | "blocked" | "completed">>;
   };
   version: string;
   url: string | null;
