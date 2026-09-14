@@ -4,11 +4,43 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import time
 from pathlib import Path
 from ledger import Ledger
+
+
+def store_artifact(artifact, archives, digest):
+    archives.mkdir(parents=True, exist_ok=True)
+    target = archives / f'{digest}.apworld'
+    if target.exists():
+        if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+            raise RuntimeError('Stored artifact checksum mismatch')
+        return target
+    staged = None
+    try:
+        # Stage on the destination filesystem; /tmp may be a separate mount.
+        with tempfile.NamedTemporaryFile(dir=archives, prefix=digest + '.', delete=False) as output:
+            staged = Path(output.name)
+            with artifact.open('rb') as source:
+                shutil.copyfileobj(source, output, length=65536)
+            output.flush()
+            os.fsync(output.fileno())
+        if hashlib.sha256(staged.read_bytes()).hexdigest() != digest:
+            raise RuntimeError('Stored artifact checksum mismatch')
+        staged.chmod(0o444)
+        staged.replace(target)
+        directory = os.open(archives, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+        return target
+    finally:
+        if staged is not None:
+            staged.unlink(missing_ok=True)
 
 
 def sandbox_command(job, output):
@@ -49,15 +81,7 @@ def run_candidate(ledger, row, archives):
         digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
         if digest != result['sha256']:
             raise RuntimeError('Worker output checksum mismatch')
-        archives.mkdir(parents=True, exist_ok=True)
-        target = archives / f'{digest}.apworld'
-        if target.exists():
-            if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
-                raise RuntimeError('Stored artifact checksum mismatch')
-        else:
-            # Keep the content-addressed file read-only for subsequent workers.
-            artifact.chmod(0o444)
-            artifact.replace(target)
+        store_artifact(artifact, archives, digest)
         result['release_id'] = ledger.verified(row['id'], digest)
         return result
 
