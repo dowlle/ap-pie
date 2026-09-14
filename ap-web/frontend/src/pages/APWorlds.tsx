@@ -864,6 +864,11 @@ export default function APWorlds() {
         <strong>Match the host's version.</strong>
         <span>If you are unsure which APWorld version to use, ask the host before downloading.</span>
       </aside>
+      <p className="muted">
+        Missing a game or release?{" "}
+        <a href="https://github.com/dowlle/Archipelago-index/issues/new" target="_blank" rel="noopener noreferrer">Submit its source</a>
+        {" "}with the game name, source repository and release link.
+      </p>
 
       {error && <p className="error">{error}</p>}
 
