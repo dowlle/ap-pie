@@ -1,10 +1,34 @@
 import tempfile
 import unittest
 from pathlib import Path
-from reconcile import archived_audit_observations, standing_holds
+from reconcile import archived_audit_observations, standing_holds, add_world
+from ledger import Ledger
 
 
 class ArchiveMetadataTests(unittest.TestCase):
+    def test_index_stored_artifact_is_pinned_and_requires_download_verification(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger=Ledger(Path(tmp)/'state.db')
+            data={'name':'Twilight Princess','versions':{'1':{'local':'../apworlds/Twilight Princess-1.apworld'}}}
+            count=add_world(ledger,'Twilight Princess',data,{'Twilight Princess':{'1':'a'*64}},'index',{'commit':'b'*40})
+            row=dict(ledger.db.execute('SELECT * FROM candidates').fetchone())
+            self.assertEqual(count,1)
+            self.assertEqual(row['url'],'https://raw.githubusercontent.com/dowlle/Archipelago-index/'+'b'*40+'/apworlds/Twilight%20Princess-1.apworld')
+            self.assertEqual(row['expected'],'a'*64)
+            self.assertEqual(ledger.status()['releases'],0)
+            for local in ('../private/game.apworld','../apworlds/../../game.apworld','../apworlds/sub/game.apworld'):
+                data['versions']['1']['local']=local
+                with self.assertRaises(ValueError):add_world(ledger,'Twilight Princess',data,{},'index',{'commit':'b'*40})
+            ledger.db.close()
+
+    def test_retired_source_remains_registered_without_new_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger=Ledger(Path(tmp)/'state.db')
+            count=add_world(ledger,'game',{'disabled':True,'versions':{'1':{'url':'https://github.com/o/r/releases/download/1/game.apworld'}}},{},'index',{})
+            self.assertEqual(count,0)
+            self.assertEqual(ledger.status()['sources'],1)
+            ledger.db.close()
+
     def test_historical_unknown_hash_is_not_invented_from_current_bytes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)

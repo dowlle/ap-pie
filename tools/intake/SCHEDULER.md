@@ -33,3 +33,11 @@ PR heads before scanning, and reuses exact-checksum audit-cache/QA evidence.
 This operational pilot does not prove complete source coverage, uncached
 security review handling or full rollback. Those remain required for the goal.
 Production publication is unavailable through these fixed-container tools.
+
+Index-stored artifacts are now queued using the canonical repository's full
+commit SHA and `apworlds/` path. They require the same isolated archive and
+checksum verification as release assets. Retired entries remain registered
+without creating new downloads. Scanner classifications distinguish built-in,
+retired and index-stored sources from missing mappings. The 2026-09-14 source
+dry run found 103 stored-file version observations across 77 sources; a real
+Twilight Princess 0.3.0 archive passed verification without package execution.

@@ -103,13 +103,14 @@ def scan(ledger, cache, *, workers=6, ttl=1800):
     for source in sources:
         metadata = json.loads(source['metadata'])
         candidates = [dict(row) for row in ledger.db.execute('SELECT * FROM candidates WHERE module=?', (source['module'],))]
+        classification = 'retired' if metadata.get('disabled') else 'builtin' if metadata.get('supported') else None
         repo = next((r for u in [metadata.get('default_url'), *[c['url'] for c in candidates], metadata.get('home')]
                      if (r := repository(u))), None)
-        if repo:
+        if repo and not classification:
             grouped.setdefault(repo.lower(), []).append((source['module'], metadata, candidates))
         else:
             summary['unsupported'] += 1
-            state = 'builtin' if metadata.get('supported') else 'needs_source_mapping'
+            state = classification or ('index_stored' if any(c['url'].startswith('https://raw.githubusercontent.com/dowlle/Archipelago-index/') for c in candidates) else 'needs_source_mapping')
             ledger.db.execute('INSERT INTO scans VALUES (?,?,?,?) ON CONFLICT(module) DO UPDATE '
                               'SET state=excluded.state,detail=excluded.detail,updated=excluded.updated',
                               (source['module'], state, '{}', time.time()))

@@ -12,6 +12,18 @@ from builtin_builder import build_versions
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_index_stored_url_requires_canonical_repository_and_full_commit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'discovery.json'
+            record=self.record()
+            base='https://raw.githubusercontent.com/dowlle/Archipelago-index/'
+            for suffix,valid in [('b'*40+'/apworlds/Game%20Name.apworld',True),('main/apworlds/game.apworld',False),('b'*40+'/private/game.apworld',False)]:
+                record['url']=base+suffix
+                path.write_text(json.dumps({'schema':1,'releases':[record]}))
+                if valid:self.assertEqual(len(discovery.load(path)['releases']),1)
+                else:
+                    with self.assertRaises(ValueError):discovery.load(path)
+
     def test_module_hold_applies_to_accepted_versions_without_discovery_record(self):
         original=APWorldInfo(name='game',display_name='Game',versions=[APWorldVersion('1'),APWorldVersion('2')])
         world=discovery.merge([original],{'releases':[],'policies':[{'module':'game','version':'*'}]})[0]

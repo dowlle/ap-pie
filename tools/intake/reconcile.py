@@ -10,7 +10,7 @@ import subprocess
 import tomllib
 from pathlib import Path
 import re
-from urllib.parse import urlsplit, urlunsplit, unquote
+from urllib.parse import urlsplit, urlunsplit, unquote, quote
 import yaml
 from ledger import Ledger, HASH
 
@@ -28,10 +28,20 @@ def add_world(ledger, module, data, lock, origin, detail):
                             ('name', 'home', 'tags', 'supported', 'disabled', 'stability',
                              'setup_guide', 'tracker', 'default_url') if k in data})
     count = 0
+    if data.get('disabled'):
+        return count
     for version, spec in data.get('versions', {}).items():
         url = spec.get('url') or data.get('default_url')
+        if spec.get('local'):
+            local = spec['local']
+            commit = detail.get('commit', '')
+            if not isinstance(local, str) or not re.fullmatch(r'\.\./apworlds/[^/\\\x00-\x1f]+\.apworld', local):
+                raise ValueError('Local artifact must be an index apworlds file')
+            if not re.fullmatch('[a-f0-9]{40}', commit):
+                raise ValueError('Local artifact requires an immutable index commit')
+            url = 'https://raw.githubusercontent.com/dowlle/Archipelago-index/' + commit + '/' + quote(local[3:], safe='/')
         if not url:
-            continue  # Built-in/local sources remain represented in the registry.
+            continue  # Built-ins and sources without artifacts remain registered.
         digest = lock.get(module, {}).get(version)
         ledger.discover(module, version, url.replace('{{version}}', version),
                         digest.lower() if isinstance(digest, str) and HASH.fullmatch(digest.lower()) else None,

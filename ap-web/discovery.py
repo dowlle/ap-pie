@@ -86,9 +86,11 @@ def load(path):
         if not isinstance(r.get('url'),str) or len(r['url'])>4000:
             raise ValueError('Invalid release URL')
         u=urlsplit(r['url'])
-        if u.scheme!='https' or u.hostname!='github.com' or u.username or u.password or u.port not in (None,443) or u.query or u.fragment:
+        if u.scheme!='https' or u.hostname not in ('github.com','raw.githubusercontent.com') or u.username or u.password or u.port not in (None,443) or u.query or u.fragment:
             raise ValueError('Invalid release source')
-        if not re.fullmatch(r'/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/download/[^/]+/[^/]+\.apworld',u.path):
+        pattern = (r'/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/download/[^/]+/[^/]+\.apworld' if u.hostname=='github.com' else
+                   r'/dowlle/Archipelago-index/[a-f0-9]{40}/apworlds/[^/]+\.apworld')
+        if not re.fullmatch(pattern,u.path):
             raise ValueError('Release URL is not an APWorld artifact')
         if not isinstance(r.get('source'),dict) or not isinstance(r.get('held'),bool):
             raise ValueError('Invalid release metadata')

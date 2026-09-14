@@ -8,6 +8,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import re
 import resource
 import socket
 import stat
@@ -19,7 +20,7 @@ import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
 
-HOSTS = {'github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com'}
+HOSTS = {'github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com', 'raw.githubusercontent.com'}
 MAX_DOWNLOAD = 50 * 1024 * 1024
 MAX_MEMBERS = 5000
 MAX_MEMBER = 32 * 1024 * 1024
@@ -46,6 +47,9 @@ def validate_url(url, *, resolve=True):
         raise InvalidArtifact('Artifact URL is outside registered HTTPS hosts')
     if u.port not in (None, 443):
         raise InvalidArtifact('Disallowed artifact port')
+    if u.hostname == 'raw.githubusercontent.com' and (u.query or not re.fullmatch(
+            r'/dowlle/Archipelago-index/[a-f0-9]{40}/apworlds/[^/]+\.apworld', u.path)):
+        raise InvalidArtifact('Stored artifact must be pinned to the canonical index')
     if resolve:
         addresses = socket.getaddrinfo(u.hostname, 443, type=socket.SOCK_STREAM)
         if not addresses or any(not ipaddress.ip_address(a[4][0]).is_global for a in addresses):
