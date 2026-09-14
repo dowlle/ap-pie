@@ -12,6 +12,13 @@ from builtin_builder import build_versions
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_release_tags_with_slashes_are_valid_public_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'data.json'
+            record=self.record()
+            record['url']='https://github.com/o/r/releases/download/release/v1/game.apworld'
+            path.write_text(json.dumps({'schema':1,'releases':[record]}))
+            self.assertEqual(len(discovery.load(path)['releases']),1)
     def test_index_stored_url_requires_canonical_repository_and_full_commit(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'discovery.json'

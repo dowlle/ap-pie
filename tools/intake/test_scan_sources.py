@@ -1,8 +1,14 @@
 import unittest
-from scan_sources import pages, observations
+from scan_sources import pages, observations, repository
 
 
 class ScanTests(unittest.TestCase):
+    def test_registered_forges_and_raw_repository_are_mapped(self):
+        self.assertEqual(repository('https://gitlab.com/group/project/-/raw/tag/assets/game.apworld'),'gitlab.com:group/project')
+        self.assertEqual(repository('https://codeberg.org/o/r/releases/download/1/game.apworld'),'codeberg.org:o/r')
+        self.assertEqual(repository('https://git.makuluni.com/o/r/releases/download/1/game.apworld'),'git.makuluni.com:o/r')
+        self.assertEqual(repository('https://raw.githubusercontent.com/o/r/'+'a'*40+'/game.apworld'),'o/r')
+        self.assertIsNone(repository('https://unregistered.test/o/r'))
     def test_paginated_arrays_are_not_truncated(self):
         self.assertEqual(pages('[{"tag_name":"v2"}]\n[{"tag_name":"v1"}]'),
                          [{'tag_name':'v2'}, {'tag_name':'v1'}])

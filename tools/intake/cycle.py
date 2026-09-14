@@ -65,6 +65,7 @@ def main():
     p.add_argument('--generation', type=Path, required=True)
     p.add_argument('--limit', type=int, default=5)
     p.add_argument('--workers', type=int, default=4)
+    p.add_argument('--evidence-limit', type=int, help='Independent bounded evidence work per cycle')
     p.add_argument('--beta-ssh-target', help='Publish discovery before evidence work to the fixed beta container')
     p.add_argument('--audit-db', type=Path, help='Read-only existing source-review cache')
     p.add_argument('--review-summary', type=Path, action='append', default=[], help='Existing exact-checksum QA summary')
@@ -74,6 +75,9 @@ def main():
     a = p.parse_args()
     if not 1 <= a.limit <= 500 or not 1 <= a.workers <= 8:
         p.error('limit must be 1..500 and workers 1..8')
+    evidence_limit = a.limit if a.evidence_limit is None else a.evidence_limit
+    if not 1 <= evidence_limit <= 500:
+        p.error('evidence-limit must be 1..500')
     a.out_dir.mkdir(parents=True, exist_ok=True)
     with a.db.with_suffix('.cycle.lock').open('a') as lock:
         try:
@@ -97,7 +101,7 @@ def main():
                 records = security_snapshot.load_catalog(a.security)
                 if a.audit_db:
                     records += cached_security.export(ledger, a.audit_db, a.review_summary)
-                completed = import_security.process(ledger, records, limit=a.limit)
+                completed = import_security.process(ledger, records, limit=evidence_limit)
                 snapshot.write_atomic(a.out_dir / 'security-evidence.json', security_snapshot.export(ledger, records))
                 return completed
 
@@ -110,19 +114,19 @@ def main():
                     producer.gh_text, producer.gh_json = collect_generation.gh_text, collect_generation.gh_json
                     prs = json.loads((a.index_source.parent / 'queued-prs.json').read_text())
                     records += collect_generation.collect(ledger, prs, producer)['records']
-                completed = import_generation.process(ledger, records, limit=a.limit)
+                completed = import_generation.process(ledger, records, limit=evidence_limit)
                 snapshot.write_atomic(a.out_dir / 'fuzz-evidence.json', generation_snapshot.export(ledger, records))
                 return completed
 
             def schemas():
-                completed = schema_queue.process(ledger, a.archives, limit=a.limit)
+                completed = schema_queue.process(ledger, a.archives, limit=evidence_limit)
                 snapshot.write_atomic(a.out_dir / 'discovery-schemas.json', schema_snapshot.export(ledger))
                 if a.beta_ssh_target:
                     publish_schemas(a.beta_ssh_target, a.out_dir / 'discovery-schemas.json')
                 return completed
 
             steps = [('security', security), ('generation', generation), ('schema', schemas),
-                     ('guide', lambda: guide_queue.process(ledger, a.limit))]
+                     ('guide', lambda: guide_queue.process(ledger, evidence_limit))]
             if a.beta_ssh_target:
                 steps.append(('evidence_publication', lambda: publish_beta_evidence(a.beta_ssh_target,
                               a.out_dir / 'security-evidence.json', a.out_dir / 'fuzz-evidence.json')))

@@ -7,7 +7,7 @@ import math
 import logging
 import threading
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, unquote
 from ap_lib.apworld_index import APWorldInfo, APWorldVersion, _version_sort_key
 
 _valid_snapshots = {}
@@ -86,10 +86,16 @@ def load(path):
         if not isinstance(r.get('url'),str) or len(r['url'])>4000:
             raise ValueError('Invalid release URL')
         u=urlsplit(r['url'])
-        if u.scheme!='https' or u.hostname not in ('github.com','raw.githubusercontent.com') or u.username or u.password or u.port not in (None,443) or u.query or u.fragment:
+        decoded = unquote(u.path)
+        if '\\' in decoded or any(ord(c)<32 for c in decoded) or any(p in ('.','..') for p in decoded.split('/')):
+            raise ValueError('Invalid artifact path')
+        if u.scheme!='https' or u.hostname not in ('github.com','raw.githubusercontent.com','gitlab.com','codeberg.org','git.makuluni.com') or u.username or u.password or u.port not in (None,443) or u.query or u.fragment:
             raise ValueError('Invalid release source')
-        pattern = (r'/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/download/[^/]+/[^/]+\.apworld' if u.hostname=='github.com' else
-                   r'/dowlle/Archipelago-index/[a-f0-9]{40}/apworlds/[^/]+\.apworld')
+        pattern = (r'/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/[a-f0-9]{40}/(?:[^/]+/)*[^/]+\.apworld' if u.hostname=='raw.githubusercontent.com' else
+                   r'/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+/-/(?:raw|releases/[^/]+/downloads)/[^/]+/(?:[^/]+/)*[^/]+\.apworld' if u.hostname=='gitlab.com' else
+                   r'/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/download/(?:[^/]+/)+[^/]+\.apworld')
+        if u.hostname=='raw.githubusercontent.com' and u.path.startswith('/dowlle/Archipelago-index/'):
+            pattern = r'/dowlle/Archipelago-index/[a-f0-9]{40}/apworlds/[^/]+\.apworld'
         if not re.fullmatch(pattern,u.path):
             raise ValueError('Release URL is not an APWorld artifact')
         if not isinstance(r.get('source'),dict) or not isinstance(r.get('held'),bool):

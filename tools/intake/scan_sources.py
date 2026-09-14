@@ -8,7 +8,8 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit, quote
+import urllib.request
 from ledger import Ledger
 
 REPO = re.compile(r'^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)(?:/|$)')
@@ -16,7 +17,50 @@ REPO = re.compile(r'^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)(?:/
 
 def repository(url):
     match = REPO.match(url or '')
-    return '/'.join(match.groups()) if match else None
+    if match:
+        return '/'.join(match.groups())
+    u = urlsplit(url or '')
+    parts = u.path.strip('/').split('/')
+    if u.hostname == 'raw.githubusercontent.com' and len(parts) >= 4:
+        return '/'.join(parts[:2])
+    if u.hostname in ('codeberg.org', 'git.makuluni.com') and len(parts) >= 2:
+        return u.hostname + ':' + '/'.join(parts[:2])
+    if u.hostname == 'gitlab.com' and len(parts) >= 2:
+        return 'gitlab.com:' + u.path.strip('/').split('/-/')[0]
+    return None
+
+
+def forge_releases(repo):
+    host, project = repo.split(':', 1)
+    if host not in ('gitlab.com', 'codeberg.org', 'git.makuluni.com'):
+        raise ValueError('Unregistered forge')
+    result = []
+    for page in range(1, 101):
+        path = ('/api/v4/projects/' + quote(project, safe='') + '/releases?per_page=100' if host=='gitlab.com'
+                else '/api/v1/repos/' + project + '/releases?limit=100') + '&page=' + str(page)
+        request = urllib.request.Request('https://' + host + path, headers={'User-Agent':'AP-Pie-public-intake/1.0'})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            if urlsplit(response.url).hostname != host:
+                raise ValueError('Forge metadata redirected outside source')
+            body = response.read(10*1024*1024+1)
+        if len(body)>10*1024*1024:raise ValueError('Forge metadata budget exceeded')
+        records = json.loads(body)
+        if not isinstance(records,list):raise ValueError('Unexpected forge release shape')
+        if not records:return result
+        for record in records:
+            if host=='gitlab.com':
+                assets = [{'id':a.get('id'), 'name':a.get('name'),
+                           'browser_download_url':a.get('direct_asset_url') or a.get('url'),
+                           'updated_at':record.get('released_at')} for a in record.get('assets',{}).get('links',[])]
+                result.append({'tag_name':record.get('tag_name'),'published_at':record.get('released_at'),'assets':assets})
+            else:
+                for asset in record.get('assets', []):
+                    if isinstance(asset.get('name'), str) and asset['name'].endswith('.apworld'):
+                        asset['browser_download_url'] = ('https://' + host + '/' + project + '/releases/download/' +
+                                                         quote(record['tag_name'], safe='') + '/' + quote(asset['name'], safe=''))
+                result.append(record)
+        if len(result)>10000:raise ValueError('Forge release count exceeded')
+    raise ValueError('Forge pagination budget exceeded')
 
 
 def pages(raw):
@@ -36,6 +80,13 @@ def fetch_releases(repo, cache, *, ttl=1800):
     filename = cache / (hashlib.sha256(repo.lower().encode()).hexdigest() + '.json')
     if filename.exists() and time.time() - filename.stat().st_mtime < ttl:
         return json.loads(filename.read_text())
+    if ':' in repo:
+        releases = forge_releases(repo)
+        cache.mkdir(parents=True, exist_ok=True)
+        tmp = filename.with_suffix('.tmp')
+        tmp.write_text(json.dumps(releases))
+        tmp.replace(filename)
+        return releases
     fields = '[.[]|{tag_name,published_at,draft,prerelease,assets:[.assets[]|{id,name,browser_download_url,size,digest,updated_at}]}]'
     p = subprocess.run(['gh', 'api', '--paginate', f'repos/{repo}/releases?per_page=100', '--jq', fields],
                        capture_output=True, text=True, timeout=180)

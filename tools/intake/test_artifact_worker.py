@@ -8,6 +8,11 @@ from artifact_worker import InvalidArtifact, validate_url, inspect_archive, MAX_
 
 
 class ArtifactTests(unittest.TestCase):
+    def test_raw_sources_require_full_commit_and_reject_encoded_traversal(self):
+        base='https://raw.githubusercontent.com/o/r/'
+        self.assertEqual(validate_url(base+'a'*40+'/game.apworld',resolve=False),base+'a'*40+'/game.apworld')
+        for suffix in ('main/game.apworld','a'*40+'/%2e%2e/game.apworld','a'*40+'/%5cgame.apworld'):
+            with self.assertRaises(InvalidArtifact):validate_url(base+suffix,resolve=False)
     def test_reject_non_registered_hosts_credentials_private_addresses_and_ports(self):
         for url in ['http://github.com/x', 'https://localhost/x', 'https://github.com.evil.test/x',
                     'https://user:password@github.com/x', 'https://github.com:444/x']:
