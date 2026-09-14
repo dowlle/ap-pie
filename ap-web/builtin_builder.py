@@ -22,7 +22,7 @@ def builtin_record(world, version=None):
     return record
 
 def build_versions(world):
-    versions = [{'version': v.version} for v in world.versions if v.url or v.local]
+    versions = [{'version': v.version} for v in world.versions if (v.url or v.local) and not getattr(v, 'discovered', False)]
     record = builtin_record(world)
     if record:
         versions.append({'version': record['version']})

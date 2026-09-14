@@ -30,6 +30,7 @@ from ap_lib.apworld_index import (
 
 import config
 import security_reviews
+import discovery
 from builtin_builder import builtin_record, build_versions
 from apworld_editorial import join_index_record, load_reviewed_apworlds
 from fuzz_evidence import attach_fuzz_evidence, load_provenance
@@ -62,6 +63,7 @@ _index_lock = threading.Lock()
 _index_refresh_lock = threading.Lock()
 _review_stamp = None
 _fuzz_stamp = None
+_discovery_stamp = None
 
 
 def _fuzz_snapshot():
@@ -156,10 +158,13 @@ def _index_updated_map(index_dir: Path) -> dict[str, str]:
 def _load_index_into_cache():
     """Populate all three index caches in one parse pass. Caller holds the
     lock. Cache is invalidated by `refresh_index` and on first read."""
-    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp
+    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp, _discovery_stamp
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
+        discovery_path = index_dir.parent / 'discovery.json'
+        worlds = discovery.merge(worlds, discovery.load(discovery_path))
+        _discovery_stamp = security_reviews.fingerprint(discovery_path)
         head = index_head_sha(index_dir)
         fuzz_stamp, fuzz_records = _fuzz_snapshot()
         for world in worlds:
@@ -193,7 +198,8 @@ def _get_index() -> list:
         seed, overlay = _review_paths()
         stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
         fuzz_stamp, _ = _fuzz_snapshot()
-        if _index_cache is None or stamp != _review_stamp or fuzz_stamp != _fuzz_stamp:
+        discovery_stamp = security_reviews.fingerprint(_get_index_dir().parent / 'discovery.json')
+        if _index_cache is None or stamp != _review_stamp or fuzz_stamp != _fuzz_stamp or discovery_stamp != _discovery_stamp:
             _load_index_into_cache()
         return _index_cache
 
@@ -622,6 +628,12 @@ def builder_schemas_for_pins(
         }
         out.append(entry)
         if not ver:
+            continue
+
+        if getattr(ver, 'discovered', False):
+            # Newly discovered packages are never downloaded or parsed inside
+            # a web request. A restricted schema worker will supply output.
+            entry['pending'] = True
             continue
 
         # Cache first: by lock sha when the index pins one, else by
