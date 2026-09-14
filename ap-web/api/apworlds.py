@@ -163,7 +163,7 @@ def _load_index_into_cache():
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
         discovery_path = index_dir.parent / 'discovery.json'
-        worlds = discovery.merge(worlds, discovery.load(discovery_path))
+        worlds = discovery.merge(worlds, discovery.load_for_serving(discovery_path))
         _discovery_stamp = security_reviews.fingerprint(discovery_path)
         head = index_head_sha(index_dir)
         fuzz_stamp, fuzz_records = _fuzz_snapshot()

@@ -12,6 +12,16 @@ from builtin_builder import build_versions
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_invalid_replacement_preserves_last_valid_snapshot_and_removal_rolls_back(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)/'discovery.json'
+            p.write_text(json.dumps({'schema':1,'releases':[self.record()]}))
+            self.assertEqual(len(discovery.load_for_serving(p)['releases']),1)
+            p.write_text('{malformed')
+            self.assertEqual(len(discovery.load_for_serving(p)['releases']),1)
+            p.unlink()
+            self.assertEqual(discovery.load_for_serving(p)['releases'],[])
+
     def record(self):
         r={'module':'game','version':'2','sha256':'a'*64,'url':'https://github.com/o/r/releases/download/2/game.apworld',
            'source':{'name':'Game'},'held':True,'verified_at':1}

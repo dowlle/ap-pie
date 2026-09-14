@@ -4,9 +4,32 @@ import hashlib
 import json
 import re
 import math
+import logging
+import threading
 from pathlib import Path
 from urllib.parse import urlsplit
 from ap_lib.apworld_index import APWorldInfo, APWorldVersion, _version_sort_key
+
+_valid_snapshots = {}
+_snapshot_lock = threading.Lock()
+_logger = logging.getLogger(__name__)
+
+
+def load_for_serving(path):
+    """Keep the last validated snapshot if a later replacement is malformed.
+
+    A missing file is an intentional overlay rollback. Invalid contents are
+    rejected as a whole, without logging their potentially private values.
+    """
+    key = str(path.resolve())
+    with _snapshot_lock:
+        try:
+            data = load(path)
+        except (ValueError, OSError, TypeError, KeyError, OverflowError):
+            _logger.warning('Rejected invalid discovery snapshot')
+            return copy.deepcopy(_valid_snapshots.get(key, {'schema': 1, 'releases': [], 'queue': {}}))
+        _valid_snapshots[key] = data
+        return copy.deepcopy(data)
 
 
 def load(path):
