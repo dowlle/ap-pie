@@ -212,6 +212,21 @@ def intake_status():
                     'available_releases': len(snapshot['releases'])})
 
 
+@bp.get('/api/apworlds/intake/releases/<digest>')
+def discovery_release_record(digest):
+    if not re.fullmatch(r'[a-f0-9]{64}', digest):
+        abort(404)
+    snapshot = discovery.load_for_serving(_get_index_dir().parent / 'discovery.json')
+    record = next((r for r in snapshot['releases'] if r['id'] == digest), None)
+    if record is None:
+        abort(404)
+    # Identity and artifact bytes are immutable. Policy and job states remain
+    # mutable, so this response must not use immutable year-long caching.
+    response = jsonify(record)
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
 @bp.get("/api/apworlds/security-reviews/<digest>")
 def security_review_record(digest):
     if not re.fullmatch(r"[0-9a-f]{64}", digest):

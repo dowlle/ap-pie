@@ -140,6 +140,7 @@ def attach_public_metadata(world, data):
         if getattr(version, 'discovery_id', None):
             row['discovery'] = {
                 'id': version.discovery_id,
+                'record_url': '/api/apworlds/intake/releases/' + version.discovery_id,
                 'held': version.discovery_held,
                 'jobs': dict(version.discovery_jobs),
                 'policy_summary': ('This release has an unresolved policy or security hold. '
