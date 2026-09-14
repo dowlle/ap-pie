@@ -37,6 +37,10 @@ class DiscoveryTests(unittest.TestCase):
         self.assertTrue(w.versions[0].discovery_held)
         self.assertEqual(w.setup_guide,original.setup_guide)
         self.assertEqual(len(original.versions),1)
+        public=discovery.attach_public_metadata(w,w.to_dict())
+        self.assertTrue(public['versions'][0]['discovery']['held'])
+        self.assertNotIn('security_review',public['versions'][0])
+        self.assertNotIn('discovery',public['versions'][1])
 
     def test_invalid_identity_or_url_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:

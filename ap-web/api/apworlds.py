@@ -175,6 +175,7 @@ def _load_index_into_cache():
         _index_cache = []
         for w in worlds:
             d = _scrub_index_dict(w.to_dict())
+            discovery.attach_public_metadata(w, d)
             d["updated_at"] = updated.get(w.name)
             d["builder_versions"] = build_versions(w) if not w.disabled else []
             security_reviews.join_reviews(d, reviews)

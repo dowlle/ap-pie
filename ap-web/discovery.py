@@ -110,6 +110,23 @@ def merge(worlds, data):
         v.discovered=True
         v.discovery_id=r['id']
         v.discovery_held=r['held']
+        v.discovery_jobs=dict(r.get('jobs', {}))
         w.versions.append(v)
         w.versions.sort(key=lambda v:_version_sort_key(v.version),reverse=True)
     return worlds
+
+
+def attach_public_metadata(world, data):
+    """Policy holds are independent from checksum-matched security verdicts."""
+    versions = {v.version: v for v in world.versions}
+    for row in data['versions']:
+        version = versions[row['version']]
+        if getattr(version, 'discovered', False):
+            row['discovery'] = {
+                'id': version.discovery_id,
+                'held': version.discovery_held,
+                'jobs': dict(version.discovery_jobs),
+                'policy_summary': ('This release has an unresolved policy or security hold. '
+                                   'Discovery does not clear that hold.') if version.discovery_held else None,
+            }
+    return data
