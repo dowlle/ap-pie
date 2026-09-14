@@ -60,6 +60,8 @@ def load(path):
             raise ValueError('Invalid queue states')
     seen = set()
     for r in data['releases']:
+        if not isinstance(r,dict) or set(r)-{'id','module','version','sha256','url','verified_at','source','held','jobs'}:
+            raise ValueError('Unknown release metadata fields')
         if not isinstance(r, dict) or not isinstance(r.get('sha256'),str) or not re.fullmatch('[a-f0-9]{64}', r['sha256']):
             raise ValueError('Invalid release checksum')
         module, version = r.get('module'), r.get('version')
@@ -84,6 +86,8 @@ def load(path):
         if isinstance(timestamp,bool) or not isinstance(timestamp,(int,float)) or not math.isfinite(timestamp) or timestamp<0:
             raise ValueError('Invalid verification timestamp')
         source=r['source']
+        if set(source)-{'name','home','stability','setup_guide','tracker','supported','disabled'}:
+            raise ValueError('Unknown source metadata fields')
         for key in ('name','home','stability','setup_guide','tracker'):
             value=source.get(key)
             if value is not None and (not isinstance(value,str) or len(value)>4000):
