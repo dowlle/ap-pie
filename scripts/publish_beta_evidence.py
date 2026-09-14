@@ -54,7 +54,9 @@ def main():
     work = Path(args.work_dir); work.mkdir(parents=True, exist_ok=True)
     scripts = Path(__file__).resolve().parent
     app = scripts.parent / "ap-web"
-    with urllib.request.urlopen(args.beta_url.rstrip("/") + "/api/apworlds", timeout=30) as response:
+    catalog_request = urllib.request.Request(args.beta_url.rstrip("/") + "/api/apworlds",
+                                             headers={"User-Agent": "AP-Pie-maintenance/1.0", "Accept": "application/json"})
+    with urllib.request.urlopen(catalog_request, timeout=30) as response:
         content = response.read(6 * 1024 * 1024 + 1)
     if len(content) > 6 * 1024 * 1024:
         raise ValueError("Catalog exceeds budget")
