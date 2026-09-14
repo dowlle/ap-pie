@@ -26,6 +26,7 @@ import discovery as discovery_loader
 from publish_beta_discovery import publish as publish_beta_discovery
 from publish_beta_discovery import publish_schemas
 from publish_beta_evidence import publish as publish_beta_evidence
+from publish_beta_archives import publish as publish_beta_archives
 
 
 def cycle(ledger, *, scan_sources, verify, publish_discovery, evidence_steps):
@@ -95,6 +96,7 @@ def main():
                 path = a.out_dir / 'discovery.json'
                 snapshot.write_atomic(path, snapshot.export(ledger), validate=discovery_loader.load)
                 if a.beta_ssh_target:
+                    publish_beta_archives(a.beta_ssh_target, json.loads(path.read_text()), a.archives)
                     publish_beta_discovery(a.beta_ssh_target, path)
 
             def security():

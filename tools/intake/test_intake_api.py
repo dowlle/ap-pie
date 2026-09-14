@@ -1,4 +1,5 @@
 import json
+import hashlib
 import ipaddress
 import sys
 import tempfile
@@ -13,6 +14,27 @@ import test_discovery
 
 
 class IntakeAPITests(unittest.TestCase):
+    def test_immutable_download_checks_cached_bytes_and_never_fetches_upstream(self):
+        payload=b'verified archive fixture'
+        self.record['sha256']=hashlib.sha256(payload).hexdigest()
+        self.record['id']=hashlib.sha256(json.dumps((self.record['module'],self.record['version'],self.record['sha256']),separators=(',',':')).encode()).hexdigest()
+        self.path.write_text(json.dumps({'schema':1,'releases':[self.record]}))
+        folder=self.root/'discovery-archives'
+        folder.mkdir()
+        path=folder/(self.record['sha256']+'.apworld')
+        url='/api/apworlds/intake/releases/'+self.record['id']+'/download'
+        with patch.object(apworlds,'_fetch_apworld_bytes',side_effect=AssertionError('no upstream request')):
+            self.assertEqual(self.client.get(url).status_code,503)
+            path.write_bytes(payload)
+            response=self.client.get(url)
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response.data,payload)
+            self.assertEqual(response.headers['X-Content-SHA256'],self.record['sha256'])
+            response.close()
+            path.write_bytes(b'mutated')
+            self.assertEqual(self.client.get(url).status_code,409)
+            self.assertEqual(self.client.get('/api/apworlds/intake/releases/'+'0'*64+'/download').status_code,404)
+
     def test_published_schema_cache_updates_catalog_builder_choices(self):
         (self.root/'index'/'index').mkdir(parents=True)
         names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp','_schema_stamp']
@@ -57,7 +79,7 @@ class IntakeAPITests(unittest.TestCase):
         finally:
             for name,value in previous.items(): setattr(apworlds,name,value)
 
-    def test_discovered_download_redirects_to_recorded_source_without_fetching_package(self):
+    def test_discovered_download_redirects_to_immutable_cache_without_fetching_package(self):
         (self.root/'index'/'index').mkdir(parents=True)
         names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
         previous={name:getattr(apworlds,name) for name in names}
@@ -66,7 +88,7 @@ class IntakeAPITests(unittest.TestCase):
             with patch.object(apworlds,'parse_index_dir',return_value=[]), patch('tracker._resolve_ips',return_value=[ipaddress.ip_address('140.82.112.3')]), patch.object(apworlds.analytics,'record_event'):
                 response=self.client.get('/api/apworlds/game/2/download')
             self.assertEqual(response.status_code,302)
-            self.assertEqual(response.headers['Location'],self.record['url'])
+            self.assertEqual(response.headers['Location'],'/api/apworlds/intake/releases/'+self.record['id']+'/download')
         finally:
             for name,value in previous.items(): setattr(apworlds,name,value)
 

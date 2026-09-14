@@ -89,7 +89,8 @@ def load(path):
         decoded = unquote(u.path)
         if '\\' in decoded or any(ord(c)<32 for c in decoded) or any(p in ('.','..') for p in decoded.split('/')):
             raise ValueError('Invalid artifact path')
-        if u.scheme!='https' or u.hostname not in ('github.com','raw.githubusercontent.com','gitlab.com','codeberg.org','git.makuluni.com') or u.username or u.password or u.port not in (None,443) or u.query or u.fragment:
+        permitted_query = u.hostname=='gitlab.com' and u.query in ('ref_type=tags','ref_type=heads')
+        if u.scheme!='https' or u.hostname not in ('github.com','raw.githubusercontent.com','gitlab.com','codeberg.org','git.makuluni.com') or u.username or u.password or u.port not in (None,443) or (u.query and not permitted_query) or u.fragment:
             raise ValueError('Invalid release source')
         pattern = (r'/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/[a-f0-9]{40}/(?:[^/]+/)*[^/]+\.apworld' if u.hostname=='raw.githubusercontent.com' else
                    r'/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+/-/(?:raw|releases/[^/]+/downloads)/[^/]+/(?:[^/]+/)*[^/]+\.apworld' if u.hostname=='gitlab.com' else
@@ -167,6 +168,7 @@ def attach_public_metadata(world, data):
         version = versions[row['version']]
         row['policy_hold'] = {'summary': 'This release has an unresolved policy or security hold. Discovery does not clear that hold.'} if getattr(version,'policy_held',False) else None
         if getattr(version, 'discovery_id', None):
+            row['url'] = '/api/apworlds/intake/releases/' + version.discovery_id + '/download'
             row['discovery'] = {
                 'id': version.discovery_id,
                 'record_url': '/api/apworlds/intake/releases/' + version.discovery_id,

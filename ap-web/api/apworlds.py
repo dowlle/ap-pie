@@ -241,6 +241,43 @@ def discovery_release_record(digest):
     return response
 
 
+@bp.get('/api/apworlds/intake/releases/<digest>/download')
+def discovery_archive_download(digest):
+    """Serve only cached bytes matching the published immutable identity."""
+    if not re.fullmatch('[a-f0-9]{64}', digest):
+        abort(404)
+    root = _get_index_dir().parent
+    data = discovery.load_for_serving(root / 'discovery.json')
+    record = next((r for r in data['releases'] if r['id'] == digest), None)
+    if record is None:
+        abort(404)
+    path = root / 'discovery-archives' / (record['sha256'] + '.apworld')
+    try:
+        archive = path.open('rb')
+    except OSError:
+        abort(503, description='Verified archive is not available yet')
+    try:
+        checksum = hashlib.sha256()
+        size = 0
+        while block := archive.read(65536):
+            size += len(block)
+            if size > 50 * 1024 * 1024:
+                abort(409, description='Cached archive failed verification')
+            checksum.update(block)
+        if checksum.hexdigest() != record['sha256']:
+            abort(409, description='Cached archive failed verification')
+        archive.seek(0)
+        response = send_file(archive, as_attachment=True, download_name=record['module'] + '.apworld',
+                             etag=record['sha256'], max_age=31536000)
+        response.content_length = size
+        response.headers['X-Content-SHA256'] = record['sha256']
+        response.call_on_close(archive.close)
+        return response
+    except BaseException:
+        archive.close()
+        raise
+
+
 @bp.get("/api/apworlds/security-reviews/<digest>")
 def security_review_record(digest):
     if not re.fullmatch(r"[0-9a-f]{64}", digest):
@@ -1016,6 +1053,8 @@ def apworld_download_proxy(name: str, version: str):
         req=request,
     )
 
+    if getattr(ver, 'discovery_id', None):
+        return redirect('/api/apworlds/intake/releases/' + ver.discovery_id + '/download', code=302)
     if ver.url:
         # SEC-38: the redirect target comes from the index TOML manifest.
         # Gate it through the same scheme + outbound-host check the fetch
