@@ -19,6 +19,8 @@ from scan_sources import scan
 from verify_queue import run_candidate
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-lib'))
 import discovery as discovery_loader
+from publish_beta_discovery import publish as publish_beta_discovery
+from publish_beta_evidence import publish as publish_beta_evidence
 
 
 def cycle(ledger, *, scan_sources, verify, publish_discovery, evidence_steps):
@@ -57,6 +59,7 @@ def main():
     p.add_argument('--security', type=Path, required=True)
     p.add_argument('--generation', type=Path, required=True)
     p.add_argument('--limit', type=int, default=5)
+    p.add_argument('--beta-ssh-target', help='Publish discovery before evidence work to the fixed beta container')
     a = p.parse_args()
     if not 1 <= a.limit <= 50:
         p.error('limit must be between 1 and 50')
@@ -76,6 +79,8 @@ def main():
             def discovery():
                 path = a.out_dir / 'discovery.json'
                 snapshot.write_atomic(path, snapshot.export(ledger), validate=discovery_loader.load)
+                if a.beta_ssh_target:
+                    publish_beta_discovery(a.beta_ssh_target, path)
 
             def security():
                 records = security_snapshot.load_catalog(a.security)
@@ -94,9 +99,13 @@ def main():
                 snapshot.write_atomic(a.out_dir / 'discovery-schemas.json', schema_snapshot.export(ledger))
                 return completed
 
+            steps = [('security', security), ('generation', generation), ('schema', schemas),
+                     ('guide', lambda: guide_queue.process(ledger, a.limit))]
+            if a.beta_ssh_target:
+                steps.append(('evidence_publication', lambda: publish_beta_evidence(a.beta_ssh_target,
+                              a.out_dir / 'security-evidence.json', a.out_dir / 'fuzz-evidence.json')))
             result = cycle(ledger, scan_sources=lambda: scan(ledger, a.cache), verify=verify,
-                           publish_discovery=discovery, evidence_steps=[('security', security), ('generation', generation),
-                                                                       ('schema', schemas), ('guide', lambda: guide_queue.process(ledger, a.limit))])
+                           publish_discovery=discovery, evidence_steps=steps)
             print(json.dumps(result))
             if result['status'] == 'failed':
                 raise SystemExit(1)
