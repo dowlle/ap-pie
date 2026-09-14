@@ -216,6 +216,7 @@ export interface FuzzResult {
 }
 
 export interface APWorldVersion {
+  policy_hold?: { summary: string } | null;
   discovery?: {
     id: string;
     record_url: string;

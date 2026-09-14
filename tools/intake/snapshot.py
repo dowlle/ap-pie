@@ -25,7 +25,8 @@ def export(ledger):
                          'sha256': row['sha256'], 'url': row['url'], 'verified_at': row['verified'],
                          'source': {k: metadata[k] for k in SOURCE_KEYS if k in metadata},
                          'held': held, 'jobs': jobs})
-    snapshot = {'schema': 1, 'releases': releases, 'queue': ledger.status()}
+    policies = [dict(r) for r in ledger.db.execute('SELECT module,version FROM holds ORDER BY module,version')]
+    snapshot = {'schema': 1, 'releases': releases, 'queue': ledger.status(), 'policies': policies}
     if len(json.dumps(snapshot).encode()) > MAX_BYTES:
         raise ValueError('Discovery snapshot exceeds public metadata budget')
     return snapshot

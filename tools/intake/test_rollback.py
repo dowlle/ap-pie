@@ -13,6 +13,21 @@ sys.path[:0]=[str(ROOT/'ap-web'),str(ROOT/'ap-lib')]
 
 
 class RollbackTests(unittest.TestCase):
+    def test_rollback_retains_current_policy_holds_when_old_snapshot_has_none(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            current=root/'discovery.json'
+            current.write_text(json.dumps({'schema':1,'releases':[],'policies':[{'module':'game','version':'*'}]}))
+            body=json.dumps({'schema':1,'releases':[]}).encode()
+            digest=hashlib.sha256(body).hexdigest()
+            history=root/'discovery-history'
+            history.mkdir()
+            (history/(digest+'.json')).write_bytes(body)
+            code=ROLLBACK_REMOTE.replace("Path('/app/.state')", 'Path('+repr(tmp)+')')
+            with patch('sys.stdin',io.StringIO(json.dumps({'digest':digest}))), patch('sys.stdout',io.StringIO()):
+                exec(code,{})
+            self.assertEqual(json.loads(current.read_text())['policies'],[{'module':'game','version':'*'}])
+
     def test_corrupt_or_invalid_history_never_replaces_current_snapshot(self):
         for corrupt_digest in (True, False):
             with self.subTest(corrupt_digest=corrupt_digest), tempfile.TemporaryDirectory() as tmp:

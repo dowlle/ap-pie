@@ -12,6 +12,27 @@ from builtin_builder import build_versions
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_module_hold_applies_to_accepted_versions_without_discovery_record(self):
+        original=APWorldInfo(name='game',display_name='Game',versions=[APWorldVersion('1'),APWorldVersion('2')])
+        world=discovery.merge([original],{'releases':[],'policies':[{'module':'game','version':'*'}]})[0]
+        public=discovery.attach_public_metadata(world,world.to_dict())
+        self.assertTrue(all(v['policy_hold'] for v in public['versions']))
+        self.assertTrue(all('discovery' not in v for v in public['versions']))
+        self.assertFalse(hasattr(original.versions[0],'policy_held'))
+
+    def test_exact_policy_hold_does_not_inherit_to_another_version(self):
+        original=APWorldInfo(name='game',display_name='Game',versions=[APWorldVersion('1'),APWorldVersion('2')])
+        world=discovery.merge([original],{'releases':[],'policies':[{'module':'game','version':'1'}]})[0]
+        public=discovery.attach_public_metadata(world,world.to_dict())
+        self.assertTrue(public['versions'][0]['policy_hold'])
+        self.assertIsNone(public['versions'][1]['policy_hold'])
+
+    def test_policy_private_fields_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'discovery.json'
+            path.write_text(json.dumps({'schema':1,'releases':[],'policies':[{'module':'game','version':'1','reason':'private'}]}))
+            with self.assertRaises(ValueError):discovery.load(path)
+
     def test_private_or_invalid_queue_fields_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'discovery.json'

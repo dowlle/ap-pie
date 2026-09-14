@@ -295,8 +295,8 @@ function VersionRow({
           </span>
         )}
         <APWorldEvidence version={v} builtin={world.is_builtin} />
-        {v.discovery?.held && (
-          <span className="apworld-version-hold" title={v.discovery.policy_summary ?? undefined}>Unresolved hold</span>
+        {(v.policy_hold || v.discovery?.held) && (
+          <span className="apworld-version-hold" title={v.policy_hold?.summary ?? v.discovery?.policy_summary ?? undefined}>Unresolved hold</span>
         )}
         {isCurrent && <span className="badge badge-done apworld-version-current">installed</span>}
       </div>
@@ -526,10 +526,10 @@ function WorldCard({
       </div>
       <div className="apworld-card-content">
         <APWorldEvidence version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
-        {latestVersion?.discovery?.held && (
+        {(latestVersion?.policy_hold || latestVersion?.discovery?.held) && (
           <p className="apworld-card-note" role="note">
             <strong>Unresolved hold.</strong>{" "}
-            {latestVersion.discovery.policy_summary ?? "This release needs an explicit security or policy decision."}
+            {latestVersion?.policy_hold?.summary ?? latestVersion?.discovery?.policy_summary ?? "This release needs an explicit security or policy decision."}
           </p>
         )}
 

@@ -22,7 +22,13 @@ try:
     history.mkdir(exist_ok=True)
     if current.exists():
         old=current.read_bytes()
-        discovery.load(current)
+        previous=discovery.load(current)
+        policies={(h['module'],h['version']) for h in previous.get('policies',[])+data.get('policies',[])}
+        if policies:
+            data['policies']=[{'module':m,'version':v} for m,v in sorted(policies)]
+            with p.open('wb') as updated:
+                updated.write(json.dumps(data).encode());updated.flush();os.fsync(updated.fileno())
+            discovery.load(p)
         digest=hashlib.sha256(old).hexdigest()
         backup=history/(digest+'.json')
         if not backup.exists():
@@ -49,6 +55,11 @@ if source.stat().st_size>5*1024*1024:raise ValueError('Rollback budget exceeded'
 body=source.read_bytes()
 if hashlib.sha256(body).hexdigest()!=digest:raise ValueError('Rollback checksum mismatch')
 data=discovery.load(source)
+current=discovery.load(root/'discovery.json')
+policies={(h['module'],h['version']) for h in current.get('policies',[])+data.get('policies',[])}
+if policies:
+    data['policies']=[{'module':m,'version':v} for m,v in sorted(policies)]
+    body=json.dumps(data).encode()
 p=None
 try:
     with tempfile.NamedTemporaryFile(dir=root,prefix='discovery.restore.',delete=False) as out:

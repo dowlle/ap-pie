@@ -45,6 +45,16 @@ def load(path):
         raise ValueError('Invalid discovery schema')
     if len(data['releases']) > 10000:
         raise ValueError('Too many discovery releases')
+    policies=data.get('policies',[])
+    if not isinstance(policies,list) or len(policies)>5000:
+        raise ValueError('Invalid policy count')
+    for policy in policies:
+        if not isinstance(policy,dict) or set(policy)!={'module','version'}:
+            raise ValueError('Invalid public policy fields')
+        if not isinstance(policy['module'],str) or not re.fullmatch(r'[A-Za-z0-9_ .-]{1,160}',policy['module']) or policy['module'] in ('.','..'):
+            raise ValueError('Invalid policy module')
+        if not isinstance(policy['version'],str) or not 0<len(policy['version'])<=160 or any(ord(c)<32 for c in policy['version']):
+            raise ValueError('Invalid policy version')
     queue=data.get('queue',{})
     if not isinstance(queue,dict) or set(queue)-{'sources','releases','holds','candidates','jobs'}:
         raise ValueError('Invalid public queue metadata')
@@ -133,6 +143,12 @@ def merge(worlds, data):
         v.discovery_jobs=dict(r.get('jobs', {}))
         w.versions.append(v)
         w.versions.sort(key=lambda v:_version_sort_key(v.version),reverse=True)
+    policies={(p['module'],p['version']) for p in data.get('policies',[])}
+    for world in worlds:
+        for version in world.versions:
+            version.policy_held=(world.name,version.version) in policies or (world.name,'*') in policies
+            if getattr(version,'discovery_id',None) and version.policy_held:
+                version.discovery_held=True
     return worlds
 
 
@@ -141,6 +157,7 @@ def attach_public_metadata(world, data):
     versions = {v.version: v for v in world.versions}
     for row in data['versions']:
         version = versions[row['version']]
+        row['policy_hold'] = {'summary': 'This release has an unresolved policy or security hold. Discovery does not clear that hold.'} if getattr(version,'policy_held',False) else None
         if getattr(version, 'discovery_id', None):
             row['discovery'] = {
                 'id': version.discovery_id,
