@@ -645,6 +645,7 @@ export default function APWorlds() {
   // server. Search stays server-side (?search=) as before.
   const [sortBy, setSortBy] = useState<"name" | "name-desc" | "stability" | "updated">("name");
   const [stabilityFilter, setStabilityFilter] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [catalogView, setCatalogView] = useState<
     "all" | "downloadable" | "builtin" | "guides" | "trackers"
   >("all");
@@ -655,7 +656,8 @@ export default function APWorlds() {
     builtin: available.filter((w) => w.is_builtin).length,
     guides: available.filter((w) => Boolean(w.setup_guide)).length,
     trackers: available.filter((w) => Boolean(w.tracker)).length,
-  }), [available]);
+    favorites: available.filter((w) => favorites.games.includes(w.name)).length,
+  }), [available, favorites.games]);
 
   const handleBuild = (name: string, version: string) => {
     trackBuilderCta("activation", "apworlds");
@@ -684,6 +686,9 @@ export default function APWorlds() {
 
   const visible = useMemo(() => {
     let list = available;
+    if (user && favoritesOnly) {
+      list = list.filter((w) => favorites.games.includes(w.name));
+    }
     if (stabilityFilter === "__unset__") {
       list = list.filter((w) => !w.stability);
     } else if (stabilityFilter) {
@@ -733,7 +738,7 @@ export default function APWorlds() {
       });
     }
     return sorted;
-  }, [available, sortBy, stabilityFilter, catalogView]);
+  }, [available, sortBy, stabilityFilter, catalogView, user, favoritesOnly, favorites.games]);
 
   const fetchData = () => {
     setLoading(true);
@@ -923,27 +928,34 @@ export default function APWorlds() {
             {label}<span>{catalogCounts[value]}</span>
           </button>
         ))}
+        {user && <button type="button" className={favoritesOnly ? "is-active" : ""}
+          aria-pressed={favoritesOnly} disabled={favorites.loading}
+          onClick={() => setFavoritesOnly(!favoritesOnly)}>
+          My favorites<span>{favorites.loading ? "…" : catalogCounts.favorites}</span>
+        </button>}
       </div>
       </div>
 
-      {loading ? (
+      {favorites.error && <p role="alert" className="error">{favorites.error}</p>}
+      {loading || (user && favoritesOnly && favorites.loading) ? (
         <p className="loading">Loading...</p>
       ) : available.length === 0 ? (
         <p className="muted">No APWorlds found. Try refreshing the index.</p>
       ) : visible.length === 0 ? (
         <p className="muted">
-          No APWorlds match these filters.{" "}
+          {user && favoritesOnly && favorites.games.length === 0 && !favorites.error
+            ? "No favorite games saved yet. Use the star on a game to save it."
+            : "No APWorlds match these filters."}{" "}
           <button
             type="button"
             className="yaml-builder-desc-toggle"
-            onClick={() => { setStabilityFilter(""); setCatalogView("all"); }}
+            onClick={() => { setSearch(""); setStabilityFilter(""); setCatalogView("all"); setFavoritesOnly(false); }}
           >
             Clear filters
           </button>
         </p>
       ) : (
         <>
-          {favorites.error && <p role="alert" className="error">{favorites.error}</p>}
           <p className="muted apworlds-count">
             {visible.length === available.length
               ? `${available.length} APWorlds`

@@ -37,7 +37,11 @@ def main():
     parser.add_argument("--out", required=True)
     parser.add_argument("--batch-size", type=int, default=12)
     parser.add_argument("--runner", default="codex", help="Existing authenticated Codex executable")
+    parser.add_argument("--shard-index", type=int, default=0)
+    parser.add_argument("--shard-count", type=int, default=1)
     args = parser.parse_args()
+    if not 0 <= args.shard_index < args.shard_count <= 8:
+        parser.error("Invalid shard")
     destination = Path(args.out)
     destination.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(Path(args.db).resolve().as_uri() + "?mode=ro", uri=True) as conn:
@@ -45,6 +49,8 @@ def main():
                    conn.execute("SELECT report FROM audits") if isinstance(report, str)}
     jobs = []
     for record in load_catalog(args.catalog):
+        if int(record_id(record), 16) % args.shard_count != args.shard_index:
+            continue
         # Holds and independent QA require their own evidence, not a source-only
         # report. Keep their generic explanation until separately reviewed.
         if record["method"] != "automated-source-review" or record["status"] not in {"pass", "needs_review", "fail"}:

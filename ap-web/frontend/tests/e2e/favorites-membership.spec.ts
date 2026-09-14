@@ -89,8 +89,38 @@ test("anonymous catalog has no favorite writes and exposes the support link", as
   await page.goto("/apworlds");
   await expect(page.getByRole("heading", { name: "Fixture Game" })).toBeVisible();
   await expect(page.getByRole("button", { name: /favorite games/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /My favorites/ })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Support Dowlle on Ko-fi" })).toHaveAttribute("href", "https://ko-fi.com/dowlle");
 });
+
+for (const width of [1440, 390]) {
+  test(`catalog favorites filter updates and combines with views at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const state = await mockApp(page); state.favorites = ["fixture"];
+    await page.route("**/api/apworlds*", route => route.fulfill({ json: [world,
+      { ...world, name: "other", display_name: "Other Game", game_name: "Other Game" }] }));
+    await page.goto("/apworlds");
+    const filter = page.getByRole("button", { name: /My favorites/ });
+    await expect(filter).toBeEnabled();
+    await filter.click();
+    await expect(filter).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("heading", { name: "Fixture Game", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Other Game", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: /Built into Archipelago/ }).click();
+    await expect(page.getByText("No APWorlds match these filters.")).toBeVisible();
+    await expect(filter).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: /APWorld downloads/ }).click();
+    await page.getByRole("button", { name: "Remove Fixture Game from favorite games" }).click();
+    await expect(page.getByText("No favorite games saved yet. Use the star on a game to save it.")).toBeVisible();
+    await page.getByRole("button", { name: "Clear filters", exact: true }).click();
+    await expect(filter).toHaveAttribute("aria-pressed", "false");
+    await expect(page.getByRole("heading", { name: "Other Game", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Add Fixture Game to favorite games" }).click();
+    await filter.click();
+    await expect(page.getByRole("heading", { name: "Fixture Game", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}
 
 test("favorites fit a narrow screen", async ({ page }) => {
   const state = await mockApp(page); state.favorites = ["fixture"];
