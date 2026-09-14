@@ -2,6 +2,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'ap-web'),str(ROOT/'ap-lib')]
@@ -11,6 +12,24 @@ import test_discovery
 
 
 class IntakeAPITests(unittest.TestCase):
+    def test_raw_and_game_lookups_follow_replaced_discovery_snapshot(self):
+        (self.root/'index'/'index').mkdir(parents=True)
+        names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
+        previous={name:getattr(apworlds,name) for name in names}
+        try:
+            for name in names: setattr(apworlds,name,None)
+            with self.client.application.app_context(), patch.object(apworlds,'parse_index_dir',return_value=[]):
+                first=apworlds._get_index_worlds()
+                self.assertEqual(first[0].versions[0].version,'2')
+                updated={**self.record,'source':{'name':'Renamed Game'}}
+                self.path.write_text(json.dumps({'schema':1,'releases':[updated]}))
+                lookup=apworlds._get_game_lookup()
+                self.assertIn('Renamed Game',lookup)
+                self.assertNotIn('Game',lookup)
+                self.assertEqual(apworlds._get_index_worlds()[0].display_name,'Renamed Game')
+        finally:
+            for name,value in previous.items(): setattr(apworlds,name,value)
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.root=Path(self.tmp.name)
