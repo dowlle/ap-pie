@@ -5,6 +5,23 @@ from ledger import Ledger
 
 
 class LedgerTests(unittest.TestCase):
+    def test_held_and_queued_updates_precede_newer_upstream_history(self):
+        held = self.l.discover('game', 'held', 'https://github.com/o/r/releases/download/held/game.apworld', None, origin='archived-audit')
+        queued = self.l.discover('game', 'queued', 'https://github.com/o/r/releases/download/queued/game.apworld', None, origin='pr:61')
+        historical = self.l.discover('game', 'history', 'https://github.com/o/r/releases/download/history/game.apworld', None, origin='github:o/r', detail={'published_at': '2099-01-01'})
+        self.l.hold('game', 'held', 'Unresolved hold')
+        self.l.db.commit()
+        self.assertEqual([r['id'] for r in self.l.pending_candidates()], [held, queued, historical])
+
+    def test_equivalent_observation_skips_download_but_later_revision_does_not(self):
+        cid = self.candidate()
+        self.l.verified(cid, 'a' * 64)
+        old = self.l.discover('game', '1.0', 'https://github.com/o/r/releases/download/1/game.apworld', 'a' * 64, origin='pr:1')
+        self.l.db.execute('UPDATE candidates SET discovered=0 WHERE id=?', (old,))
+        newer = self.l.discover('game', '1.0', 'https://github.com/o/r/releases/download/1/game.apworld', None, origin='github:o/r', revision='changed')
+        self.l.db.commit()
+        self.assertEqual([r['id'] for r in self.l.pending_candidates()], [newer])
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.l = Ledger(Path(self.tmp.name) / 'state.db')

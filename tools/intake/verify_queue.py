@@ -72,18 +72,7 @@ def main():
     a = p.parse_args()
     ledger = Ledger(a.db)
     try:
-        query = "SELECT * FROM candidates WHERE state IN ('queued','retry') AND next_attempt<=?"
-        values = [time.time()]
-        if a.module:
-            query += ' AND module=?'
-            values.append(a.module)
-        if a.version:
-            query += ' AND version=?'
-            values.append(a.version)
-        # Release timestamps outrank ingestion order: paginated historical
-        # releases must not push today's updates behind the oldest archives.
-        order = " ORDER BY COALESCE((SELECT max(json_extract(detail,'$.published_at')) FROM origins WHERE candidate_id=candidates.id),'') DESC, discovered DESC LIMIT ?"
-        rows = ledger.db.execute(query + order, [*values, a.limit]).fetchall()
+        rows = ledger.pending_candidates(limit=a.limit, module=a.module, version=a.version)
         for row in rows:
             result = run_candidate(ledger, row, a.archives)
             print(json.dumps({'module': row['module'], 'version': row['version'], **result}), flush=True)

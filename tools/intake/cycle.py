@@ -74,7 +74,7 @@ def main():
         ledger = Ledger(a.db)
         try:
             def verify():
-                rows = ledger.db.execute("SELECT * FROM candidates WHERE state IN ('queued','retry') AND next_attempt<=? ORDER BY COALESCE((SELECT max(json_extract(detail,'$.published_at')) FROM origins WHERE candidate_id=candidates.id),'') DESC,discovered DESC LIMIT ?", (time.time(), a.limit)).fetchall()
+                rows = ledger.pending_candidates(limit=a.limit)
                 return [run_candidate(ledger, row, a.archives)['status'] for row in rows]
 
             def discovery():
