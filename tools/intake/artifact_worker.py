@@ -22,8 +22,9 @@ from pathlib import Path, PurePosixPath
 HOSTS = {'github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com'}
 MAX_DOWNLOAD = 50 * 1024 * 1024
 MAX_MEMBERS = 5000
-MAX_MEMBER = 5 * 1024 * 1024
-MAX_EXPANDED = 64 * 1024 * 1024
+MAX_MEMBER = 32 * 1024 * 1024
+MAX_SOURCE = 5 * 1024 * 1024
+MAX_EXPANDED = 128 * 1024 * 1024
 
 
 class InvalidArtifact(ValueError):
@@ -70,6 +71,8 @@ def inspect_archive(path):
             total += member.file_size
             if member.file_size > MAX_MEMBER or total > MAX_EXPANDED:
                 raise InvalidArtifact('Archive expanded-byte budget exceeded')
+            if member.filename.endswith('.py') and member.file_size > MAX_SOURCE:
+                raise InvalidArtifact('Python source member budget exceeded')
             if member.file_size > max(1024 * 1024, member.compress_size * 200):
                 raise InvalidArtifact('Archive compression ratio exceeded')
             if not member.is_dir():
