@@ -12,6 +12,13 @@ from builtin_builder import build_versions
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_private_or_invalid_queue_fields_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)/'discovery.json'
+            for queue in [{'error':'private'}, {'sources':-1}, {'jobs':{'secret':1}}, {'holds':True}]:
+                p.write_text(json.dumps({'schema':1,'releases':[],'queue':queue}))
+                with self.assertRaises(ValueError): discovery.load(p)
+
     def test_matching_accepted_bytes_still_receive_the_independent_hold(self):
         original=APWorldInfo(name='game',display_name='Game',versions=[APWorldVersion('2',url=self.record()['url'],sha256='a'*64)])
         merged=discovery.merge([original],{'releases':[self.record()]})[0]

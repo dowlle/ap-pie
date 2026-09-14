@@ -45,6 +45,19 @@ def load(path):
         raise ValueError('Invalid discovery schema')
     if len(data['releases']) > 10000:
         raise ValueError('Too many discovery releases')
+    queue=data.get('queue',{})
+    if not isinstance(queue,dict) or set(queue)-{'sources','releases','holds','candidates','jobs'}:
+        raise ValueError('Invalid public queue metadata')
+    def count(value):
+        return isinstance(value,int) and not isinstance(value,bool) and 0<=value<=10000000
+    for key in ('sources','releases','holds'):
+        if key in queue and not count(queue[key]):
+            raise ValueError('Invalid queue count')
+    for key in ('candidates','jobs'):
+        states=queue.get(key,{})
+        allowed={'queued','running','retry','blocked','verified'} if key=='candidates' else {'queued','running','retry','blocked','completed'}
+        if not isinstance(states,dict) or any(k not in allowed or not count(v) for k,v in states.items()):
+            raise ValueError('Invalid queue states')
     seen = set()
     for r in data['releases']:
         if not isinstance(r, dict) or not isinstance(r.get('sha256'),str) or not re.fullmatch('[a-f0-9]{64}', r['sha256']):

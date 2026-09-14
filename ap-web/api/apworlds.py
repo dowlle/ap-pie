@@ -205,6 +205,13 @@ def _get_index() -> list:
         return _index_cache
 
 
+@bp.get('/api/apworlds/intake/status')
+def intake_status():
+    snapshot = discovery.load_for_serving(_get_index_dir().parent / 'discovery.json')
+    return jsonify({'schema': 1, 'queue': snapshot.get('queue', {}),
+                    'available_releases': len(snapshot['releases'])})
+
+
 @bp.get("/api/apworlds/security-reviews/<digest>")
 def security_review_record(digest):
     if not re.fullmatch(r"[0-9a-f]{64}", digest):
