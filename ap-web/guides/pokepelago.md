@@ -21,6 +21,16 @@ You can play Poképelago as a standalone guessing game before making a seed.
 
 Standalone progress stays in that browser. It is separate from every Archipelago slot you connect later.
 
+![The Poképelago opening screen with the PokeAPI sprite shortcut, Connect to Archipelago, Play Standalone, and Manage Games.](/img/guides/pokepelago-opening.png)
+
+*Choose Play Standalone to try the guessing game, or Connect to Archipelago to join a generated seed. The sprite shortcut is in the panel on the left.*
+
+To configure or change the sprite source while playing, open the gear-shaped **Settings** button and select **Sprites**. Paste your sprite repository URL into **Sprite Repo URL**, or choose **Import Sprite Folder** for a local import.
+
+![The Sprites tab in Poképelago Settings, showing the Sprite Repo URL field and Import Sprite Folder button.](/img/guides/pokepelago-sprite-settings.png)
+
+*The example uses the PokeAPI sprite repository. Local imports take priority over the URL source.*
+
 ## What you need for an Archipelago seed
 
 If you are only joining a room that somebody else generated, you need the browser client and the connection details from your host. You do not need to install Archipelago or the APWorld yourself.
@@ -86,11 +96,16 @@ Uploading a generated seed to archipelago.gg is the easiest route for the browse
 
 1. Open [pokepelago.ap-pie.com](https://pokepelago.ap-pie.com/).
 2. Configure a sprite source on the opening screen. Poképelago does not host ripped sprite assets itself.
-3. Choose **Connect to Archipelago**, then open **Manage Games** and select **Add Game**.
-4. Give the saved connection any display name you recognize.
-5. Enter the server hostname and port from the room page in their separate fields.
-6. Enter your slot name exactly, including capitalization and spaces.
-7. Add the room password only when the host supplied one, save, and select **Connect**.
+3. Choose **Connect to Archipelago**, then select **Settings** in the sidebar beside **Tracker**. Open the **Connection** section if it is collapsed.
+4. Enter the server hostname and port from the room page in their separate fields.
+5. Enter your slot name exactly, including capitalization and spaces.
+6. Add the room password only when the host supplied one, then select **Connect**.
+
+![The Connection section of the Poképelago Settings sidebar, showing server, port, slot name, password, and the Connect button.](/img/guides/pokepelago-sidebar-connection.png)
+
+*Connect directly from Settings beside the Pokémon grid. These are example details, not a playable room. Replace archipelago.gg, port 12345, and ExamplePlayer with your host's connection details.*
+
+To keep several named connections together, select **Manage Games → Add Game**. Give the connection a display name, enter the same server, port, slot name, and optional password, then save it. Display Name is your own label; Slot Name must match the generated player exactly.
 
 The public client is served over HTTPS, so a remote server must support `wss://`. Standard archipelago.gg rooms do. Plain `ws://` connections are available only for localhost from the public client.
 
@@ -124,7 +139,7 @@ Version 0.6.4 does not randomly choose Hisui as the only region. If you manually
 
 ### The client shows no Pokémon images
 
-Return to Settings and configure a GitHub sprite repository URL, use the PokeAPI shortcut on the opening screen, or import a local sprite folder. The application intentionally does not ship the sprite artwork.
+Open **Settings → Sprites** and configure a GitHub sprite repository URL, use the PokeAPI shortcut on the opening screen, or import a local sprite folder. The application intentionally does not ship the sprite artwork.
 
 ### The client cannot connect
 
