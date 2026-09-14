@@ -31,6 +31,13 @@ class InvalidArtifact(ValueError):
     pass
 
 
+class ChecksumMismatch(InvalidArtifact):
+    def __init__(self, expected, observed):
+        super().__init__('Artifact checksum mismatch')
+        self.expected=expected
+        self.observed=observed
+
+
 def validate_url(url, *, resolve=True):
     if not isinstance(url, str) or len(url) > 10000:
         raise InvalidArtifact('Invalid artifact URL')
@@ -113,7 +120,7 @@ def verify(job, output):
                 f.write(block)
     checksum = digest.hexdigest()
     if job.get('expected') and checksum != job['expected']:
-        raise InvalidArtifact('Artifact checksum mismatch')
+        raise ChecksumMismatch(job['expected'], checksum)
     return {'sha256': checksum, 'bytes': size, **inspect_archive(output)}
 
 
@@ -125,6 +132,10 @@ def main():
     output = Path(sys.argv[2])
     try:
         result = {'status': 'verified', **verify(job, output)}
+    except ChecksumMismatch as e:
+        output.unlink(missing_ok=True)
+        result={'status':'checksum_mismatch','expected_sha256':e.expected,'observed_sha256':e.observed,
+                'error':'Artifact checksum mismatch'}
     except (InvalidArtifact, zipfile.BadZipFile, RuntimeError, ValueError) as e:
         output.unlink(missing_ok=True)
         result = {'status': 'blocked', 'error': str(e)[:300]}

@@ -133,6 +133,22 @@ class Ledger:
         query += " ORDER BY CASE WHEN EXISTS(SELECT 1 FROM holds h WHERE h.module=c.module AND h.version IN(c.version,'*')) THEN 0 WHEN EXISTS(SELECT 1 FROM origins o WHERE o.candidate_id=c.id AND o.origin LIKE 'pr:%') THEN 1 ELSE 2 END, COALESCE((SELECT max(json_extract(detail,'$.published_at')) FROM origins WHERE candidate_id=c.id),'') DESC, c.discovered DESC LIMIT ?"
         return self.db.execute(query, [*values, limit]).fetchall()
 
+    def record_checksum_mismatch(self, candidate_id, observed):
+        if not isinstance(observed,str) or not HASH.fullmatch(observed):
+            raise ValueError('Invalid observed checksum')
+        candidate=self.db.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
+        if candidate is None or candidate['expected'] is None or candidate['expected']==observed:
+            raise ValueError('Invalid checksum mutation')
+        with self.db:
+            if not self.db.execute('SELECT 1 FROM holds WHERE module=? AND version=?',(candidate['module'],candidate['version'])).fetchone():
+                self.hold(candidate['module'],candidate['version'],'Artifact bytes disagree with the registered checksum; source reconciliation required')
+            cid=self.discover(candidate['module'],candidate['version'],candidate['url'],observed,
+                              origin='checksum-mismatch:'+candidate_id,
+                              detail={'expected_sha256':candidate['expected'],'observed_sha256':observed},
+                              revision='observed:'+observed)
+            self.db.execute("UPDATE candidates SET state='blocked',error='Artifact checksum mismatch',attempts=attempts+1,updated=? WHERE id=? AND (state!='blocked' OR COALESCE(error,'')!='Artifact checksum mismatch')",(time.time(),candidate_id))
+        return cid
+
     def claim(self, kind, *, now=None, lease_seconds=300):
         if kind not in KINDS:
             raise ValueError('Unknown job kind')

@@ -74,6 +74,11 @@ def run_candidate(ledger, row, archives):
             # Sandbox startup failure is not an artifact defect. Fail closed.
             raise RuntimeError(f'Artifact sandbox failed, exit {process.returncode}: {process.stderr[:200]}')
         result = json.loads(process.stdout)
+        if result['status']=='checksum_mismatch':
+            if result['expected_sha256'] != row['expected']:
+                raise RuntimeError('Worker checksum identity mismatch')
+            ledger.record_checksum_mismatch(row['id'],result['observed_sha256'])
+            return result
         if result['status'] != 'verified':
             ledger.retry_candidate(row['id'], result['error'], permanent=result['status'] == 'blocked')
             return result

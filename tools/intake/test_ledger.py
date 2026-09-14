@@ -5,6 +5,24 @@ from ledger import Ledger
 
 
 class LedgerTests(unittest.TestCase):
+    def test_checksum_mutation_is_held_and_cannot_inherit_old_evidence(self):
+        cid=self.candidate('a'*64)
+        self.l.hold('game','1.0','Existing maintainer policy')
+        self.l.db.commit()
+        old=self.l.verified(cid,'a'*64)
+        job=self.l.claim('security')
+        self.l.finish(old,'security',job['token'],{'status':'pass'})
+        observed=self.l.record_checksum_mismatch(cid,'b'*64)
+        self.assertEqual(self.l.status()['holds'],1)
+        self.assertEqual(self.l.status()['releases'],1)
+        self.assertEqual(self.l.record_checksum_mismatch(cid,'b'*64),observed)
+        self.assertEqual(self.l.db.execute('SELECT reason FROM holds').fetchone()[0],'Existing maintainer policy')
+        self.assertEqual(self.l.db.execute('SELECT attempts FROM candidates WHERE id=?',(cid,)).fetchone()[0],1)
+        new=self.l.verified(observed,'b'*64)
+        self.assertNotEqual(old,new)
+        self.assertEqual(self.l.db.execute("SELECT state FROM jobs WHERE release_id=? AND kind='security'",(new,)).fetchone()[0],'queued')
+        self.assertEqual(self.l.status()['holds'],1)
+
     def test_unattempted_evidence_jobs_are_not_starved_by_due_retries(self):
         old = self.l.verified(self.candidate(), 'a' * 64)
         job = self.l.claim('security', now=1)
