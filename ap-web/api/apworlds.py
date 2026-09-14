@@ -243,6 +243,7 @@ def security_review_record(digest):
 def _get_index_worlds() -> list[APWorldInfo]:
     """Get the raw APWorldInfo objects (not dicts) for URL resolution."""
     global _index_worlds_cache
+    _get_index()
     with _index_lock:
         if _index_worlds_cache is None:
             _load_index_into_cache()
@@ -253,6 +254,7 @@ def _get_game_lookup() -> dict[str, APWorldInfo]:
     """Get the `game_name -> APWorldInfo` map (FEAT-21 picker uses this to
     resolve YAML.game strings into index entries)."""
     global _index_lookup_cache
+    _get_index()
     with _index_lock:
         if _index_lookup_cache is None:
             _load_index_into_cache()
