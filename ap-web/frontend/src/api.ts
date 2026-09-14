@@ -216,6 +216,12 @@ export interface FuzzResult {
 }
 
 export interface APWorldVersion {
+  discovery?: {
+    id: string;
+    held: boolean;
+    policy_summary: string | null;
+    jobs: Partial<Record<"security" | "generation" | "guide", "queued" | "running" | "retry" | "blocked" | "completed">>;
+  };
   version: string;
   url: string | null;
   local: string | null;

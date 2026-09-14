@@ -525,6 +525,12 @@ function WorldCard({
       </div>
       <div className="apworld-card-content">
         <APWorldEvidence version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
+        {latestVersion?.discovery?.held && (
+          <p className="apworld-card-note" role="note">
+            <strong>Unresolved hold.</strong>{" "}
+            {latestVersion.discovery.policy_summary ?? "This release needs an explicit security or policy decision."}
+          </p>
+        )}
 
           <div className="apworld-card-primary-actions">
             {reviewNeedsAttention && <button type="button" className="btn btn-primary btn-sm" aria-expanded={reviewOpen} onClick={() => setReviewOpen(true)}>Read review</button>}
