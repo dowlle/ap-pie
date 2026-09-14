@@ -763,6 +763,7 @@ export default function APWorlds() {
   };
 
   useEffect(() => {
+    if (!isAdmin) { setIntake(null); return; }
     let cancelled = false;
     const update = () => {
       if (document.hidden) return;
@@ -773,7 +774,7 @@ export default function APWorlds() {
     update();
     const timer = window.setInterval(update, 60_000);
     return () => { cancelled = true; window.clearInterval(timer); };
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -854,13 +855,11 @@ export default function APWorlds() {
         <div>
           <h1>APWorld downloads</h1>
           <p className="apworlds-lede">
-            Find the game integration and exact version your Archipelago host expects. Built-in
-            games already ship with Archipelago and do not need a separate download.
+            Download the APWorld version your host uses. Built-in games are included with Archipelago.
           </p>
           <p className="apworlds-builder-link">
-            Need to configure your game options? <Link to="/yaml-builder">Open the YAML Builder →</Link>
+            <Link to="/yaml-builder">Configure your game in the YAML Builder →</Link>
           </p>
-          <p className="apworlds-evidence-context">Badges describe the displayed release. Security reviews match exact archive checksums; pending means matching evidence is missing. Builder availability is separate from review and generation evidence.</p>
         </div>
         <div className="apworlds-header-actions">
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's
@@ -875,18 +874,9 @@ export default function APWorlds() {
         </div>
       </div>
 
-      <aside className="apworlds-version-note notice notice-info">
-        <strong>Match the host's version.</strong>
-        <span>If you are unsure which APWorld version to use, ask the host before downloading.</span>
-      </aside>
-      <p className="muted">
-        Missing a game or release?{" "}
-        <a href="https://github.com/dowlle/Archipelago-index/issues/new" target="_blank" rel="noopener noreferrer">Submit its source</a>
-        {" "}with the game name, source repository and release link.
-      </p>
-
-      {intake && intake.available_releases > 0 && (
-        <aside className="notice notice-info" aria-label="Automatic APWorld intake status">
+      {isAdmin && intake && (
+        <details className="muted" aria-label="Admin intake status">
+          <summary>Admin: intake status</summary>
           <div>
             <strong>Automatic intake</strong>
             <p>{intake.available_releases.toLocaleString()} verified releases published.
@@ -909,7 +899,7 @@ export default function APWorlds() {
               </details>
             )}
           </div>
-        </aside>
+        </details>
       )}
 
       {error && <p className="error">{error}</p>}
@@ -1051,6 +1041,9 @@ export default function APWorlds() {
         </>
       )}
       </section>
+      <p className="muted">
+        Missing a game? <a href="https://github.com/dowlle/Archipelago-index/issues/new" target="_blank" rel="noopener noreferrer">Suggest a source</a>.
+      </p>
     </div>
   );
 }
