@@ -332,6 +332,20 @@ export async function getAPWorlds(search?: string): Promise<APWorldInfo[]> {
   return fetchJson(`${BASE}/apworlds${params}`);
 }
 
+export interface APWorldIntakeStatus {
+  schema: 1;
+  available_releases: number;
+  queue: {
+    sources?: number;
+    candidates?: Partial<Record<"queued" | "retry" | "blocked" | "verified", number>>;
+    jobs?: Partial<Record<"queued" | "running" | "retry" | "blocked" | "completed", number>>;
+  };
+}
+
+export async function getAPWorldIntakeStatus(): Promise<APWorldIntakeStatus> {
+  return fetchJson(`${BASE}/apworlds/intake/status`);
+}
+
 export async function getInstalledAPWorlds(): Promise<InstalledAPWorld[]> {
   return fetchJson(`${BASE}/apworlds/installed`);
 }

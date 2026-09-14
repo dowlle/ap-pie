@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   getAPWorlds,
+  getAPWorldIntakeStatus,
+  type APWorldIntakeStatus,
   getInstalledAPWorlds,
   installAPWorld,
   removeAPWorld,
@@ -627,6 +629,7 @@ export default function APWorlds() {
   const deploymentLabel = useDeploymentLabel();
   const isAdmin = !!user?.is_admin;
   const [available, setAvailable] = useState<APWorldInfo[]>([]);
+  const [intake, setIntake] = useState<APWorldIntakeStatus | null>(null);
   const [installed, setInstalled] = useState<InstalledAPWorld[]>([]);
   // UX-16 hand-off: GameCell links from RoomDetail/RoomPublic land at
   // /apworlds?search=<game>. Prefill the search box from the URL on
@@ -761,6 +764,19 @@ export default function APWorlds() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    const update = () => {
+      if (document.hidden) return;
+      getAPWorldIntakeStatus().then((status) => {
+        if (!cancelled) setIntake(status);
+      }).catch(() => { /* Intake status must not block catalog browsing. */ });
+    };
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, []);
+
+  useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(fetchData, 200);
     return () => clearTimeout(debounceRef.current);
@@ -869,6 +885,22 @@ export default function APWorlds() {
         <a href="https://github.com/dowlle/Archipelago-index/issues/new" target="_blank" rel="noopener noreferrer">Submit its source</a>
         {" "}with the game name, source repository and release link.
       </p>
+
+      {intake && intake.available_releases > 0 && (
+        <aside className="notice notice-info" aria-label="Automatic APWorld intake status">
+          <div>
+            <strong>Automatic intake</strong>
+            <p>{intake.available_releases.toLocaleString()} verified releases published.
+              {intake.queue.sources != null && <> {intake.queue.sources.toLocaleString()} sources registered for intake.</>}
+              {" "}Reviews and tests update independently after discovery.</p>
+            <p className="muted">
+              Evidence jobs: {(intake.queue.jobs?.completed ?? 0).toLocaleString()} completed,
+              {" "}{((intake.queue.jobs?.queued ?? 0) + (intake.queue.jobs?.running ?? 0)).toLocaleString()} waiting or running,
+              {" "}{(intake.queue.jobs?.retry ?? 0).toLocaleString()} awaiting retry.
+            </p>
+          </div>
+        </aside>
+      )}
 
       {error && <p className="error">{error}</p>}
 
