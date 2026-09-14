@@ -26,9 +26,14 @@ def gh_json(*args):
 
 
 def collect(ledger, prs, producer):
-    identities = {(r['module'], r['version']): r['sha256'] for r in ledger.db.execute('SELECT * FROM releases')}
+    identities = {}
+    for row in ledger.db.execute('SELECT module,version,sha256 FROM releases'):
+        identities.setdefault((row['module'], row['version']), set()).add(row['sha256'])
+    relevant_prs = {row[0] for row in ledger.db.execute("SELECT DISTINCT substr(o.origin,4) FROM origins o JOIN candidates c ON c.id=o.candidate_id JOIN releases r ON r.module=c.module AND r.version=c.version WHERE o.origin LIKE 'pr:%'")}
     records = []
     for pr in prs:
+        if str(pr['number']) not in relevant_prs:
+            continue
         data = gh_json('pr', 'view', str(pr['number']), '--repo', REPO, '--json', 'headRefOid,statusCheckRollup')
         if data['headRefOid'] != pr['headRefOid']:
             continue
@@ -49,8 +54,8 @@ def collect(ledger, prs, producer):
                 continue
             source = gh_json('api', f"repos/{REPO}/contents/index.lock?ref={run['headSha']}")
             lock = tomllib.loads(base64.b64decode(source['content']).decode())
-            digest = identities[identity]
-            if lock.get(identity[0], {}).get(identity[1]) != digest:
+            digest = lock.get(identity[0], {}).get(identity[1])
+            if digest not in identities[identity]:
                 continue
             result = producer._pull_pr_verdict_from_checks(pr['number'], checks)
             if result is None:

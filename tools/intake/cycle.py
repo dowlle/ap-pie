@@ -1,5 +1,6 @@
 """Run intake phases with discovery publication preceding evidence work."""
 import argparse
+import importlib.util
 import fcntl
 import json
 import time
@@ -16,6 +17,7 @@ import guide_queue
 import import_security
 import import_generation
 import cached_security
+import collect_generation
 from refresh_sources import refresh
 from scan_sources import scan
 from verify_queue import batch_rows, run_batch
@@ -68,6 +70,7 @@ def main():
     p.add_argument('--review-summary', type=Path, action='append', default=[], help='Existing exact-checksum QA summary')
     p.add_argument('--index-source', type=Path, help='Dedicated canonical-index source checkout')
     p.add_argument('--holds', type=Path, help='Existing policy holds, retained independently')
+    p.add_argument('--generation-emitter', type=Path, help='Trusted existing Actions evidence parser; never starts tests')
     a = p.parse_args()
     if not 1 <= a.limit <= 500 or not 1 <= a.workers <= 8:
         p.error('limit must be 1..500 and workers 1..8')
@@ -100,6 +103,13 @@ def main():
 
             def generation():
                 records = import_generation.validate(json.loads(a.generation.read_text())['records'])
+                if a.generation_emitter and a.index_source:
+                    spec = importlib.util.spec_from_file_location('intake_actions_parser', a.generation_emitter)
+                    producer = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(producer)
+                    producer.gh_text, producer.gh_json = collect_generation.gh_text, collect_generation.gh_json
+                    prs = json.loads((a.index_source.parent / 'queued-prs.json').read_text())
+                    records += collect_generation.collect(ledger, prs, producer)['records']
                 completed = import_generation.process(ledger, records, limit=a.limit)
                 snapshot.write_atomic(a.out_dir / 'fuzz-evidence.json', generation_snapshot.export(ledger, records))
                 return completed
