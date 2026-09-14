@@ -31,6 +31,7 @@ from ap_lib.apworld_index import (
 import config
 import security_reviews
 import discovery
+import discovery_schemas
 from builtin_builder import builtin_record, build_versions
 from apworld_editorial import join_index_record, load_reviewed_apworlds
 from fuzz_evidence import attach_fuzz_evidence, load_provenance
@@ -658,7 +659,14 @@ def builder_schemas_for_pins(
         if getattr(ver, 'discovered', False):
             # Newly discovered packages are never downloaded or parsed inside
             # a web request. A restricted schema worker will supply output.
-            entry['pending'] = True
+            try:
+                cached = discovery_schemas.lookup(_get_index_dir().parent / 'discovery-schemas.json', ver)
+            except (ValueError, OSError, TypeError):
+                cached = None
+            if cached is None:
+                entry['pending'] = True
+            else:
+                entry['schema'] = cached['schema']
             continue
 
         # Cache first: by lock sha when the index pins one, else by
