@@ -34,6 +34,7 @@ COPY ap-web/legal/ ./legal/
 # Reviewed APWorld metadata is version-controlled alongside backend code. The
 # loader keeps it separate from the upstream index and from player YAMLs.
 COPY ap-web/apworld_content/ ./apworld_content/
+COPY ap-web/builtin_schemas/ ./builtin_schemas/
 
 COPY ap-web/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

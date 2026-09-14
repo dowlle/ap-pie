@@ -28,7 +28,9 @@ from ap_lib.apworld_index import (
 )
 
 import config
+from builtin_builder import builtin_record, build_versions
 from apworld_editorial import join_index_record, load_reviewed_apworlds
+from fuzz_evidence import attach_fuzz_evidence
 
 bp = Blueprint("apworlds", __name__)
 
@@ -135,12 +137,16 @@ def _load_index_into_cache():
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
+        head = index_head_sha(index_dir)
+        for world in worlds:
+            attach_fuzz_evidence(world, head)
         _index_worlds_cache = worlds
         updated = _index_updated_map(index_dir)
         _index_cache = []
         for w in worlds:
             d = _scrub_index_dict(w.to_dict())
             d["updated_at"] = updated.get(w.name)
+            d["builder_versions"] = build_versions(w) if not w.disabled else []
             _index_cache.append(d)
         _index_lookup_cache = build_game_lookup(worlds)
     else:
@@ -544,6 +550,13 @@ def builder_schemas_for_pins(
         if not world:
             continue
 
+        builtin = builtin_record(world, None if force_latest else pin["version"])
+        if builtin:
+            out.append({"game": builtin["game"], "apworld_name": world.name,
+                        "display_name": world.display_name, "version": builtin["version"],
+                        "schema": builtin["schema"], "source": "builtin"})
+            continue
+
         if force_latest:
             ver = next((v for v in world.versions if v.url or v.local), None)
         else:
@@ -841,14 +854,15 @@ def apworld_builder_schema(name: str):
         abort(404, description=f"APWorld '{name}' not in index")
 
     version = request.args.get("version")
+    builtin = builtin_record(world, version)
     if version:
-        if not any(v.version == version for v in world.versions):
+        if not builtin and not any(v.version == version for v in world.versions):
             abort(404, description=f"Version '{version}' not in index for '{name}'")
     else:
-        ver = next((v for v in world.versions if v.url or v.local), None)
-        if not ver:
+        versions = build_versions(world)
+        if not versions:
             abort(404, description=f"No downloadable version for '{name}'")
-        version = ver.version
+        version = versions[0]["version"]
 
     rows = builder_schemas_for_pins([{"apworld_name": name, "version": version}])
     if not rows:

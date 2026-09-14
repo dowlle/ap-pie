@@ -211,6 +211,8 @@ export interface FuzzResult {
   worst_hook_rate: number;
   seeds: number;
   fuzzed_at: string;  // ISO date
+  report_url?: string | null;
+  record_url?: string | null;
 }
 
 export interface APWorldVersion {
@@ -235,6 +237,7 @@ export interface APWorldInfo {
   has_update: boolean;
   versions: APWorldVersion[];
   downloadable_versions: { version: string }[];
+  builder_versions?: { version: string }[];
   // FEAT-34: optional metadata backfilled from the unofficial AP sheet
   // (OPS-16). `stability` is stable/unstable/alpha/beta; the other two
   // are URLs. Render `null` as silent absence.

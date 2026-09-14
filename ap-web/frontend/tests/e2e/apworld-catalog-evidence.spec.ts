@@ -1,0 +1,61 @@
+import { expect, test } from "@playwright/test";
+
+for (const width of [1440, 390]) {
+  test(`catalog evidence stays tied to the release at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    const result = { verdict: "clean", default_rate: 0, worst_hook: "default", worst_hook_rate: 0, seeds: 100, fuzzed_at: "2026-09-13", report_url: "https://github.com/dowlle/Archipelago-index/pull/754" };
+    const version = (value: string, fuzz: unknown) => ({ version: value, source: "url", url: `https://github.com/example/world/releases/download/${value}/world.apworld`, local: null, sha256: null, fuzz_result: fuzz });
+    const world = { name: "fixture", display_name: "Evidence Fixture", game_name: "Evidence Fixture", home: "https://github.com/example/world", tags: [], supported: false, disabled: false, is_builtin: false, has_update: false, stability: "stable", setup_guide: "https://example.com/setup", tracker: null, updated_at: null, editorial: null, versions: [version("1.2.0", null), version("1.1.0", result)], downloadable_versions: [{ version: "1.2.0" }, { version: "1.1.0" }], builder_versions: [{ version: "1.1.0" }] };
+    await page.route("**/api/**", route => {
+      const path = new URL(route.request().url()).pathname;
+      if (path === "/api/auth/me") return route.fulfill({ status: 401, json: {} });
+      if (path === "/api/features") return route.fulfill({ json: { generation: false } });
+      if (path === "/api/deployment") return route.fulfill({ json: { label: "beta" } });
+      return route.fulfill({ json: path === "/api/apworlds" ? [world, { ...world, name: "warnings", display_name: "Warning Fixture", versions: [version("1.2.0", { ...result, verdict: "broken", default_rate: 1, worst_hook_rate: 1 })] }] : [] });
+    });
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.goto("/apworlds");
+    const card = page.locator(".apworld-catalog-card").filter({ hasText: "Evidence Fixture" });
+    await expect(card).toBeVisible({ timeout: 20_000 });
+    await expect(card.getByRole("button", { name: "Review pending", exact: true })).toBeVisible();
+    await expect(card.getByRole("button", { name: "Tests pending", exact: true })).toBeVisible();
+    await expect(card.getByRole("button", { name: "Create YAML · 1.1.0", exact: true })).toBeVisible();
+    await expect(card.getByRole("link", { name: "Download Evidence Fixture v1.2.0" })).toHaveAttribute("href", "/api/apworlds/fixture/1.2.0/download");
+    await expect(card).toContainText("maintainer: stable");
+    await card.getByRole("button", { name: "Review pending", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await expect(card.getByRole("region")).toContainText("not a safety clearance");
+    await card.getByRole("button", { name: "Close explanation" }).click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open GitHub repository" })).toBeVisible();
+    await expect(card.locator(".apworld-card-primary-actions").getByRole("link", { name: "Open unreviewed setup link recorded in the community index" })).toBeVisible();
+    const guideLink = card.getByRole("link", { name: "Open unreviewed setup link recorded in the community index" });
+    await page.setViewportSize({ width, height: 500 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await guideLink.focus();
+    await expect(page.getByRole("tooltip")).toContainText("AP-Pie has not reviewed this link.");
+    await expect(guideLink).not.toHaveAttribute("title");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
+    await page.setViewportSize({ width, height: 1000 });
+    const warningCard = page.locator(".apworld-catalog-card").filter({ hasText: "Warning Fixture" });
+    await expect(warningCard.locator(".apworld-evidence-note")).toHaveCount(0);
+    const warningBadge = warningCard.getByRole("button", { name: "Generation warnings", exact: true });
+    await warningBadge.scrollIntoViewIfNeeded();
+    await warningBadge.focus();
+    const tooltip = page.getByRole("tooltip");
+    await expect(tooltip).toContainText("Some recorded generation checks failed.");
+    await expect(warningBadge).not.toHaveAttribute("title");
+    const bounds = await tooltip.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    await page.keyboard.press("Escape");
+    await expect(tooltip).toHaveCount(0);
+    await warningBadge.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open GitHub report" })).toHaveAttribute("href", result.report_url);
+    await page.getByRole("button", { name: "Close fuzzer explanation" }).click();
+    expect(errors).toEqual([]);
+  });
+}

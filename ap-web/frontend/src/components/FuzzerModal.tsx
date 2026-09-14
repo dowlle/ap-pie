@@ -43,6 +43,9 @@ export default function FuzzerModal({ result, version, onClose }: {
             <div><dt>Tested</dt><dd>{result.fuzzed_at}</dd></div>
           </dl>
           <p className="muted">These are results from a test sample, not the chance that your YAML or group will fail. The “default” check uses randomized options, not just the game’s default settings.</p>
+          {result.report_url && <p><a className="btn btn-sm" href={result.report_url} target="_blank" rel="noopener noreferrer">Open GitHub report ↗</a></p>}
+          {!result.report_url && <p className="muted">The original GitHub report link is not recorded for this result.</p>}
+          {result.record_url && <p><a href={result.record_url} target="_blank" rel="noopener noreferrer">View recorded result on GitHub ↗</a></p>}
         </section>
         <h3>Reading the colours</h3>
         <ul className="fuzzer-meanings">
@@ -50,7 +53,8 @@ export default function FuzzerModal({ result, version, onClose }: {
           <li><strong className="fuzz-pill-flaky">Amber: flaky.</strong> Reliability problems were found.</li>
           <li><strong className="fuzz-pill-broken">Red: broken.</strong> Substantial generation problems were found.</li>
         </ul>
-        <p>No badge means there is no recorded fuzz result for that version. It does not mean it passed.</p>
+        <p>The catalog overview shows Tests pending when there is no recorded result. Compact version dots elsewhere may be absent instead. Neither means the version passed.</p>
+        <p>The overview shows Generation passed only for a clean recorded verdict with zero reported generation and highest-check failures. Other recorded results show Generation warnings, including clean results with some failures. Randomized failures alone do not establish that standard settings cannot generate.</p>
         <h3>What should I do with this?</h3>
         <p>Check the version and its setup guide, then test your actual YAMLs together before your session. If generation fails, keep the error log and check the APWorld’s known issues.</p>
         <p>Fuzz results describe generation quality. They are separate from the security audit and do not certify safety, gameplay correctness or compatibility with every multiworld.</p>

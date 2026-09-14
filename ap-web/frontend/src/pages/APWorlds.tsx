@@ -14,6 +14,8 @@ import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
 import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
+import APWorldEvidence from "../components/APWorldEvidence";
+import Tooltip from "../components/Tooltip";
 import FavoriteGameButton from "../components/FavoriteGameButton";
 import { useFavoriteGames } from "../lib/useFavoriteGames";
 import { trackBuilderCta } from "../lib/analytics";
@@ -402,52 +404,52 @@ function HomeAndIconRow({ world }: { world: APWorldInfo }) {
       {hasIcons && (
         <div className="apworld-card-icons">
           {homeIcon && (
+            <Tooltip label={homeIcon.kind === "github" ? "GitHub repository" : homeIcon.kind === "discord" ? "Community Discord" : "Project homepage"} explanation={homeIcon.kind === "github" ? "Browse the source repository and releases for this APWorld." : homeIcon.kind === "discord" ? "Visit the game’s community Discord for discussion and support." : "Visit the project’s homepage for game information and resources."}>
             <a
               href={homeIcon.href}
               target="_blank"
               rel="noreferrer"
               className="apworld-card-icon"
-              title={homeIcon.title}
               aria-label={homeIcon.label}
             >
               {homeIcon.node}
-            </a>
+            </a></Tooltip>
           )}
           {derivedRepo && (
+            <Tooltip label="Source repository" explanation="Browse the GitHub repository identified by this APWorld’s download source.">
             <a
               href={derivedRepo}
               target="_blank"
               rel="noreferrer"
               className="apworld-card-icon"
-              title={`Source repo (from download URL): ${derivedRepo}`}
               aria-label="Open source GitHub repository"
             >
               <GitHubIcon />
-            </a>
+            </a></Tooltip>
           )}
           {world.setup_guide && (
+            <Tooltip label="Setup guide" explanation="Open the setup link recorded in the community index. AP-Pie has not reviewed this link.">
             <a
               href={world.setup_guide}
               target="_blank"
               rel="noopener noreferrer"
               className="apworld-card-icon"
-              title={`Setup link recorded in the community index; not reviewed by AP-Pie: ${world.setup_guide}`}
               aria-label="Open unreviewed setup link recorded in the community index"
             >
               <SetupGuideIcon />
-            </a>
+            </a></Tooltip>
           )}
           {world.tracker && (
+            <Tooltip label="Tracker" explanation="Open the game’s live tracker or PopTracker pack recorded in the community index.">
             <a
               href={world.tracker}
               target="_blank"
               rel="noopener noreferrer"
               className="apworld-card-icon"
-              title={`Live tracker / PopTracker pack: ${world.tracker}`}
               aria-label="Open tracker"
             >
               <TrackerIcon />
-            </a>
+            </a></Tooltip>
           )}
         </div>
       )}
@@ -491,6 +493,7 @@ function WorldCard({
   const [showAllVersions, setShowAllVersions] = useState(false);
   const latestVersion = versions[0];
   const latestDownloadable = downloadable[0];
+  const latestBuilderVersion = (world.builder_versions ?? world.downloadable_versions)[0]?.version;
   const initials = world.display_name
     .split(/\s+/)
     .filter(Boolean)
@@ -498,11 +501,6 @@ function WorldCard({
     .map((part) => part[0])
     .join("")
     .toUpperCase();
-  const setupState = detailHref
-    ? "Reviewed details"
-    : world.setup_guide
-      ? "Recorded link"
-      : "Review required";
 
   const detailAction = detailHref && (detailRouteKind === "server"
     ? <a className="btn apworld-card-detail-button" href={detailHref}>{detailLabel ?? "View details"}</a>
@@ -512,64 +510,48 @@ function WorldCard({
     : null;
 
   return (
-    <article className="apworld-card">
-      <div className="apworld-card-badges">
-        {world.disabled && <span className="badge badge-stopped">Disabled</span>}
-        {world.is_builtin && <span className="badge badge-builtin">Built in</span>}
-        {!world.is_builtin && !world.disabled && <span className="badge badge-save">Community</span>}
-      </div>
+    <article className="apworld-card apworld-catalog-card">
       <div className="apworld-card-icon-tile" aria-hidden="true">{initials || "AP"}</div>
       <div className="apworld-card-main">
         <header className="apworld-card-head">
           <div className="apworld-card-title">
             <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
-            <code className="apworld-card-key">{world.name}</code>
+            <span className="apworld-card-source">{world.is_builtin ? "Built in · Archipelago" : "Community"}</span>
+            <span className="apworld-card-release">{latestVersion ? `v${latestVersion.version} · Latest release` : latestBuilderVersion ? `Archipelago ${latestBuilderVersion}` : "No release recorded"}{world.stability ? ` · maintainer: ${world.stability}` : ""}</span>
           </div>
         </header>
 
-        <div className="apworld-card-info-row">
-          <dl className="apworld-card-meta">
-            <div><dt>Versions</dt><dd>{versions.length > 0 ? `${versions.length} available` : world.is_builtin ? "Core world" : "None recorded"}</dd></div>
-            <div>
-              <dt>Latest recorded</dt>
-              <dd>
-                {latestVersion ? `v${latestVersion.version}` : world.is_builtin ? "Bundled" : "None"}
-                {latestVersion?.fuzz_result && <FuzzResultPill fuzz_result={latestVersion.fuzz_result} version={latestVersion.version} />}
-              </dd>
-            </div>
-            <div><dt>Setup</dt><dd>{setupState}</dd></div>
-          </dl>
+        <APWorldEvidence version={latestVersion} />
 
           <div className="apworld-card-primary-actions">
             {playUrl && <a className="btn btn-primary btn-sm" href={playUrl}>Play Poképelago</a>}
             {detailAction}
-            {latestDownloadable && (
+            {latestBuilderVersion && (
               <button
                 type="button"
                 className="btn btn-sm apworld-action"
                 data-tooltip="Choose options, save a setup or download a YAML"
-                onClick={() => onBuild(world.name, latestDownloadable.version)}
-                disabled={buildingVersion === latestDownloadable.version}
+                onClick={() => onBuild(world.name, latestBuilderVersion)}
+                disabled={buildingVersion === latestBuilderVersion}
               >
-                {buildingVersion === latestDownloadable.version ? "Loading…" : "Create YAML"}
+                {buildingVersion === latestBuilderVersion ? "Loading…" : latestVersion && latestBuilderVersion !== latestVersion.version ? `Create YAML · ${latestBuilderVersion}` : "Create YAML"}
               </button>
             )}
             {latestDownloadable && (
               <a
-                className="btn btn-sm apworld-download-btn apworld-action"
+                className="btn btn-primary btn-sm apworld-action"
                 href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
                 download
                 data-tooltip={`Download APWorld v${latestDownloadable.version}`}
                 aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
               >
-                <DownloadIcon />
+                Download <span aria-hidden="true">↗</span>
               </a>
             )}
+            {!latestBuilderVersion && <span className="apworld-builder-blocker" title="No Builder schema is available for this game.">Builder unavailable</span>}
             {favoriteControl}
+            <HomeAndIconRow world={world} />
           </div>
-        </div>
-
-        <HomeAndIconRow world={world} />
 
         {world.tags.length > 0 && (
           <div className="apworld-card-tags">
@@ -848,6 +830,7 @@ export default function APWorlds() {
           <p className="apworlds-builder-link">
             Need to configure your game options? <Link to="/yaml-builder">Open the YAML Builder →</Link>
           </p>
+          <p className="apworlds-evidence-context">Badges describe the displayed release. Security reviews are not published here yet; Builder availability is separate from review and generation evidence.</p>
         </div>
         <div className="apworlds-header-actions">
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's

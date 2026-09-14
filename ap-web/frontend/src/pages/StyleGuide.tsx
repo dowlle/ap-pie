@@ -1,4 +1,5 @@
 import SearchToolbar from "../components/SearchToolbar";
+import APWorldBadgeProposal from "../components/APWorldBadgeProposal";
 
 const colors = [
   ["Canvas", "#121016", "Page background"],
@@ -36,6 +37,7 @@ export default function StyleGuide() {
         <a href="#room-coordination">Room coordination proposal</a>
         <a href="#density">Page families</a>
         <a href="#apworld">APWorld example</a>
+        <a href="#apworld-badges">APWorld badges</a>
       </nav>
 
       <section id="foundation" className="sg-section">
@@ -226,6 +228,8 @@ export default function StyleGuide() {
           <article className="sg-family sg-family-workspace"><h3>Dense, responsive tools</h3><p>Builders and rooms prioritize state, controls and immediate feedback.</p></article>
         </div>
       </section>
+
+      <APWorldBadgeProposal />
 
       <section id="apworld" className="sg-section">
         <div className="sg-section-heading">

@@ -134,8 +134,9 @@ def _schema_for(apworld_name: str, version: str | None):
     if world is None:
         return None, None
     if not version:
-        ver = next((v for v in world.versions if v.url or v.local), None)
-        version = ver.version if ver else None
+        from builtin_builder import build_versions
+        versions = build_versions(world)
+        version = versions[0]["version"] if versions else None
     if not version:
         return world, None
     rows = builder_schemas_for_pins([{"apworld_name": apworld_name, "version": version}])

@@ -1,16 +1,26 @@
-The coloured dot beside an APWorld version tells you how that version performed in automated generation tests. Click it to see the recorded result and what it means.
+The generation badge on an APWorld card describes the displayed release's recorded tests. Hover over it or focus it with the keyboard for an explanation. Click or tap it for details; press Escape to dismiss a tooltip.
 
 The fuzzer repeatedly tries to generate an Archipelago world with randomized settings and seeds. This helps find combinations that a normal test with one player's YAML might miss. Additional checks look for specific problems in the generation code.
 
-## What do clean, flaky and broken mean?
+## What do the catalog badges mean?
+
+- **Tests pending.** No generation result is recorded for this release yet. This does not mean it passed or that a test is currently running.
+- **Generation passed.** The recorded randomized checks have a clean verdict and zero reported failures in both the generation rate and highest check rate. This is a result from a test sample, not a guarantee that every configuration works.
+- **Generation warnings.** The recorded verdict is flaky or broken, or at least one displayed failure rate is above zero. Inspect the badge for the warning and open the details before planning your session.
+
+The warning explanation appears in the tooltip rather than as an extra sentence on the card. Cards with recorded results also show the test date.
+
+The separate **Review pending** badge means no release-specific security review is published in the catalog yet. It is not a security clearance. Existing YAML Builder availability is separate from these badges.
+
+## What do clean, flaky and broken mean in the details?
 
 - **Green: clean.** Low failure rates in the recorded checks. This can include some failures. Test your actual settings before your session.
 - **Amber: flaky.** The checks found reliability problems. Check known issues and allow time to investigate generation failures.
 - **Red: broken.** The checks found substantial generation problems. Review the result and version carefully before planning a session around it.
 
-These labels belong to a particular APWorld version. A result for an older release does not describe every newer release. If a version has no badge, AP-Pie has no recorded fuzz result to display for it. Absence is not a pass.
+These raw verdicts belong to a particular APWorld version. A result for an older release does not describe every newer release. The overview shows Tests pending when a result is missing; compact version dots elsewhere may be absent instead. Neither is a pass.
 
-The green result is called **clean** in the catalog. It is not a guarantee that every test passed or that every possible configuration works.
+The overview's Generation warnings badge can therefore include a raw clean verdict with nonzero failures. Raw broken results remain warnings on the overview: randomized failures alone do not establish that standard settings cannot generate.
 
 ## What does the fuzzer try?
 
@@ -18,11 +28,13 @@ The standard randomized run varies game options and seeds, then attempts generat
 
 Other checks target particular behaviours, such as item and location counts, placement references, accessibility, and whether repeating generation produces consistent output. A separate run relaxes restrictive starting settings. Each check answers a different question, so a failure in one check should be read in its own context.
 
-The pipeline also has a separate generation check using canonical default settings for the exact APWorld archive. That distinction matters: even if all attempts in a randomized run fail, it does not prove that the APWorld can never generate. A **broken** badge can coexist with a successful default-settings generation.
+The pipeline also has a separate generation check using canonical default settings for the exact APWorld archive. That distinction matters: even if all attempts in a randomized run fail, it does not prove that the APWorld can never generate. A raw **broken** result can coexist with successful default-settings generation. The current catalog badges do not publish that separate canonical result, so Generation passed does not establish successful standard generation.
 
 ## How to read the numbers
 
 The modal shows the randomized generation failure rate, the highest recorded check failure rate and its check name, the recorded seed count, and the test date.
+
+Use **Open GitHub report** to inspect the published report when an exact-result link is available. **View recorded result on GitHub** opens the index record at the revision AP-Pie is serving. Some historical records do not retain the original report URL; the details say so rather than linking to an unrelated run.
 
 For example, a 2% failure rate means two out of every hundred counted attempts failed in that particular sample. It does not mean your YAML has a 2% chance of failing. Your settings, APWorld version, Archipelago version and the other worlds in your group can differ from the test environment.
 
