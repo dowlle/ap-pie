@@ -1,0 +1,11 @@
+[Unit]
+Description=Scan AP-Pie beta release sources every 30 minutes
+
+[Timer]
+OnActiveSec=15s
+OnUnitInactiveSec=30min
+AccuracySec=1s
+Unit=ap-pie-beta-intake.service
+
+[Install]
+WantedBy=timers.target
