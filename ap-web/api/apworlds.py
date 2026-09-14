@@ -179,6 +179,16 @@ def _load_index_into_cache():
             discovery.attach_public_metadata(w, d)
             d["updated_at"] = updated.get(w.name)
             d["builder_versions"] = build_versions(w) if not w.disabled else []
+            if not w.disabled:
+                for version in w.versions:
+                    if not getattr(version, 'discovered', False):
+                        continue
+                    try:
+                        result = discovery_schemas.lookup(index_dir.parent / 'discovery-schemas.json', version)
+                    except (ValueError, OSError, TypeError):
+                        result = None
+                    if result and result['schema'] is not None:
+                        d['builder_versions'].insert(0, {'version': version.version})
             security_reviews.join_reviews(d, reviews)
             for version in d["versions"]:
                 review = version.get("security_review")
