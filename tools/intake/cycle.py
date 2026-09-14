@@ -16,6 +16,7 @@ import guide_queue
 import import_security
 import import_generation
 import cached_security
+from refresh_sources import refresh
 from scan_sources import scan
 from verify_queue import run_candidate
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-lib'))
@@ -64,6 +65,8 @@ def main():
     p.add_argument('--beta-ssh-target', help='Publish discovery before evidence work to the fixed beta container')
     p.add_argument('--audit-db', type=Path, help='Read-only existing source-review cache')
     p.add_argument('--review-summary', type=Path, action='append', default=[], help='Existing exact-checksum QA summary')
+    p.add_argument('--index-source', type=Path, help='Dedicated canonical-index source checkout')
+    p.add_argument('--holds', type=Path, help='Existing policy holds, retained independently')
     a = p.parse_args()
     if not 1 <= a.limit <= 50:
         p.error('limit must be between 1 and 50')
@@ -112,7 +115,12 @@ def main():
             if a.beta_ssh_target:
                 steps.append(('evidence_publication', lambda: publish_beta_evidence(a.beta_ssh_target,
                               a.out_dir / 'security-evidence.json', a.out_dir / 'fuzz-evidence.json')))
-            result = cycle(ledger, scan_sources=lambda: scan(ledger, a.cache), verify=verify,
+            def scan_sources():
+                if a.index_source:
+                    refresh(ledger, a.index_source, a.holds)
+                return scan(ledger, a.cache)
+
+            result = cycle(ledger, scan_sources=scan_sources, verify=verify,
                            publish_discovery=discovery, evidence_steps=steps)
             print(json.dumps(result))
             if result['status'] == 'failed':
