@@ -37,3 +37,14 @@ class DiscoveryTests(unittest.TestCase):
             r['url']='javascript:alert(1)'
             p.write_text(json.dumps({'schema':1,'releases':[r]}))
             with self.assertRaises(ValueError): discovery.load(p)
+
+    def test_malformed_timestamp_source_and_job_metadata_are_rejected(self):
+        changes=[{'verified_at':float('nan')},{'verified_at':True},{'source':{'name':[]}},
+                 {'source':{'setup_guide':'javascript:alert(1)'}},{'jobs':{'security':'approved'}},
+                 {'url':'https://github.com/o/r/issues/1'}, {'sha256':42}]
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)/'discovery.json'
+            for change in changes:
+                with self.subTest(change=change):
+                    p.write_text(json.dumps({'schema':1,'releases':[{**self.record(),**change}]}))
+                    with self.assertRaises(ValueError): discovery.load(p)
