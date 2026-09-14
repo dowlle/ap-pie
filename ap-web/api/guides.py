@@ -218,7 +218,7 @@ GUIDES: list[dict[str, str]] = [
             "then connect the browser client and start guessing."
         ),
         "published": "2026-08-31",
-        "updated": "2026-08-31",
+        "updated": "2026-09-14",
         "project": "poke",
         "kicker": "Setup",
         "featured": True,
