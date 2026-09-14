@@ -13,6 +13,23 @@ import test_discovery
 
 
 class IntakeAPITests(unittest.TestCase):
+    def test_worker_schema_cache_is_served_only_for_matching_release_checksum(self):
+        (self.root/'index'/'index').mkdir(parents=True)
+        names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
+        previous={name:getattr(apworlds,name) for name in names}
+        cache=self.root/'discovery-schemas.json'
+        schema={'game':'Game','options':[]}
+        try:
+            for name in names: setattr(apworlds,name,None)
+            with self.client.application.app_context(), patch.object(apworlds,'parse_index_dir',return_value=[]), patch.object(apworlds,'_fetch_apworld_bytes',side_effect=AssertionError('must not fetch')):
+                for digest,expected in [('a'*64,schema),('b'*64,None)]:
+                    cache.write_text(json.dumps({'schema':1,'records':{self.record['id']:{'sha256':digest,'schema':schema}}}))
+                    rows=apworlds.builder_schemas_for_pins([{'apworld_name':'game','version':'2'}])
+                    self.assertEqual(rows[0]['schema'],expected)
+                    self.assertEqual(rows[0].get('pending',False),expected is None)
+        finally:
+            for name,value in previous.items(): setattr(apworlds,name,value)
+
     def test_explicit_discovered_builder_request_never_fetches_archive(self):
         (self.root/'index'/'index').mkdir(parents=True)
         names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
