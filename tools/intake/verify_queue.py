@@ -1,6 +1,7 @@
 """Verify discovery candidates with a credential-free artifact subprocess."""
 from __future__ import annotations
 import argparse
+import concurrent.futures
 import hashlib
 import json
 import os
@@ -61,7 +62,7 @@ def sandbox_command(job, output):
     return args
 
 
-def run_candidate(ledger, row, archives):
+def download_candidate(row, archives):
     with tempfile.TemporaryDirectory(prefix='ap-pie-artifact-') as tmp:
         root = Path(tmp)
         job = root / 'job.json'
@@ -77,18 +78,63 @@ def run_candidate(ledger, row, archives):
         if result['status']=='checksum_mismatch':
             if result['expected_sha256'] != row['expected']:
                 raise RuntimeError('Worker checksum identity mismatch')
-            ledger.record_checksum_mismatch(row['id'],result['observed_sha256'])
             return result
         if result['status'] != 'verified':
-            ledger.retry_candidate(row['id'], result['error'], permanent=result['status'] == 'blocked')
             return result
         artifact = output / 'artifact.apworld'
         digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
         if digest != result['sha256']:
             raise RuntimeError('Worker output checksum mismatch')
         store_artifact(artifact, archives, digest)
-        result['release_id'] = ledger.verified(row['id'], digest)
         return result
+
+
+def record_result(ledger, row, result):
+    if result['status'] == 'checksum_mismatch':
+        ledger.record_checksum_mismatch(row['id'], result['observed_sha256'])
+    elif result['status'] == 'verified':
+        result['release_id'] = ledger.verified(row['id'], result['sha256'])
+    else:
+        ledger.retry_candidate(row['id'], result['error'], permanent=result['status'] == 'blocked')
+    return result
+
+
+def run_candidate(ledger, row, archives):
+    return record_result(ledger, row, download_candidate(row, archives))
+
+
+def batch_rows(ledger, limit):
+    """Spread work across sources and skip equivalent observations in a batch."""
+    pending = ledger.pending_candidates(limit=max(1000, limit * 20))
+    first, rest, modules, identities = [], [], set(), set()
+    for row in pending:
+        key = (row['module'], row['version'], row['url'], row['expected'])
+        if key in identities:
+            continue
+        identities.add(key)
+        target = rest if row['module'] in modules else first
+        target.append(dict(row))
+        modules.add(row['module'])
+    return (first + rest)[:limit]
+
+
+def run_batch(ledger, rows, archives, *, workers=4, download=download_candidate):
+    if not 1 <= workers <= 8:
+        raise ValueError('workers must be between 1 and 8')
+    results = []
+    # Workers touch only public downloads and the hash-addressed archive cache.
+    # All SQLite updates happen on the coordinator thread.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(download, row, archives): row for row in rows}
+        for future in concurrent.futures.as_completed(futures):
+            row = futures[future]
+            try:
+                result = future.result()
+            except Exception as exc:
+                result = {'status': 'retry', 'error': type(exc).__name__}
+            result = record_result(ledger, row, result)
+            results.append({'module': row['module'], 'version': row['version'], **result})
+    return results
 
 
 def main():
@@ -98,13 +144,15 @@ def main():
     p.add_argument('--limit', type=int, default=5)
     p.add_argument('--module')
     p.add_argument('--version')
+    p.add_argument('--workers', type=int, default=4)
     a = p.parse_args()
+    if not 1 <= a.limit <= 500 or not 1 <= a.workers <= 8:
+        p.error('limit must be 1..500 and workers 1..8')
     ledger = Ledger(a.db)
     try:
-        rows = ledger.pending_candidates(limit=a.limit, module=a.module, version=a.version)
-        for row in rows:
-            result = run_candidate(ledger, row, a.archives)
-            print(json.dumps({'module': row['module'], 'version': row['version'], **result}), flush=True)
+        rows = ledger.pending_candidates(limit=a.limit, module=a.module, version=a.version) if a.module or a.version else batch_rows(ledger, a.limit)
+        for result in run_batch(ledger, rows, a.archives, workers=a.workers):
+            print(json.dumps(result), flush=True)
         print(json.dumps(ledger.status()), flush=True)
     finally:
         ledger.db.close()

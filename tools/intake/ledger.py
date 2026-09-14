@@ -130,7 +130,7 @@ class Ledger:
         # Do not re-download an equivalent older observation. A later asset
         # revision remains eligible because its discovery time is newer.
         query += " AND NOT EXISTS (SELECT 1 FROM releases r WHERE r.module=c.module AND r.version=c.version AND r.url=c.url AND r.verified>=c.discovered AND (c.expected IS NULL OR c.expected=r.sha256))"
-        query += " ORDER BY CASE WHEN EXISTS(SELECT 1 FROM holds h WHERE h.module=c.module AND h.version IN(c.version,'*')) THEN 0 WHEN EXISTS(SELECT 1 FROM origins o WHERE o.candidate_id=c.id AND o.origin LIKE 'pr:%') THEN 1 ELSE 2 END, COALESCE((SELECT max(json_extract(detail,'$.published_at')) FROM origins WHERE candidate_id=c.id),'') DESC, c.discovered DESC LIMIT ?"
+        query += " ORDER BY CASE WHEN EXISTS(SELECT 1 FROM holds h WHERE h.module=c.module AND h.version IN(c.version,'*')) AND NOT EXISTS(SELECT 1 FROM releases r WHERE r.module=c.module AND (r.version=c.version OR EXISTS(SELECT 1 FROM holds h WHERE h.module=c.module AND h.version='*'))) THEN 0 WHEN EXISTS(SELECT 1 FROM origins o WHERE o.candidate_id=c.id AND o.origin LIKE 'pr:%') THEN 1 WHEN NOT EXISTS(SELECT 1 FROM releases r WHERE r.module=c.module) THEN 2 ELSE 3 END, COALESCE((SELECT max(json_extract(detail,'$.published_at')) FROM origins WHERE candidate_id=c.id),'') DESC, c.discovered DESC LIMIT ?"
         return self.db.execute(query, [*values, limit]).fetchall()
 
     def record_checksum_mismatch(self, candidate_id, observed):

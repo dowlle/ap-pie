@@ -18,7 +18,7 @@ import import_generation
 import cached_security
 from refresh_sources import refresh
 from scan_sources import scan
-from verify_queue import run_candidate
+from verify_queue import batch_rows, run_batch
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-lib'))
 import discovery as discovery_loader
 from publish_beta_discovery import publish as publish_beta_discovery
@@ -62,14 +62,15 @@ def main():
     p.add_argument('--security', type=Path, required=True)
     p.add_argument('--generation', type=Path, required=True)
     p.add_argument('--limit', type=int, default=5)
+    p.add_argument('--workers', type=int, default=4)
     p.add_argument('--beta-ssh-target', help='Publish discovery before evidence work to the fixed beta container')
     p.add_argument('--audit-db', type=Path, help='Read-only existing source-review cache')
     p.add_argument('--review-summary', type=Path, action='append', default=[], help='Existing exact-checksum QA summary')
     p.add_argument('--index-source', type=Path, help='Dedicated canonical-index source checkout')
     p.add_argument('--holds', type=Path, help='Existing policy holds, retained independently')
     a = p.parse_args()
-    if not 1 <= a.limit <= 50:
-        p.error('limit must be between 1 and 50')
+    if not 1 <= a.limit <= 500 or not 1 <= a.workers <= 8:
+        p.error('limit must be 1..500 and workers 1..8')
     a.out_dir.mkdir(parents=True, exist_ok=True)
     with a.db.with_suffix('.cycle.lock').open('a') as lock:
         try:
@@ -80,8 +81,8 @@ def main():
         ledger = Ledger(a.db)
         try:
             def verify():
-                rows = ledger.pending_candidates(limit=a.limit)
-                return [run_candidate(ledger, row, a.archives)['status'] for row in rows]
+                rows = batch_rows(ledger, a.limit)
+                return [r['status'] for r in run_batch(ledger, rows, a.archives, workers=a.workers)]
 
             def discovery():
                 path = a.out_dir / 'discovery.json'
