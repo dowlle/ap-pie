@@ -228,6 +228,7 @@ export interface APWorldVersion {
     reviewed_at: string;
     method: string;
     summary: string;
+    rationale?: string;
     sha256: string;
     report_sha256: string;
     report_public: boolean;

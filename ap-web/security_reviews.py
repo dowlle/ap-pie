@@ -33,8 +33,15 @@ def validate_catalog(payload):
         raise ValueError("Invalid record count")
     allowed = {"module", "version", "sha256", "status", "reviewed_at", "method", "report_sha256"}
     for record in records:
-        if not isinstance(record, dict) or set(record) != allowed:
+        if not isinstance(record, dict) or set(record) not in (allowed, allowed | {"rationale"}):
             raise ValueError("Invalid public record fields")
+        if "rationale" in record:
+            text = record["rationale"]
+            if (not isinstance(text, str) or not 20 <= len(text) <= 600 or
+                    any(ord(c) < 32 for c in text) or
+                    len(re.findall(r"[.!?](?:\s|$)", text)) not in (1, 2) or
+                    re.search(r"https?://|/home/|/root/|/tmp/|[<>`]|api[_ -]?key|Bearer\s", text, re.I)):
+                raise ValueError("Invalid public rationale")
         if not isinstance(record["module"], str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,160}", record["module"]):
             raise ValueError("Invalid module")
         if not isinstance(record["version"], str) or not 0 < len(record["version"]) <= 160 or any(ord(c) < 32 for c in record["version"]):
@@ -102,6 +109,6 @@ def join_reviews(world_dict, records):
         if accepted:
             decision = max(accepted, key=lambda r: r["reviewed_at"])
             candidates = [r for r in candidates if r["reviewed_at"] >= decision["reviewed_at"]]
-        chosen = max(candidates, key=lambda r: (ranking[r["status"]], r["reviewed_at"])) if candidates else None
+        chosen = max(candidates, key=lambda r: (ranking[r["status"]], r["reviewed_at"], bool(r.get("rationale")))) if candidates else None
         version["security_review"] = public_record(chosen) if chosen else None
     return world_dict

@@ -12,7 +12,7 @@ for (const width of [1440, 390]) {
       name: `review${i}`, display_name: `Review fixture ${i}`, game_name: `Review fixture ${i}`, disabled: false, is_builtin: false, tags: [],
       downloadable_versions: [{ version: "2.0" }], builder_versions: [{ version: "2.0" }],
       versions: [{ version: "2.0", source: "url", sha256: "a".repeat(64), url: "https://example.com/world.apworld", fuzz_result: result,
-        security_review: status && { status, reviewed_at: "2026-09-09T12:00:00Z", method: "automated-source-review", summary: `Exact-byte outcome: ${status}`, sha256: "a".repeat(64), report_sha256: "b".repeat(64), report_public: false, record_url: "/api/apworlds/security-reviews/" + "c".repeat(64) } }],
+        security_review: status && { status, reviewed_at: "2026-09-09T12:00:00Z", method: "automated-source-review", summary: `Exact-byte outcome: ${status}`, rationale: status === "needs_review" ? "The review flagged an unchecked extraction path. Human assessment is still required." : undefined, sha256: "a".repeat(64), report_sha256: "b".repeat(64), report_public: false, record_url: "/api/apworlds/security-reviews/" + "c".repeat(64) } }],
     }));
     await page.route("**/api/**", route => {
       const path = new URL(route.request().url()).pathname;
@@ -36,6 +36,10 @@ for (const width of [1440, 390]) {
       const detail = card.getByRole("region", { name: "Security review explanation" });
       await expect(detail).toBeVisible();
       if (statuses[i]) {
+        if (statuses[i] === "needs_review") {
+          await expect(detail).toContainText("The review flagged an unchecked extraction path. Human assessment is still required.");
+          await expect(detail).toContainText("Exact-byte outcome: needs_review");
+        }
         await expect(detail).toContainText("a".repeat(64));
         await expect(detail).toContainText("full source report is private");
         await expect(detail.getByRole("link", { name: "Public review record" })).toHaveAttribute("href", "/api/apworlds/security-reviews/" + "c".repeat(64));

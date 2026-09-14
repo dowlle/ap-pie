@@ -26,7 +26,7 @@ export default function APWorldEvidence({ version, builtin = false, reviewOpen, 
   const reviewLabels = { pass: "Review passed", needs_review: "Review concerns", fail: "Review failed", held: "Review held", human_accepted: "Concerns accepted" };
   const reviewLabel = review ? reviewLabels[review.status] : builtinRelease ? "Review not applicable" : "Review pending";
   const reviewTone = review ? review.status === "pass" ? "passed" : review.status === "fail" ? "failed" : "warning" : "pending";
-  const reviewExplanation = review?.summary ?? (builtinRelease
+  const reviewExplanation = review?.rationale ?? review?.summary ?? (builtinRelease
     ? "This world ships with Archipelago. There is no separate downloadable APWorld release to review here. Built-in provenance is not a security guarantee."
     : "No matching security review is recorded for these exact release bytes. This is not a safety clearance. Downloads and existing Builder availability are shown separately.");
   const generationExplanation = result
@@ -42,6 +42,7 @@ export default function APWorldEvidence({ version, builtin = false, reviewOpen, 
     {testedAt && !Number.isNaN(testedAt.getTime()) && <p className="apworld-evidence-date">Tested {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(testedAt)}</p>}
     {reviewVisible && <div className="apworld-evidence-detail" role="region" aria-label="Security review explanation"><strong>Security review{version ? ` · v${version.version}` : ""}</strong><p>{reviewExplanation}</p>
       {review && <>
+        {review.rationale && <p className="apworld-evidence-date">{review.summary}</p>}
         <p>{review.method === "maintainer-decision" ? "Decision recorded" : "Source reviewed"} <time dateTime={review.reviewed_at}>{new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(review.reviewed_at))}</time> · {review.method === "maintainer-decision" ? "Human decision" : review.method === "source-review-with-qa" ? "Source review with independent QA" : "Automated source review"}</p>
         <p className="apworld-review-digest">Archive SHA-256: <code>{review.sha256}</code></p>
         <p><a href={review.record_url}>Public review record</a>. The full source report is private; this record contains its outcome, date and report fingerprint.</p>

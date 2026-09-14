@@ -52,6 +52,24 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(reviews.record_id(record()), reviews.record_id(dict(reversed(list(record().items())))))
         self.assertNotEqual(reviews.record_id(record()), reviews.record_id(record(status="fail")))
 
+    def test_rationale_is_bounded_and_original_record_is_preserved(self):
+        original = record(status="needs_review")
+        enriched = record(status="needs_review", rationale="The review flagged an unchecked archive extraction path. Human assessment is still required.")
+        reviews.validate_catalog({"schema": 1, "records": [original, enriched]})
+        chosen = reviews.join_reviews(self.world(), [original, enriched])["versions"][0]["security_review"]
+        self.assertEqual(chosen["status"], "needs_review")
+        self.assertEqual(chosen["rationale"], enriched["rationale"])
+        self.assertNotEqual(reviews.record_id(original), reviews.record_id(enriched))
+        # A rationale never changes severity or overrides a later review.
+        newer = record(status="needs_review", reviewed_at="2026-09-14T12:00:00Z")
+        self.assertNotIn("rationale", reviews.join_reviews(self.world(), [enriched, newer])["versions"][0]["security_review"])
+        failed = record(status="fail")
+        self.assertEqual(reviews.join_reviews(self.world(), [enriched, failed])["versions"][0]["security_review"]["status"], "fail")
+        for text in ("One sentence. Two sentences. Three sentences.", "Private source /home/stef/report.md.",
+                     "Visit https://example.com for details.", "Not enough", "<script>Bad output.</script>", "A" * 601 + "."):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                reviews.validate_catalog({"schema": 1, "records": [record(rationale=text)]})
+
     def test_module_lock_wins_and_legacy_fallback_only_when_absent(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); (root / "index").mkdir()

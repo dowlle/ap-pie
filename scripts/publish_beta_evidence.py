@@ -44,6 +44,8 @@ def main():
     parser.add_argument("--container", default="ap-pie-beta-ap-web-1")
     parser.add_argument("--db", required=True)
     parser.add_argument("--summary", action="append", default=[])
+    parser.add_argument("--rationales", action="append", default=[],
+                        help="Reviewed public rationale catalogs; drafts are never read")
     parser.add_argument("--holds", required=True)
     parser.add_argument("--emitter", required=True)
     parser.add_argument("--work-dir", required=True)
@@ -80,6 +82,22 @@ def main():
     for summary in args.summary:
         command.extend(["--summary", summary])
     subprocess.run(command, check=True, timeout=60)
+    if args.rationales:
+        sys.path.insert(0, str(app))
+        from security_reviews import load_catalog, record_id
+        records = load_catalog(review)
+        originals = {record_id({k: v for k, v in r.items() if k != "rationale"}) for r in records}
+        for path in args.rationales:
+            for enriched in load_catalog(path):
+                original = {k: v for k, v in enriched.items() if k != "rationale"}
+                if "rationale" not in enriched or record_id(original) not in originals:
+                    continue
+                records.append(enriched)
+        records = list({record_id(r): r for r in records}.values())
+        pending = review.with_suffix(".json.pending")
+        pending.write_text(json.dumps({"schema": 1, "records": records}) + "\n")
+        load_catalog(pending)
+        pending.replace(review)
     command = [sys.executable, str(scripts / "export_fuzz_provenance.py"), "--emitter", args.emitter,
                "--catalog", str(work / "catalog.json"), "--lock", str(work / "index.lock"),
                "--cache", str(work / "github-cache"), "--out", str(fuzz)]
