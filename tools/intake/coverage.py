@@ -84,13 +84,23 @@ def export(db, expected_prs=()):
         held.append({'module': row['module'], 'version': row['version'],
                      'verified_releases': len(matches),
                      'gap': None if matches else 'held_artifact_verification_pending'})
+    audits=[]
+    for row in db.execute("SELECT candidate_id,origin,detail FROM origins WHERE origin IN ('archived-audit','recorded-audit') ORDER BY origin,candidate_id"):
+        candidate=candidate_ids[row['candidate_id']]
+        item=by_id[row['candidate_id']]
+        audits.append({'id':candidate['id'],'module':candidate['module'],'version':candidate['version'],
+                       'origin':row['origin'],'state':item['state'],
+                       'historical_checksum_known':json.loads(row['detail']).get('historical_checksum_known',False),
+                       'gap':None if item['state'] in ('verified','quarantined') else 'audit_artifact_verification_pending'})
     jobs = dict(Counter((r['kind'] + ':' + r['state']) for r in db.execute('SELECT kind,state FROM jobs')))
     return {'schema': 1, 'generated_at': time.time(), 'sources': report, 'prs': pr_report,
-            'holds': held, 'jobs': jobs,
+            'holds': held, 'audit_observations':audits, 'jobs': jobs,
             'summary': {'registered_sources': len(report), 'pr_origins': len(pr_report),
                         'verified_releases': len(releases),
                         'source_gaps': dict(Counter(r['gap'] for r in report if r['gap'])),
                         'pr_gaps': sum(bool(r['gap']) for r in pr_report),
+                        'audit_observations':len(audits),
+                        'audit_gaps':sum(bool(r['gap']) for r in audits),
                         'hold_gaps': sum(bool(r['gap']) for r in held)}}
 
 

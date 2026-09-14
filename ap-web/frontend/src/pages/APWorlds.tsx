@@ -897,6 +897,17 @@ export default function APWorlds() {
               {" "}{((intake.queue.jobs?.queued ?? 0) + (intake.queue.jobs?.running ?? 0)).toLocaleString()} waiting or running,
               {" "}{(intake.queue.jobs?.retry ?? 0).toLocaleString()} awaiting retry.
             </p>
+            {!!intake.unverified_observations?.length && (
+              <details>
+                <summary>{intake.unverified_observations.length} recorded releases need attention</summary>
+                <p>These observations have no newly verified download. Existing security holds remain in place.</p>
+                <ul>{intake.unverified_observations.map((item) => (
+                  <li key={item.id}>
+                    {available.find((world) => world.name === item.module)?.display_name ?? item.module} v{item.version}: {item.reason === "source_unreachable" ? "Source unreachable; awaiting retry." : item.reason === "checksum_mismatch" ? "Declared checksum mismatch; quarantined." : item.reason === "archive_verification_rejected" ? "Archive verification blocked." : "Verification pending."}
+                  </li>
+                ))}</ul>
+              </details>
+            )}
           </div>
         </aside>
       )}

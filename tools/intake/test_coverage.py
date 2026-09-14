@@ -6,6 +6,18 @@ from coverage import export
 
 
 class CoverageTests(unittest.TestCase):
+    def test_historical_observation_gaps_are_explicit_without_inventing_old_checksum(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger=Ledger(Path(tmp)/'state.db');ledger.register('game',{})
+            cid=ledger.discover('game','old','https://github.com/o/r/releases/download/old/game.apworld',None,
+                                origin='archived-audit',detail={'historical_checksum_known':False})
+            report=export(ledger.db)
+            self.assertEqual(report['summary']['audit_gaps'],1)
+            self.assertFalse(report['audit_observations'][0]['historical_checksum_known'])
+            ledger.verified(cid,'a'*64)
+            self.assertEqual(export(ledger.db)['summary']['audit_gaps'],0)
+            self.assertIsNone(ledger.db.execute('SELECT expected FROM candidates').fetchone()[0])
+            ledger.db.close()
     def test_duplicate_pr_checksum_mismatch_is_reconciled_only_with_verified_held_bytes(self):
         with tempfile.TemporaryDirectory() as tmp:
             ledger=Ledger(Path(tmp)/'state.db');ledger.register('game',{})

@@ -223,7 +223,8 @@ def _get_index() -> list:
 def intake_status():
     snapshot = discovery.load_for_serving(_get_index_dir().parent / 'discovery.json')
     return jsonify({'schema': 1, 'queue': snapshot.get('queue', {}),
-                    'available_releases': len(snapshot['releases'])})
+                    'available_releases': len(snapshot['releases']),
+                    'unverified_observations':snapshot.get('observations',[])})
 
 
 @bp.get('/api/apworlds/intake/releases/<digest>')

@@ -6,6 +6,7 @@ import json
 import re
 import subprocess
 import tomllib
+import time
 from pathlib import Path
 from ledger import Ledger
 from import_generation import validate
@@ -63,6 +64,43 @@ def collect(ledger, prs, producer):
             records.append(dict(module=identity[0], version=identity[1], sha256=digest, report_url=url,
                                 **{k: result[k] for k in ('verdict', 'default_rate', 'worst_hook', 'worst_hook_rate', 'seeds', 'fuzzed_at')}))
     return {'schema': 1, 'records': validate(records)}
+
+
+def collect_incremental(ledger, prs, producer, cache, *, limit=5, ttl=21600):
+    """Rotate bounded PR refreshes; preserve previously validated CI evidence."""
+    if not 1<=limit<=20:raise ValueError('Invalid generation refresh limit')
+    cache=Path(cache);cache.mkdir(parents=True,exist_ok=True)
+    entries=[];records=[];now=time.time()
+    for pr in prs:
+        head=pr['headRefOid']
+        if not re.fullmatch('[a-f0-9]{40}',head):raise ValueError('Invalid PR head')
+        path=cache/(str(int(pr['number']))+'-'+head+'.json')
+        previous=[];updated=0;retry=False
+        if path.exists():
+            try:
+                data=json.loads(path.read_text())
+                if data.get('head')!=head:raise ValueError('Mismatched evidence cache head')
+                previous=validate(data['records']);updated=path.stat().st_mtime
+                retry=bool(data.get('retry'))
+            except (ValueError,KeyError,TypeError):
+                previous=[];updated=0
+        records+=previous
+        if now-updated>=(1800 if retry else ttl):entries.append((updated,pr,path,previous))
+    for _,pr,path,previous in sorted(entries,key=lambda entry:(entry[0],entry[1]['number']))[:limit]:
+        try:
+            fresh=collect(ledger,[pr],producer)['records']
+            # Old completed-run dispositions remain evidence after reruns.
+            merged={json.dumps(r,sort_keys=True):r for r in previous+fresh}
+            payload={'head':pr['headRefOid'],'records':validate(list(merged.values()))}
+            write_atomic(path,payload)
+            records+=fresh
+        except Exception:
+            # Keep prior evidence, retry this PR on a later bounded cycle.
+            write_atomic(path,{'head':pr['headRefOid'],'records':previous,'retry':True})
+            continue
+    identities={(r['module'],r['version'],r['sha256']) for r in ledger.db.execute('SELECT module,version,sha256 FROM releases')}
+    result={json.dumps(r,sort_keys=True):r for r in records if (r['module'],r['version'],r['sha256']) in identities}
+    return {'schema':1,'records':validate(list(result.values()))}
 
 
 if __name__ == '__main__':

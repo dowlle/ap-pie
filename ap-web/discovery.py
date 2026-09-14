@@ -45,6 +45,32 @@ def load(path):
         raise ValueError('Invalid discovery schema')
     if len(data['releases']) > 10000:
         raise ValueError('Too many discovery releases')
+    observations=data.get('observations',[])
+    if not isinstance(observations,list) or len(observations)>10000:raise ValueError('Invalid observation count')
+    observation_ids=set()
+    for item in observations:
+        if not isinstance(item,dict) or set(item)!={'id','module','version','url','expected_sha256','state','reason','verified'}:
+            raise ValueError('Invalid public observation fields')
+        if not isinstance(item['id'],str) or not re.fullmatch('[a-f0-9]{64}',item['id']) or item['id'] in observation_ids:
+            raise ValueError('Invalid observation identity')
+        observation_ids.add(item['id'])
+        if not isinstance(item['module'],str) or not re.fullmatch('[A-Za-z0-9_ .-]{1,160}',item['module']) or item['module'] in ('.','..'):
+            raise ValueError('Invalid observation module')
+        if not isinstance(item['version'],str) or not 0<len(item['version'])<=200 or any(ord(c)<32 for c in item['version']):
+            raise ValueError('Invalid observation version')
+        if item['expected_sha256'] is not None and (not isinstance(item['expected_sha256'],str) or not re.fullmatch('[a-f0-9]{64}',item['expected_sha256'])):
+            raise ValueError('Invalid declared observation checksum')
+        if item['verified'] is not False or item['state'] not in ('queued','retry','blocked') or item['reason'] not in ('checksum_mismatch','archive_verification_rejected','source_unreachable','verification_pending'):
+            raise ValueError('Invalid observation verification state')
+        if not isinstance(item['url'],str) or len(item['url'])>4000:raise ValueError('Invalid observation URL')
+        url=urlsplit(item['url'])
+        decoded=unquote(url.path)
+        if '\\' in decoded or any(ord(c)<32 for c in decoded) or any(p in ('.','..') for p in decoded.split('/')):
+            raise ValueError('Invalid observation artifact path')
+        if url.scheme!='https' or url.hostname not in ('github.com','raw.githubusercontent.com','gitlab.com','codeberg.org','git.makuluni.com') or url.username or url.password or url.port not in (None,443) or url.fragment:
+            raise ValueError('Invalid observation source')
+        if url.query and not (url.hostname=='gitlab.com' and url.query in ('ref_type=tags','ref_type=heads')):
+            raise ValueError('Invalid observation query')
     policies=data.get('policies',[])
     if not isinstance(policies,list) or len(policies)>5000:
         raise ValueError('Invalid policy count')
@@ -136,6 +162,8 @@ def merge(worlds, data):
                           stability=source.get('stability'),setup_guide=source.get('setup_guide'))
             worlds.append(w)
             lookup[w.name]=w
+        if not w.setup_guide and r['source'].get('setup_guide'):
+            w.setup_guide=r['source']['setup_guide']
         old=next((v for v in w.versions if v.version==r['version']),None)
         if old and old.sha256==r['sha256']:
             old.discovery_id=r['id']

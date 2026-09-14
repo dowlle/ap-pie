@@ -26,7 +26,15 @@ def export(ledger):
                          'source': {k: metadata[k] for k in SOURCE_KEYS if k in metadata},
                          'held': held, 'jobs': jobs})
     policies = [dict(r) for r in ledger.db.execute('SELECT module,version FROM holds ORDER BY module,version')]
-    snapshot = {'schema': 1, 'releases': releases, 'queue': ledger.status(), 'policies': policies}
+    observations=[]
+    for row in ledger.db.execute("SELECT DISTINCT c.* FROM candidates c JOIN origins o ON o.candidate_id=c.id WHERE o.origin IN ('archived-audit','recorded-audit') AND c.state!='verified' AND NOT EXISTS(SELECT 1 FROM releases r WHERE r.module=c.module AND r.version=c.version AND r.url=c.url AND (c.expected IS NULL OR c.expected=r.sha256)) ORDER BY c.module,c.version,c.id"):
+        reason=('checksum_mismatch' if row['error']=='Artifact checksum mismatch' else
+                'archive_verification_rejected' if row['state']=='blocked' else
+                'source_unreachable' if row['error']=='HTTPError' else 'verification_pending')
+        observations.append({'id':row['id'],'module':row['module'],'version':row['version'],'url':row['url'],
+                             'expected_sha256':row['expected'],'state':row['state'],'reason':reason,'verified':False})
+    snapshot = {'schema': 1, 'releases': releases, 'observations':observations,
+                'queue': ledger.status(), 'policies': policies}
     if len(json.dumps(snapshot).encode()) > MAX_BYTES:
         raise ValueError('Discovery snapshot exceeds public metadata budget')
     return snapshot

@@ -127,7 +127,8 @@ def main():
                     spec.loader.exec_module(producer)
                     producer.gh_text, producer.gh_json = collect_generation.gh_text, collect_generation.gh_json
                     prs = json.loads((a.index_source.parent / 'queued-prs.json').read_text())
-                    records += collect_generation.collect(ledger, prs, producer)['records']
+                    records += collect_generation.collect_incremental(ledger, prs, producer,
+                        a.out_dir.parent/'generation-cache',limit=5)['records']
                 completed = import_generation.process(ledger, records, limit=evidence_limit)
                 snapshot.write_atomic(a.out_dir / 'fuzz-evidence.json', generation_snapshot.export(ledger, records))
                 return completed

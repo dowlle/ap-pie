@@ -7,6 +7,23 @@ from snapshot import export, write_atomic
 
 
 class SnapshotTests(unittest.TestCase):
+    def test_failed_audit_observations_remain_unverified_and_scrubbed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            l=Ledger(Path(tmp)/'state.db')
+            l.register('game',{'name':'Game'})
+            cid=l.discover('game','1','https://github.com/o/r/releases/download/1/game.apworld',origin='recorded-audit',detail={'private':'secret'})
+            l.db.execute("UPDATE candidates SET state='blocked',error='/private/report: Unsafe archive member' WHERE id=?",(cid,))
+            l.db.commit()
+            data=export(l)
+            self.assertEqual(data['releases'],[])
+            item=data['observations'][0]
+            self.assertFalse(item['verified'])
+            self.assertIsNone(item['expected_sha256'])
+            self.assertEqual(item['reason'],'archive_verification_rejected')
+            self.assertNotIn('private',json.dumps(data))
+            l.verified(cid,'a'*64)
+            self.assertEqual(export(l)['observations'],[])
+            l.db.close()
     def test_pending_candidate_is_not_a_verified_download_and_private_fields_are_removed(self):
         with tempfile.TemporaryDirectory() as tmp:
             l=Ledger(Path(tmp)/'state.db')

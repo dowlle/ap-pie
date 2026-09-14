@@ -133,7 +133,7 @@ def run_batch(ledger, rows, archives, *, workers=4, download=download_candidate)
             except Exception as exc:
                 result = {'status': 'retry', 'error': type(exc).__name__}
             result = record_result(ledger, row, result)
-            results.append({'module': row['module'], 'version': row['version'], **result})
+            results.append({'candidate_id':row['id'],'module': row['module'], 'version': row['version'], **result})
     return results
 
 

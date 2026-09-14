@@ -12,6 +12,23 @@ from builtin_builder import build_versions
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_observations_cannot_be_verified_downloads_or_leak_private_fields(self):
+        item={'id':'b'*64,'module':'game','version':'1','url':self.record()['url'],
+              'expected_sha256':None,'state':'blocked','reason':'archive_verification_rejected','verified':False}
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'discovery.json'
+            path.write_text(json.dumps({'schema':1,'releases':[],'observations':[item]}))
+            self.assertEqual(discovery.load(path)['releases'],[])
+            for change in ({'verified':True},{'private_report':'secret'},{'url':'https://github.com/o/%2e%2e/game.apworld'}):
+                path.write_text(json.dumps({'schema':1,'releases':[],'observations':[{**item,**change}]}))
+                with self.assertRaises(ValueError):discovery.load(path)
+    def test_verified_discovered_guide_fills_existing_game_gap_without_overwriting_guide(self):
+        record=self.record();record['source']['setup_guide']='https://github.com/o/r/blob/HEAD/setup.md'
+        for existing in (None,'https://ap-pie.com/guide'):
+            original=APWorldInfo(name='game',display_name='Game',setup_guide=existing,versions=[])
+            world=discovery.merge([original],{'releases':[record]})[0]
+            self.assertEqual(world.setup_guide,existing or record['source']['setup_guide'])
+            self.assertEqual(original.setup_guide,existing)
     def test_release_tags_with_slashes_are_valid_public_artifacts(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'data.json'

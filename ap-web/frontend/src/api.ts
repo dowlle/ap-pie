@@ -336,6 +336,11 @@ export async function getAPWorlds(search?: string): Promise<APWorldInfo[]> {
 export interface APWorldIntakeStatus {
   schema: 1;
   available_releases: number;
+  unverified_observations?: Array<{
+    id: string; module: string; version: string; verified: false;
+    state: "queued" | "retry" | "blocked";
+    reason: "checksum_mismatch" | "archive_verification_rejected" | "source_unreachable" | "verification_pending";
+  }>;
   queue: {
     sources?: number;
     candidates?: Partial<Record<"queued" | "retry" | "blocked" | "verified", number>>;
