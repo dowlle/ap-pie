@@ -2,8 +2,8 @@
 Description=Scan AP-Pie beta release sources every 30 minutes
 
 [Timer]
-OnActiveSec=15s
-OnUnitInactiveSec=30min
+OnCalendar=*-*-* *:05,35:00
+Persistent=true
 AccuracySec=1s
 Unit=ap-pie-beta-intake.service
 

@@ -5,7 +5,18 @@ After=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=/home/stef/projects/ap-pie-intake
-ExecStart=/usr/bin/python3 tools/intake/cycle.py --db /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/state.db --cache /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/release-cache --archives /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/archives --out-dir /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/output --security /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/security-seed.json --generation /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/generation-seed.json --limit 3 --beta-ssh-target stef@178.104.97.246 --audit-db /home/stef/apworld-auditor/.cache/audits.db --review-summary /home/stef/apworld-tools/runs/luna-full-20260909/summary.json
+ExecStart=/usr/bin/python3 tools/intake/cycle.py \
+    --db /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/state.db \
+    --cache /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/release-cache \
+    --archives /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/archives \
+    --out-dir /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/output \
+    --security /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/security-seed.json \
+    --generation /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/generation-seed.json \
+    --limit 3 --beta-ssh-target stef@178.104.97.246 \
+    --audit-db /home/stef/apworld-auditor/.cache/audits.db \
+    --review-summary /home/stef/apworld-tools/runs/luna-full-20260909/summary.json \
+    --index-source /home/stef/projects/ap-pie-support/artifacts/automatic-intake-beta/index-source \
+    --holds /home/stef/projects/ap-pie-support/tools/rejected-held.json
 TimeoutStartSec=30min
 Nice=10
 UMask=0077
