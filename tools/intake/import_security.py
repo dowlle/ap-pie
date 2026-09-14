@@ -1,11 +1,16 @@
 """Reuse existing immutable public security evidence for exact release bytes."""
 import argparse
 import json
+import sys
 from pathlib import Path
 from ledger import Ledger
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'ap-web'))
+from security_reviews import validate_catalog
 
 
 def process(ledger, records, *, limit=20):
+    # Validate the entire batch before claiming or changing any queue job.
+    records = validate_catalog({'schema': 1, 'records': records})
     lookup={}
     for r in records:
         key=(r.get('module'),r.get('version'),r.get('sha256'))
@@ -21,7 +26,7 @@ def process(ledger, records, *, limit=20):
             continue
         # Preserve all matching immutable results; never collapse a hold or
         # concern into a more recent automatic PASS here.
-        public=[{k:r[k] for k in ('module','version','sha256','status','reviewed_at','method','report_sha256') if k in r} for r in matching]
+        public=[dict(r) for r in matching]
         ledger.finish(release['id'],'security',job['token'],{'records':public})
         completed+=1
     return completed
