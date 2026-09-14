@@ -9,7 +9,7 @@ The initial SQLite database was copied with SQLite's backup API.
 
 User units are `ap-pie-beta-intake.service` and `ap-pie-beta-intake.timer`.
 The timer runs at minutes 05 and 35 of each hour, with missed-run persistence.
-Each cycle verifies at most three artifacts. The cycle lock
+Each cycle verifies at most 100 artifacts using four isolated workers. The cycle lock
 prevents concurrent coordinator runs. Download, schema and guide workers have
 isolated mounts and cleared environments. Fresh fuzzing is not performed on
 Atlas; recorded Actions evidence is reused.
@@ -30,8 +30,9 @@ It was replaced on 2026-09-14 with the fixed wall-clock schedule above.
 Installed configuration also refreshes the canonical index and all live open
 PR heads before scanning, and reuses exact-checksum audit-cache/QA evidence.
 
-This operational pilot does not prove complete source coverage, uncached
-security review handling or full rollback. Those remain required for the goal.
+The initial pilot receipt alone did not prove source coverage, uncached
+security review handling or rollback. Subsequent cohort checks and real worker,
+rollback and unattended receipts provide that evidence.
 Production publication is unavailable through these fixed-container tools.
 
 Uncached reviews use the existing trusted extractor/prompt and an outer bwrap
