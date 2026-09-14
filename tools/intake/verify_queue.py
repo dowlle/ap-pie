@@ -80,7 +80,10 @@ def main():
         if a.version:
             query += ' AND version=?'
             values.append(a.version)
-        rows = ledger.db.execute(query + ' ORDER BY discovered DESC LIMIT ?', [*values, a.limit]).fetchall()
+        # Release timestamps outrank ingestion order: paginated historical
+        # releases must not push today's updates behind the oldest archives.
+        order = " ORDER BY COALESCE((SELECT max(json_extract(detail,'$.published_at')) FROM origins WHERE candidate_id=candidates.id),'') DESC, discovered DESC LIMIT ?"
+        rows = ledger.db.execute(query + order, [*values, a.limit]).fetchall()
         for row in rows:
             result = run_candidate(ledger, row, a.archives)
             print(json.dumps({'module': row['module'], 'version': row['version'], **result}), flush=True)
