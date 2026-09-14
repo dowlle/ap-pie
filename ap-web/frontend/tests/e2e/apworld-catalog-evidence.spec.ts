@@ -54,7 +54,7 @@ for (const width of [1440, 390]) {
     await expect(tooltip).toHaveCount(0);
     await warningBadge.click();
     await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Open GitHub report" })).toHaveAttribute("href", result.report_url);
+    await expect(page.getByRole("link", { name: "View published report" })).toHaveAttribute("href", result.report_url);
     await page.getByRole("button", { name: "Close fuzzer explanation" }).click();
     expect(errors).toEqual([]);
   });

@@ -5947,3 +5947,5 @@ details.yaml-builder-group > summary .muted {
   flex: 0 0 5.5rem;
   width: 5.5rem;
 }
+/* Full archive digests must remain readable on small screens. */
+.apworld-review-digest code { overflow-wrap: anywhere; word-break: break-all; }

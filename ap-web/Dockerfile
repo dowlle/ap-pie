@@ -35,6 +35,8 @@ COPY ap-web/legal/ ./legal/
 # loader keeps it separate from the upstream index and from player YAMLs.
 COPY ap-web/apworld_content/ ./apworld_content/
 COPY ap-web/builtin_schemas/ ./builtin_schemas/
+COPY ap-web/security-evidence.json ./security-evidence.json
+COPY ap-web/fuzz-evidence.json ./fuzz-evidence.json
 
 COPY ap-web/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

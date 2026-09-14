@@ -521,7 +521,7 @@ function WorldCard({
           </div>
         </header>
 
-        <APWorldEvidence version={latestVersion} />
+        <APWorldEvidence version={latestVersion} builtin={world.is_builtin} />
 
           <div className="apworld-card-primary-actions">
             {playUrl && <a className="btn btn-primary btn-sm" href={playUrl}>Play Poképelago</a>}
@@ -830,7 +830,7 @@ export default function APWorlds() {
           <p className="apworlds-builder-link">
             Need to configure your game options? <Link to="/yaml-builder">Open the YAML Builder →</Link>
           </p>
-          <p className="apworlds-evidence-context">Badges describe the displayed release. Security reviews are not published here yet; Builder availability is separate from review and generation evidence.</p>
+          <p className="apworlds-evidence-context">Badges describe the displayed release. Security reviews match exact archive checksums; pending means matching evidence is missing. Builder availability is separate from review and generation evidence.</p>
         </div>
         <div className="apworlds-header-actions">
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's

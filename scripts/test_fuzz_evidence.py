@@ -34,6 +34,19 @@ class FuzzEvidenceTests(unittest.TestCase):
         attach_fuzz_evidence(world, None)
         self.assertEqual(world.versions[0].fuzz_result.report_url, url)
 
+    def test_run_backfill_requires_hash_and_every_result_field(self):
+        world = self.world()
+        version = world.versions[0]; version.sha256 = "a" * 64
+        url = "https://github.com/dowlle/Archipelago-index/actions/runs/123"
+        proof = {"module": "crash2", "version": "0.4.1", "sha256": "a" * 64, "report_url": url,
+                 **{key: getattr(version.fuzz_result, key) for key in ("verdict", "default_rate", "worst_hook", "worst_hook_rate", "seeds", "fuzzed_at")}}
+        attach_fuzz_evidence(world, None, [proof])
+        self.assertEqual(version.fuzz_result.report_url, url)
+        for changes in ({"sha256": "c" * 64}, {"version": "0.4.2"}, {"fuzzed_at": "2026-09-13"}, {"seeds": 10}, {"default_rate": .5}, {"worst_hook": "other"}):
+            changed = self.world(); changed.versions[0].sha256 = "a" * 64
+            attach_fuzz_evidence(changed, None, [{**proof, **changes}])
+            self.assertNotEqual(changed.versions[0].fuzz_result.report_url, url)
+
     def test_non_report_or_unsafe_urls_rejected(self):
         for value in ("javascript:alert(1)", "https://github.com.evil.test/a/b/pull/1", "https://github.com/a/b", "https://example.com/report", 123):
             self.assertIsNone(github_report_url(value))

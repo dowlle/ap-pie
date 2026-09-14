@@ -265,10 +265,8 @@ def parse_world_toml(key: str, data: dict) -> APWorldInfo:
 def parse_index_dir(index_dir: Path, *, strict: bool = False) -> list[APWorldInfo]:
     """Parse all TOML files in an index directory.
 
-    Side effect: for any world whose name appears in `index.lock`, fills
-    each `APWorldVersion.sha256` from the lock entry. The lock keys are
-    the TOML's `name` field (game_name), not the apworld key. Versions
-    without a lock entry stay sha256=None.
+    Fill version hashes from module-keyed index.lock. Older indexes may
+    use game names; consult those only when the module entry is absent.
     """
     worlds = []
     toml_dir = index_dir / "index"
@@ -287,9 +285,10 @@ def parse_index_dir(index_dir: Path, *, strict: bool = False) -> list[APWorldInf
             data = tomllib.loads(f.read_text(encoding="utf-8"))
             key = f.stem
             world = parse_world_toml(key, data)
-            ver_shas = lock.get(world.game_name, {})
+            ver_shas = lock.get(key, lock.get(world.game_name, {}))
             for v in world.versions:
-                v.sha256 = ver_shas.get(v.version)
+                digest = ver_shas.get(v.version) if isinstance(ver_shas, dict) else None
+                v.sha256 = digest.lower() if isinstance(digest, str) and re.fullmatch(r"[0-9a-fA-F]{64}", digest) else None
             worlds.append(world)
         except Exception as exc:
             if strict:
@@ -335,7 +334,7 @@ def resolve_local_path(index_dir: Path, world: APWorldInfo, version: APWorldVers
 def parse_lock_file(
     index_dir: Path, *, strict: bool = False
 ) -> dict[str, dict[str, str]]:
-    """Parse index.lock → {display_name: {version: sha256}}."""
+    """Parse index.lock → {module_key: {version: sha256}}."""
     lock_file = index_dir / "index.lock"
     if not lock_file.exists():
         return {}

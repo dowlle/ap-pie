@@ -223,6 +223,16 @@ export interface APWorldVersion {
   source: "url" | "local" | "builtin";
   /** FEAT-35: per-version fuzz verdict, null when the index has no data. */
   fuzz_result: FuzzResult | null;
+  security_review?: {
+    status: "pass" | "needs_review" | "fail" | "held" | "human_accepted";
+    reviewed_at: string;
+    method: string;
+    summary: string;
+    sha256: string;
+    report_sha256: string;
+    report_public: boolean;
+    record_url: string;
+  } | null;
 }
 
 export interface APWorldInfo {

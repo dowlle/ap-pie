@@ -43,7 +43,7 @@ export default function FuzzerModal({ result, version, onClose }: {
             <div><dt>Tested</dt><dd>{result.fuzzed_at}</dd></div>
           </dl>
           <p className="muted">These are results from a test sample, not the chance that your YAML or group will fail. The “default” check uses randomized options, not just the game’s default settings.</p>
-          {result.report_url && <p><a className="btn btn-sm" href={result.report_url} target="_blank" rel="noopener noreferrer">Open GitHub report ↗</a></p>}
+          {result.report_url && <p><a className="btn btn-sm" href={result.report_url} target="_blank" rel="noopener noreferrer">{result.report_url.includes("/actions/runs/") ? "View test run ↗" : "View published report ↗"}</a></p>}
           {!result.report_url && <p className="muted">The original GitHub report link is not recorded for this result.</p>}
           {result.record_url && <p><a href={result.record_url} target="_blank" rel="noopener noreferrer">View recorded result on GitHub ↗</a></p>}
         </section>

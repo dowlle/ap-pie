@@ -81,3 +81,6 @@ jobs:
       # there is one place that runs the backend checks.
       - run: python scripts/test_index_refresh.py
       - run: python scripts/test_apworld_version_order.py
+      - run: python scripts/test_security_evidence.py
+      - run: python scripts/test_fuzz_evidence.py
+      - run: python scripts/test_builtin_builder.py

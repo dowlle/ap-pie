@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 import subprocess
 import threading
 from datetime import datetime, timezone
@@ -28,9 +29,10 @@ from ap_lib.apworld_index import (
 )
 
 import config
+import security_reviews
 from builtin_builder import builtin_record, build_versions
 from apworld_editorial import join_index_record, load_reviewed_apworlds
-from fuzz_evidence import attach_fuzz_evidence
+from fuzz_evidence import attach_fuzz_evidence, load_provenance
 
 bp = Blueprint("apworlds", __name__)
 
@@ -58,6 +60,27 @@ _index_worlds_cache: list | None = None  # raw APWorldInfo objects, parallel to 
 _index_lookup_cache: dict | None = None  # game_name -> APWorldInfo
 _index_lock = threading.Lock()
 _index_refresh_lock = threading.Lock()
+_review_stamp = None
+_fuzz_stamp = None
+
+
+def _fuzz_snapshot():
+    seed = Path(__file__).resolve().parent.parent / "fuzz-evidence.json"
+    overlay = _get_index_dir().parent / "fuzz-evidence.json"
+    stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
+    return stamp, load_provenance(str(seed), str(overlay), stamp)
+
+
+def _review_paths():
+    seed = Path(__file__).resolve().parent.parent / "security-evidence.json"
+    overlay = _get_index_dir().parent / "security-evidence.json"
+    return seed, overlay
+
+
+def _review_snapshot():
+    seed, overlay = _review_paths()
+    stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
+    return stamp, security_reviews.load_snapshot(str(seed), str(overlay), stamp)
 
 
 def _get_index_dir() -> Path:
@@ -133,21 +156,30 @@ def _index_updated_map(index_dir: Path) -> dict[str, str]:
 def _load_index_into_cache():
     """Populate all three index caches in one parse pass. Caller holds the
     lock. Cache is invalidated by `refresh_index` and on first read."""
-    global _index_cache, _index_worlds_cache, _index_lookup_cache
+    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
         head = index_head_sha(index_dir)
+        fuzz_stamp, fuzz_records = _fuzz_snapshot()
         for world in worlds:
-            attach_fuzz_evidence(world, head)
+            attach_fuzz_evidence(world, head, fuzz_records)
         _index_worlds_cache = worlds
         updated = _index_updated_map(index_dir)
+        stamp, reviews = _review_snapshot()
         _index_cache = []
         for w in worlds:
             d = _scrub_index_dict(w.to_dict())
             d["updated_at"] = updated.get(w.name)
             d["builder_versions"] = build_versions(w) if not w.disabled else []
+            security_reviews.join_reviews(d, reviews)
+            for version in d["versions"]:
+                review = version.get("security_review")
+                if review:
+                    review["record_url"] = f"/api/apworlds/security-reviews/{review['id']}"
             _index_cache.append(d)
+        _review_stamp = stamp
+        _fuzz_stamp = fuzz_stamp
         _index_lookup_cache = build_game_lookup(worlds)
     else:
         _index_worlds_cache = []
@@ -158,9 +190,25 @@ def _load_index_into_cache():
 def _get_index() -> list:
     global _index_cache
     with _index_lock:
-        if _index_cache is None:
+        seed, overlay = _review_paths()
+        stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
+        fuzz_stamp, _ = _fuzz_snapshot()
+        if _index_cache is None or stamp != _review_stamp or fuzz_stamp != _fuzz_stamp:
             _load_index_into_cache()
         return _index_cache
+
+
+@bp.get("/api/apworlds/security-reviews/<digest>")
+def security_review_record(digest):
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        abort(404)
+    _, records = _review_snapshot()
+    record = next((r for r in records if security_reviews.record_id(r) == digest), None)
+    if record is None:
+        abort(404)
+    response = jsonify(security_reviews.public_record(record))
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
 
 
 def _get_index_worlds() -> list[APWorldInfo]:

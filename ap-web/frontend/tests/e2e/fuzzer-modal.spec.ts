@@ -18,9 +18,10 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/apworlds");
 });
 
-for (const verdict of ["clean", "flaky", "broken"]) {
+for (const [index, verdict] of ["clean", "flaky", "broken"].entries()) {
   test(`${verdict} badge opens version detail by keyboard and restores focus`, async ({ page }) => {
-    const badge = page.getByRole("button", { name: new RegExp(`v1.2.3: ${verdict}`) });
+    const card = page.locator(".apworld-catalog-card").filter({ hasText: `Fixture ${index}` });
+    const badge = card.getByRole("button", { name: "Generation warnings", exact: true });
     await badge.focus();
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("dialog", { name: "What is the fuzzer?" });
@@ -35,10 +36,11 @@ for (const verdict of ["clean", "flaky", "broken"]) {
   });
 }
 
-test("missing data is silent and mobile modal stays usable", async ({ page }) => {
+test("missing data stays pending and mobile modal stays usable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 700 });
-  await expect(page.getByRole("button", { name: /What is the fuzzer/ })).toHaveCount(3);
-  await page.getByRole("button", { name: /v1.2.3: broken/ }).click();
+  await expect(page.getByRole("button", { name: "Generation warnings", exact: true })).toHaveCount(3);
+  await expect(page.getByRole("button", { name: "Tests pending", exact: true })).toHaveCount(1);
+  await page.locator(".apworld-catalog-card").filter({ hasText: "Fixture 2" }).getByRole("button", { name: "Generation warnings", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
