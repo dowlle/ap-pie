@@ -13,6 +13,19 @@ import test_discovery
 
 
 class IntakeAPITests(unittest.TestCase):
+    def test_published_schema_cache_updates_catalog_builder_choices(self):
+        (self.root/'index'/'index').mkdir(parents=True)
+        names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp','_schema_stamp']
+        previous={name:getattr(apworlds,name) for name in names}
+        try:
+            for name in names: setattr(apworlds,name,None)
+            with self.client.application.app_context(), patch.object(apworlds,'parse_index_dir',return_value=[]):
+                self.assertEqual(apworlds._get_index()[0]['builder_versions'],[])
+                (self.root/'discovery-schemas.json').write_text(json.dumps({'schema':1,'records':{self.record['id']:{'sha256':'a'*64,'schema':{'game':'Game','options':[]}}}}))
+                self.assertEqual(apworlds._get_index()[0]['builder_versions'],[{'version':'2'}])
+        finally:
+            for name,value in previous.items(): setattr(apworlds,name,value)
+
     def test_worker_schema_cache_is_served_only_for_matching_release_checksum(self):
         (self.root/'index'/'index').mkdir(parents=True)
         names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
