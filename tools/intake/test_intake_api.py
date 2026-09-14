@@ -1,4 +1,5 @@
 import json
+import ipaddress
 import sys
 import tempfile
 import unittest
@@ -12,6 +13,19 @@ import test_discovery
 
 
 class IntakeAPITests(unittest.TestCase):
+    def test_discovered_download_redirects_to_recorded_source_without_fetching_package(self):
+        (self.root/'index'/'index').mkdir(parents=True)
+        names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
+        previous={name:getattr(apworlds,name) for name in names}
+        try:
+            for name in names: setattr(apworlds,name,None)
+            with patch.object(apworlds,'parse_index_dir',return_value=[]), patch('tracker._resolve_ips',return_value=[ipaddress.ip_address('140.82.112.3')]), patch.object(apworlds.analytics,'record_event'):
+                response=self.client.get('/api/apworlds/game/2/download')
+            self.assertEqual(response.status_code,302)
+            self.assertEqual(response.headers['Location'],self.record['url'])
+        finally:
+            for name,value in previous.items(): setattr(apworlds,name,value)
+
     def test_raw_and_game_lookups_follow_replaced_discovery_snapshot(self):
         (self.root/'index'/'index').mkdir(parents=True)
         names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
