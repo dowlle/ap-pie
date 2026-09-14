@@ -2963,6 +2963,9 @@ a.btn:hover { text-decoration: none; }
   transition: border-color 150ms ease, background 150ms ease;
 }
 .apworld-card:hover { border-color: var(--border-strong); }
+.apworld-catalog-card { align-content: start; }
+.apworld-card-content { grid-column: 1 / -1; min-width: 0; }
+.apworld-card-content > .apworld-evidence-pair { margin-top: 0; }
 .apworld-catalog-card .apworld-card-title { padding-right: 0; }
 .apworld-catalog-card .apworld-card-head { padding-top: 0; }
 .apworld-card-source, .apworld-card-release { color: var(--text-muted); font-size: 0.75rem; }

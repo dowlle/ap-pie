@@ -522,7 +522,8 @@ function WorldCard({
             <span className="apworld-card-release">{latestVersion ? `v${latestVersion.version} · Latest release` : latestBuilderVersion ? `Archipelago ${latestBuilderVersion}` : "No release recorded"}{world.stability ? ` · maintainer: ${world.stability}` : ""}</span>
           </div>
         </header>
-
+      </div>
+      <div className="apworld-card-content">
         <APWorldEvidence version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
 
           <div className="apworld-card-primary-actions">
