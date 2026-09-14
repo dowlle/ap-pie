@@ -63,6 +63,7 @@ def main():
     p.add_argument('--limit', type=int, default=5)
     p.add_argument('--beta-ssh-target', help='Publish discovery before evidence work to the fixed beta container')
     p.add_argument('--audit-db', type=Path, help='Read-only existing source-review cache')
+    p.add_argument('--review-summary', type=Path, action='append', default=[], help='Existing exact-checksum QA summary')
     a = p.parse_args()
     if not 1 <= a.limit <= 50:
         p.error('limit must be between 1 and 50')
@@ -88,7 +89,7 @@ def main():
             def security():
                 records = security_snapshot.load_catalog(a.security)
                 if a.audit_db:
-                    records += cached_security.export(ledger, a.audit_db)
+                    records += cached_security.export(ledger, a.audit_db, a.review_summary)
                 completed = import_security.process(ledger, records, limit=a.limit)
                 snapshot.write_atomic(a.out_dir / 'security-evidence.json', security_snapshot.export(ledger, records))
                 return completed
