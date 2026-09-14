@@ -2971,6 +2971,7 @@ a.btn:hover { text-decoration: none; }
 .apworld-evidence-badge.is-pending { color: var(--text-muted); background: var(--bg-elevated); }
 .apworld-evidence-badge.is-passed { color: var(--color-success); background: rgba(105,201,157,.09); }
 .apworld-evidence-badge.is-warning { color: var(--color-warning); background: rgba(242,173,85,.09); }
+.apworld-evidence-badge.is-failed { color: var(--color-danger); background: rgba(229,124,120,.09); }
 .apworld-evidence-badge:focus-visible { outline: 2px solid var(--text-h); outline-offset: 3px; }
 .apworld-evidence-date { margin: 0.5rem 0 0; font-size: 0.7rem; color: var(--text-muted); }
 .apworld-evidence-tooltip { position: fixed; z-index: 1000; width: min(18rem, calc(100vw - 2rem)); padding: 0.85rem 1rem; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--bg-elevated); color: var(--text-h); box-shadow: 0 8px 24px rgba(0,0,0,.3); font: 0.8rem/1.55 var(--font-body); }
@@ -2979,6 +2980,7 @@ a.btn:hover { text-decoration: none; }
 .apworld-evidence-tooltip small { color: var(--text-muted); font-size: 0.7rem; }
 .apworld-evidence-tooltip.is-warning strong { color: var(--color-warning); }
 .apworld-evidence-tooltip.is-passed strong { color: var(--color-success); }
+.apworld-evidence-tooltip.is-failed strong { color: var(--color-danger); }
 .apworld-evidence-detail { margin-top: 0.7rem; padding: 1rem; border-radius: 6px; background: var(--bg-elevated); font-size: 0.8rem; }
 .apworld-catalog-card .apworld-card-primary-actions > .btn-primary { order: -1; }
 .apworld-catalog-card .apworld-action::after { max-width: min(15rem, 100%); white-space: normal; }

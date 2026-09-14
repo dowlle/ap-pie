@@ -27,7 +27,12 @@ for (const width of [1440, 390]) {
     for (let i = 0; i < statuses.length; i++) {
       const card = page.locator(".apworld-catalog-card").filter({ hasText: `Review fixture ${i}` });
       const badge = card.getByRole("button", { name: labels[i], exact: true });
-      await badge.scrollIntoViewIfNeeded(); await badge.focus(); await page.keyboard.press("Enter");
+      await badge.scrollIntoViewIfNeeded();
+      if (statuses[i] === "fail") {
+        await card.getByRole("button", { name: "Read review", exact: true }).click();
+      } else {
+        await badge.focus(); await page.keyboard.press("Enter");
+      }
       const detail = card.getByRole("region", { name: "Security review explanation" });
       await expect(detail).toBeVisible();
       if (statuses[i]) {

@@ -491,7 +491,9 @@ function WorldCard({
   const downloadable = versions.filter((v) => v.source === "url" || v.source === "local");
   const builtinOnly = downloadable.length === 0;
   const [showAllVersions, setShowAllVersions] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const latestVersion = versions[0];
+  const reviewNeedsAttention = latestVersion?.security_review && latestVersion.security_review.status !== "pass";
   const latestDownloadable = downloadable[0];
   const latestBuilderVersion = (world.builder_versions ?? world.downloadable_versions)[0]?.version;
   const initials = world.display_name
@@ -521,9 +523,10 @@ function WorldCard({
           </div>
         </header>
 
-        <APWorldEvidence version={latestVersion} builtin={world.is_builtin} />
+        <APWorldEvidence version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
 
           <div className="apworld-card-primary-actions">
+            {reviewNeedsAttention && <button type="button" className="btn btn-primary btn-sm" aria-expanded={reviewOpen} onClick={() => setReviewOpen(true)}>Read review</button>}
             {playUrl && <a className="btn btn-primary btn-sm" href={playUrl}>Play Poképelago</a>}
             {detailAction}
             {latestBuilderVersion && (
@@ -539,7 +542,7 @@ function WorldCard({
             )}
             {latestDownloadable && (
               <a
-                className="btn btn-primary btn-sm apworld-action"
+                className={`btn ${reviewNeedsAttention ? "" : "btn-primary "}btn-sm apworld-action`}
                 href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
                 download
                 data-tooltip={`Download APWorld v${latestDownloadable.version}`}
