@@ -1,11 +1,40 @@
 """Run independent guide checks in a credential-free network sandbox."""
 import argparse
 import json
+import math
+import re
 import subprocess
 import tempfile
+import urllib.parse
 from pathlib import Path
 from ledger import Ledger
 from verify_queue import sandbox_command
+from guide_worker import HOSTS
+
+
+def validate_evidence(evidence, release, metadata):
+    if not isinstance(evidence, dict) or set(evidence) != {'url', 'content_sha256', 'checked_at', 'kind'}:
+        raise ValueError('Invalid guide worker fields')
+    if not isinstance(evidence['url'], str) or len(evidence['url']) > 10000:
+        raise ValueError('Invalid guide URL')
+    url = urllib.parse.urlsplit(evidence['url'])
+    if url.scheme != 'https' or url.hostname not in HOSTS or url.username or url.password or url.port not in (None, 443):
+        raise ValueError('Invalid guide host')
+    if not isinstance(evidence['content_sha256'], str) or not re.fullmatch(r'[0-9a-f]{64}', evidence['content_sha256']):
+        raise ValueError('Invalid guide content digest')
+    if type(evidence['checked_at']) not in (int, float) or not math.isfinite(evidence['checked_at']) or evidence['checked_at'] <= 0:
+        raise ValueError('Invalid guide check date')
+    existing = metadata.get('setup_guide')
+    if existing:
+        if evidence['url'] != existing or evidence['kind'] != 'existing-link-reachable':
+            raise ValueError('Existing guide identity mismatch')
+    else:
+        repo = re.match(r'https://github\.com/([^/]+/[^/]+)/releases/download/', release['url'])
+        if not repo or not evidence['url'].startswith('https://github.com/' + repo.group(1) + '/blob/HEAD/') or evidence['kind'] != 'repository-setup-document':
+            raise ValueError('Discovered guide source mismatch')
+        if url.query or url.fragment or '..' in url.path.split('/'):
+            raise ValueError('Invalid discovered guide path')
+    return evidence
 
 
 def run(job):
@@ -37,7 +66,7 @@ def process(ledger, limit=5):
             if result.get('error') or result.get('result') is None:
                 ledger.finish(row['id'], 'guide', job['token'], None, error=result.get('error') or 'Guide discovery requires follow-up')
                 continue
-            evidence = result['result']
+            evidence = validate_evidence(result['result'], row, metadata)
             if not metadata.get('setup_guide'):
                 ledger.register(row['module'], {'setup_guide': evidence['url']})
                 ledger.db.commit()
