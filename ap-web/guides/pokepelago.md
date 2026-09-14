@@ -10,6 +10,8 @@ This guide reflects the current published release, Poképelago APWorld **0.6.4**
 
 New to rooms, slots, YAMLs, and checks? Read [Getting started with Archipelago](/guides/getting-started) first.
 
+For a quick introduction and the game link, see the [Poképelago overview](/pokepelago).
+
 ## Try it without Archipelago
 
 You can play Poképelago as a standalone guessing game before making a seed.

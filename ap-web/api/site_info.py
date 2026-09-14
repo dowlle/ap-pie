@@ -7,8 +7,9 @@ import config
 import seo
 
 bp = Blueprint("site_info", __name__)
-PAGES_UPDATED = "2026-09-10"
+PAGES_UPDATED = "2026-09-14"
 PAGES = {
+    "/pokepelago": ("Poképelago", "Guess Pokémon names in your browser. Play Poképelago standalone or exchange items with other games in an Archipelago multiworld.", "pokepelago.md"),
     "/changelog": ("Changelog", "Recent updates and fixes to Archipelago Pie.", "changelog.md"),
     "/report-issue": ("Report an issue", "Report a problem with Archipelago Pie or find the right place for an APWorld issue.", "report-issue.md"),
 }
@@ -23,6 +24,8 @@ def _page(path):
         "guides/site-page.html", h1=title, body_html=html,
         page_title=f"{title} | Archipelago Pie", meta_description=description,
         canonical_url=canonical, og_type="website",
+        og_image=(f"{config.PUBLIC_BASE_URL}/img/guides/pokepelago-gameplay.png"
+                  if path == "/pokepelago" else None),
         structured_data=seo.graph(config.PUBLIC_BASE_URL, seo.page(
             config.PUBLIC_BASE_URL, "WebPage", canonical, title, description,
         )),
@@ -37,3 +40,8 @@ def changelog():
 @bp.get("/report-issue")
 def report_issue():
     return _page("/report-issue")
+
+
+@bp.get("/pokepelago", strict_slashes=False)
+def pokepelago():
+    return _page("/pokepelago")

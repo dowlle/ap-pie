@@ -594,6 +594,7 @@ def llms() -> Response:
         "",
         "## Games",
         "",
+        f"- [Poképelago]({_canonical('/pokepelago')}): a quick introduction to the browser guessing game, with play and setup links",
         "- [Play Poképelago](https://pokepelago.ap-pie.com/): guess and catch Pokémon in your browser, standalone or connected to an Archipelago multiworld",
         "",
         "## App",
