@@ -15,6 +15,26 @@ from ledger import Ledger
 REPO = re.compile(r'^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)(?:/|$)')
 
 
+def pinned_raw_observations(candidates, resolve):
+    result=[]
+    for candidate in candidates:
+        url=urlsplit(candidate['url'])
+        match=re.fullmatch(r'/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/raw/(?:refs/tags/)?([^/]+)/(.+\.apworld)',url.path)
+        if url.hostname!='github.com' or not match:
+            continue
+        owner,repo,ref,path=match.groups()
+        commit=resolve(owner+'/'+repo,unquote(ref))
+        if not re.fullmatch('[a-f0-9]{40}',commit):raise ValueError('Raw reference did not resolve to an immutable commit')
+        result.append({**candidate,'url':'https://raw.githubusercontent.com/'+owner+'/'+repo+'/'+commit+'/'+path})
+    return result
+
+
+def resolve_commit(repo, ref):
+    process=subprocess.run(['gh','api','repos/'+repo+'/commits/'+quote(ref,safe=''),'--jq','.sha'],capture_output=True,text=True,timeout=90)
+    if process.returncode:raise RuntimeError('Public raw reference resolution failed')
+    return process.stdout.strip()
+
+
 def repository(url):
     match = REPO.match(url or '')
     if match:
@@ -154,6 +174,14 @@ def scan(ledger, cache, *, workers=6, ttl=1800):
     for source in sources:
         metadata = json.loads(source['metadata'])
         candidates = [dict(row) for row in ledger.db.execute('SELECT * FROM candidates WHERE module=?', (source['module'],))]
+        if not metadata.get('disabled') and not metadata.get('supported'):
+            try:
+                for candidate in pinned_raw_observations(candidates, resolve_commit):
+                    ledger.discover(source['module'],candidate['version'],candidate['url'],candidate['expected'],
+                                    origin='resolved-github-raw',detail={'original_candidate':candidate['id']})
+                    candidates.append(candidate)
+            except Exception as exc:
+                metadata['_raw_error']=type(exc).__name__
         classification = 'retired' if metadata.get('disabled') else 'builtin' if metadata.get('supported') else None
         repo = next((r for u in [metadata.get('default_url'), *[c['url'] for c in candidates], metadata.get('home')]
                      if (r := repository(u))), None)
@@ -177,17 +205,18 @@ def scan(ledger, cache, *, workers=6, ttl=1800):
                 releases, error = [], type(e).__name__
             with ledger.db:
                 for module, metadata, candidates in grouped[repo]:
+                    source_error = error or metadata.get('_raw_error')
                     found, unmatched = observations(module, metadata, candidates, releases)
                     for record in found:
                         ledger.discover(module, record['version'], record['url'], record['expected'],
                                         origin='github:' + repo, detail=record, revision=record['revision'])
                     summary['observations'] += len(found)
-                    summary['errors' if error else 'scanned'] += 1
+                    summary['errors' if source_error else 'scanned'] += 1
                     detail = {'repository': repo, 'observations': len(found),
-                              'unmatched_assets': unmatched[:100], 'error': error}
+                              'unmatched_assets': unmatched[:100], 'error': source_error}
                     ledger.db.execute('INSERT INTO scans VALUES (?,?,?,?) ON CONFLICT(module) DO UPDATE '
                                       'SET state=excluded.state,detail=excluded.detail,updated=excluded.updated',
-                                      (module, 'retry' if error else 'scanned', json.dumps(detail), time.time()))
+                                      (module, 'retry' if source_error else 'scanned', json.dumps(detail), time.time()))
             print(json.dumps({'repository': repo, 'sources': len(grouped[repo]), 'error': error}), flush=True)
     assert summary['scanned'] + summary['errors'] + summary['unsupported'] == summary['registered']
     return summary

@@ -1,8 +1,15 @@
 import unittest
-from scan_sources import pages, observations, repository
+from scan_sources import pages, observations, repository, pinned_raw_observations
 
 
 class ScanTests(unittest.TestCase):
+    def test_mutable_raw_tag_is_resolved_without_inventing_version_or_checksum(self):
+        candidate={'id':'original','version':'0.0.1','expected':'a'*64,'url':'https://github.com/o/r/raw/refs/tags/Game/game.apworld'}
+        result=pinned_raw_observations([candidate],lambda repo,ref:'b'*40)[0]
+        self.assertEqual(result['url'],'https://raw.githubusercontent.com/o/r/'+'b'*40+'/game.apworld')
+        self.assertEqual(result['version'],'0.0.1')
+        self.assertEqual(result['expected'],'a'*64)
+        with self.assertRaises(ValueError):pinned_raw_observations([candidate],lambda *args:'main')
     def test_registered_forges_and_raw_repository_are_mapped(self):
         self.assertEqual(repository('https://gitlab.com/group/project/-/raw/tag/assets/game.apworld'),'gitlab.com:group/project')
         self.assertEqual(repository('https://codeberg.org/o/r/releases/download/1/game.apworld'),'codeberg.org:o/r')
