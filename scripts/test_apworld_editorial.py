@@ -110,6 +110,33 @@ class ReviewedAPWorldMetadataTests(unittest.TestCase):
         with self.assertRaisesRegex(EditorialValidationError, "route overrides require a reviewed published record"):
             _record_from_data(data, Path("bad.toml"))
 
+    def test_beta_preview_overlay_serves_approved_copy(self) -> None:
+        records = load_reviewed_apworlds()
+        joined = join_index_record(
+            {"name": "sm", "display_name": "Super Metroid"}, records, include_beta_previews=True
+        )
+        copy = joined["editorial"]["copy"]
+        self.assertTrue(copy["answer"].startswith("Super Metroid is included"))
+        self.assertEqual(copy["facts"][1], {"label": "APWorld download", "value": "Not required"})
+        self.assertEqual(len(copy["sections"]), 2)
+        self.assertIn("Before your multiworld is generated", copy["sections"][0]["title"])
+        # Production must still withhold the beta preview and its copy.
+        self.assertIsNone(join_index_record({"name": "sm"}, records)["editorial"])
+
+    def test_published_record_without_route_requires_copy_and_no_claims_leak(self) -> None:
+        data = tomllib.loads((CONTENT_DIR / "super-metroid.toml").read_text(encoding="utf-8"))
+        del data["copy"]
+        with self.assertRaisesRegex(EditorialValidationError, "requires a \\[copy\\] table"):
+            _record_from_data(data, Path("bad.toml"))
+
+    def test_copy_requires_approved_original_status(self) -> None:
+        data = tomllib.loads((CONTENT_DIR / "super-metroid.toml").read_text(encoding="utf-8"))
+        data["editorial"]["copy_status"] = "original_draft"
+        data["editorial"].pop("copy_reviewed_by")
+        data["editorial"].pop("copy_reviewed_at")
+        with self.assertRaisesRegex(EditorialValidationError, "requires copy_status"):
+            _record_from_data(data, Path("bad.toml"))
+
     def test_route_overrides_require_explicit_route_kind(self) -> None:
         data = tomllib.loads((CONTENT_DIR / "ctr.toml").read_text(encoding="utf-8"))
         del data["route"]["kind"]

@@ -1,151 +1,185 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { getAPWorlds, type APWorldInfo } from "../api";
+import { getAPWorlds, type APWorldInfo, type FuzzResult } from "../api";
 
-type Preview = {
-  name: string;
-  identifier: string;
-  type: "Built into Archipelago" | "Community integration";
-  status: "Reviewed beta preview" | "Review blocked";
-  statusTone: "reviewed" | "blocked";
-  answer: string;
-  facts: Array<{ label: string; value: string }>;
-  notice?: { title: string; body: string };
-  sections: Array<{ title: string; paragraphs: string[] }>;
-  sourceHref: string;
-  sourceLabel: string;
-  reviewed: string;
-  nextReview: string;
-  reviewedVersion: string;
+type ReviewStatus = "pass" | "needs_review" | "fail" | "held" | "human_accepted";
+
+const REVIEW_LABELS: Record<ReviewStatus, string> = {
+  pass: "Review passed",
+  needs_review: "Review concerns",
+  fail: "Review failed",
+  held: "Review held",
+  human_accepted: "Concerns accepted",
 };
 
-const PREVIEWS: Record<string, Preview> = {
-  "super-metroid": {
-    name: "Super Metroid Archipelago",
-    identifier: "sm",
-    type: "Built into Archipelago",
-    status: "Reviewed beta preview",
-    statusTone: "reviewed",
-    answer: "Super Metroid is included with Archipelago 0.6.7, so this setup does not begin with a separate APWorld download. Prepare a legal base ROM and follow the official setup path for the client and generated patch.",
-    facts: [
-      { label: "Reviewed scope", value: "Archipelago 0.6.7" },
-      { label: "APWorld download", value: "Not required" },
-      { label: "Generated patch", value: ".apsm" },
-    ],
-    sections: [
-      {
-        title: "Before your multiworld is generated",
-        paragraphs: [
-          "The reviewed official guide expects an Archipelago installation, SNI, a legally obtained Super Metroid ROM and a suitable way to run the game. Detailed emulator and hardware choices remain with the official guide because that compatibility information can change between releases.",
-          "Your player YAML describes the options for your world. It is sent to the host before generation; it does not install an APWorld or contain the playable game.",
-        ],
-      },
-      {
-        title: "After generation",
-        paragraphs: [
-          "The host returns a patch for your slot using the .apsm extension. Opening that patch starts the Super Metroid client workflow that creates the ROM used for the session.",
-          "The reviewed source does not contain a completed Macintosh setup section. AP-Pie therefore does not turn that documentation gap into a broader platform-support claim.",
-        ],
-      },
-    ],
-    sourceHref: "https://archipelago.gg/tutorial/Super%20Metroid/multiworld_en",
-    sourceLabel: "Open the official Super Metroid setup guide",
-    reviewed: "24 August 2026",
-    nextReview: "Next Archipelago release or 20 February 2027",
-    reviewedVersion: "0.6.7",
-  },
-  "animal-well": {
-    name: "ANIMAL WELL Archipelago",
-    identifier: "animal_well",
-    type: "Community integration",
-    status: "Review blocked",
-    statusTone: "blocked",
-    answer: "ANIMAL WELL uses a community APWorld rather than an integration bundled with Archipelago. Version 0.5.4 has source-controlled setup material. Its red fuzz result remains an important warning, but does not by itself remove an APWorld that the active index still makes available.",
-    facts: [
-      { label: "Reviewed package", value: "APWorld 0.5.4" },
-      { label: "Minimum AP version", value: "0.6.4" },
-      { label: "Base-game build", value: "Not source-stated" },
-    ],
-    notice: {
-      title: "Fuzz warning",
-      body: "The active catalog labels this integration stable while its 0.5.4 fuzz record says broken after 5,000 seeds. AP-Pie keeps the warning visible without silently overriding the index's availability decision.",
-    },
-    sections: [
-      {
-        title: "What the reviewed source establishes",
-        paragraphs: [
-          "The 0.5.4 release contains an animal_well.apworld package and declares Archipelago 0.6.4 as its minimum version. The maintainer guide places the package in Archipelago's custom-worlds location before player options are generated.",
-          "The play workflow uses an ANIMAL WELL client while the game waits at its title screen. The guide also documents a Wine-based Linux route, but that does not establish a complete platform-support matrix.",
-        ],
-      },
-      {
-        title: "What remains unresolved",
-        paragraphs: [
-          "The reviewed manifest does not state a compatible ANIMAL WELL base-game build. A minimum Archipelago version is also not proof that every later release has been tested.",
-          "The indexed APWorld and YAML Builder remain available while the integration remains enabled in the active index. The warning and missing game-build scope stay visible so availability is not mistaken for AP-Pie verification.",
-        ],
-      },
-    ],
-    sourceHref: "https://github.com/ScipioWright/Archipelago-SW/blob/4b760c7/worlds/animal_well/docs/setup_en.md",
-    sourceLabel: "Open the maintainer setup source",
-    reviewed: "24 August 2026",
-    nextReview: "On release or operational-verdict change",
-    reviewedVersion: "0.5.4",
-  },
-};
+function reviewTone(status: ReviewStatus): string {
+  if (status === "pass") return "passed";
+  if (status === "fail") return "failed";
+  return "warning";
+}
+
+function generationTone(result: FuzzResult): string {
+  const warnings = result.verdict !== "clean" || result.default_rate > 0 || result.worst_hook_rate > 0;
+  return warnings ? "warning" : "passed";
+}
+
+function generationLabel(result: FuzzResult): string {
+  const warnings = result.verdict !== "clean" || result.default_rate > 0 || result.worst_hook_rate > 0;
+  return warnings ? "Generation warnings" : "Generation passed";
+}
+
+function formatDate(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(parsed);
+}
+
+function percent(rate: number): string {
+  return `${(rate * 100).toFixed(rate > 0 && rate < 0.001 ? 2 : 1)}%`;
+}
 
 export default function APWorldDetailPreview() {
   const { slug = "" } = useParams();
-  const preview = PREVIEWS[slug];
-  const [worlds, setWorlds] = useState<APWorldInfo[]>([]);
+  const [worlds, setWorlds] = useState<APWorldInfo[] | null>(null);
+  const [acknowledged, setAcknowledged] = useState(false);
+
   useEffect(() => {
     getAPWorlds().then(setWorlds).catch(() => setWorlds([]));
   }, []);
-  const indexedWorld = useMemo(
-    () => preview ? worlds.find((world) => world.name === preview.identifier) : undefined,
-    [preview, worlds],
-  );
-  if (!preview) return <Navigate to="/apworlds" replace />;
 
-  const indexedVersion = indexedWorld?.versions.find((version) => version.version === preview.reviewedVersion);
+  const world = useMemo(
+    () => worlds?.find((candidate) => candidate.editorial?.slug === slug),
+    [worlds, slug],
+  );
+
+  // Route overrides are server-rendered documents (for example CTR owns
+  // /ctr). Leave the SPA with a full navigation rather than a client route.
+  useEffect(() => {
+    if (world?.editorial?.route_override && world.editorial.route_kind === "server") {
+      window.location.replace(world.editorial.route_override);
+    }
+  }, [world]);
+
+  if (worlds === null) {
+    return <p className="apworld-detail-loading">Loading reviewed page…</p>;
+  }
+  if (!world || !world.editorial) return <Navigate to="/apworlds" replace />;
+  if (world.editorial.route_override) return <Navigate to={world.editorial.route_override} replace />;
+
+  const copy = world.editorial.copy;
+  const latestVersion = world.downloadable_versions[0]?.version;
+  const indexedVersion = world.versions.find((version) => version.version === latestVersion) ?? world.versions[0];
+  const review = indexedVersion?.security_review ?? null;
+  const generation = indexedVersion?.fuzz_result ?? null;
+
+  const downloadHref = indexedVersion
+    ? `/api/apworlds/${encodeURIComponent(world.name)}/${encodeURIComponent(indexedVersion.version)}/download`
+    : undefined;
   const builderHref = indexedVersion
-    ? `/yaml-builder/${encodeURIComponent(preview.identifier)}?version=${encodeURIComponent(indexedVersion.version)}`
+    ? `/yaml-builder/${encodeURIComponent(world.name)}?version=${encodeURIComponent(indexedVersion.version)}`
     : undefined;
-  const downloadHref = indexedVersion && (indexedVersion.source === "url" || indexedVersion.source === "local")
-    ? `/api/apworlds/${encodeURIComponent(preview.identifier)}/${encodeURIComponent(indexedVersion.version)}/download`
-    : undefined;
+  const sourceHref = world.setup_guide || world.home;
+  const sourceLabel = world.setup_guide ? "Open the setup source" : "Open the project page";
+  const blocked = review?.status === "fail";
 
   return (
     <article className="apworld-detail-page">
       <header className="apworld-detail-hero">
         <div className="apworld-detail-title-row">
           <div>
-            <h1>{preview.name}</h1>
-            <code>{preview.identifier}</code>
+            <h1>{world.display_name}</h1>
+            <code>{world.name}</code>
           </div>
           <div className="apworld-detail-statuses">
-            <span className="badge badge-builtin">{preview.type}</span>
-            <span className={`review-badge review-badge-${preview.statusTone}`}>{preview.status}</span>
+            <span className="badge">{world.is_builtin ? "Built into Archipelago" : "Community integration"}</span>
+            <span className="review-badge review-badge-reviewed">
+              {world.editorial.beta_preview_only ? "Reviewed beta preview" : "Reviewed"}
+            </span>
           </div>
         </div>
-        <p className="apworld-detail-answer">{preview.answer}</p>
+        {copy && <p className="apworld-detail-answer">{copy.answer}</p>}
         <div className="apworld-detail-actions">
-          <a className="btn btn-primary" href={preview.sourceHref} target="_blank" rel="noreferrer">{preview.sourceLabel}</a>
-          {downloadHref && <a className="btn" href={downloadHref} download>Download APWorld {preview.reviewedVersion}</a>}
-          {builderHref && <Link className="btn" to={builderHref}>Build {preview.name.replace(" Archipelago", "")} YAML</Link>}
+          {sourceHref && <a className="btn btn-primary" href={sourceHref} target="_blank" rel="noreferrer">{sourceLabel}</a>}
+          {downloadHref && !blocked && (
+            <a className="btn" href={downloadHref} download>Download APWorld {indexedVersion?.version}</a>
+          )}
+          {builderHref && <Link className="btn" to={builderHref}>Build YAML</Link>}
           <Link className="btn" to="/apworlds">Browse all APWorlds</Link>
         </div>
       </header>
 
-      <dl className="apworld-detail-facts">
-        {preview.facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}
-      </dl>
+      <div className="apworld-evidence-pair">
+        <span className={`apworld-evidence-badge is-${review ? reviewTone(review.status) : "pending"}`}>
+          <span aria-hidden="true" />{review ? REVIEW_LABELS[review.status] : "Review pending"}
+        </span>
+        <span className={`apworld-evidence-badge is-${generation ? generationTone(generation) : "pending"}`}>
+          <span aria-hidden="true" />{generation ? generationLabel(generation) : "Tests pending"}
+        </span>
+      </div>
+      {generation && <p className="apworld-evidence-date">Tested {formatDate(generation.fuzzed_at)}</p>}
 
-      {preview.notice && <aside className="review-notice review-notice-warning"><strong>{preview.notice.title}</strong><p>{preview.notice.body}</p></aside>}
+      {copy && copy.facts.length > 0 && (
+        <dl className="apworld-detail-facts">
+          {copy.facts.map((fact) => (
+            <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>
+          ))}
+        </dl>
+      )}
+
+      {blocked && review && (
+        <aside className="review-notice review-notice-warning">
+          <strong>Security review failed</strong>
+          <p>{review.rationale ?? review.summary}</p>
+          <label className="apworld-detail-ack">
+            <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
+            I understand this release is not cleared by AP-Pie and I want to continue to the upstream source.
+          </label>
+          {acknowledged && downloadHref && (
+            <p><a className="btn" href={downloadHref} download>Continue to APWorld {indexedVersion?.version}</a></p>
+          )}
+        </aside>
+      )}
+
+      {(generation || review) && (
+        <div className="apworld-detail-evidence">
+          <section>
+            <h2>Generation result</h2>
+            {generation ? (
+              <dl>
+                <div><dt>Verdict</dt><dd>{generation.verdict}</dd></div>
+                <div><dt>Default seed runs</dt><dd>{generation.seeds.toLocaleString("en-GB")}</dd></div>
+                <div><dt>Failure rate</dt><dd>{percent(generation.default_rate)}</dd></div>
+                {generation.worst_hook && <div><dt>Worst hook</dt><dd>{generation.worst_hook} ({percent(generation.worst_hook_rate)})</dd></div>}
+                <div><dt>Checked</dt><dd>{formatDate(generation.fuzzed_at)}</dd></div>
+              </dl>
+            ) : (
+              <p>No generation test result is recorded for this release yet.</p>
+            )}
+          </section>
+          <section>
+            <h2>Security review result</h2>
+            {review ? (
+              <>
+                <dl>
+                  <div><dt>Status</dt><dd>{REVIEW_LABELS[review.status]}</dd></div>
+                  <div><dt>Method</dt><dd>{review.method === "maintainer-decision" ? "Human decision" : review.method === "source-review-with-qa" ? "Source review with independent QA" : "Automated source review"}</dd></div>
+                  <div><dt>Reviewed</dt><dd>{formatDate(review.reviewed_at)}</dd></div>
+                  <div><dt>Scope</dt><dd>exact {indexedVersion?.version} bytes</dd></div>
+                </dl>
+                <p>{review.summary}</p>
+                {review.sha256 && <p className="apworld-review-digest">Archive SHA-256: <code>{review.sha256}</code></p>}
+                {review.record_url && <p><a href={review.record_url}>Public review record</a>. The full source report is private; this record carries its outcome, date and report fingerprint.</p>}
+              </>
+            ) : (
+              <p>No matching security review is recorded for these exact release bytes. This is not a safety clearance.</p>
+            )}
+          </section>
+        </div>
+      )}
 
       <div className="apworld-detail-layout">
         <div className="apworld-detail-content">
-          {preview.sections.map((section) => (
+          {copy?.sections.map((section) => (
             <section key={section.title}>
               <h2>{section.title}</h2>
               {section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
@@ -155,12 +189,12 @@ export default function APWorldDetailPreview() {
         <aside className="apworld-detail-provenance">
           <h2>Review and sources</h2>
           <dl>
-            <div><dt>Review state</dt><dd>{preview.status}</dd></div>
-            <div><dt>Reviewed</dt><dd>{preview.reviewed}</dd></div>
-            <div><dt>Review again</dt><dd>{preview.nextReview}</dd></div>
+            <div><dt>Review state</dt><dd>{world.editorial.beta_preview_only ? "Reviewed beta preview" : "Reviewed"}</dd></div>
+            <div><dt>Reviewed</dt><dd>{formatDate(world.editorial.reviewed_at)}</dd></div>
+            <div><dt>Review again</dt><dd>{formatDate(world.editorial.next_review_at)}</dd></div>
           </dl>
-          <a href={preview.sourceHref} target="_blank" rel="noreferrer">Primary source ↗</a>
-          <p>This beta page uses independently written AP-Pie copy derived from reviewed atomic claims.</p>
+          {sourceHref && <a href={sourceHref} target="_blank" rel="noreferrer">Primary source ↗</a>}
+          <p>Independently written AP-Pie copy, approved from the version-controlled editorial record.</p>
         </aside>
       </div>
     </article>

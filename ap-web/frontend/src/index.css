@@ -5840,6 +5840,17 @@ details.yaml-builder-group > summary .muted {
 .apworld-detail-provenance dd { color: var(--text-h); font-size: 0.78rem; }
 .apworld-detail-provenance > a { display: inline-block; margin-top: var(--space-4); font-size: 0.78rem; font-weight: 650; }
 .apworld-detail-provenance > p { margin: var(--space-4) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.72rem; line-height: 1.5; }
+.apworld-detail-loading { padding: var(--space-10) 0; color: var(--text-muted); }
+.apworld-detail-evidence { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin: var(--space-8) 0; }
+.apworld-detail-evidence > section { padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-card); }
+.apworld-detail-evidence h2 { margin: 0 0 var(--space-4); font-size: 1rem; }
+.apworld-detail-evidence dl { display: grid; gap: var(--space-3); }
+.apworld-detail-evidence dt { margin-bottom: var(--space-1); color: var(--text-muted); font-size: 0.7rem; }
+.apworld-detail-evidence dd { color: var(--text-h); font-size: 0.84rem; }
+.apworld-detail-evidence p { margin: var(--space-3) 0 0; color: var(--text); font-size: 0.82rem; line-height: 1.55; }
+.apworld-review-digest code { word-break: break-all; font-family: var(--font-mono); font-size: 0.72rem; }
+.apworld-detail-ack { display: flex; gap: var(--space-2); align-items: flex-start; margin-top: var(--space-3); color: var(--text); font-size: 0.82rem; line-height: 1.5; cursor: pointer; }
+.apworld-detail-ack input { margin-top: 0.15rem; }
 
 @media (max-width: 760px) {
   .apworld-detail-page { padding-top: var(--space-8); }
@@ -5848,6 +5859,7 @@ details.yaml-builder-group > summary .muted {
   .apworld-detail-facts { grid-template-columns: 1fr; }
   .apworld-detail-layout { grid-template-columns: 1fr; gap: var(--space-8); }
   .apworld-detail-provenance { position: static; }
+  .apworld-detail-evidence { grid-template-columns: 1fr; }
 }
 .uploader-you {
   display: inline-flex;
