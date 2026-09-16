@@ -81,6 +81,11 @@ export default function APWorldDetailPreview() {
   const sourceHref = world.setup_guide || world.home;
   const sourceLabel = world.setup_guide ? "Open the setup source" : "Open the project page";
   const blocked = review?.status === "fail";
+  const reviewLabel = review
+    ? REVIEW_LABELS[review.status]
+    : world.is_builtin
+      ? "Review not applicable"
+      : "Review pending";
 
   return (
     <article className="apworld-detail-page">
@@ -110,7 +115,7 @@ export default function APWorldDetailPreview() {
 
       <div className="apworld-evidence-pair">
         <span className={`apworld-evidence-badge is-${review ? reviewTone(review.status) : "pending"}`}>
-          <span aria-hidden="true" />{review ? REVIEW_LABELS[review.status] : "Review pending"}
+          <span aria-hidden="true" />{reviewLabel}
         </span>
         <span className={`apworld-evidence-badge is-${generation ? generationTone(generation) : "pending"}`}>
           <span aria-hidden="true" />{generation ? generationLabel(generation) : "Tests pending"}
