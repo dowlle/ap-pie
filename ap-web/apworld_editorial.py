@@ -51,6 +51,7 @@ _ROOT_KEYS = frozenset({
     "reviewed_at",
     "next_review_at",
     "editorial",
+    "copy",
     "sources",
     "claims",
     "route",
@@ -59,6 +60,9 @@ _EDITORIAL_KEYS = frozenset({"copy_status", "writing_policy", "copy_reviewed_by"
 _SOURCE_KEYS = frozenset({"id", "kind", "url", "revision", "verified_at"})
 _CLAIM_KEYS = frozenset({"id", "topic", "fact", "source_refs", "applies_to_versions", "verified_at"})
 _ROUTE_KEYS = frozenset({"action", "path", "kind"})
+_COPY_KEYS = frozenset({"answer", "facts", "sections"})
+_FACT_KEYS = frozenset({"label", "value"})
+_SECTION_KEYS = frozenset({"title", "paragraphs"})
 
 
 class EditorialValidationError(ValueError):
@@ -96,6 +100,32 @@ class RouteOverride:
 
 
 @dataclass(frozen=True)
+class EditorialFact:
+    label: str
+    value: str
+
+
+@dataclass(frozen=True)
+class EditorialSection:
+    title: str
+    paragraphs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class EditorialCopy:
+    """Approved, original AP-Pie prose for a record's own detail page.
+
+    Only rendered when the record is published or a beta preview. A record that
+    overrides its route (for example CTR, which owns ``/ctr``) needs no copy
+    here because it has no dedicated detail page to render.
+    """
+
+    answer: str
+    facts: tuple[EditorialFact, ...]
+    sections: tuple[EditorialSection, ...]
+
+
+@dataclass(frozen=True)
 class EditorialRecord:
     apworld_name: str
     slug: str
@@ -108,6 +138,7 @@ class EditorialRecord:
     sources: tuple[EditorialSource, ...]
     claims: tuple[EditorialClaim, ...]
     route: RouteOverride | None = None
+    copy: EditorialCopy | None = None
 
     @property
     def is_public(self) -> bool:
@@ -154,6 +185,18 @@ class EditorialRecord:
         if self.route:
             overlay["route_override"] = self.route.path
             overlay["route_kind"] = self.route.kind
+        if self.copy:
+            overlay["copy"] = {
+                "answer": self.copy.answer,
+                "facts": [
+                    {"label": fact.label, "value": fact.value}
+                    for fact in self.copy.facts
+                ],
+                "sections": [
+                    {"title": section.title, "paragraphs": list(section.paragraphs)}
+                    for section in self.copy.sections
+                ],
+            }
         return overlay
 
 
@@ -312,6 +355,50 @@ def _record_from_data(data: Any, path: Path) -> EditorialRecord:
             if claim_id and topic and fact and source_refs and applies_to_versions and verified_at:
                 claims.append(EditorialClaim(claim_id, topic, fact, source_refs, applies_to_versions, verified_at))
 
+    copy_raw = data.get("copy")
+    copy: EditorialCopy | None = None
+    if copy_raw is not None:
+        copy_label = f"{label}.copy"
+        if not isinstance(copy_raw, dict):
+            errors.append(f"{copy_label}: expected a table")
+        else:
+            _unknown_keys(copy_raw, _COPY_KEYS, copy_label, errors)
+            answer = _text(copy_raw.get("answer"), f"{copy_label}.answer", errors)
+            facts: list[EditorialFact] = []
+            facts_raw = copy_raw.get("facts")
+            if not isinstance(facts_raw, list) or not facts_raw:
+                errors.append(f"{copy_label}.facts: expected a non-empty list of tables")
+            else:
+                for position, fact in enumerate(facts_raw):
+                    fact_label = f"{copy_label}.facts[{position}]"
+                    if not isinstance(fact, dict):
+                        errors.append(f"{fact_label}: expected a table")
+                        continue
+                    _unknown_keys(fact, _FACT_KEYS, fact_label, errors)
+                    fact_name = _text(fact.get("label"), f"{fact_label}.label", errors)
+                    fact_value = _text(fact.get("value"), f"{fact_label}.value", errors)
+                    if fact_name and fact_value:
+                        facts.append(EditorialFact(fact_name, fact_value))
+            sections: list[EditorialSection] = []
+            sections_raw = copy_raw.get("sections")
+            if not isinstance(sections_raw, list) or not sections_raw:
+                errors.append(f"{copy_label}.sections: expected a non-empty list of tables")
+            else:
+                for position, section in enumerate(sections_raw):
+                    section_label = f"{copy_label}.sections[{position}]"
+                    if not isinstance(section, dict):
+                        errors.append(f"{section_label}: expected a table")
+                        continue
+                    _unknown_keys(section, _SECTION_KEYS, section_label, errors)
+                    section_title = _text(section.get("title"), f"{section_label}.title", errors)
+                    paragraphs = _string_list(
+                        section.get("paragraphs"), f"{section_label}.paragraphs", errors
+                    )
+                    if section_title and paragraphs:
+                        sections.append(EditorialSection(section_title, paragraphs))
+            if answer and facts and sections:
+                copy = EditorialCopy(answer, tuple(facts), tuple(sections))
+
     route_raw = data.get("route")
     route: RouteOverride | None = None
     if route_raw is not None:
@@ -332,9 +419,14 @@ def _record_from_data(data: Any, path: Path) -> EditorialRecord:
             if action and route_path and route_kind:
                 route = RouteOverride(action, route_path, route_kind)
 
+    if copy is not None and copy_status != "approved_original":
+        errors.append(f"{label}.copy: prose requires copy_status = 'approved_original'")
+
     if review_state == "reviewed" and publication_status in {"published", "beta_preview"}:
         if copy_status != "approved_original":
             errors.append(f"{label}: publishable records require approved original AP-Pie copy")
+        if route is None and copy is None:
+            errors.append(f"{label}.copy: a published or previewed record without a route override requires a [copy] table")
         if not any(source.kind in {"versioned_primary", "official_archipelago_guide", "maintainer_documentation", "ap_pie_authority"} for source in sources):
             errors.append(f"{label}: publishable records require a primary, official, maintainer, or AP-Pie authority source")
     elif publication_status in {"published", "beta_preview"}:
@@ -359,6 +451,7 @@ def _record_from_data(data: Any, path: Path) -> EditorialRecord:
         sources=tuple(sources),
         claims=tuple(claims),
         route=route,
+        copy=copy,
     )
 
 

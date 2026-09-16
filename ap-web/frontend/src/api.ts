@@ -271,11 +271,18 @@ export interface APWorldInfo {
   editorial: {
     slug: string;
     review_state: "reviewed";
+    publication_status?: "unpublished" | "beta_preview" | "published";
     reviewed_at: string;
     next_review_at: string;
     route_override?: string;
     route_kind?: "spa" | "server";
     beta_preview_only?: boolean;
+    /** Approved original AP-Pie prose, served from the editorial record. */
+    copy?: {
+      answer: string;
+      facts: { label: string; value: string }[];
+      sections: { title: string; paragraphs: string[] }[];
+    };
   } | null;
   review_state: "absent" | "draft" | "reviewed" | "stale" | "retired";
 }
