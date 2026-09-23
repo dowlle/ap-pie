@@ -4682,7 +4682,23 @@ details.yaml-builder-group > summary .muted {
   background: var(--bg);
   border: 1px solid var(--border);
 }
-.yaml-builder-option-desc .markdown-body pre { display: none; }
+/* Example blocks from option docstrings (reST `::` blocks, fenced by
+   normalizeOptionHelp) show when the help is expanded. Long YAML lines
+   scroll inside the block instead of widening the row. */
+.yaml-builder-option-desc .markdown-body pre {
+  margin: 0.4rem 0;
+  padding: 0.45rem 0.6rem;
+  max-width: 100%;
+}
+.yaml-builder-option-desc .markdown-body pre code {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.85em;
+  line-height: 1.45;
+}
 
 /* Collapsed state: enough to see what the option is for, with the full
    text one click away. AP docstrings routinely enumerate every accepted
