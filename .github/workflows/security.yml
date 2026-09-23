@@ -26,6 +26,7 @@ jobs:
           cache-dependency-path: ap-web/frontend/package-lock.json
       - run: npm ci
       - run: npm audit --omit=dev --audit-level=high
+      - run: npm run test:unit
 
   python-audit:
     runs-on: ubuntu-latest
