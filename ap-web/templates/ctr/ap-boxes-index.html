@@ -1,0 +1,61 @@
+{% extends "guides/base.html" %}
+{% block head_extra %}
+{% include "ctr/_ap-boxes-style.html" %}
+{% endblock %}
+{% block main %}
+  <nav class="section-subnav" aria-label="CTR section">
+    <a href="/ctr">Overview</a>
+    <a href="/ctr/download">Download</a>
+    <a href="/guides/ctr">Setup guide</a>
+    <a class="current" aria-current="page" href="/ctr/reference">Reference</a>
+  </nav>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/ctr">CTR Archipelago</a><span class="sep">/</span><a href="/ctr/reference">Reference</a><span class="sep">/</span>AP box locations</nav>
+  <header class="apbox-hero">
+    <h1>CTR AP box locations</h1>
+    <p class="lede">A picture of every AP item box on all 18 tracks, {{ total }} in total. Pick a track, or jump straight to a box by its number.</p>
+  </header>
+  <p class="apbox-meta">Published <time datetime="{{ published }}">{{ published }}</time> · Updated <time datetime="{{ updated }}">{{ updated }}</time></p>
+{% include "ctr/_ap-boxes-note.html" %}
+  <form class="apbox-find" id="apbox-find" action="/ctr/reference/ap-boxes" method="get">
+    <label>Track
+      <select id="apbox-find-track" required>
+        {% for track in tracks %}<option value="{{ track.slug }}" data-count="{{ track.boxes|length }}">{{ track.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Item Box
+      <input id="apbox-find-box" type="number" min="1" max="15" inputmode="numeric" placeholder="1">
+    </label>
+    <button type="submit">Show box</button>
+  </form>
+  {% for hub in hubs %}
+  <section class="apbox-hub">
+    <h2>{{ hub.name }}</h2>
+    <div class="apbox-tracks">
+      {% for track in hub.tracks %}
+      <a class="apbox-track" href="/ctr/reference/ap-boxes/{{ track.slug }}">
+        <img src="{{ track.boxes[0].thumb }}" alt="" width="480" height="270" loading="lazy" decoding="async">
+        <span><strong>{{ track.name }}</strong>{{ track.boxes|length }} boxes</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <p>Hubs follow the original Adventure mode. With shuffled warp pads, a different pad can take you to these tracks. The <a href="/ctr/reference/warp-pads">warp pads page</a> explains how.</p>
+  <script>
+    (function () {
+      var form = document.getElementById("apbox-find");
+      var track = document.getElementById("apbox-find-track");
+      var box = document.getElementById("apbox-find-box");
+      function syncMax() { box.max = track.options[track.selectedIndex].dataset.count; }
+      track.addEventListener("change", syncMax);
+      syncMax();
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var url = "/ctr/reference/ap-boxes/" + track.value;
+        var n = parseInt(box.value, 10);
+        if (n >= 1 && n <= parseInt(box.max, 10)) { url += "#box-" + n; }
+        window.location.href = url;
+      });
+    })();
+  </script>
+{% endblock %}

@@ -1,0 +1,2299 @@
+{
+ "tracks": [
+  {
+   "name": "Crash Cove",
+   "slug": "crash-cove",
+   "hub": "N. Sanity Beach",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Crash Cove: Item Box 1",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "228d2f49d439811532b44fef3fd77ed9539dccc5a0353ccdbf5735ac6ca51827"
+    },
+    {
+     "number": 2,
+     "name": "Crash Cove: Item Box 2",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0571f5860b6124de02887f123b34c9cddc0dc97e24dbc668cb224ec4067a834b"
+    },
+    {
+     "number": 3,
+     "name": "Crash Cove: Item Box 3",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8e42f3b98eaaae865c798fa2c520283294132b47d6874bcc7aece69f9ec8aaab"
+    },
+    {
+     "number": 4,
+     "name": "Crash Cove: Item Box 4",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8ae520037b771a197b1cdcd66ba589ac12cd97a6cfd11333df3e7883c57ee0c8"
+    },
+    {
+     "number": 5,
+     "name": "Crash Cove: Item Box 5",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8849b85c0254d5e77951165ee97c918669efc301766e3604ebf96986329f21df"
+    },
+    {
+     "number": 6,
+     "name": "Crash Cove: Item Box 6",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e6de3d29dd575668084a1a782366270711d227fb696fb075f96ee383a861eccd"
+    },
+    {
+     "number": 7,
+     "name": "Crash Cove: Item Box 7",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "Floats in the air next to the bow of the pirate ship, over the water.",
+     "source_sha256": "b42338ca5e4b406e9360a22a02a32305f2d92464e229755e4d3c138ba5142d88"
+    },
+    {
+     "number": 8,
+     "name": "Crash Cove: Item Box 8",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "08b3d381a9fccbb892b9c5f0aa4d3faef2956590febb9a81668965e8a3edb67b"
+    },
+    {
+     "number": 9,
+     "name": "Crash Cove: Item Box 9",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "653de0e8180bbb4d84a3dabd8c19d926eeb39ccacfdb5781ac7ce59c7b011d78"
+    },
+    {
+     "number": 10,
+     "name": "Crash Cove: Item Box 10",
+     "full": "/img/ctr/ap-boxes/crash-cove/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/crash-cove/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b733fa884a48e9dfe6291aab60b4535fd04daba5e37d93feb844bba58d07b483"
+    }
+   ]
+  },
+  {
+   "name": "Roo's Tubes",
+   "slug": "roos-tubes",
+   "hub": "N. Sanity Beach",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Roo's Tubes: Item Box 1",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0526378bb0e32b0d27c1fdbb7384118cbd9a96ffd4ee034f6ab0f1b2f9298e62"
+    },
+    {
+     "number": 2,
+     "name": "Roo's Tubes: Item Box 2",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a27d6d2dda589478b440d7e75ad2edf6e98c1f91432a8bf3ad3ed406be938d5f"
+    },
+    {
+     "number": 3,
+     "name": "Roo's Tubes: Item Box 3",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "798e4db1fd04c0270b3185696054c57f8a8bc74a60d7f6cee2ffed2128f28af0"
+    },
+    {
+     "number": 4,
+     "name": "Roo's Tubes: Item Box 4",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "24f5308c2644b32f0868b96b6999b23baafe08b4bda1a9808fd6ccdc2d24868c"
+    },
+    {
+     "number": 5,
+     "name": "Roo's Tubes: Item Box 5",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "3ff5a4617967dd1209dc1eac968db135d7928681237f33935400047da25028bb"
+    },
+    {
+     "number": 6,
+     "name": "Roo's Tubes: Item Box 6",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "f9b84745a48be26043b3d250c09d8940622930b17fb2bb34b9f2ea7352edb382"
+    },
+    {
+     "number": 7,
+     "name": "Roo's Tubes: Item Box 7",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "3e805e1d310bd5303af06b0bcfb0ab0f12fb8dc292257cbeffd4f18514b973ff"
+    },
+    {
+     "number": 8,
+     "name": "Roo's Tubes: Item Box 8",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6ce403ece8052d93d60a555f605a383c0cc1445d3d17cbe5147c8b82c625a7ab"
+    },
+    {
+     "number": 9,
+     "name": "Roo's Tubes: Item Box 9",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "fd460310d4bd9516d073f14ac204ee210565ef802ff9d9945f7388a58c9085f4"
+    },
+    {
+     "number": 10,
+     "name": "Roo's Tubes: Item Box 10",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9a947d571a3637d23960120c67e99c28b04e70be146a04172f229a6d575b0aac"
+    },
+    {
+     "number": 11,
+     "name": "Roo's Tubes: Item Box 11",
+     "full": "/img/ctr/ap-boxes/roos-tubes/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/roos-tubes/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e196dba65fa82f560e3d77dab2dee03eb44849e69dc70711914a007f9569abe7"
+    }
+   ]
+  },
+  {
+   "name": "Mystery Caves",
+   "slug": "mystery-caves",
+   "hub": "N. Sanity Beach",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Mystery Caves: Item Box 1",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ad6446325592520b81f9486433474478e8b3efa22d0833ad81715ad023941161"
+    },
+    {
+     "number": 2,
+     "name": "Mystery Caves: Item Box 2",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "7ad3a1b668ed252506265272fde58ed8761cb6e4eae529c85f3edde458b0bdb4"
+    },
+    {
+     "number": 3,
+     "name": "Mystery Caves: Item Box 3",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5c4933842b23743f98376f23c691f44400eca11644d31a9762310f192ac1c647"
+    },
+    {
+     "number": 4,
+     "name": "Mystery Caves: Item Box 4",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "43ae1b511e86934fdd14444063c8b53789b129e422a4691bbeebc5883ef30b45"
+    },
+    {
+     "number": 5,
+     "name": "Mystery Caves: Item Box 5",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ee9ab76eb323a0399f848e6299080db1b1b2a5cf9ddbadf2609989199afba497"
+    },
+    {
+     "number": 6,
+     "name": "Mystery Caves: Item Box 6",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0ea9986b568800c766c3faf1ba5826a11f6935dfd37a5ba1e195dab127cb61f8"
+    },
+    {
+     "number": 7,
+     "name": "Mystery Caves: Item Box 7",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "fd3fcc9b96adffd12b7ca84f8e167405492909fdbbc760e61f374925880d5751"
+    },
+    {
+     "number": 8,
+     "name": "Mystery Caves: Item Box 8",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "bf91106ee008a45018b8dc8a277ca0f28657cd3dd746b9d38ef2ace967dcc7ea"
+    },
+    {
+     "number": 9,
+     "name": "Mystery Caves: Item Box 9",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1d0cfb64fcc3df78b5183ca889afd0aa3953561efe863f033282d683abf34bda"
+    },
+    {
+     "number": 10,
+     "name": "Mystery Caves: Item Box 10",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0b01bf91edb77bb811425006735cb22e40b3223fe85e1779784340ea398cd099"
+    },
+    {
+     "number": 11,
+     "name": "Mystery Caves: Item Box 11",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "513439a6bb22af72e3ae127ed7180491e38568a6f5cab0619b38f854af2d2a4f"
+    },
+    {
+     "number": 12,
+     "name": "Mystery Caves: Item Box 12",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c23cd83ea098f3af801aae73b79c0542ddd77bd4ca24d19672c2ff5f44e4c900"
+    },
+    {
+     "number": 13,
+     "name": "Mystery Caves: Item Box 13",
+     "full": "/img/ctr/ap-boxes/mystery-caves/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/mystery-caves/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9285056cbd7720facebb6c4d041356333549a7837ac49bb06bd415562f1d6360"
+    }
+   ]
+  },
+  {
+   "name": "Sewer Speedway",
+   "slug": "sewer-speedway",
+   "hub": "N. Sanity Beach",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Sewer Speedway: Item Box 1",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "538cae8ecb487bade5095f7fe530855508343a19758c179be57a07b8f60385d1"
+    },
+    {
+     "number": 2,
+     "name": "Sewer Speedway: Item Box 2",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-02-thumb.webp",
+     "shortcut_knowledge": "Medium",
+     "hint": null,
+     "source_sha256": "c851398d76384a09ee0cd448132b2c9f0a551933afa4093f24489271905715dd"
+    },
+    {
+     "number": 3,
+     "name": "Sewer Speedway: Item Box 3",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-03-thumb.webp",
+     "shortcut_knowledge": "Medium",
+     "hint": null,
+     "source_sha256": "289b29993cc43355691f1945ddcefd04f1d450ed99fb911ad35df1aced671a05"
+    },
+    {
+     "number": 4,
+     "name": "Sewer Speedway: Item Box 4",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "abd5cab05bedc5e7e2287d5746994e21ef2f9bb62c805068756357f190688b5d"
+    },
+    {
+     "number": 5,
+     "name": "Sewer Speedway: Item Box 5",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "63aa8b6ff91e2e94d16c9e9b6508a056f0b55f1b08e82e95d72ed4a6b036a8b6"
+    },
+    {
+     "number": 6,
+     "name": "Sewer Speedway: Item Box 6",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2a8db6304390ff725841e728dc6f563359ec609ab7e4d9eccacc7a211f4076ea"
+    },
+    {
+     "number": 7,
+     "name": "Sewer Speedway: Item Box 7",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b98faa83b9b4dfe49f985c2be5eefa5675a4a7448fe535abe33ece03c7a9278d"
+    },
+    {
+     "number": 8,
+     "name": "Sewer Speedway: Item Box 8",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9d35fff7b7b43e168d03607f80cb5ccb719dacd1e16f87f4f687e12d66c4026f"
+    },
+    {
+     "number": 9,
+     "name": "Sewer Speedway: Item Box 9",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "eb7ad893c23bc0c38cf712aa61827c7716d8f5cc032852094f5753a8493e6241"
+    },
+    {
+     "number": 10,
+     "name": "Sewer Speedway: Item Box 10",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "Inside the red pipe, in the middle of the road.",
+     "source_sha256": "75f51ca6d41b9355a718c9788388a30d48ddb830b5a588a26bc77fd0d692660f"
+    },
+    {
+     "number": 11,
+     "name": "Sewer Speedway: Item Box 11",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2d840cb4cd6502a171724aee0691846681028e4bf5d9b62a14a40d28788fd0b8"
+    },
+    {
+     "number": 12,
+     "name": "Sewer Speedway: Item Box 12",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "aa864f50565653a789c01bedccaf066312d30c108fecbb639cb4b8800b344c2a"
+    },
+    {
+     "number": 13,
+     "name": "Sewer Speedway: Item Box 13",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "aa112d5824696d493b8b13412a963300b161dd24658e79b278bfab2c6655a6e2"
+    },
+    {
+     "number": 14,
+     "name": "Sewer Speedway: Item Box 14",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6c2afb9edb018358f53f729f0133bdbe949200dcb542e8397a35d4f0b7d81853"
+    },
+    {
+     "number": 15,
+     "name": "Sewer Speedway: Item Box 15",
+     "full": "/img/ctr/ap-boxes/sewer-speedway/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ef3c67f18ff2a5cda87ddece133adde3a14adcad1fd6c9d03571d51699e95b5f"
+    }
+   ]
+  },
+  {
+   "name": "Coco Park",
+   "slug": "coco-park",
+   "hub": "The Lost Ruins",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Coco Park: Item Box 1",
+     "full": "/img/ctr/ap-boxes/coco-park/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "f73a7b8e43621fda6e1a0ecbcaa677f9e681d5e4ae516f11d63fd7f949d0c065"
+    },
+    {
+     "number": 2,
+     "name": "Coco Park: Item Box 2",
+     "full": "/img/ctr/ap-boxes/coco-park/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c63fa2270306f5ecdd13f249dfec9d2806fadf7ea7c13ace875922208d6f6910"
+    },
+    {
+     "number": 3,
+     "name": "Coco Park: Item Box 3",
+     "full": "/img/ctr/ap-boxes/coco-park/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5383f8642df3e5c6abca54fa98a372f35e743859b03973926dc8731e1cc58ad5"
+    },
+    {
+     "number": 4,
+     "name": "Coco Park: Item Box 4",
+     "full": "/img/ctr/ap-boxes/coco-park/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "189e6fdcf5720df630205d02b11e45fa25ea10a5fd19385b91158c42dfe1a684"
+    },
+    {
+     "number": 5,
+     "name": "Coco Park: Item Box 5",
+     "full": "/img/ctr/ap-boxes/coco-park/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0b1f9463575bca9986da2f24224ed4604710e9843d8042e6bf2e49d83b9c463b"
+    },
+    {
+     "number": 6,
+     "name": "Coco Park: Item Box 6",
+     "full": "/img/ctr/ap-boxes/coco-park/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ac6702606076c1afa5bfe9bd390104adc6955feab2fffc8e65890fc8c8a17a4a"
+    },
+    {
+     "number": 7,
+     "name": "Coco Park: Item Box 7",
+     "full": "/img/ctr/ap-boxes/coco-park/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-07-thumb.webp",
+     "shortcut_knowledge": "Medium",
+     "hint": null,
+     "source_sha256": "1234618c5d10965121de0c74a54c1f51ccd55424b749f067c711a5b2ca94f54a"
+    },
+    {
+     "number": 8,
+     "name": "Coco Park: Item Box 8",
+     "full": "/img/ctr/ap-boxes/coco-park/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2624905564e989658236cf8ebca1259b119da057e1752862ff45cf67a4480636"
+    },
+    {
+     "number": 9,
+     "name": "Coco Park: Item Box 9",
+     "full": "/img/ctr/ap-boxes/coco-park/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "7c9a5c67204f5d27527d65d095581d17cd652f8154d500982fdbaa1ab31e5a18"
+    },
+    {
+     "number": 10,
+     "name": "Coco Park: Item Box 10",
+     "full": "/img/ctr/ap-boxes/coco-park/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/coco-park/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d2a182074147f13295e57104091ebfe0a4446bd48fbba802e4aa292776357076"
+    }
+   ]
+  },
+  {
+   "name": "Tiger Temple",
+   "slug": "tiger-temple",
+   "hub": "The Lost Ruins",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Tiger Temple: Item Box 1",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1d4ea210c0ebe10c1d05adca9f341247cc111a2468d90c7a5403db22b7ebbf45"
+    },
+    {
+     "number": 2,
+     "name": "Tiger Temple: Item Box 2",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ffc7f34d330f35855bd34c097131349bbe38b387cb90baac33c3c0a3f8840b7c"
+    },
+    {
+     "number": 3,
+     "name": "Tiger Temple: Item Box 3",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "f53f6adf02c9498ca68d53878a3068f23b9c1f982742653ffeb55158f1b27f4b"
+    },
+    {
+     "number": 4,
+     "name": "Tiger Temple: Item Box 4",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1f311c5bcdf3c045c12a156f424d27a13e0a078a60c5ff4122fa1da3ca0ccd1a"
+    },
+    {
+     "number": 5,
+     "name": "Tiger Temple: Item Box 5",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-05-thumb.webp",
+     "shortcut_knowledge": "Medium",
+     "hint": "At the far end of the dark tunnel, where it opens back up to the outside.",
+     "source_sha256": "a0d8b6acbba4e3e5de87bad33b717f677b8ea9cc1277dd8df968d580f73ecafc"
+    },
+    {
+     "number": 6,
+     "name": "Tiger Temple: Item Box 6",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "959550250c866fa130cb1dc685b5677b1b95884481bc55d63bdef80fdf02cd88"
+    },
+    {
+     "number": 7,
+     "name": "Tiger Temple: Item Box 7",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "3fe574e4283e75fd671c1b20d5bf71b91907c2283b63467a480f0055865dbcfb"
+    },
+    {
+     "number": 8,
+     "name": "Tiger Temple: Item Box 8",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0d86f3d3f2d8f69384e6603212ad8e33506957b3726a65de98e4679ced038f4e"
+    },
+    {
+     "number": 9,
+     "name": "Tiger Temple: Item Box 9",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "f43287868470958dde5ee02eb7627827ded92baca2d1a7d06efa6b785017e2ac"
+    },
+    {
+     "number": 10,
+     "name": "Tiger Temple: Item Box 10",
+     "full": "/img/ctr/ap-boxes/tiger-temple/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/tiger-temple/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "On the path at the corner of the temple wall.",
+     "source_sha256": "f56277ea144f75d4fb0c10c296a7d77011be4d64d581086a002b96a01e1e56cc"
+    }
+   ]
+  },
+  {
+   "name": "Papu's Pyramid",
+   "slug": "papus-pyramid",
+   "hub": "The Lost Ruins",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Papu's Pyramid: Item Box 1",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c39872ab08a127adcbfa035d356b2c075482e43e1a714238c2b3d2b234b03386"
+    },
+    {
+     "number": 2,
+     "name": "Papu's Pyramid: Item Box 2",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8c3a88ebc614544fcff5c6b6ce9fe9c79b173e40c81bad32d4da6facb3cd6ecc"
+    },
+    {
+     "number": 3,
+     "name": "Papu's Pyramid: Item Box 3",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b00be89301be8ebd84f2aa5271f3eca13dceda9289ee53a1cde72f3c8a3ce597"
+    },
+    {
+     "number": 4,
+     "name": "Papu's Pyramid: Item Box 4",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a723d3d9bf0a44110db63f1d5ad4f2ae7acab4e8528217155cdb4605a1557843"
+    },
+    {
+     "number": 5,
+     "name": "Papu's Pyramid: Item Box 5",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "dfade23a9e46fa3a160175ce3828b5956c28d576d6a46ee76851872fda3f5b36"
+    },
+    {
+     "number": 6,
+     "name": "Papu's Pyramid: Item Box 6",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-06-thumb.webp",
+     "shortcut_knowledge": "Medium",
+     "hint": null,
+     "source_sha256": "c65d270205ba3b10516ee2904537d18bd0368cea7f09732b2e17d9440a011f45"
+    },
+    {
+     "number": 7,
+     "name": "Papu's Pyramid: Item Box 7",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-07-thumb.webp",
+     "shortcut_knowledge": "Hard",
+     "hint": null,
+     "source_sha256": "f38d9a54dfb719e6266aaae27e45e3e75565ba51b0f8e843383223c55e86b5ed"
+    },
+    {
+     "number": 8,
+     "name": "Papu's Pyramid: Item Box 8",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d3003f805a31b1169d403e53e055e19b45cfd3a5d811c2169ccd1e3cc616401b"
+    },
+    {
+     "number": 9,
+     "name": "Papu's Pyramid: Item Box 9",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "45c4255bc39589896d679391009f563533c5f0fc6e0aaa5d4d2ab3d750eb5791"
+    },
+    {
+     "number": 10,
+     "name": "Papu's Pyramid: Item Box 10",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-10-thumb.webp",
+     "shortcut_knowledge": "Hard",
+     "hint": null,
+     "source_sha256": "7929d133936603a22768c1e725ad32a8150918f611d28826a20a26e06bb43f79"
+    },
+    {
+     "number": 11,
+     "name": "Papu's Pyramid: Item Box 11",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9d0425b4030b22fe13850b0108f3213ec057be032eebfe0c03227b0e0066b7fb"
+    },
+    {
+     "number": 12,
+     "name": "Papu's Pyramid: Item Box 12",
+     "full": "/img/ctr/ap-boxes/papus-pyramid/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-12-thumb.webp",
+     "shortcut_knowledge": "Medium",
+     "hint": null,
+     "source_sha256": "6279253400767f1efd60cd4d224f05aa9dcc50914653f9a37e81de31013cd29e"
+    }
+   ]
+  },
+  {
+   "name": "Dingo Canyon",
+   "slug": "dingo-canyon",
+   "hub": "The Lost Ruins",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Dingo Canyon: Item Box 1",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "4dc827a038632c21b0a3a5e34466a6448b0fd4c9563c25eb5e4875efe72c244b"
+    },
+    {
+     "number": 2,
+     "name": "Dingo Canyon: Item Box 2",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d9dbec08642fbd37063ecf732c2e0c29746fbb3de228d3eb4e937fccfb81a63d"
+    },
+    {
+     "number": 3,
+     "name": "Dingo Canyon: Item Box 3",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "538a41d38a5011d3e26a15db74bcf68882e288efe51070265c96cc358dc55c52"
+    },
+    {
+     "number": 4,
+     "name": "Dingo Canyon: Item Box 4",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "60fa1b0650ca548edcc4e8868b7563cd03b4d4d7b78f9eee79a111dcb21815c8"
+    },
+    {
+     "number": 5,
+     "name": "Dingo Canyon: Item Box 5",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a2a972c21d0cb6fc71787e42b8e85d346d0fd303160f26a01bf5189d00b4d82b"
+    },
+    {
+     "number": 6,
+     "name": "Dingo Canyon: Item Box 6",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5cc79f83852467fbee47f368fc1d54edbfb60e10548b990a76301b8ad2704985"
+    },
+    {
+     "number": 7,
+     "name": "Dingo Canyon: Item Box 7",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ef7db5ba385e7a9e60404254d9061d3a3acf6e10437b99fb0b639294d09e2568"
+    },
+    {
+     "number": 8,
+     "name": "Dingo Canyon: Item Box 8",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8dbad308d3fd17cd61a31cd84d268d38de74e8f78dda72910b23c34c63783fb9"
+    },
+    {
+     "number": 9,
+     "name": "Dingo Canyon: Item Box 9",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "76307efe253f9ebb0176010ca3d6b9407e2e800033a7443eed25a81d41c7f8a9"
+    },
+    {
+     "number": 10,
+     "name": "Dingo Canyon: Item Box 10",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5e304f1ed4511e3dcd89301d404a3f1c3827d498fe297e1b41b37b63b44f41dd"
+    },
+    {
+     "number": 11,
+     "name": "Dingo Canyon: Item Box 11",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "823662822271ad000321066a8a8127d6281f2b9edfbd428de98a9398e093c9d8"
+    },
+    {
+     "number": 12,
+     "name": "Dingo Canyon: Item Box 12",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "309db9592d9557652897b33c6123d8364fb70dac0f56f0ceaa50ec920db4cba5"
+    },
+    {
+     "number": 13,
+     "name": "Dingo Canyon: Item Box 13",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "3e5656fac04ed39846df54538d6bb845eb000e0e96af23aecedf0f3fe808dff3"
+    },
+    {
+     "number": 14,
+     "name": "Dingo Canyon: Item Box 14",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a6e5c2569ca34eb6bde27cd94ca207da29ce580a9b66259758d6f65c0b94a26e"
+    },
+    {
+     "number": 15,
+     "name": "Dingo Canyon: Item Box 15",
+     "full": "/img/ctr/ap-boxes/dingo-canyon/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e762cdbda1a94da3ed54cef79a30f12221861b0cdab475bfd732d30af2568561"
+    }
+   ]
+  },
+  {
+   "name": "Blizzard Bluff",
+   "slug": "blizzard-bluff",
+   "hub": "Glacier Park",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Blizzard Bluff: Item Box 1",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "620c5911f5f84b354031e705789d8fd5c45d63f027c04d1b5d2b4a1d954957a2"
+    },
+    {
+     "number": 2,
+     "name": "Blizzard Bluff: Item Box 2",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "7b48cd57e981ffe8e10d1dee8e928adc8d6183e4e0e2e366b0778a221b15f71f"
+    },
+    {
+     "number": 3,
+     "name": "Blizzard Bluff: Item Box 3",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a088f6f949c1b9e3c9567b41eb970de21d3430efc8f7ead07054411e79accc4b"
+    },
+    {
+     "number": 4,
+     "name": "Blizzard Bluff: Item Box 4",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "94e56a23073edcee7a23425a0f0221dfbea21dfe98240a5415d05d7a024bae2f"
+    },
+    {
+     "number": 5,
+     "name": "Blizzard Bluff: Item Box 5",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e554bad9c1b0ebb5f4acf6dd7f0ee4d5d4a670a2195c2e1dca9131ee152c1623"
+    },
+    {
+     "number": 6,
+     "name": "Blizzard Bluff: Item Box 6",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a0885b6aa08a9537348b685c5ec41e37762d09406d17a6c3e235cbb3bc332dfb"
+    },
+    {
+     "number": 7,
+     "name": "Blizzard Bluff: Item Box 7",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "4855c7e13976116094ea8dbd3338864e8442d157a600269c654cb03b185ecd23"
+    },
+    {
+     "number": 8,
+     "name": "Blizzard Bluff: Item Box 8",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e94d3242c0a6e3d7127aa649ab188626bc356b43a215a359e0a8bb44d6bf32c0"
+    },
+    {
+     "number": 9,
+     "name": "Blizzard Bluff: Item Box 9",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2e320a4d354195830937e40cc90096eb252493133538d9dc05de4d0bda20ae8b"
+    },
+    {
+     "number": 10,
+     "name": "Blizzard Bluff: Item Box 10",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5170e7642b9926b3944a1ac123f372371e87c34eee95d619ec8a1c5a912d6536"
+    },
+    {
+     "number": 11,
+     "name": "Blizzard Bluff: Item Box 11",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "eca39361bfa7217d3fa76ccc8201137ef4b04e11b67c7faccf10a32df8ce6dd8"
+    },
+    {
+     "number": 12,
+     "name": "Blizzard Bluff: Item Box 12",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e9aa44559466dca7dce0643dadd7f710fc47d84182d970de53d79b9b7787c303"
+    },
+    {
+     "number": 13,
+     "name": "Blizzard Bluff: Item Box 13",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "f64b2f0e9a0930d032460b57592addd70fe6fbe318ad74bb1d860be93828e6ed"
+    },
+    {
+     "number": 14,
+     "name": "Blizzard Bluff: Item Box 14",
+     "full": "/img/ctr/ap-boxes/blizzard-bluff/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "624d8d04d08de40abd9e1479fabfeb3936986d17b014b657c8adddd0d89d5b77"
+    }
+   ]
+  },
+  {
+   "name": "Dragon Mines",
+   "slug": "dragon-mines",
+   "hub": "Glacier Park",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Dragon Mines: Item Box 1",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1ac7c0920655e7aaa2d7899b75b24735e6f3eaacbade0178dad94d63e0fede22"
+    },
+    {
+     "number": 2,
+     "name": "Dragon Mines: Item Box 2",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-02-thumb.webp",
+     "shortcut_knowledge": "Medium",
+     "hint": null,
+     "source_sha256": "323793d1358ca38dae5bc489b07b87f014f664e587450b4915f097e7e8fbe91b"
+    },
+    {
+     "number": 3,
+     "name": "Dragon Mines: Item Box 3",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "38f5871277c6eada6f051f6e81ef8d57fddded696cf3449930dbdac6c4315008"
+    },
+    {
+     "number": 4,
+     "name": "Dragon Mines: Item Box 4",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b831c511de1779b9dea75cfbdf339991bb5aaac37f6545d556d613efe70d270c"
+    },
+    {
+     "number": 5,
+     "name": "Dragon Mines: Item Box 5",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "eb2e33e2f71c294e5274200bee1823db4be1bb92d94800f592bc43fbd11f0994"
+    },
+    {
+     "number": 6,
+     "name": "Dragon Mines: Item Box 6",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5e5814d2ba6404bf8ca9b1652185426af71a4ddcf45bfc20c67c19260e7e1f7d"
+    },
+    {
+     "number": 7,
+     "name": "Dragon Mines: Item Box 7",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "97b5490feca507bcb7944148339321c1e81e65afefce653ce1b65809fdc5b03f"
+    },
+    {
+     "number": 8,
+     "name": "Dragon Mines: Item Box 8",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d1853af5db4809473720b0bdad477f928873194875b4835942b405a3dee2711d"
+    },
+    {
+     "number": 9,
+     "name": "Dragon Mines: Item Box 9",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ebfe4ed6878274d0b50eb0d33b36ab5b74bdc584d53cbdcda4503d98031740a4"
+    },
+    {
+     "number": 10,
+     "name": "Dragon Mines: Item Box 10",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "Against the cave wall on the purple rock stretch, between Item Box 9 and Item Box 11.",
+     "source_sha256": "327081b9fea85bee665b60d4f0a903660b08ce8eb957f53fa81f77a459b4cbbb"
+    },
+    {
+     "number": 11,
+     "name": "Dragon Mines: Item Box 11",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "025edb9b4e51a878ef2354428b81845d5940d0fcf9d2b8df6bb54d5f111eeaa5"
+    },
+    {
+     "number": 12,
+     "name": "Dragon Mines: Item Box 12",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e5f9af892022c81a134e127c9584d009e0219d3e198a6a3e4f54a368188cfc42"
+    },
+    {
+     "number": 13,
+     "name": "Dragon Mines: Item Box 13",
+     "full": "/img/ctr/ap-boxes/dragon-mines/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/dragon-mines/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d75fbb84c7dcda43b4487f52a661d9785828279298a49b60b81fc496119117e6"
+    }
+   ]
+  },
+  {
+   "name": "Polar Pass",
+   "slug": "polar-pass",
+   "hub": "Glacier Park",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Polar Pass: Item Box 1",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1aa5968ae20eadb94c610e7ec5f609553d4b861cf4eac60ccbc467d517048009"
+    },
+    {
+     "number": 2,
+     "name": "Polar Pass: Item Box 2",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2ee18a196755a9c89bd2b87579134d9b512bae2872f2cc58ae556d42fceefcb6"
+    },
+    {
+     "number": 3,
+     "name": "Polar Pass: Item Box 3",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b61853c0202cf9fba69ebd8a5dff2bf0510dc70fe74f7a928be873b31c0d88cb"
+    },
+    {
+     "number": 4,
+     "name": "Polar Pass: Item Box 4",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c16a6f3b8e5226f15a64c4e57a8e6806069443b2bf69b7fb46d06afd4cee2bd7"
+    },
+    {
+     "number": 5,
+     "name": "Polar Pass: Item Box 5",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "bce6968babeed3bc2f4be3312783800df65af0d8c03fa90c19bb0b0fdea99f18"
+    },
+    {
+     "number": 6,
+     "name": "Polar Pass: Item Box 6",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "db569145f69d6e35e5182bc1d18f62a47357c215f6c36e62e060b7b3e3896e01"
+    },
+    {
+     "number": 7,
+     "name": "Polar Pass: Item Box 7",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e62b2716e545cf0b068c44fbfe036c8b57bac846e77c8d1c6d3ba3770de89205"
+    },
+    {
+     "number": 8,
+     "name": "Polar Pass: Item Box 8",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "88e19db9c5df9f2ceda5c096538c123458a91626e8cc4228caea4968cae958f8"
+    },
+    {
+     "number": 9,
+     "name": "Polar Pass: Item Box 9",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-09-thumb.webp",
+     "shortcut_knowledge": "Hard",
+     "hint": null,
+     "source_sha256": "db52237431e0f22f3688887b889bc41ae8973e4f69009531e49cd32e3596aeb4"
+    },
+    {
+     "number": 10,
+     "name": "Polar Pass: Item Box 10",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "7134858b75ff5c95609179e5547b6b1f26f8348debeb91d930ff03bb83a9763b"
+    },
+    {
+     "number": 11,
+     "name": "Polar Pass: Item Box 11",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "4121e83ac534dcaafabf5fe782b729d1e19aaae8e195e32af22d9bbd0127ad96"
+    },
+    {
+     "number": 12,
+     "name": "Polar Pass: Item Box 12",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "dbdded0c2ced87eba0b49d42d94da24428dd7775734131a1c354ad3a0ab3c452"
+    },
+    {
+     "number": 13,
+     "name": "Polar Pass: Item Box 13",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1c9d345e78fb1e1ee1b21a7091631733563fe10afc842119dab92996a0993108"
+    },
+    {
+     "number": 14,
+     "name": "Polar Pass: Item Box 14",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e45c435c08fc6117c98256710df59c309ef5b5ca705a80f3ffcfe31345833273"
+    },
+    {
+     "number": 15,
+     "name": "Polar Pass: Item Box 15",
+     "full": "/img/ctr/ap-boxes/polar-pass/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/polar-pass/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "53a797fc1974ecb403d00c2950224b203a5d10ea7bc0838ac8a38acf3e584d08"
+    }
+   ]
+  },
+  {
+   "name": "Tiny Arena",
+   "slug": "tiny-arena",
+   "hub": "Glacier Park",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Tiny Arena: Item Box 1",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6a64f94e82b62cf7d91e38a31661ed3edfc5f2b9944ede3e5aacd32df319e927"
+    },
+    {
+     "number": 2,
+     "name": "Tiny Arena: Item Box 2",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c9e71e02d36d28ebee742195587ab899c6b6849274b4ff17fc572cd6774a24ca"
+    },
+    {
+     "number": 3,
+     "name": "Tiny Arena: Item Box 3",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2f96b7b066cd404f377406228d40cfcb483fbfb04fb94e864a9fdf32c1f0b3b7"
+    },
+    {
+     "number": 4,
+     "name": "Tiny Arena: Item Box 4",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b8c3c52cc9db430d7f83ace82fb19b13256f37590423547b1adc0b08f8b48c2b"
+    },
+    {
+     "number": 5,
+     "name": "Tiny Arena: Item Box 5",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5e565da25265540dcfa61ce73b84690186c2633d7346c08de74d8866a3b7e527"
+    },
+    {
+     "number": 6,
+     "name": "Tiny Arena: Item Box 6",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b087668cc3007e934f72947af0bfc1c795a945eb48b4fc0773de3c9d4cc212c4"
+    },
+    {
+     "number": 7,
+     "name": "Tiny Arena: Item Box 7",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "94dca528255e5458d0affb57be31994815108bd2b8755e3e6a87577d3fb11692"
+    },
+    {
+     "number": 8,
+     "name": "Tiny Arena: Item Box 8",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b899cf6ab6e7bc227fb7fe8192d6bae4402ca5d7dd3ad38ea3399c941ec3310d"
+    },
+    {
+     "number": 9,
+     "name": "Tiny Arena: Item Box 9",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6f451cb4654f11fde93de9d92827ed3fabf3998de17625728942992953818392"
+    },
+    {
+     "number": 10,
+     "name": "Tiny Arena: Item Box 10",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5999de5f052ba1b899dd92178b81344b71149111e44f5ade83be5d1e82d1393c"
+    },
+    {
+     "number": 11,
+     "name": "Tiny Arena: Item Box 11",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "24a1f9d2cc1c892ddd1a93ba96c0fad6faa6347304071b53b52831f8595a957a"
+    },
+    {
+     "number": 12,
+     "name": "Tiny Arena: Item Box 12",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2b101f14aa620a48de3634fe97b8cfbb39ee31432a723776ff9a94c2cb380f36"
+    },
+    {
+     "number": 13,
+     "name": "Tiny Arena: Item Box 13",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "25eb8645f936a5bb765e6bfb9a3ca702d9fe1b15ce83d4c64cc87992e1567af3"
+    },
+    {
+     "number": 14,
+     "name": "Tiny Arena: Item Box 14",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1206666f6de87a2db084e2f69068d2ae84cce4eb34f2208b534bdc8a136e0d82"
+    },
+    {
+     "number": 15,
+     "name": "Tiny Arena: Item Box 15",
+     "full": "/img/ctr/ap-boxes/tiny-arena/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/tiny-arena/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2242e52125faf790d0e4f8060345c810bfe673700e546b10e45705211b900d57"
+    }
+   ]
+  },
+  {
+   "name": "N. Gin Labs",
+   "slug": "n-gin-labs",
+   "hub": "Citadel City",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "N. Gin Labs: Item Box 1",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9bdfff61675f5636ba43fd17799125bc694104bdf6f8eb4473d9ba2ee2ff47dd"
+    },
+    {
+     "number": 2,
+     "name": "N. Gin Labs: Item Box 2",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ef6feef834db0360bbc4075469403df8e2328ef0c6cb0d148e6e7c9a7a39920d"
+    },
+    {
+     "number": 3,
+     "name": "N. Gin Labs: Item Box 3",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0eb3c56364de3877290d83bcfe15de8318437cabe7ee4e9d327403699fc8a99f"
+    },
+    {
+     "number": 4,
+     "name": "N. Gin Labs: Item Box 4",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "7ae06170389aa98624d5d46b988af6269c713ee32601ef00829ba6c368d3ec76"
+    },
+    {
+     "number": 5,
+     "name": "N. Gin Labs: Item Box 5",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "e982bdb7a7341410374326e0dfec70a294bfb6fb01739bc089da6da6f4381555"
+    },
+    {
+     "number": 6,
+     "name": "N. Gin Labs: Item Box 6",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "fc5ed949e62dc725edaa3492228b406fb9ba6bae5913d7805cd3b10c37918fc0"
+    },
+    {
+     "number": 7,
+     "name": "N. Gin Labs: Item Box 7",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "On the corridor floor just before the doorway with the yellow arrow sign.",
+     "source_sha256": "0a91a71447727ee547f553f11d166f14b838b90289fe6f65a0583845f5174624"
+    },
+    {
+     "number": 8,
+     "name": "N. Gin Labs: Item Box 8",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0d04a151b4308ddb25849a976b78da706a24180c979af3a9f0752884e973d490"
+    },
+    {
+     "number": 9,
+     "name": "N. Gin Labs: Item Box 9",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2ea51eab95a596ed12aa7d1ed7adc06b23642cd88a2600e76e342434c5ee34da"
+    },
+    {
+     "number": 10,
+     "name": "N. Gin Labs: Item Box 10",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6c3d6c5c99ee1f13a98fad8a812a577bfefc4fef623f5c1466ff3395e26a54ca"
+    },
+    {
+     "number": 11,
+     "name": "N. Gin Labs: Item Box 11",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8dcf05640ce9d8f7ecea20ea0813a1df8463d2c12eeda76424a39eafbf837199"
+    },
+    {
+     "number": 12,
+     "name": "N. Gin Labs: Item Box 12",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ff804c3e26c40057b8ab27a643f586e3febaeb83f4897d0e0b4cd90d525a8a7c"
+    },
+    {
+     "number": 13,
+     "name": "N. Gin Labs: Item Box 13",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8a98a420ae08a8e61a8be29d64f97c4e0f39a964cbbe171eb395b8dc65c4be32"
+    },
+    {
+     "number": 14,
+     "name": "N. Gin Labs: Item Box 14",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d799ca0635d29652c2642ef3b2936b1e51bf1e39ad9787bb86ea6d0ad475fab5"
+    },
+    {
+     "number": 15,
+     "name": "N. Gin Labs: Item Box 15",
+     "full": "/img/ctr/ap-boxes/n-gin-labs/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a86f2ae461f4c16b01f57b4cdf909c492a9f9d93ccbaee28cb76522edfa67a01"
+    }
+   ]
+  },
+  {
+   "name": "Cortex Castle",
+   "slug": "cortex-castle",
+   "hub": "Citadel City",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Cortex Castle: Item Box 1",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "bac1a587b0041c9ff79b26b558d64e347db371a34555a857dab25695d8932022"
+    },
+    {
+     "number": 2,
+     "name": "Cortex Castle: Item Box 2",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d425b401dfa140ad533e64926166a1ad50498cfac36e4b8d85062ae98a86b562"
+    },
+    {
+     "number": 3,
+     "name": "Cortex Castle: Item Box 3",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "24b52085695b07bc93b8621062b8bedced9c44b27fa81c9df5f5e88228996d6b"
+    },
+    {
+     "number": 4,
+     "name": "Cortex Castle: Item Box 4",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d1e3baa71788add070e22452d98248e5853d1729f830da85bd0902ad8fce92ad"
+    },
+    {
+     "number": 5,
+     "name": "Cortex Castle: Item Box 5",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5fa88a55184234f1d4a6b859171ef3cd51bc00ae685b8fccde397b1a9527da6d"
+    },
+    {
+     "number": 6,
+     "name": "Cortex Castle: Item Box 6",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "On the walkway along the outside of the castle wall. The black area is the drop beside the walkway.",
+     "source_sha256": "f24275ed4709854ab8f273b8739f81873cdeeeeb70f11929ead93f72f1ccf551"
+    },
+    {
+     "number": 7,
+     "name": "Cortex Castle: Item Box 7",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "On the walkway along the outside of the castle wall. The black area is the drop beside the walkway.",
+     "source_sha256": "063e452c8225a9f43c4dd6b06adc28b0c6d70159f02f18e76870b2a91043d6ea"
+    },
+    {
+     "number": 8,
+     "name": "Cortex Castle: Item Box 8",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "On the walkway along the outside of the castle wall. The black area is the drop beside the walkway.",
+     "source_sha256": "809998b66d00e7485e1d13dda292b47efd0d5fa53904673d996d4939fe07fa90"
+    },
+    {
+     "number": 9,
+     "name": "Cortex Castle: Item Box 9",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "On the walkway along the outside of the castle wall. The black area is the drop beside the walkway.",
+     "source_sha256": "fa0d2c6960488232fe1c276b4339ad70d5a3787a14800196d3e77f3907d45494"
+    },
+    {
+     "number": 10,
+     "name": "Cortex Castle: Item Box 10",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "36614d46ac713b60608aed05009312f082818a30241b2d82d6e25048a3c07a91"
+    },
+    {
+     "number": 11,
+     "name": "Cortex Castle: Item Box 11",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "228d1fca3043acb789d30e7a905e682f289bbcb4fc4d56b3b69b925ec819303d"
+    },
+    {
+     "number": 12,
+     "name": "Cortex Castle: Item Box 12",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "08b5364ffce5a53718d9d66f5be922682b38ad0150cd84cfabdb4e425669d6ba"
+    },
+    {
+     "number": 13,
+     "name": "Cortex Castle: Item Box 13",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "7e77eec4d56e1a68215c3f5f36b7b519ae7d1a457b1136573626c64f73f2845e"
+    },
+    {
+     "number": 14,
+     "name": "Cortex Castle: Item Box 14",
+     "full": "/img/ctr/ap-boxes/cortex-castle/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/cortex-castle/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "942c64e1ae9d2af95d309f3c8d30a09ecb80913db8fc6e0aa1c02568d3e931af"
+    }
+   ]
+  },
+  {
+   "name": "Hot Air Skyway",
+   "slug": "hot-air-skyway",
+   "hub": "Citadel City",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Hot Air Skyway: Item Box 1",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "81a896db5c09e5b885c461580c8f23b2935b567196eac6f283115b2fa1adf099"
+    },
+    {
+     "number": 2,
+     "name": "Hot Air Skyway: Item Box 2",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6a51de8533e5eb09a4f5819a5a489df978c79a32adeebf197fd8e2cf48375d72"
+    },
+    {
+     "number": 3,
+     "name": "Hot Air Skyway: Item Box 3",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "123a192b7df90f89af23fadb3674a88b753ddc42508f5b8089a79156b6eada5b"
+    },
+    {
+     "number": 4,
+     "name": "Hot Air Skyway: Item Box 4",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ff23ae71a17c5aa3b566d52b60a51a2899b229db41dfc3c7e837e5807c6be724"
+    },
+    {
+     "number": 5,
+     "name": "Hot Air Skyway: Item Box 5",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "Floats in open air just past the end of the road piece, next to the small blue balloon.",
+     "source_sha256": "a97a95774df264658bd10ec77bf55d2b20c471a3bdf1759f1736475fe6ce6a05"
+    },
+    {
+     "number": 6,
+     "name": "Hot Air Skyway: Item Box 6",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ebd8ff1f3bf36668c2adf7e7186bc41dd810dbc44fd86355954d48a224bab0b9"
+    },
+    {
+     "number": 7,
+     "name": "Hot Air Skyway: Item Box 7",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "db246a1b84ca500354076c8d5163bc3b4e89d9dfa4c3c21232e5589899dc202f"
+    },
+    {
+     "number": 8,
+     "name": "Hot Air Skyway: Item Box 8",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-08-thumb.webp",
+     "shortcut_knowledge": "Hard",
+     "hint": null,
+     "source_sha256": "6a1362cad77ecee21fb41e0cff7d280f0ca90b7fb52918a4dcc7488e1517f984"
+    },
+    {
+     "number": 9,
+     "name": "Hot Air Skyway: Item Box 9",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8bc14df344d0dd482ba8c1c92f4ce31bb4aebbcf11a631339c9f4a073946e657"
+    },
+    {
+     "number": 10,
+     "name": "Hot Air Skyway: Item Box 10",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "04cdb9604d88ace2fcfdff4010fe0bf1a543e999dbf688654e6143dfc7321183"
+    },
+    {
+     "number": 11,
+     "name": "Hot Air Skyway: Item Box 11",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "447a69fc23516082b948959977f2958576be29f9a93deb71a5815a48cdf4eb1e"
+    },
+    {
+     "number": 12,
+     "name": "Hot Air Skyway: Item Box 12",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "eda39163c6f22cd982679ac9b720a19aaee8f8216d2f8882bf67d1fbda3630f4"
+    },
+    {
+     "number": 13,
+     "name": "Hot Air Skyway: Item Box 13",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ff2fea01d8aea2816b337644b0729d9b373f42b8b2444f0baf36443bf9e670c5"
+    },
+    {
+     "number": 14,
+     "name": "Hot Air Skyway: Item Box 14",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "15f463b437ba6fda44d38a6346e37e0f6b2733fa37f6b7a9da821b07750ba8a4"
+    },
+    {
+     "number": 15,
+     "name": "Hot Air Skyway: Item Box 15",
+     "full": "/img/ctr/ap-boxes/hot-air-skyway/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d527a02fe803e6071998d0b12874926f90ebf44f0dad9e56af96de85d178ef2c"
+    }
+   ]
+  },
+  {
+   "name": "Oxide Station",
+   "slug": "oxide-station",
+   "hub": "Citadel City",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Oxide Station: Item Box 1",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2a65367ef4ffa47b1eee02d7b2307f0acd161d5e01311b9ca321c8745392f052"
+    },
+    {
+     "number": 2,
+     "name": "Oxide Station: Item Box 2",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b64677257f626a6cf26f7ce8871ff083f5a5485fe1647ffe6ebc6aa018b020f6"
+    },
+    {
+     "number": 3,
+     "name": "Oxide Station: Item Box 3",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9f4a9dde8497c7bf9e09fecf66ca5834f427ff680bc9e852fa3157be1788736c"
+    },
+    {
+     "number": 4,
+     "name": "Oxide Station: Item Box 4",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c20f7e79600328040e0434e202de5c7527fd4663b3c9a544e22b31bdb4a0f732"
+    },
+    {
+     "number": 5,
+     "name": "Oxide Station: Item Box 5",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9baab7c9cd1a26c04c7ca44489dbfa099917b4407e6ca3d2a007044e7c787cdc"
+    },
+    {
+     "number": 6,
+     "name": "Oxide Station: Item Box 6",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-06-thumb.webp",
+     "shortcut_knowledge": "Hard",
+     "hint": null,
+     "source_sha256": "f868cf25f4a8aecddc9eaa178cf7a0259b43c83d031097004d0eb7e0ffecd5f6"
+    },
+    {
+     "number": 7,
+     "name": "Oxide Station: Item Box 7",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "13948e512f7d2c7b4fb2ad6ccf74dcc73101418160a6d45664b9365787548a7b"
+    },
+    {
+     "number": 8,
+     "name": "Oxide Station: Item Box 8",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "3cdef4b854fea004277692b78283abfa3c3f3c71acd229ead5050c790292900d"
+    },
+    {
+     "number": 9,
+     "name": "Oxide Station: Item Box 9",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "cc70663849c8677355665a5a8e50352be756ed9a1a1dad54e92e95d3c65b325c"
+    },
+    {
+     "number": 10,
+     "name": "Oxide Station: Item Box 10",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "cc3daf92363f99f1d8d5b8451118c20f32b7cd17855e6d49cdbe2cc1dc3a67e0"
+    },
+    {
+     "number": 11,
+     "name": "Oxide Station: Item Box 11",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": "Floats in open space just above the edge of the platform right after the tunnel exit.",
+     "source_sha256": "9e5ffe21645ca55dbaf05fc566772f6a75d75007450c5c9903bc526b6b744b28"
+    },
+    {
+     "number": 12,
+     "name": "Oxide Station: Item Box 12",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8fffef43d7b53bfdf11f93550db5295f9972f1f2ba8c5c6bacf84ed29000d9cc"
+    },
+    {
+     "number": 13,
+     "name": "Oxide Station: Item Box 13",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "a29a58d5516fb913cb39431637d02962235b4e98b8eb125653ec7c3ca4e522ff"
+    },
+    {
+     "number": 14,
+     "name": "Oxide Station: Item Box 14",
+     "full": "/img/ctr/ap-boxes/oxide-station/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/oxide-station/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "544fc2536e0dc537fe17513c2c14643fa9ddf13071c5ed43606fcc86776657b2"
+    }
+   ]
+  },
+  {
+   "name": "Slide Coliseum",
+   "slug": "slide-coliseum",
+   "hub": "Gemstone Valley",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Slide Coliseum: Item Box 1",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "de81e5d0dbe59e644ca215412c24fc92235994dd44cdd272eada7dc0c337e3ea"
+    },
+    {
+     "number": 2,
+     "name": "Slide Coliseum: Item Box 2",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "54512af4e265e162a2e47b65f8e80e76701be83881108e7018ad8438bfafe688"
+    },
+    {
+     "number": 3,
+     "name": "Slide Coliseum: Item Box 3",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2a424fac17abef9292eba0fde8b30d0b4707b52ebbb8e4fae5a2e69a7585bbf4"
+    },
+    {
+     "number": 4,
+     "name": "Slide Coliseum: Item Box 4",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "cb6a94714a67a9baf8567a21ed16df879b71db7207739e4bd298375999e35791"
+    },
+    {
+     "number": 5,
+     "name": "Slide Coliseum: Item Box 5",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "f96c88d7d5c88157dd75548cda142279022d7a4b249fde0cee3bd4fc95b89447"
+    },
+    {
+     "number": 6,
+     "name": "Slide Coliseum: Item Box 6",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "92cb4f7777fe91a3e233b81e53516ee079ca8e018866ed5cf1252e8488637034"
+    },
+    {
+     "number": 7,
+     "name": "Slide Coliseum: Item Box 7",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d400669b0adc7918d0131b3a08d267b8fda7eeddd9e492a82b9d960e4ad9805a"
+    },
+    {
+     "number": 8,
+     "name": "Slide Coliseum: Item Box 8",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "dc759a9995243fcbdd58cf9ec29479429e6c5a1515a68f0a4798cfec47f0f12e"
+    },
+    {
+     "number": 9,
+     "name": "Slide Coliseum: Item Box 9",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "9be34b1d21dfaacdda4532a5b7e029ea084cc0bb20abe9712196ea731c21c107"
+    },
+    {
+     "number": 10,
+     "name": "Slide Coliseum: Item Box 10",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "ed6c914dfbf7f59f187e74fe9de70e87093c35378fbea32f3fd36d9c378cf49c"
+    },
+    {
+     "number": 11,
+     "name": "Slide Coliseum: Item Box 11",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c10d95a3347a62036e2079f4cb1b8dce6d5f32b0977e1419d1a238b0be3aa872"
+    },
+    {
+     "number": 12,
+     "name": "Slide Coliseum: Item Box 12",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "907f9e6742e35c22a06d3097c033b65490d115810fe3beda0d563f015bc7b1bd"
+    },
+    {
+     "number": 13,
+     "name": "Slide Coliseum: Item Box 13",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2050fd16dd889304d6e6ab64076297d23f8458f7636b5f96348dbae0d2075efc"
+    },
+    {
+     "number": 14,
+     "name": "Slide Coliseum: Item Box 14",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "365570623807830ae48e128741fd4e1b75b5363a1d5f643399f256c021c8189b"
+    },
+    {
+     "number": 15,
+     "name": "Slide Coliseum: Item Box 15",
+     "full": "/img/ctr/ap-boxes/slide-coliseum/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "792e8ee583f355a788f97c399c4eef444657101aa92d4c8cefe138b44c06d1fa"
+    }
+   ]
+  },
+  {
+   "name": "Turbo Track",
+   "slug": "turbo-track",
+   "hub": "Gemstone Valley",
+   "boxes": [
+    {
+     "number": 1,
+     "name": "Turbo Track: Item Box 1",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-01.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-01-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "c95cea75adbf89c93599c1caa20393cee84783373aff12a5f9b6198b66dfa07e"
+    },
+    {
+     "number": 2,
+     "name": "Turbo Track: Item Box 2",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-02.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-02-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8f00177fa474b012be50c37b5320ca751d3a1d2e5d7baa991639d69cbbcceea6"
+    },
+    {
+     "number": 3,
+     "name": "Turbo Track: Item Box 3",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-03.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-03-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "d6d24f4a66e76c85d86425292532c301396adc78f89a4b83a631d5253e8d3184"
+    },
+    {
+     "number": 4,
+     "name": "Turbo Track: Item Box 4",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-04.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-04-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "758ed6c4ae2eaa66d81c1d1b8db32fcea1cd03923e6399a8c390edaef4c38af9"
+    },
+    {
+     "number": 5,
+     "name": "Turbo Track: Item Box 5",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-05.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-05-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8b24104d3f016bf5b15936539b6de3ea79fc97297bc8c73662d68e75c51674f9"
+    },
+    {
+     "number": 6,
+     "name": "Turbo Track: Item Box 6",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-06.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-06-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "8017d7af9b12a96429cec17d9d25b0de1bd8654ab735385c19294464151fffef"
+    },
+    {
+     "number": 7,
+     "name": "Turbo Track: Item Box 7",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-07.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-07-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0133e30d065286ac03532dc8c1be5850db66e899d0e82b5a216a99bef6ff4ee3"
+    },
+    {
+     "number": 8,
+     "name": "Turbo Track: Item Box 8",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-08.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-08-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6dbdafa8c660f3496884af6d943be185da58e3c75f2ebb62b515c46ae82c9509"
+    },
+    {
+     "number": 9,
+     "name": "Turbo Track: Item Box 9",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-09.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-09-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "2ca2191492d078a4122ff6d5d3d67ae84487adeb23233ca4d1799ab576c9ce40"
+    },
+    {
+     "number": 10,
+     "name": "Turbo Track: Item Box 10",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-10.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-10-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6af6c3b83f4690248c7f95c3143591eaf21365238ee766cc30f96cec0192f520"
+    },
+    {
+     "number": 11,
+     "name": "Turbo Track: Item Box 11",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-11.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-11-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "b1b8c27a05af26fecccf3de5d4c4171b4b4651c08dab126d2f918dcdded45e8b"
+    },
+    {
+     "number": 12,
+     "name": "Turbo Track: Item Box 12",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-12.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-12-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "1792d23fe58b70474cc0a3d12c413ec828bade06bc19b004cd3c3e0feb2c7008"
+    },
+    {
+     "number": 13,
+     "name": "Turbo Track: Item Box 13",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-13.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-13-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "6bee1c0d8e1831bb59cd35ed446f7ab32cf88636ddc950e88c8a0deac585ca66"
+    },
+    {
+     "number": 14,
+     "name": "Turbo Track: Item Box 14",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-14.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-14-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "5e7dffc0eefd87d81d787790c674aac6b9ba99bd326ae5d41db8d5b3fb716a78"
+    },
+    {
+     "number": 15,
+     "name": "Turbo Track: Item Box 15",
+     "full": "/img/ctr/ap-boxes/turbo-track/box-15.webp",
+     "thumb": "/img/ctr/ap-boxes/turbo-track/box-15-thumb.webp",
+     "shortcut_knowledge": null,
+     "hint": null,
+     "source_sha256": "0b827af99a753d2d584c6c324360c4164d641d18c778ee41126bf30dbce8d12a"
+    }
+   ]
+  }
+ ]
+}

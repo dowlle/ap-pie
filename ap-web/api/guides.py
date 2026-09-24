@@ -531,7 +531,7 @@ def sitemap() -> Response:
         {"loc": _canonical(f"/guides/{g['slug']}"), "lastmod": g["updated"]}
         for g in GUIDES
     ] + [
-        {"loc": _canonical(p["path"]), "lastmod": CTR_UPDATED}
+        {"loc": _canonical(p["path"]), "lastmod": p.get("lastmod", CTR_UPDATED)}
         for p in CTR_PAGES
     ] + [
         {"loc": _canonical(LEGAL_PRIVACY_PATH), "lastmod": LEGAL_PRIVACY_UPDATED},
