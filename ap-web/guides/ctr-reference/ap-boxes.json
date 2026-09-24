@@ -13,6 +13,7 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "228d2f49d439811532b44fef3fd77ed9539dccc5a0353ccdbf5735ac6ca51827"
     },
     {
@@ -22,6 +23,7 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "f7adb2cb328d77875701f1a49beedc81c5d610d99ffe603618fdd12a86df4e7c"
     },
     {
@@ -31,6 +33,7 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "5d40a5f3d3f47c7f3ceea3e37d9d697e517b4fe7a61da29b6fcac60b36511033"
     },
     {
@@ -40,6 +43,9 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "174f2da7acc688a12682022c7355a25b8fac440bff001d1fda7b2e7f78b03598"
     },
     {
@@ -49,6 +55,7 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "a8080992a0947ce6f60ada4d5a38acf813a2decc22e0d3dbf5772244114a388c"
     },
     {
@@ -58,6 +65,7 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "54e1fd7d4270e3ae1ac8be1d4e333a2b001adf5d48a2e239944669a881abfa0e"
     },
     {
@@ -67,6 +75,7 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "Floats in the air next to the bow of the pirate ship, over the water.",
+     "requirements": [],
      "source_sha256": "09e3150e50e12042ac9113cc7a3832d8de4d78a96adf90b3bf9b49062d565896"
     },
     {
@@ -76,6 +85,7 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "08b3d381a9fccbb892b9c5f0aa4d3faef2956590febb9a81668965e8a3edb67b"
     },
     {
@@ -85,6 +95,9 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "fec9a2685d0845a65a76e2108986d404108fea4d749fb18c2ac7c78409b945ac"
     },
     {
@@ -94,6 +107,9 @@
      "thumb": "/img/ctr/ap-boxes/crash-cove/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "025e838c752be14c67199ecf0ba6e3e5ecc6a31f262a2928484f23afb9349bdc"
     }
    ]
@@ -111,6 +127,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0526378bb0e32b0d27c1fdbb7384118cbd9a96ffd4ee034f6ab0f1b2f9298e62"
     },
     {
@@ -120,6 +137,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "a27d6d2dda589478b440d7e75ad2edf6e98c1f91432a8bf3ad3ed406be938d5f"
     },
     {
@@ -129,6 +147,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "798e4db1fd04c0270b3185696054c57f8a8bc74a60d7f6cee2ffed2128f28af0"
     },
     {
@@ -138,6 +157,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "648a392b9da94fdfcfa442426ee9362d53f28c623f9057b6257c376e47dd545c"
     },
     {
@@ -147,6 +167,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "f5edd2a32da91bc47b3249a3bfa0bbc4243884fcc32741690fa49742f0cb416c"
     },
     {
@@ -156,6 +177,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b9f77712ce07f881f81d6515d54ae40a2b50ea08d6b9838f807c7db182ef7489"
     },
     {
@@ -165,6 +187,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "dee583a20cfc0fbc6c4e4a651e6cd71106add96d4a408ba6e2cdb36ae9651495"
     },
     {
@@ -174,6 +197,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "38fffdfa5100750a8e5de35b1c7313c92f0c44ec8019819dcf8cf18e8c75416c"
     },
     {
@@ -183,6 +207,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "bc7c54d1805e35322aefd25b1e2d8a8f9d8dc61054dbd5508a83118c007bd356"
     },
     {
@@ -192,6 +217,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "55bba01c4d528d463ac61709ab0f34e896397f1e6f3f25e01bd06c8d31029d94"
     },
     {
@@ -201,6 +227,7 @@
      "thumb": "/img/ctr/ap-boxes/roos-tubes/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6a81a43f106256acad47d0c65b8ccd5256360d91e1c09a333384e36188f32ea5"
     }
    ]
@@ -218,6 +245,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b82f8f99793dcb6d79e5cc4e77f51461078bebcd1f48c4e80f7b8bb69970fc55"
     },
     {
@@ -227,6 +255,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7ad3a1b668ed252506265272fde58ed8761cb6e4eae529c85f3edde458b0bdb4"
     },
     {
@@ -236,6 +265,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b0b52bdb901e3d500131d5b825b39e4feffa87f6b56bae14da54c8244dad4405"
     },
     {
@@ -245,6 +275,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7ad50638274983f9cc5bf790f69f852fa2c2b847b361ec82604b0b88a94b479b"
     },
     {
@@ -254,6 +285,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2a9644426f6a00200da2821373df1f7e5dfff9c9837a8b35e6bb95d6ba321880"
     },
     {
@@ -263,6 +295,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "4cfca8a5a9ab26fceb2746e8d7120ff18f11a81d4b0e68e357266ffbeab68ae4"
     },
     {
@@ -272,6 +305,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "a805a3382278402c5b17d4a639e9bb11b61d487d0f570efd5c54d0cc5fd007b9"
     },
     {
@@ -281,6 +315,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2dfc4d023ccb0c326b989aa5ecf3297c9b663642b5dcb315c13bc19c48a961b4"
     },
     {
@@ -290,6 +325,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "4fe9f1bb188b24f47ad409f83ee11bab1e36abb358ef5d8325de24ef42c1b154"
     },
     {
@@ -299,6 +335,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "26ba01a8ae1ecc43baa1e319c8800c06a7bdaff24d3d20dc86fcc4e333a30451"
     },
     {
@@ -308,6 +345,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "df977e3e6c572819bb7b1a31f6a8754c67691f18d4bfa90fa5f9bbccfc7b1552"
     },
     {
@@ -317,6 +355,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "796cc8b218ac2ed56c911ad3d52e321d626939e580bf378a648a560fc86a1d04"
     },
     {
@@ -326,6 +365,7 @@
      "thumb": "/img/ctr/ap-boxes/mystery-caves/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9285056cbd7720facebb6c4d041356333549a7837ac49bb06bd415562f1d6360"
     }
    ]
@@ -343,6 +383,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "411ba654bc9c04f384aef9be921569894a6131e0f3f1c15456d0543d5246716d"
     },
     {
@@ -352,6 +393,9 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-02-thumb.webp",
      "shortcut_knowledge": "Medium",
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "56aaac69b5319b6a5486a4aced17f40331faf70a1589964f02f5bdf85562bf91"
     },
     {
@@ -361,6 +405,9 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-03-thumb.webp",
      "shortcut_knowledge": "Medium",
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "dcb6de7f8f70d48f33c070ccf76d11bb3bc69298e3e3a68176efcf0b9fa99bcc"
     },
     {
@@ -370,6 +417,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9ca3afb0485c6269ab283446658bc1af98c6d21a95aec272bc5d781e96cc150d"
     },
     {
@@ -379,6 +427,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "63aa8b6ff91e2e94d16c9e9b6508a056f0b55f1b08e82e95d72ed4a6b036a8b6"
     },
     {
@@ -388,6 +437,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2a8db6304390ff725841e728dc6f563359ec609ab7e4d9eccacc7a211f4076ea"
     },
     {
@@ -397,6 +447,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b615e7c3924037ee8e63959dc38fe1b8fdf54e87a23ec0bbed7b0b35cb74a088"
     },
     {
@@ -406,6 +457,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "1c2afd62e925e4bc03210610a2dd436262f8df0115c3457f163c10a3dd0872c8"
     },
     {
@@ -415,6 +467,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "577809da97431d716789f05f5e372049714cd0d74a9e54f9f349719daebd4aec"
     },
     {
@@ -424,6 +477,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "Inside the red pipe, in the middle of the road.",
+     "requirements": [],
      "source_sha256": "efaf7721068754c11deae805a5ebeff9ed7f0c59f7862a4ba5af0c51f826ca6e"
     },
     {
@@ -433,6 +487,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2d840cb4cd6502a171724aee0691846681028e4bf5d9b62a14a40d28788fd0b8"
     },
     {
@@ -442,6 +497,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "4eea2df6a8a6260bdaf3e2636c90f2b7c31b3facc01d9b5213ea1f6b4c2a7565"
     },
     {
@@ -451,6 +507,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "df75447225633f8eb84b6540f9843293f3d73a21ae40e020cbec54d7e805898f"
     },
     {
@@ -460,6 +517,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6c2afb9edb018358f53f729f0133bdbe949200dcb542e8397a35d4f0b7d81853"
     },
     {
@@ -469,6 +527,7 @@
      "thumb": "/img/ctr/ap-boxes/sewer-speedway/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "ef3c67f18ff2a5cda87ddece133adde3a14adcad1fd6c9d03571d51699e95b5f"
     }
    ]
@@ -486,6 +545,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "a5dc894e7d265dd28923ac2029f3a080fddbbcc5cd1ebad8a2cf5e93c0cd373f"
     },
     {
@@ -495,6 +555,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "5a6288143ef33be986991df089322a251d20c5fc1e0139a61c6c112f287cc242"
     },
     {
@@ -504,6 +565,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "5383f8642df3e5c6abca54fa98a372f35e743859b03973926dc8731e1cc58ad5"
     },
     {
@@ -513,6 +575,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "189e6fdcf5720df630205d02b11e45fa25ea10a5fd19385b91158c42dfe1a684"
     },
     {
@@ -522,6 +585,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "23ff1499acf56883ecd58297a5987e86a859786c897056acec04d16635e9eccb"
     },
     {
@@ -531,6 +595,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "e99581e8a03444087d0487ebe453e619b5ab2d67cab394eafe76fcd8b2d46645"
     },
     {
@@ -540,6 +605,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-07-thumb.webp",
      "shortcut_knowledge": "Medium",
      "hint": null,
+     "requirements": [],
      "source_sha256": "751002c8112d32185fc2c051191ffa6d14e18ed6d3733853e60a7c42b7f76b63"
     },
     {
@@ -549,6 +615,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2624905564e989658236cf8ebca1259b119da057e1752862ff45cf67a4480636"
     },
     {
@@ -558,6 +625,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9b207e00d553f113694f3c1256f12a2c9380b639e77c36eb40d290582b58b27e"
     },
     {
@@ -567,6 +635,7 @@
      "thumb": "/img/ctr/ap-boxes/coco-park/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d2a182074147f13295e57104091ebfe0a4446bd48fbba802e4aa292776357076"
     }
    ]
@@ -584,6 +653,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "e41470ab029f9860bc7a46dd9f06c9a5bcfec2c9c264c1a8f93e12ab7f7c760b"
     },
     {
@@ -593,6 +663,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c01f653f429cb0f4dddb1b1fb957b7450f88a71da2dbec4d198ff2552c99fcd1"
     },
     {
@@ -602,6 +673,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c98d452f4877d8489ae5d34720c57e890b924dad51e80f58f758363b660815de"
     },
     {
@@ -611,6 +683,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9c48f10374c556d2b1791d9ec95733a31f9a83f795e668df42da69d920187236"
     },
     {
@@ -619,7 +692,10 @@
      "full": "/img/ctr/ap-boxes/tiger-temple/box-05.webp",
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-05-thumb.webp",
      "shortcut_knowledge": "Medium",
-     "hint": "At the far end of the dark tunnel, where it opens back up to the outside.",
+     "hint": "In the shortcut tunnel behind the breakable stone door, at the far end where it opens back up to the outside.",
+     "requirements": [
+      "With Itemsanity on: a weapon that breaks the stone door: Bomb, Missile, Beaker, Shield Bubble or Mask, or a x3 version."
+     ],
      "source_sha256": "a0d8b6acbba4e3e5de87bad33b717f677b8ea9cc1277dd8df968d580f73ecafc"
     },
     {
@@ -629,6 +705,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "959550250c866fa130cb1dc685b5677b1b95884481bc55d63bdef80fdf02cd88"
     },
     {
@@ -638,6 +715,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "bf4c7d1ea264d67cace88e99f10b6bed9443467b82bb7435a5f5f7ac84be7026"
     },
     {
@@ -647,6 +725,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "411d100edf55d459e1fe1facfaccccca97d2eea248f3fe2a32ae8b8c3216b85d"
     },
     {
@@ -656,6 +735,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d7afe7486d4cbac481dc2b66b876f84d866d8987bc8a77e60049737a9c106be7"
     },
     {
@@ -665,6 +745,7 @@
      "thumb": "/img/ctr/ap-boxes/tiger-temple/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "On the path at the corner of the temple wall.",
+     "requirements": [],
      "source_sha256": "d1c13a3b8d96fee70dd89e027a9e65e91af72fc7c5794fb0a80868e0754d6bef"
     }
    ]
@@ -682,6 +763,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c39872ab08a127adcbfa035d356b2c075482e43e1a714238c2b3d2b234b03386"
     },
     {
@@ -691,6 +773,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2a60800376d6814edd65ef8243a7369b1b8bd9e5126b2fd080e72dddd2980b21"
     },
     {
@@ -700,6 +783,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c0d429ae58a1fcf956a8f9406c87da4e263b4680b7ddf61c19362f7674b63f86"
     },
     {
@@ -709,6 +793,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d6f8a4826cf308c057b00167d27b77f6ea4efd80abf455e8bd5de8550f867631"
     },
     {
@@ -718,6 +803,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "f6a5455a508dfaf1835df203f220c216c91eb74e6041162ae2611587c5f4c31e"
     },
     {
@@ -727,6 +813,9 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-06-thumb.webp",
      "shortcut_knowledge": "Medium",
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "f6f795f42b508e5b849d7dfc7ac70fda9faf3c416dfcdde4c543ae40615d097a"
     },
     {
@@ -736,6 +825,10 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-07-thumb.webp",
      "shortcut_knowledge": "Hard",
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost).",
+      "With Progressive Stats on: one Top Speed, one Acceleration and one Turning upgrade."
+     ],
      "source_sha256": "761b73b6c60da9be4563c105464c2ed7abe5e960fafdcb919a3bcc5be1d63980"
     },
     {
@@ -745,6 +838,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d3003f805a31b1169d403e53e055e19b45cfd3a5d811c2169ccd1e3cc616401b"
     },
     {
@@ -754,6 +848,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8ffb49497b4f732bfeb2ab73fc00aec7abbc3f04eebc4fef82c4648662397f5d"
     },
     {
@@ -763,6 +858,10 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-10-thumb.webp",
      "shortcut_knowledge": "Hard",
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost).",
+      "With Progressive Stats on: one Top Speed, one Acceleration and one Turning upgrade."
+     ],
      "source_sha256": "f1e1fe253b35e4538d84b275febcb685ac5720992b6eb4b8336118b2f9dcbf1e"
     },
     {
@@ -772,6 +871,7 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "43515605b521e1b40a8cc723e6576344c918cc2f4fac70d2a035a909fc1c015d"
     },
     {
@@ -781,6 +881,9 @@
      "thumb": "/img/ctr/ap-boxes/papus-pyramid/box-12-thumb.webp",
      "shortcut_knowledge": "Medium",
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "2351210a7f8807c045d6c8af7b4f86f84e35284a9bf3a436c8a34f4648037266"
     }
    ]
@@ -798,6 +901,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2be0e9f53a737c9d24228a96c20fd5f58dd48b689eae0e696bb58fc0f047aae3"
     },
     {
@@ -807,6 +911,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "e1e10162035c57919c04a9719b72e7c61003863f9e7a1c1edc5d2e62d99cdfb5"
     },
     {
@@ -816,6 +921,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "538a41d38a5011d3e26a15db74bcf68882e288efe51070265c96cc358dc55c52"
     },
     {
@@ -825,6 +931,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "60fa1b0650ca548edcc4e8868b7563cd03b4d4d7b78f9eee79a111dcb21815c8"
     },
     {
@@ -834,6 +941,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0d8a107ad4a8e4d206d35009468724e7587034c053ed16848a6f764bbb7e3fed"
     },
     {
@@ -843,6 +951,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "534feb29ad07f2d1ffe16a57ccbbd49378387a9c7fcb71fc6d86b77ce57182f2"
     },
     {
@@ -852,6 +961,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "aaa0d6129411d102b9e3cae9a3b853e63435ed581866e18d34114d3ae71c8997"
     },
     {
@@ -861,6 +971,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8dbad308d3fd17cd61a31cd84d268d38de74e8f78dda72910b23c34c63783fb9"
     },
     {
@@ -870,6 +981,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8613758986942fbec149fbbcd424b7489866b97d0e2f4b13da33a04a28904e7c"
     },
     {
@@ -879,6 +991,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0a7ae3ba8f2286cd88a2651a12b2b5d55bd5cbb51324805b07c00d68ac38cd69"
     },
     {
@@ -888,6 +1001,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "823662822271ad000321066a8a8127d6281f2b9edfbd428de98a9398e093c9d8"
     },
     {
@@ -897,6 +1011,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "3585d8c68198966c0eb8f01f011fc6198a68a2f36462e248aa1917da166b903c"
     },
     {
@@ -906,6 +1021,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "3c61e6a0f64e1364e9c00445e22dfb8206c2515529734b37ef79510b51451509"
     },
     {
@@ -915,6 +1031,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "1af0454c12634eb54ce43c4f248feed7d4cd583d8fb22566e39e109f1973b431"
     },
     {
@@ -924,6 +1041,7 @@
      "thumb": "/img/ctr/ap-boxes/dingo-canyon/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2fbd16f4eb57bc56c3ddf15997b5858807dc7a6637018d14987e9dad001842bf"
     }
    ]
@@ -941,6 +1059,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "433ecda3bfda16049d7791d0473ec9a9143f11bcf3024e91d28c5630938ff2fc"
     },
     {
@@ -950,6 +1069,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "37bc9a845846412273a2bc07bb6656029d0693c05874d5112b34751cb7f8e0cd"
     },
     {
@@ -959,6 +1079,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "dbf6c3edbc398224062fc174c67ee26c7a98a9fef67c211eb143c5429527fbcd"
     },
     {
@@ -968,6 +1089,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8e9a38ffb269d129c8d2c5f992e31f8018f24042b41246bec4022a45e61aad0f"
     },
     {
@@ -977,6 +1099,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "95970f08664fc213f6e93df925f076f9d69666f2fe296036cd1039f281b3781f"
     },
     {
@@ -986,6 +1109,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "746e9bfb57ebfd7627169d7b99741a7b997d933fe4d89a722f0188ac6048c6e9"
     },
     {
@@ -995,6 +1119,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b5ed5fd93d3dcbb22ee5c94ed6f77c40ec152993a260edfe1192a2997b2197f4"
     },
     {
@@ -1004,6 +1129,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c755b5ab79d672f8a2ae9df9aae608ac1bb1aed1709d37521554e5fdaf4cf32a"
     },
     {
@@ -1013,6 +1139,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "a68e98f8677559e889393aa1eaa7f008f2954904d2bc360807fae3510e569940"
     },
     {
@@ -1022,6 +1149,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "5170e7642b9926b3944a1ac123f372371e87c34eee95d619ec8a1c5a912d6536"
     },
     {
@@ -1031,6 +1159,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "325de7e4d62c61be51f4e12de2f4a1d7128da8bd7c00abcb28cf22cf27a34e3b"
     },
     {
@@ -1040,6 +1169,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "3354a6a5364c5bc3983a1140797db6f93326dd59a46abe29dfaaae0cd899b0a1"
     },
     {
@@ -1049,6 +1179,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "50cb6e0bc7cb8fd445b3ef77843e6fd91198117d3c18665845698adc94194c61"
     },
     {
@@ -1058,6 +1189,7 @@
      "thumb": "/img/ctr/ap-boxes/blizzard-bluff/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b1792f694908378f31aba72f96d9cd00ad2323ef52b3dc1952832bac6b36731a"
     }
    ]
@@ -1075,6 +1207,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "aa9319e4ceafc054f3882270a307b7e14d7e702bf231096c0904a2d36986b01f"
     },
     {
@@ -1084,6 +1217,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-02-thumb.webp",
      "shortcut_knowledge": "Medium",
      "hint": null,
+     "requirements": [],
      "source_sha256": "e51339bb36d0b96e90a0357265d85c5eb53b0d7782422ab45f5469e39070462e"
     },
     {
@@ -1093,6 +1227,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "38f5871277c6eada6f051f6e81ef8d57fddded696cf3449930dbdac6c4315008"
     },
     {
@@ -1102,6 +1237,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "fb6ed9bcc241895bef418fc347415944f82a1cc4444ec808637eb5451cd2e46d"
     },
     {
@@ -1111,6 +1247,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d0de8f8586717b22bcc92dfb4df23f9e7924f5b014a717c35d431407da32cbb5"
     },
     {
@@ -1120,6 +1257,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "f27a92b6382baddab6131f0556439920c467525fd6f09c7015de70392a045a57"
     },
     {
@@ -1129,6 +1267,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "47de92d7702eb70ac6cef94fac77a9672ec112be2267d14b5182183db2235c14"
     },
     {
@@ -1138,6 +1277,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6057990b43da8390ad5293d7ab63e0fe8e71cfd7ac10f622e9e8831226a46840"
     },
     {
@@ -1147,6 +1287,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d78a32d0b24752a39fc4dfa73b56c91eb02b709d9f5b3d399d7ee021b793b4b8"
     },
     {
@@ -1156,6 +1297,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "Against the cave wall on the purple rock stretch, between Item Box 9 and Item Box 11.",
+     "requirements": [],
      "source_sha256": "db69837f5190ef03581900a895cf20260f61a91ddf404bd66257d2e497de6cb1"
     },
     {
@@ -1165,6 +1307,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "94c995743ab2351420959a6d364a1c6b8537f7696f6f8187c848680eaf28ff3b"
     },
     {
@@ -1174,6 +1317,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0df90d5835b825f7f354d60235c54c0d14e2478db9f147cbd86bff2d1520e3d0"
     },
     {
@@ -1183,6 +1327,7 @@
      "thumb": "/img/ctr/ap-boxes/dragon-mines/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d3aff0355ed89cc85ec5a6dc1fd455685561f3800a8bc5de597b7b45c548a218"
     }
    ]
@@ -1200,6 +1345,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c72a257e4fddc642a9d9fb42512e45e8fab989dde47697d6daf5867054efda91"
     },
     {
@@ -1209,6 +1355,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "82856d5ce0808a0f900a5a44994fb8fafeb8f15f8ac1dcf62e8e4c8397659660"
     },
     {
@@ -1218,6 +1365,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8b87228f7552f0c04f5d9ea4f231ee888ba0785adb373c7a16479f557a821a9d"
     },
     {
@@ -1227,6 +1375,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "f9b205552f04f7898b17415087f906e5b9881b10f3503f11f5eed83dd6000448"
     },
     {
@@ -1236,6 +1385,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "73b33d2ffad23f14ea648f445cb184e8fbf5671c8f8cb691e1dd0216ec27563f"
     },
     {
@@ -1245,6 +1395,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9044e1011d9a6baaac3a88a7b7dd2995b9e4ecd6f57ca6f38492f3fa68c75de2"
     },
     {
@@ -1254,6 +1405,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "e62b2716e545cf0b068c44fbfe036c8b57bac846e77c8d1c6d3ba3770de89205"
     },
     {
@@ -1263,6 +1415,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "88e19db9c5df9f2ceda5c096538c123458a91626e8cc4228caea4968cae958f8"
     },
     {
@@ -1272,6 +1425,10 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-09-thumb.webp",
      "shortcut_knowledge": "Hard",
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost).",
+      "With Progressive Stats on: one Top Speed, one Acceleration and one Turning upgrade."
+     ],
      "source_sha256": "aa60068398c9d1599e5498c608c08aafcce16e1e83a1a09508e6163b8302b4fd"
     },
     {
@@ -1281,6 +1438,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7134858b75ff5c95609179e5547b6b1f26f8348debeb91d930ff03bb83a9763b"
     },
     {
@@ -1290,6 +1448,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6dbcdfc36c6060cea87f6057fd2a085a15520c3c2906093e7669593c3c73983b"
     },
     {
@@ -1299,6 +1458,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "724594f76c5a0e06431d18a0202b25af712ab2d2a7aed73a181089ab7663716d"
     },
     {
@@ -1308,6 +1468,7 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "05cce4b3631f6828cbc712eee6bbbc8dde49540caba87f33083dd27b61ef6d7d"
     },
     {
@@ -1317,6 +1478,9 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "58aed47949372fde306d1376b42984272ec0b76ce1e468a9e19b3129d496266b"
     },
     {
@@ -1326,6 +1490,9 @@
      "thumb": "/img/ctr/ap-boxes/polar-pass/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "5f7cadb8a6821dad74bf94bf15901189a4b833fc316a09a5e4c35020d5e67ee5"
     }
    ]
@@ -1343,6 +1510,9 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "52875189bcce8dc76caa07f3cb29343787d8c80cf4d69ec61c90599a0bbfa938"
     },
     {
@@ -1352,6 +1522,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0a22dcbac86da4c94e60bf4348d93bda7788f56bf5bbf4e59d38bf0d2a6236a4"
     },
     {
@@ -1361,6 +1532,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2f96b7b066cd404f377406228d40cfcb483fbfb04fb94e864a9fdf32c1f0b3b7"
     },
     {
@@ -1370,6 +1542,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2cb1c666d743ada22a330cb269434a4055a355c542e2554fb4ec632722ec551f"
     },
     {
@@ -1379,6 +1552,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b6e6a3779803215dcab746bc70090f7f200c077ab924810b1da950f42edf2854"
     },
     {
@@ -1388,6 +1562,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "008842c03870e5d678fd5cb227052a831209dd4ad7161e9aadef8048a0933bf4"
     },
     {
@@ -1397,6 +1572,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "18e83714e17418169f65b19407a45eb9c00e5737b2eeb52f7a5e1deb12c6d2dd"
     },
     {
@@ -1406,6 +1582,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b899cf6ab6e7bc227fb7fe8192d6bae4402ca5d7dd3ad38ea3399c941ec3310d"
     },
     {
@@ -1415,6 +1592,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "49632544815db8106c818b4c735fed8c13c0c8e93e8f072ee464a298c8ceca32"
     },
     {
@@ -1424,6 +1602,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "5999de5f052ba1b899dd92178b81344b71149111e44f5ade83be5d1e82d1393c"
     },
     {
@@ -1433,6 +1612,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "892e912a48037579a5e1cf18fbb28c337a0194118dca5c83bf12bfd4c521f471"
     },
     {
@@ -1442,6 +1622,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "a37a6396d24f94d46f94bfcb70a8e1b4c9128731db322e12c117c04b77e2ae77"
     },
     {
@@ -1451,6 +1632,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "34da434e3c9b7e5c21da929e0f470076416ef5610c7e6bb13620107dfaccbec8"
     },
     {
@@ -1460,6 +1642,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d3b428bd95b73de1a9a0fd3f6349f8ce9a54332968524b54cec9e45363cb2d3f"
     },
     {
@@ -1469,6 +1652,7 @@
      "thumb": "/img/ctr/ap-boxes/tiny-arena/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2242e52125faf790d0e4f8060345c810bfe673700e546b10e45705211b900d57"
     }
    ]
@@ -1486,6 +1670,7 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9bdfff61675f5636ba43fd17799125bc694104bdf6f8eb4473d9ba2ee2ff47dd"
     },
     {
@@ -1495,6 +1680,7 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c0cd2f74e6009af085ce305b12d8a4e61cf6e4d0225d418f8bf81565f40a5968"
     },
     {
@@ -1504,6 +1690,7 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "07812846158c92f314a0ec77763a55984bb45c8823b8a04892787071e6137670"
     },
     {
@@ -1513,6 +1700,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "dfdf9eb721816fa74d2dbfc4686e92fa8ab8fade32ef1863a2788eb6e2efcf35"
     },
     {
@@ -1522,6 +1712,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "e982bdb7a7341410374326e0dfec70a294bfb6fb01739bc089da6da6f4381555"
     },
     {
@@ -1531,6 +1724,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "fc5ed949e62dc725edaa3492228b406fb9ba6bae5913d7805cd3b10c37918fc0"
     },
     {
@@ -1540,6 +1736,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "On the corridor floor just before the doorway with the yellow arrow sign.",
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "710758872ec4a18cf645091b22d1bd6fe6e3d2e38901e4bd8bb642450121cf5f"
     },
     {
@@ -1549,6 +1748,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "2e3674a866786226b14075d6d4b2389a119ca2a3de0c590ff8ea4bd570eab0ed"
     },
     {
@@ -1558,6 +1760,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "ce669db749276575152d1c74f557287eeb10cf748fb20397ffd90d2498488a11"
     },
     {
@@ -1567,6 +1772,7 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6c3d6c5c99ee1f13a98fad8a812a577bfefc4fef623f5c1466ff3395e26a54ca"
     },
     {
@@ -1576,6 +1782,7 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "654a1d0bb1d64d17e70dcf0db35a6208538f97b0fbb11583f9ba5b835f5e8bcb"
     },
     {
@@ -1585,6 +1792,7 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "ff804c3e26c40057b8ab27a643f586e3febaeb83f4897d0e0b4cd90d525a8a7c"
     },
     {
@@ -1594,6 +1802,7 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "00b71f7139aa0f5a2846887952de4cb43a6714e3b85192518b66a59ff9a16d98"
     },
     {
@@ -1603,6 +1812,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "8526445c7214183b3008e9c7010bdfd1f610854883be7f1a097e57ccef473157"
     },
     {
@@ -1612,6 +1824,9 @@
      "thumb": "/img/ctr/ap-boxes/n-gin-labs/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "2fa256704e882932241db134ff70a867948441abdc6d32d274019ad255182efd"
     }
    ]
@@ -1629,6 +1844,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "bac1a587b0041c9ff79b26b558d64e347db371a34555a857dab25695d8932022"
     },
     {
@@ -1638,6 +1854,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "b00c948a92a2835fed3f26acf5b83b4ccbedf0b8a6e1f7e51e19afe202bc0117"
     },
     {
@@ -1647,6 +1864,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0c82ed351e613d12e2960ef6e341e90b1e18aa5bcc2897cb30848035ef291d71"
     },
     {
@@ -1656,6 +1874,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6e3ff8d6332ccfa03e2f6a8cca8620139ac8894581de8d11b7c73e4ece6db2d2"
     },
     {
@@ -1665,6 +1884,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "4e4d0f6d1f2ff60a7dcb337a279406267be8ccb25d5219ec69350cf5db670302"
     },
     {
@@ -1674,6 +1894,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
+     "requirements": [],
      "source_sha256": "2ef42504a639708798daab5c4a1929aed4689fad929c1ef49e530853a5880579"
     },
     {
@@ -1683,6 +1904,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
+     "requirements": [],
      "source_sha256": "04260a61927afe06f349f38f7821ba2770996b60d5e8528248e826600e0eb4cf"
     },
     {
@@ -1692,6 +1914,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
+     "requirements": [],
      "source_sha256": "16797e505871634f032b40eef022af436f3c85b28736fef052a3c6de80abcbc9"
     },
     {
@@ -1701,6 +1924,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
+     "requirements": [],
      "source_sha256": "c9d9eaee567086b5e16326d7af57055c00567f7bc6de24e5f5cf3324ffafa9a8"
     },
     {
@@ -1710,6 +1934,9 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 1 Progressive Boost (boost)."
+     ],
      "source_sha256": "010755fc268896c9b5ac656c8719566fecc830d9d2fbe4d8f95b757132372d7c"
     },
     {
@@ -1719,6 +1946,9 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "1fb64f365fdfc664c81527c8a3cdcc2d9703b6686e091b1fcfdae0b9b2f75052"
     },
     {
@@ -1728,6 +1958,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "08b5364ffce5a53718d9d66f5be922682b38ad0150cd84cfabdb4e425669d6ba"
     },
     {
@@ -1737,6 +1968,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7e77eec4d56e1a68215c3f5f36b7b519ae7d1a457b1136573626c64f73f2845e"
     },
     {
@@ -1746,6 +1978,7 @@
      "thumb": "/img/ctr/ap-boxes/cortex-castle/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d442e31a5f287dba8a53d898f453b82811c4cf53fcec82fbf43243ee507f8e0f"
     }
    ]
@@ -1763,6 +1996,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "f64fc13e5947c56b8e40a35acb3214edea5c1cea2d97c7562bc0ee07107ae9d0"
     },
     {
@@ -1772,6 +2008,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "e5369cae3931d641d206650757cdbe9b5dc1811d9bedfaf2223a66a7abfc96c8"
     },
     {
@@ -1781,6 +2020,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "f491171a3dd50d27fbb1976423c8402f7f3f5fd1f222d886df77c4d8bf15e649"
     },
     {
@@ -1790,6 +2032,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "58ba4e5a5677eb4acf31eb1e0db88722db6d870e6db11845d275ab8547d2a64e"
     },
     {
@@ -1799,6 +2044,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "Floats in open air just past the end of the road piece, next to the small blue balloon.",
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "672dd19fb07f60fd52c42d1944c8d054a36f2325f698ef27b9b5ebe8b615d8cf"
     },
     {
@@ -1808,6 +2056,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "90045e7dfebd151c4adbb77f8e22de758f6055395837c06cbee9e71a0819ece8"
     },
     {
@@ -1817,6 +2068,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "76a3aa39c52721d4c22044ad6fd687e0944f155766eb5b5a0693e04b3dc6db16"
     },
     {
@@ -1825,7 +2079,11 @@
      "full": "/img/ctr/ap-boxes/hot-air-skyway/box-08.webp",
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-08-thumb.webp",
      "shortcut_knowledge": "Hard",
-     "hint": null,
+     "hint": "On the shortcut route. You can only reach it by taking the shortcut.",
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire).",
+      "With Progressive Stats on: one Top Speed, one Acceleration and one Turning upgrade."
+     ],
      "source_sha256": "8a8b419f2cb46b2f63e5e21623b572705e156b589bdb2ec24199eaa421d335f0"
     },
     {
@@ -1835,6 +2093,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "847c112affeb158bde5a063effc999ec52cb1b5c590276eb5732ef29056aedb0"
     },
     {
@@ -1844,6 +2105,7 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c1570b2029b1f84641dd3ebab9be770022035165c83f9740ef2a97080c83322c"
     },
     {
@@ -1853,6 +2115,7 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "56a106af387fa86dd1b0b32e6da1bece2cc260f30721b1b79132a95422e7b81e"
     },
     {
@@ -1862,6 +2125,7 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0c5024eaf52b1a78e80a7b108c999d55023270ebcb84c7996ebf4088c2948b8c"
     },
     {
@@ -1871,6 +2135,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "523de8bfcf2472c6db7f9ed8881cd9b3a9a5ab2864b6bb332b1ab3b5ffef51c0"
     },
     {
@@ -1880,6 +2147,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "cdb2fabec47b6eee14f05c6f171ec78b0bc6a3c55403b2bca2574220f55956ab"
     },
     {
@@ -1889,6 +2159,9 @@
      "thumb": "/img/ctr/ap-boxes/hot-air-skyway/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "fe7ec6bafcd34e8c70f98d385df067e22da317174efa0aa90378d1e7e2916918"
     }
    ]
@@ -1906,6 +2179,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "e2fddfb775df4020d540c06d0dd2d66cb66976f77623fb9c6d7abd24a267a15a"
     },
     {
@@ -1915,6 +2189,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "99d95b2ab701b85c5f0cb3ed8837d2c95dae989cc949ae5708f85455c923c330"
     },
     {
@@ -1924,6 +2199,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9f4a9dde8497c7bf9e09fecf66ca5834f427ff680bc9e852fa3157be1788736c"
     },
     {
@@ -1933,6 +2209,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6988f6462d00e175bb0b658f638af5761f1aa61d630db1edf98aad0a377b8df3"
     },
     {
@@ -1942,6 +2219,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "574d7c161aa72749f8659a62bb7ae9bf980926936d5981fe9fdf0b67cba602d6"
     },
     {
@@ -1951,6 +2229,9 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-06-thumb.webp",
      "shortcut_knowledge": "Hard",
      "hint": null,
+     "requirements": [
+      "With Progressive Stats on: one Top Speed, one Acceleration and one Turning upgrade."
+     ],
      "source_sha256": "fc4d03e4467c66b78fcc6cb1652dd16154c0107f5b75a24f4e39a1556a2eb2a4"
     },
     {
@@ -1960,6 +2241,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7fb0308bd01fe921195422f77eee9294cfe5e616f5e87f5eee8bacb17f1cf468"
     },
     {
@@ -1969,6 +2251,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0ba8e39ae37082720357b7fabbebfb68904e2ac8f632ccad45e6baf756722fe3"
     },
     {
@@ -1978,6 +2261,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "99797a7f9c03cfb60339de3c408dec1f085e2c3a4fe3808a56cd8d78dbc4665c"
     },
     {
@@ -1987,6 +2271,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8b9e3fd204d84a4217bc2b8dce07f2f026241eee973bf48f913a0a9e8965b454"
     },
     {
@@ -1996,6 +2281,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": "Floats in open space just above the edge of the platform right after the tunnel exit.",
+     "requirements": [],
      "source_sha256": "2c2761c2eae5baef69a6a19f87bba2f09f52b69b233529f23a0c9216c587cae9"
     },
     {
@@ -2005,6 +2291,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "024b92357f3e29a4dc5852f7526e9c8d994da9837462cc4ea3dfd1e6fbcc434b"
     },
     {
@@ -2014,6 +2301,9 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [
+      "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire)."
+     ],
      "source_sha256": "cbf79a20ea19a769c923f8c48c9b4dabc9d069651782c29d1497bfb679072a24"
     },
     {
@@ -2023,6 +2313,7 @@
      "thumb": "/img/ctr/ap-boxes/oxide-station/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "287c37f4f133eac3596c7bce8d184a1651ace307d1c92a789bf5bd5c7f99bd12"
     }
    ]
@@ -2040,6 +2331,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7657b79a3c80d40c2decc60fd419954ac7fe00dd55b8b2a18b01ec5eed696151"
     },
     {
@@ -2049,6 +2341,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7a7d618d32e8f9693e55c40709037376c5705bcdf8041ddff1dc3b8478b765a3"
     },
     {
@@ -2058,6 +2351,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "f570f48a6d184c3fb9985bce3f863cb9aefd4cde41483c3772efd4fddd133695"
     },
     {
@@ -2067,6 +2361,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "10a87c33c98996f3edea7e7a737a195cb06699233c03fd9928c70b82fae22f7e"
     },
     {
@@ -2076,6 +2371,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "f96c88d7d5c88157dd75548cda142279022d7a4b249fde0cee3bd4fc95b89447"
     },
     {
@@ -2085,6 +2381,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6f20e32e359994925f68de08875d9227bcdc0375d72bcacc54f236789674d8a8"
     },
     {
@@ -2094,6 +2391,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "d9d424d11f7941a0c7fcd1466992cbc04fe896476adb428474dca2a7e82b5526"
     },
     {
@@ -2103,6 +2401,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "dc759a9995243fcbdd58cf9ec29479429e6c5a1515a68f0a4798cfec47f0f12e"
     },
     {
@@ -2112,6 +2411,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "9be34b1d21dfaacdda4532a5b7e029ea084cc0bb20abe9712196ea731c21c107"
     },
     {
@@ -2121,6 +2421,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "ed6c914dfbf7f59f187e74fe9de70e87093c35378fbea32f3fd36d9c378cf49c"
     },
     {
@@ -2130,6 +2431,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "e246f65fe664e2c4f152f97a520379ba603ee76690506e49f9f1efa95be3e38a"
     },
     {
@@ -2139,6 +2441,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "907f9e6742e35c22a06d3097c033b65490d115810fe3beda0d563f015bc7b1bd"
     },
     {
@@ -2148,6 +2451,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "2050fd16dd889304d6e6ab64076297d23f8458f7636b5f96348dbae0d2075efc"
     },
     {
@@ -2157,6 +2461,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "a755354e94f04812e873c1fc863929251f98648043f14fc734f530e52df7c0b7"
     },
     {
@@ -2166,6 +2471,7 @@
      "thumb": "/img/ctr/ap-boxes/slide-coliseum/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "74735a194aa1ba2d6082ac476a98421f533edd010ef7be264dc1743abcbf4cfc"
     }
    ]
@@ -2183,6 +2489,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-01-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "c95cea75adbf89c93599c1caa20393cee84783373aff12a5f9b6198b66dfa07e"
     },
     {
@@ -2192,6 +2499,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-02-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8f00177fa474b012be50c37b5320ca751d3a1d2e5d7baa991639d69cbbcceea6"
     },
     {
@@ -2201,6 +2509,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-03-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "270cc08b424afe4bfbefc489f15f26e0f9b3d1aa199b2ab960ef8c17ca677a57"
     },
     {
@@ -2210,6 +2519,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-04-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "826ce7904233a2245dc1a6fd3e395f2a64dd5c2a992644b30e863cd7cc2467a9"
     },
     {
@@ -2219,6 +2529,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-05-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "e5d5f544b35445995379fc586804ec077f9b09abb925a1aaeec33b34406dc14f"
     },
     {
@@ -2228,6 +2539,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-06-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "8017d7af9b12a96429cec17d9d25b0de1bd8654ab735385c19294464151fffef"
     },
     {
@@ -2237,6 +2549,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-07-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "de73d767f1dc7a817bfc511e9898046b41607c2511e2c967b64cad69ecbc838d"
     },
     {
@@ -2246,6 +2559,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-08-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "3ee3bf7f68844efb171d38ceed732b7597657c020a2ea1e1296b29d7169b09f5"
     },
     {
@@ -2255,6 +2569,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-09-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "0cdc421df4e1e05920e731ffca95fe1943bb6efb4206c054ef5ed11cfe4872fb"
     },
     {
@@ -2264,6 +2579,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-10-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "6af6c3b83f4690248c7f95c3143591eaf21365238ee766cc30f96cec0192f520"
     },
     {
@@ -2273,6 +2589,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-11-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "7c8e330ebe85852becf5a8bbce59f3e3e9701035b4bebaecb5b8e11d11c65775"
     },
     {
@@ -2282,6 +2599,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-12-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "4cbeeeee6ac55cc4c7aa8cb7649898bb68d2c8ae02a0f1b7fa9bd57bf2d73241"
     },
     {
@@ -2291,6 +2609,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-13-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "16e3c305c9d7f159e96b4d899e0aff6ff14349a97710c669bc6b2f4990abb5ba"
     },
     {
@@ -2300,6 +2619,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-14-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "92f4ba40800d95b58fafeb7ce5b810eb321de7740ea5ade374341208333775a3"
     },
     {
@@ -2309,6 +2629,7 @@
      "thumb": "/img/ctr/ap-boxes/turbo-track/box-15-thumb.webp",
      "shortcut_knowledge": null,
      "hint": null,
+     "requirements": [],
      "source_sha256": "fd7a1aa7514d688de13f5dfe4b8c49d26f73995b7d8f476e97906bb7a76f6d1c"
     }
    ]

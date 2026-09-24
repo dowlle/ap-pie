@@ -57,6 +57,50 @@ SHORTCUT_KNOWLEDGE: dict[tuple[str, int], str] = {
     ("Oxide Station", 6): "Hard",
 }
 
+# Item requirements per box, copied from BOX_RULES in the apworld's
+# item_boxes.py (identical in 0.2.0 and main): (Progressive Boost count,
+# one upgrade of each stat). Each term only applies while its option is on.
+BOX_RULES: dict[tuple[str, int], tuple[int, bool]] = {
+    ("Crash Cove", 4): (1, False), ("Crash Cove", 9): (1, False), ("Crash Cove", 10): (1, False),
+    ("Sewer Speedway", 2): (1, False), ("Sewer Speedway", 3): (1, False),
+    ("Papu's Pyramid", 6): (1, False), ("Papu's Pyramid", 12): (1, False),
+    ("Papu's Pyramid", 7): (1, True), ("Papu's Pyramid", 10): (1, True),
+    ("Polar Pass", 14): (1, False), ("Polar Pass", 15): (1, False), ("Polar Pass", 9): (1, True),
+    ("Cortex Castle", 10): (1, False), ("Cortex Castle", 11): (2, False),
+    ("N. Gin Labs", 4): (2, False), ("N. Gin Labs", 5): (2, False), ("N. Gin Labs", 6): (2, False),
+    ("N. Gin Labs", 7): (2, False), ("N. Gin Labs", 8): (2, False), ("N. Gin Labs", 9): (2, False),
+    ("N. Gin Labs", 14): (2, False), ("N. Gin Labs", 15): (2, False),
+    ("Oxide Station", 6): (0, True), ("Oxide Station", 13): (2, False),
+    ("Hot Air Skyway", 1): (2, False), ("Hot Air Skyway", 2): (2, False), ("Hot Air Skyway", 3): (2, False),
+    ("Hot Air Skyway", 4): (2, False), ("Hot Air Skyway", 5): (2, False), ("Hot Air Skyway", 6): (2, False),
+    ("Hot Air Skyway", 7): (2, False), ("Hot Air Skyway", 8): (2, True), ("Hot Air Skyway", 9): (2, False),
+    ("Hot Air Skyway", 13): (2, False), ("Hot Air Skyway", 14): (2, False), ("Hot Air Skyway", 15): (2, False),
+    ("Tiny Arena", 1): (1, False),
+}
+
+BOOST_TEXT = {
+    1: "With Progressive Boost on: 1 Progressive Boost (boost).",
+    2: "With Progressive Boost on: 2 Progressive Boost (Ultimate Sacred Fire).",
+}
+STATS_TEXT = "With Progressive Stats on: one Top Speed, one Acceleration and one Turning upgrade."
+DOOR_TEXT = (
+    "With Itemsanity on: a weapon that breaks the stone door: Bomb, Missile, "
+    "Beaker, Shield Bubble or Mask, or a x3 version."
+)
+
+
+def _requirements(name: str, number: int) -> list[str]:
+    boost, stats = BOX_RULES.get((name, number), (0, False))
+    out = []
+    if boost:
+        out.append(BOOST_TEXT[boost])
+    if stats:
+        out.append(STATS_TEXT)
+    if (name, number) == ("Tiger Temple", 5):
+        out.append(DOOR_TEXT)
+    return out
+
+
 # Written for pictures where the surroundings alone are hard to recognise.
 HINTS: dict[tuple[str, int], str] = {
     ("Oxide Station", 11): "Floats in open space just above the edge of the platform right after the tunnel exit.",
@@ -68,7 +112,8 @@ HINTS: dict[tuple[str, int], str] = {
     ("Cortex Castle", 8): "On the walkway along the outside of the castle wall.",
     ("Cortex Castle", 9): "On the walkway along the outside of the castle wall.",
     ("Crash Cove", 7): "Floats in the air next to the bow of the pirate ship, over the water.",
-    ("Tiger Temple", 5): "At the far end of the dark tunnel, where it opens back up to the outside.",
+    ("Tiger Temple", 5): "In the shortcut tunnel behind the breakable stone door, at the far end where it opens back up to the outside.",
+    ("Hot Air Skyway", 8): "On the shortcut route. You can only reach it by taking the shortcut.",
     ("Tiger Temple", 10): "On the path at the corner of the temple wall.",
     ("Hot Air Skyway", 5): "Floats in open air just past the end of the road piece, next to the small blue balloon.",
 }
@@ -126,6 +171,7 @@ def main(src_dir: Path) -> int:
                         "thumb": thumb,
                         "shortcut_knowledge": SHORTCUT_KNOWLEDGE.get((name, number)),
                         "hint": HINTS.get((name, number)),
+                        "requirements": _requirements(name, number),
                         "source_sha256": digest,
                     }
                 )
