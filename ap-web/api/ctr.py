@@ -415,6 +415,9 @@ def ctr_ap_boxes_index() -> str:
         f"Find any AP item box in CTR Archipelago: {AP_BOX_TOTAL} labelled pictures "
         "across all 18 tracks, one page per track."
     )
+    og_image = _canonical("/img/ctr/ap-boxes/og/index.jpg")
+    page_node = seo.page(config.PUBLIC_BASE_URL, "CollectionPage", canonical_url, title, description)
+    page_node["primaryImageOfPage"] = og_image
     hubs: list[dict] = []
     for track in AP_BOX_TRACKS:
         if not hubs or hubs[-1]["name"] != track["hub"]:
@@ -431,11 +434,14 @@ def ctr_ap_boxes_index() -> str:
         meta_description=description,
         canonical_url=canonical_url,
         og_type="article",
-        og_image=_canonical("/img/ctr/og-ctr.jpg"),
+        og_image=og_image,
+        og_image_width=1200,
+        og_image_height=630,
+        og_image_alt=f"CTR Archipelago AP box locations: {AP_BOX_TOTAL} boxes on 18 tracks, with labelled pictures",
         site_url=_canonical("/"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,
-            seo.page(config.PUBLIC_BASE_URL, "CollectionPage", canonical_url, title, description),
+            page_node,
             _ap_box_breadcrumb("/ctr/reference/ap-boxes"),
         ),
     )
@@ -463,7 +469,8 @@ def ctr_ap_boxes_track(track_slug: str) -> str:
         "in CTR Archipelago, with a labelled picture of each box."
     )
     page_node = seo.page(config.PUBLIC_BASE_URL, "WebPage", canonical_url, title, description)
-    page_node["primaryImageOfPage"] = _canonical(track["boxes"][0]["full"])
+    og_image = _canonical(f"/img/ctr/ap-boxes/og/{track_slug}.jpg")
+    page_node["primaryImageOfPage"] = og_image
     return render_template(
         "ctr/ap-boxes-track.html",
         track=track,
@@ -476,7 +483,10 @@ def ctr_ap_boxes_track(track_slug: str) -> str:
         meta_description=description,
         canonical_url=canonical_url,
         og_type="article",
-        og_image=_canonical(track["boxes"][0]["full"]),
+        og_image=og_image,
+        og_image_width=1200,
+        og_image_height=630,
+        og_image_alt=f"Map of {track['name']} in CTR Archipelago with its {len(track['boxes'])} AP boxes numbered",
         site_url=_canonical("/"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,
