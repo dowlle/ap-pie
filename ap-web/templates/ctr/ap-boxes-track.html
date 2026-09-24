@@ -1,0 +1,87 @@
+{% extends "guides/base.html" %}
+{% block head_extra %}
+{% include "ctr/_ap-boxes-style.html" %}
+{% endblock %}
+{% block main %}
+  <nav class="section-subnav" aria-label="CTR section">
+    <a href="/ctr">Overview</a>
+    <a href="/ctr/download">Download</a>
+    <a href="/guides/ctr">Setup guide</a>
+    <a class="current" aria-current="page" href="/ctr/reference">Reference</a>
+  </nav>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/ctr">CTR Archipelago</a><span class="sep">/</span><a href="/ctr/reference">Reference</a><span class="sep">/</span><a href="/ctr/reference/ap-boxes">AP box locations</a><span class="sep">/</span>{{ track.name }}</nav>
+  <header class="apbox-hero">
+    <h1>{{ track.name }} AP box locations</h1>
+    <p class="lede">{{ track.boxes|length }} AP item boxes, in the order of their Item Box numbers. Select a picture to see it full size.</p>
+  </header>
+  <p class="apbox-meta">{{ track.hub }} · Published <time datetime="{{ published }}">{{ published }}</time> · Updated <time datetime="{{ updated }}">{{ updated }}</time></p>
+  {% if track.map %}
+  <figure class="apbox-map">
+    {% include "ctr/ap-box-maps/" ~ track.slug ~ ".svg" %}
+    {% set tiers = track.boxes|map(attribute="shortcut_knowledge")|list %}
+    <figcaption>{{ map_caption }}{% if "Medium" in tiers %} <span class="apbox-tier">M</span> only with Shortcut Knowledge Medium or Hard.{% endif %}{% if "Hard" in tiers %} <span class="apbox-tier">H</span> only with Shortcut Knowledge Hard.{% endif %}</figcaption>
+  </figure>
+  {% endif %}
+  <div class="apbox-grid">
+    {% for box in track.boxes %}
+    <article class="apbox-card" id="box-{{ box.number }}">
+      <a class="apbox-open" href="{{ box.full }}" data-index="{{ loop.index0 }}" data-name="{{ box.name }}">
+        <img src="{{ box.thumb }}" alt="{{ box.name }}{% if box.hint %}. {{ box.hint }}{% endif %}" width="480" height="270" {% if loop.index > 3 %}loading="lazy" {% endif %}decoding="async">
+      </a>
+      <div class="apbox-text">
+        <h2><a href="#box-{{ box.number }}">{{ box.name }}</a></h2>
+        {% if box.hint %}<p>{{ box.hint }}</p>{% endif %}
+        {% if box.requirements %}<ul class="apbox-req">{% for req in box.requirements %}<li>{{ req }}</li>{% endfor %}</ul>{% endif %}
+        {% if box.shortcut_knowledge == "Medium" %}<span class="badge">Only with Shortcut Knowledge Medium or Hard</span>{% elif box.shortcut_knowledge == "Hard" %}<span class="badge">Only with Shortcut Knowledge Hard</span>{% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <nav class="apbox-pager" aria-label="Other tracks">
+    {% if previous_track %}<a href="/ctr/reference/ap-boxes/{{ previous_track.slug }}">← {{ previous_track.name }}</a>{% else %}<span></span>{% endif %}
+    <a href="/ctr/reference/ap-boxes">All tracks</a>
+    {% if next_track %}<a href="/ctr/reference/ap-boxes/{{ next_track.slug }}">{{ next_track.name }} →</a>{% else %}<span></span>{% endif %}
+  </nav>
+  <dialog class="apbox-dialog" id="apbox-dialog" aria-label="Full size picture">
+    <div class="apbox-dialog-bar">
+      <span id="apbox-dialog-name"></span>
+      <button type="button" data-step="-1" aria-label="Previous box">←</button>
+      <button type="button" data-step="1" aria-label="Next box">→</button>
+      <button type="button" data-close aria-label="Close">Close</button>
+    </div>
+    <img id="apbox-dialog-img" alt="">
+  </dialog>
+  <script>
+    (function () {
+      var dialog = document.getElementById("apbox-dialog");
+      if (!dialog || typeof dialog.showModal !== "function") { return; }
+      var links = Array.prototype.slice.call(document.querySelectorAll(".apbox-open"));
+      var img = document.getElementById("apbox-dialog-img");
+      var name = document.getElementById("apbox-dialog-name");
+      var current = 0;
+      function show(i) {
+        current = (i + links.length) % links.length;
+        var link = links[current];
+        img.src = link.getAttribute("href");
+        img.alt = link.querySelector("img").alt;
+        name.textContent = link.dataset.name;
+      }
+      links.forEach(function (link, i) {
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          show(i);
+          dialog.showModal();
+        });
+      });
+      dialog.addEventListener("click", function (event) {
+        var target = event.target;
+        if (target === dialog || target.hasAttribute("data-close")) { dialog.close(); return; }
+        if (target.dataset.step) { show(current + parseInt(target.dataset.step, 10)); }
+      });
+      dialog.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowLeft") { show(current - 1); }
+        if (event.key === "ArrowRight") { show(current + 1); }
+      });
+    })();
+  </script>
+{% endblock %}
