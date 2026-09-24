@@ -15,7 +15,6 @@
     <p class="lede">A picture of every AP item box on all 18 tracks, {{ total }} in total. Pick a track, or jump straight to a box by its number.</p>
   </header>
   <p class="apbox-meta">Published <time datetime="{{ published }}">{{ published }}</time> · Updated <time datetime="{{ updated }}">{{ updated }}</time></p>
-{% include "ctr/_ap-boxes-note.html" %}
   <form class="apbox-find" id="apbox-find" action="/ctr/reference/ap-boxes" method="get">
     <label>Track
       <select id="apbox-find-track" required>
