@@ -188,7 +188,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "dee583a20cfc0fbc6c4e4a651e6cd71106add96d4a408ba6e2cdb36ae9651495"
+     "source_sha256": "2433ce5cedc506f797e817c5fb4e66edc2f21e4b768ff2182905e7a68040dcee"
     },
     {
      "number": 8,
@@ -256,7 +256,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "7ad3a1b668ed252506265272fde58ed8761cb6e4eae529c85f3edde458b0bdb4"
+     "source_sha256": "10c8bbc15636c0c9958c3b67348f5f60d50c978215d47b4d235009de736be8aa"
     },
     {
      "number": 3,
@@ -566,7 +566,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "5383f8642df3e5c6abca54fa98a372f35e743859b03973926dc8731e1cc58ad5"
+     "source_sha256": "63cf997382aede97f7644ec3448b09c48b169320363ebddaaad9361296f4dcca"
     },
     {
      "number": 4,
@@ -576,7 +576,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "189e6fdcf5720df630205d02b11e45fa25ea10a5fd19385b91158c42dfe1a684"
+     "source_sha256": "236b4dcf8790d35a929e3b01cfb0068888e29fcc7cffdf7a43b023a0091a53f2"
     },
     {
      "number": 5,
@@ -586,7 +586,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "23ff1499acf56883ecd58297a5987e86a859786c897056acec04d16635e9eccb"
+     "source_sha256": "1a48526eb6558ea1fe7f1a1793cdb2bdf8394c79536cce29fe9effd72db1b06c"
     },
     {
      "number": 6,
@@ -616,7 +616,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "2624905564e989658236cf8ebca1259b119da057e1752862ff45cf67a4480636"
+     "source_sha256": "7676da492ce54a07ecb327837051570d9c4b049460c1b7ff496e630af08cd5ea"
     },
     {
      "number": 9,
@@ -746,7 +746,7 @@
      "shortcut_knowledge": null,
      "hint": "On the path at the corner of the temple wall.",
      "requirements": [],
-     "source_sha256": "d1c13a3b8d96fee70dd89e027a9e65e91af72fc7c5794fb0a80868e0754d6bef"
+     "source_sha256": "0b433a675ebeb90fd32faef16734ad4d4800c1ee9dd8cb6cfad33421f62e4aa2"
     }
    ]
   },
@@ -774,7 +774,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "2a60800376d6814edd65ef8243a7369b1b8bd9e5126b2fd080e72dddd2980b21"
+     "source_sha256": "688a9fe6a8ee5a6d395f2fb823c16e058241ec634c516a13598d01d8a7dcd3ec"
     },
     {
      "number": 3,
@@ -922,7 +922,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "538a41d38a5011d3e26a15db74bcf68882e288efe51070265c96cc358dc55c52"
+     "source_sha256": "61f1aa32ae6787de6993bba52d880be2fd950a406aedd4d4078017dbf2fe6615"
     },
     {
      "number": 4,
@@ -972,7 +972,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "8dbad308d3fd17cd61a31cd84d268d38de74e8f78dda72910b23c34c63783fb9"
+     "source_sha256": "d20cfaaae920d81c6de4ae6d5d121b8e57d6972843e976827be09ae0f73abb02"
     },
     {
      "number": 9,
@@ -1090,7 +1090,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "8e9a38ffb269d129c8d2c5f992e31f8018f24042b41246bec4022a45e61aad0f"
+     "source_sha256": "0daa32aae58882d3c3ba0003087b37c2c11be4bf039a011be626f2adadfccf20"
     },
     {
      "number": 5,
@@ -1406,7 +1406,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "e62b2716e545cf0b068c44fbfe036c8b57bac846e77c8d1c6d3ba3770de89205"
+     "source_sha256": "6bc88db3b4b49c94a0de7523e69daea2716a45cf8d0e00fbdc8b53badbd398f9"
     },
     {
      "number": 8,
@@ -1416,7 +1416,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "88e19db9c5df9f2ceda5c096538c123458a91626e8cc4228caea4968cae958f8"
+     "source_sha256": "451ed7ae0c144f4bcb111cd3154a0dbc9eafc8702c018d27f850aa44aa554076"
     },
     {
      "number": 9,
@@ -1671,7 +1671,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "9bdfff61675f5636ba43fd17799125bc694104bdf6f8eb4473d9ba2ee2ff47dd"
+     "source_sha256": "f250ff9a53dd07e8f5ab0499c13998493b024f3bb719f22b2b48b6c46e2370d8"
     },
     {
      "number": 2,
@@ -1803,7 +1803,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "00b71f7139aa0f5a2846887952de4cb43a6714e3b85192518b66a59ff9a16d98"
+     "source_sha256": "3edce09aaf6894e728d6f31cb3a697d1826048ffc1d31fb63f22e32f0a6b6922"
     },
     {
      "number": 14,
@@ -1875,7 +1875,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "6e3ff8d6332ccfa03e2f6a8cca8620139ac8894581de8d11b7c73e4ece6db2d2"
+     "source_sha256": "81a1b81eeaefe299c943e014771da1f3cc6350435d03bb262591b786bac194e3"
     },
     {
      "number": 5,
@@ -1895,7 +1895,7 @@
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
      "requirements": [],
-     "source_sha256": "2ef42504a639708798daab5c4a1929aed4689fad929c1ef49e530853a5880579"
+     "source_sha256": "99951b4101c4fe1becd609143551b4985336c08bc5048585a61c8a8c6da098d9"
     },
     {
      "number": 7,
@@ -1905,7 +1905,7 @@
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
      "requirements": [],
-     "source_sha256": "04260a61927afe06f349f38f7821ba2770996b60d5e8528248e826600e0eb4cf"
+     "source_sha256": "564fc4625d3a80469c3e1a425a9746bb5a9af42704bb3d5df94cce52a277b626"
     },
     {
      "number": 8,
@@ -1915,7 +1915,7 @@
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
      "requirements": [],
-     "source_sha256": "16797e505871634f032b40eef022af436f3c85b28736fef052a3c6de80abcbc9"
+     "source_sha256": "599b5496da29536956eb16bf4c810133d042b56ccd57ea59a6639e659820ed71"
     },
     {
      "number": 9,
@@ -1925,7 +1925,7 @@
      "shortcut_knowledge": null,
      "hint": "On the walkway along the outside of the castle wall.",
      "requirements": [],
-     "source_sha256": "c9d9eaee567086b5e16326d7af57055c00567f7bc6de24e5f5cf3324ffafa9a8"
+     "source_sha256": "3351cc7d506dffdaa0c0878bef4c99398d1387384a79b7913e3dd18019974f3b"
     },
     {
      "number": 10,
@@ -2190,7 +2190,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "99d95b2ab701b85c5f0cb3ed8837d2c95dae989cc949ae5708f85455c923c330"
+     "source_sha256": "a53cc2820e7baddce68102f90dfdf3dc3bb820146148a9687bb98ebb8ad29314"
     },
     {
      "number": 3,
@@ -2232,7 +2232,7 @@
      "requirements": [
       "With Progressive Stats on: one Top Speed, one Acceleration and one Turning upgrade."
      ],
-     "source_sha256": "fc4d03e4467c66b78fcc6cb1652dd16154c0107f5b75a24f4e39a1556a2eb2a4"
+     "source_sha256": "a6fdc9f4864f75a92b403a194828c00afbb29144ceefc35488143e97ca3aa431"
     },
     {
      "number": 7,
@@ -2272,7 +2272,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "8b9e3fd204d84a4217bc2b8dce07f2f026241eee973bf48f913a0a9e8965b454"
+     "source_sha256": "574f9de5a00d9bfd5487660003cf8df9b079188d0437aed402661c5ffda3be04"
     },
     {
      "number": 11,
@@ -2500,7 +2500,7 @@
      "shortcut_knowledge": null,
      "hint": null,
      "requirements": [],
-     "source_sha256": "8f00177fa474b012be50c37b5320ca751d3a1d2e5d7baa991639d69cbbcceea6"
+     "source_sha256": "82922342e3fb85f69da7e61bffce9448685c07c35c99da9ba601b086dcc4147d"
     },
     {
      "number": 3,
