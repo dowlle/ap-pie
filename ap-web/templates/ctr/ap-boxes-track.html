@@ -31,6 +31,7 @@
       <div class="apbox-text">
         <h2><a href="#box-{{ box.number }}">{{ box.name }}</a></h2>
         {% if box.hint %}<p>{{ box.hint }}</p>{% endif %}
+        {% if box.requirements %}<ul class="apbox-req">{% for req in box.requirements %}<li>{{ req }}</li>{% endfor %}</ul>{% endif %}
         {% if box.shortcut_knowledge == "Medium" %}<span class="badge">Only with Shortcut Knowledge Medium or Hard</span>{% elif box.shortcut_knowledge == "Hard" %}<span class="badge">Only with Shortcut Knowledge Hard</span>{% endif %}
       </div>
     </article>
