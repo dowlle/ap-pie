@@ -3,7 +3,9 @@
 Reads the render manifest (manifest.csv from the CTR editor-shots tool) and
 writes, per box, a full-size WebP and a 480x270 thumbnail under
 ap-web/frontend/public/img/ctr/ap-boxes/<track-slug>/, plus the page data file
-ap-web/guides/ctr-reference/ap-boxes.json. Re-running after a re-shoot only
+ap-web/guides/ctr-reference/ap-boxes.json. A track map
+(<track-slug>/<track-slug>-map.svg), when present, is copied to
+ap-web/templates/ctr/ap-box-maps/<track-slug>.svg for inline use. Re-running after a re-shoot only
 rewrites pictures whose source PNG changed (tracked by sha256 in the data file).
 
 Usage:
@@ -23,6 +25,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 IMG_DIR = ROOT / "ap-web" / "frontend" / "public" / "img" / "ctr" / "ap-boxes"
 DATA_FILE = ROOT / "ap-web" / "guides" / "ctr-reference" / "ap-boxes.json"
+MAP_DIR = ROOT / "ap-web" / "templates" / "ctr" / "ap-box-maps"
 
 FULL_QUALITY = 80
 THUMB_SIZE = (480, 270)
@@ -126,7 +129,13 @@ def main(src_dir: Path) -> int:
                         "source_sha256": digest,
                     }
                 )
-            tracks.append({"name": name, "slug": slug, "hub": hub, "boxes": boxes})
+            map_src = src_dir / slug / f"{slug}-map.svg"
+            if map_src.is_file():
+                MAP_DIR.mkdir(parents=True, exist_ok=True)
+                (MAP_DIR / f"{slug}.svg").write_bytes(map_src.read_bytes())
+            tracks.append(
+                {"name": name, "slug": slug, "hub": hub, "map": map_src.is_file(), "boxes": boxes}
+            )
 
     DATA_FILE.write_text(json.dumps({"tracks": tracks}, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     total = sum(len(t["boxes"]) for t in tracks)

@@ -16,6 +16,13 @@
   </header>
   <p class="apbox-meta">{{ track.hub }} · Published <time datetime="{{ published }}">{{ published }}</time> · Updated <time datetime="{{ updated }}">{{ updated }}</time></p>
 {% include "ctr/_ap-boxes-note.html" %}
+  {% if track.map %}
+  <figure class="apbox-map">
+    {% include "ctr/ap-box-maps/" ~ track.slug ~ ".svg" %}
+    {% set tiers = track.boxes|map(attribute="shortcut_knowledge")|list %}
+    <figcaption>{{ map_caption }}{% if "Medium" in tiers %} <span class="apbox-tier">M</span> only with Shortcut Knowledge Medium or Hard.{% endif %}{% if "Hard" in tiers %} <span class="apbox-tier">H</span> only with Shortcut Knowledge Hard.{% endif %}</figcaption>
+  </figure>
+  {% endif %}
   <div class="apbox-grid">
     {% for box in track.boxes %}
     <article class="apbox-card" id="box-{{ box.number }}">

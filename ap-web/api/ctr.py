@@ -120,6 +120,10 @@ AP_BOX_TRACKS: list[dict] = json.loads(
     (_REFERENCE_DIR / "ap-boxes.json").read_text(encoding="utf-8")
 )["tracks"]
 _AP_BOX_TRACK_BY_SLUG = {track["slug"]: track for track in AP_BOX_TRACKS}
+AP_BOX_MAP_CAPTION = (
+    "Map seen from above. Select a number to jump to that box. Orange arrows show "
+    "the driving direction; lighter road is higher up."
+)
 AP_BOX_TOTAL = sum(len(track["boxes"]) for track in AP_BOX_TRACKS)
 
 # Consumed by api/guides.py for /sitemap.xml and /llms.txt so the CTR section
@@ -463,6 +467,7 @@ def ctr_ap_boxes_track(track_slug: str) -> str:
     return render_template(
         "ctr/ap-boxes-track.html",
         track=track,
+        map_caption=AP_BOX_MAP_CAPTION,
         previous_track=previous_track,
         next_track=next_track,
         published=AP_BOXES_PUBLISHED,
