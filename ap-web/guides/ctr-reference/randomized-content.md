@@ -16,7 +16,7 @@ A **check** is something you do to send an item, such as winning a race or break
 - **Race and challenge rewards:** Trophy Races, Relic Races, CTR Token Challenges, Boss Races, Gem Cups and Crystal Challenges can send items to the multiworld.
 - **Podium checks:** add rewards for holding a position during a race or finishing in the top three. You can also include a check for finishing in any position.
 - **Itemsanity:** unlock weapons by receiving them from the multiworld. Using each of the 11 Adventure weapons sends a check, with another for using it while holding ten Wumpa. Weapon unlocks and all 22 firing checks are enabled together.
-- **AP boxes:** add extra AP boxes to the tracks for more places to search. Breaking one sends its item to the player it belongs to.
+- **AP boxes:** add extra AP boxes to the tracks for more places to search. Breaking one sends its item to the player it belongs to. The [AP box locations](/ctr/reference/ap-boxes) pages show where every box is.
 - **Lettersanity:** collecting individual C, T and R letters can send checks. You can also require letter items from the multiworld before you can collect them, or combine both settings. The Letters Per Track option lets you use fewer letter checks.
 - **Wumpa:** add one check for reaching ten Wumpa anywhere, or one for each eligible track. You can also receive upgrades to your starting Wumpa and bundles of fruit.
 

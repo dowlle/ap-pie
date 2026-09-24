@@ -11,6 +11,7 @@ import { buildYamlContent, downloadYaml, isRandomValue } from "../lib/yamlBuild"
 import { CORE_CATEGORY, CORE_OPTIONS } from "../lib/coreOptions";
 import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
+import { normalizeOptionHelp } from "../lib/optionHelpText";
 import MarkdownText from "./MarkdownText";
 import {
   createBuilderAttemptId,
@@ -1405,8 +1406,10 @@ function OptionsForm({
  * Rendered as markdown because some authors write it that way: a sample of
  * 25 index worlds (2026-08-17) found 6% of descriptions using `**bold**`,
  * backticks or `-` bullets, which previously showed as literal syntax.
- * Plain-prose descriptions - the other 94% - render identically to before,
- * since remark-breaks keeps single newlines as line breaks.
+ * normalizeOptionHelp first joins the author's hard-wrapped source lines
+ * into paragraphs, keeps meaningful breaks (lists, "Label: text" lines,
+ * indented lines) and turns reST `::` example blocks into code blocks,
+ * which are shown when the help is expanded.
  *
  * The text is third-party content from the index, so it goes through the
  * same MarkdownText component as room descriptions: no raw HTML, no
@@ -1456,6 +1459,7 @@ function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "cu
 }
 
 function OptionDescription({ text }: { text?: string | null }) {
+  const markdown = useMemo(() => normalizeOptionHelp(text), [text]);
   const [expanded, setExpanded] = useState(false);
   const [canCollapse, setCanCollapse] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -1504,13 +1508,13 @@ function OptionDescription({ text }: { text?: string | null }) {
     observer.observe(row);
     observer.observe(control);
     return () => observer.disconnect();
-  }, [text]);
+  }, [markdown]);
 
-  if (!text) return null;
+  if (!markdown) return null;
   return (
     <div className="yaml-builder-option-desc" ref={rootRef}>
       <div className={`yaml-builder-option-desc-content${canCollapse && !expanded ? " yaml-builder-desc-clamp" : ""}`}>
-        <MarkdownText source={text} />
+        <MarkdownText source={markdown} />
       </div>
       {canCollapse && (
         <button
