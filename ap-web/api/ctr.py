@@ -323,7 +323,7 @@ def ctr_landing() -> str:
         "ctr/landing.html",
         **nav,
         faq=CTR_FAQ,
-        latest_release=RELEASE_PAGES[0],
+        latest_release=next(p for p in RELEASE_PAGES if p["verified_against"] == STABLE["version"]),
         stable=STABLE,
         page_title="Crash Team Racing Archipelago | Archipelago Pie",
         meta_description=description,
