@@ -1,3 +1,5 @@
+![Racing on Cortex Vortex in CTR Archipelago 0.2.1](/img/ctr/cortex-vortex-hero.jpg)
+
 **CTR Archipelago 0.2.1 adds Hit Character checks, races on Slide Coliseum and Turbo Track, Cortex Vortex, an in-game Adventure tracker and room links on Windows, plus a batch of logic fixes.**
 
 **[Download 0.2.1](/ctr/download)** · **[Setup guide](/ctr/setup)** · **[Build a 0.2.1 YAML](/yaml-builder/ctr?version=0.2.1)**
@@ -8,7 +10,7 @@
 - Race Oxide's Final Challenge on [Lockheart's Cortex Vortex](https://www.youtube.com/watch?v=pV2NdYr8W0Y), and optionally put the track on a warp pad and in Gem Cups too.
 - Open the Adventure tracker from the hub pause menu to see checks per destination, racer locks and what you've received.
 - Click your slot's link on an Archipelago room page and the game opens and connects (Windows).
-- AP boxes get a new crate look and can show the colour of the item inside.
+- [AP boxes](/ctr/reference/ap-boxes) get a new crate look and can show the colour of the item inside.
 - Boost requirements, shuffled pads, racer locks and two hard-to-reach AP boxes are fixed.
 
 ## Where should I start?
@@ -32,7 +34,7 @@ I played through the Windows test list in Steam on the release candidate: the ne
 - **Reconnecting:** a large backlog of received items can stall the game for a while. If it happens, include the support bundle in your report. See [#147](https://github.com/dowlle/ctr-native-ap/issues/147).
 - **Steam Deck:** turning on Fullscreen can cause heavy lag. Leave it off. See [#260](https://github.com/dowlle/ctr-native-ap/issues/260).
 - **Podiums:** some characters can appear invisible on the post-race podium. It's cosmetic. See [#282](https://github.com/dowlle/ctr-native-ap/issues/282).
-- **Universal Tracker:** if a YAML in the room fills in `custom_tracks`, Universal Tracker may show a datapackage checksum warning. That's expected; I haven't confirmed yet that tracking works normally on such a seed.
+- **Universal Tracker:** if a YAML in the room fills in `custom_tracks`, Universal Tracker may show a datapackage checksum warning. That's expected, and tracking still works normally.
 - **Cortex Vortex relic times:** the targets are placeholders using Oxide Station's times until the track author sends real ones. Relic Race checks on Cortex Vortex weren't confirmed in game.
 
 ## New checks and options
