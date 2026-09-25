@@ -5997,7 +5997,7 @@ details.yaml-builder-group > summary .muted {
 }
 .lp-game::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--c, var(--accent)); z-index: 1; }
 a.lp-game:hover, .lp-game:has(a:hover) { border-color: var(--c, var(--accent)); text-decoration: none; }
-.lp-game img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--border); }
+.lp-game img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--border); }
 .lp-game > div { padding: 1.2rem 1.35rem 1.4rem; position: relative; }
 .lp-game h3 { font-family: var(--lp-display); font-weight: 500; font-size: 1.3rem; color: var(--text-h); margin: 0 0 0.4rem; }
 .lp-game h3 a { color: inherit; }
@@ -6006,7 +6006,9 @@ a.lp-game:hover, .lp-game:has(a:hover) { border-color: var(--c, var(--accent)); 
 .lp-game-links { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; font-size: 0.88rem; font-weight: 700; }
 .lp-game-links a { color: var(--c, var(--accent)); }
 .lp-game-soon { justify-content: center; border-style: dashed; }
-.lp-join-hint { color: var(--text-muted); margin: 1rem 0 0; }
+.lp-join-hint { color: var(--text-muted); margin: 1rem 0 2rem; }
+.lp-tools-four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
+.lp-game-soon { align-self: start; }
 .lp-join-hint strong { color: var(--text-h); }
 .lp-about { margin-top: 2rem; }
 
