@@ -67,4 +67,8 @@ See [`.env.example`](.env.example) for the full list of environment variables.
 
 ## License
 
-MIT - see [LICENSE](LICENSE).
+Copyright (C) 2026 Dowlle.
+
+Archipelago Pie is licensed under the GNU Affero General Public License v3.0 only (AGPL-3.0-only); see [LICENSE](LICENSE). If you run a modified version as a public website, you must offer its users the source code of your version under the same licence.
+
+Versions released before 2026-09-25 were published under the MIT licence and remain available under it.

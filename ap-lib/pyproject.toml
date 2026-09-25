@@ -3,6 +3,7 @@ name = "ap-lib"
 version = "0.1.0"
 description = "Shared parsing library for Archipelago Multiworld output files"
 requires-python = ">=3.12"
+license = { text = "AGPL-3.0-only" }
 
 [build-system]
 requires = ["setuptools>=61.0"]
