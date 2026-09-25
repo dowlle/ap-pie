@@ -183,6 +183,31 @@ test("Poképelago setup guide is published through every guide surface", async (
   expect(machineIndex).toContain("[Poképelago setup](https://ap-pie.com/guides/pokepelago)");
 });
 
+test("Poképelago Twitch guide is published and cross-linked with the setup guide", async ({ page, request }) => {
+  const guides = await (await request.get("/guides")).text();
+  expect(guides).toContain('href="/guides/pokepelago-twitch"');
+
+  const twitchGuide = await (await request.get("/guides/pokepelago-twitch")).text();
+  expect(twitchGuide).toContain("Poképelago Twitch chat guessing");
+  expect(twitchGuide).toContain('href="/guides/pokepelago"');
+
+  const setupGuide = await (await request.get("/guides/pokepelago")).text();
+  expect(setupGuide).toContain('href="/guides/pokepelago-twitch"');
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("https://ap-pie.com/guides/pokepelago-twitch");
+
+  const machineIndex = await (await request.get("/llms.txt")).text();
+  expect(machineIndex).toContain("[Twitch chat guessing](https://ap-pie.com/guides/pokepelago-twitch)");
+
+  await page.goto("/guides/pokepelago-twitch");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  for (const image of await page.locator("article img, main img").all()) {
+    await expect(image).toHaveAttribute("alt", /.+/);
+    expect(await image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBeTruthy();
+  }
+});
+
 test("contextual pages link directly to the YAML Builder", async ({ page, request }) => {
   const expectedGuideLinks = [
     ["/guides/getting-started", 'href="/yaml-builder"'],
@@ -222,6 +247,7 @@ test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ r
     { path: "/guides", types: ["CollectionPage", "ItemList"], absent: "TechArticle" },
     { path: "/guides/getting-started", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
     { path: "/guides/pokepelago", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
+    { path: "/guides/pokepelago-twitch", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
     { path: "/privacy", types: ["WebPage", "BreadcrumbList"], absent: "TechArticle" },
     { path: "/ctr", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },
     { path: "/ctr/download", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },

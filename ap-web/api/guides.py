@@ -218,10 +218,30 @@ GUIDES: list[dict[str, str]] = [
             "then connect the browser client and start guessing."
         ),
         "published": "2026-08-31",
-        "updated": "2026-09-14",
+        "updated": "2026-09-25",
         "project": "poke",
         "kicker": "Setup",
         "featured": True,
+    },
+    {
+        "slug": "pokepelago-twitch",
+        "file": "pokepelago-twitch.md",
+        "h1": "Poképelago Twitch chat guessing",
+        "page_title": "Poképelago Twitch Chat Guessing for Streamers | Archipelago Pie",
+        "meta_description": (
+            "Let your Twitch viewers guess Pokémon in your Poképelago game: turn on "
+            "chat guessing, sign in for chat confirmations, and test it before you go live."
+        ),
+        "card_title": "Twitch chat guessing",
+        "card_blurb": (
+            "Let your viewers catch Pokémon for you with !guess in chat, and see "
+            "who caught the most on the leaderboard."
+        ),
+        "published": "2026-09-25",
+        "updated": "2026-09-25",
+        "project": "poke",
+        "kicker": "Streaming",
+        "featured": False,
     },
     {
         "slug": "crash-team-racing-pc",

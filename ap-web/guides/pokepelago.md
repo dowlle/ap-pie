@@ -128,6 +128,8 @@ The grid reflects the seed's active regions and the items your slot has received
 
 You can request Archipelago hints from a Pokémon's detail view. The goal and caught count shown by the client come from the generated seed.
 
+Streaming your game? Your Twitch chat can guess Pokémon for you. See [Poképelago Twitch chat guessing](/guides/pokepelago-twitch).
+
 ## Troubleshooting
 
 ### The APWorld will not install or load
