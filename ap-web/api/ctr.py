@@ -39,16 +39,34 @@ _RELEASE_BASE = "https://github.com/dowlle/ctr-native-ap/releases/download"
 # checklist: bump version/released and point the asset URLs at the new GitHub
 # Release. The visible page version and the redirect targets both read from
 # here so they cannot drift apart.
+def release_assets(version: str) -> dict:
+    """GitHub asset URLs of a release. The names have been the same since
+    0.1.5: a versioned client archive per platform plus the APWorld and the
+    template YAML."""
+    tag = f"{_RELEASE_BASE}/v{version}"
+    return {
+        "windows": f"{tag}/ctr-archipelago-v{version}-windows-x86.zip",
+        "linux": f"{tag}/ctr-archipelago-v{version}-linux-x86.tar.gz",
+        "apworld": f"{tag}/ctr.apworld",
+        "template": f"{tag}/Crash.Team.Racing.yaml",
+    }
+
+
 STABLE: dict = {
     "version": "0.2.0",
     "released": "2026-09-10",
-    "downloads": {
-        "windows": f"{_RELEASE_BASE}/v0.2.0/ctr-archipelago-v0.2.0-windows-x86.zip",
-        "linux": f"{_RELEASE_BASE}/v0.2.0/ctr-archipelago-v0.2.0-linux-x86.tar.gz",
-        "apworld": f"{_RELEASE_BASE}/v0.2.0/ctr.apworld",
-        "template": f"{_RELEASE_BASE}/v0.2.0/Crash.Team.Racing.yaml",
-    },
+    "downloads": release_assets("0.2.0"),
 }
+
+# Stable releases that stay downloadable from /ctr/download after a newer one
+# replaces them, newest first. Whatever STABLE is not shows under "Older
+# versions", with version-pinned aliases at /ctr/download/<version>/<asset>.
+# Add the outgoing version here when STABLE moves on.
+KEPT_VERSIONS: list[str] = ["0.2.0"]
+
+
+def older_versions() -> list[str]:
+    return [version for version in KEPT_VERSIONS if version != STABLE["version"]]
 
 # The testing channel. None hides the testing card on /ctr/download. When a
 # pre-release tag exists on GitHub, set this to e.g.
@@ -366,6 +384,20 @@ def ctr_download() -> str:
     return render_template(
         "ctr/download.html",
         **nav,
+        older_versions=[
+            {
+                "version": version,
+                "notes": next(
+                    (f"/ctr/releases/{p['slug']}" for p in RELEASE_PAGES if p["verified_against"] == version),
+                    f"https://github.com/dowlle/ctr-native-ap/releases/tag/v{version}",
+                ),
+            }
+            for version in older_versions()
+        ],
+        stable_notes=next(
+            (f"/ctr/releases/{p['slug']}" for p in RELEASE_PAGES if p["verified_against"] == STABLE["version"]),
+            "/ctr/releases",
+        ),
         stable=STABLE,
         prerelease=PRERELEASE,
         page_title="Download CTR Archipelago | Archipelago Pie",
@@ -399,6 +431,22 @@ def ctr_download_redirect(platform: str):
             "version": STABLE["version"],
             "from_path": analytics.entry_path(request),
         },
+        req=request,
+    )
+    return redirect(url, code=302)
+
+
+@bp.route("/ctr/download/<version>/<platform>")
+def ctr_download_version_redirect(version: str, platform: str):
+    if version not in KEPT_VERSIONS:
+        abort(404)
+    url = release_assets(version).get(platform)
+    if url is None:
+        abort(404)
+    analytics.record_event(
+        "ctr_download",
+        user_id=session.get("user_id"),
+        props={"asset": platform, "version": version, "from_path": analytics.entry_path(request)},
         req=request,
     )
     return redirect(url, code=302)
