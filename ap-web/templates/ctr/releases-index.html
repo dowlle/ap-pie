@@ -1,0 +1,35 @@
+{% extends "guides/base.html" %}
+{% block head_extra %}
+  <style>
+    .release-list { list-style: none; margin: 1.5rem 0 2rem; padding: 0; border-top: 1px solid var(--border); }
+    .release-list li { display: grid; grid-template-columns: 6rem 1fr auto; gap: 0.25rem 1rem; align-items: baseline; padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+    .release-version { color: var(--text-h); font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+    .release-date { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); }
+    .release-summary { grid-column: 2 / 3; color: var(--text-muted); margin: 0; }
+    .release-list a { grid-column: 3; grid-row: 1 / span 2; white-space: nowrap; }
+    @media (max-width: 560px) {
+      .release-list li { grid-template-columns: 1fr auto; }
+      .release-summary { grid-column: 1 / -1; }
+      .release-list a { grid-column: 1 / -1; grid-row: auto; }
+    }
+  </style>
+{% endblock %}
+{% block main %}
+  <h1>CTR Archipelago releases</h1>
+  <p class="guide-lede">Every stable release, newest first. The current stable release is {{ stable.version }}; get it from the <a href="/ctr/download">download page</a>.</p>
+  <ul class="release-list">
+    {% for release in releases %}
+    <li>
+      <span class="release-version">{{ release.version }}</span>
+      <span class="release-date"><time datetime="{{ release.date }}">{{ release.date }}</time>{% if release.version == stable.version %} · current stable{% endif %}</span>
+      <p class="release-summary">{{ release.summary }}</p>
+      {% if release.notes.startswith("/") %}
+      <a href="{{ release.notes }}">Release notes</a>
+      {% else %}
+      <a href="{{ release.notes }}" rel="noopener noreferrer">Release notes on GitHub</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p>Test builds for the next version are published as pre-releases on <a href="{{ test_builds_url }}" rel="noopener noreferrer">GitHub</a>. Use them only if you are helping to test.</p>
+{% endblock %}

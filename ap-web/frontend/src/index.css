@@ -4498,6 +4498,7 @@ details.collapsible-section > .accordion-body {
 .lp-btn { padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; }
 .lp-btn-ghost { background: transparent; color: var(--accent-light); border: 1px solid var(--border-strong); }
 .lp-btn-ghost:hover { border-color: var(--accent); }
+.lp-about .lp-capability { margin: 0 0 1rem; max-width: 48rem; }
 .lp-capability {
   position: relative;
   color: var(--text-muted);
@@ -4908,10 +4909,6 @@ details.yaml-builder-group > summary .muted {
   overflow: visible;
 }
 
-.journey-entry { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin: 1.5rem 0; }
-.journey-entry > * { padding: 1.25rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); }
-.journey-entry h2 { font-size: 1.15rem; }
-.journey-entry input { display: block; width: 100%; margin: .5rem 0; }
 .yaml-room-context { display: flex; gap: .75rem; flex-wrap: wrap; padding: 1rem; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1rem; }
 .yaml-room-context span { flex-basis: 100%; }
 @media (max-width: 980px) {
@@ -5970,3 +5967,31 @@ details.yaml-builder-group > summary .muted {
 }
 /* Full archive digests must remain readable on small screens. */
 .apworld-review-digest code { overflow-wrap: anywhere; word-break: break-all; }
+
+/* FEAT-55 (2026-09-25): games made here, with a picture per game. */
+.lp-games { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+.lp-game {
+  position: relative; display: flex; flex-direction: column; overflow: hidden; color: var(--text);
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+  transition: border-color 180ms ease;
+}
+.lp-game::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--c, var(--accent)); z-index: 1; }
+a.lp-game:hover, .lp-game:has(a:hover) { border-color: var(--c, var(--accent)); text-decoration: none; }
+.lp-game img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--border); }
+.lp-game > div { padding: 1.2rem 1.35rem 1.4rem; position: relative; }
+.lp-game h3 { font-family: var(--lp-display); font-weight: 500; font-size: 1.3rem; color: var(--text-h); margin: 0 0 0.4rem; }
+.lp-game h3 a { color: inherit; }
+.lp-game p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
+.lp-game .lp-st { position: static; display: inline-block; margin-bottom: 0.5rem; color: var(--c, var(--accent)); }
+.lp-game-links { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; font-size: 0.88rem; font-weight: 700; }
+.lp-game-links a { color: var(--c, var(--accent)); }
+.lp-game-soon { justify-content: center; border-style: dashed; }
+.lp-join-hint { color: var(--text-muted); margin: 1rem 0 2rem; }
+.lp-tools-four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
+.lp-game-soon { align-self: start; }
+.lp-join-hint strong { color: var(--text-h); }
+.lp-about { margin-top: 2rem; }
+
+/* Join room on the room page (FEAT-55): the main action for a player. */
+.join-room { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; margin: 0.25rem 0 0.75rem; }
+.join-room p { margin: 0; }

@@ -6,7 +6,7 @@ Crash Team Racing, the 1999 PlayStation kart racer, can be played on a modern PC
 
 Over several years, the [CTR-ModSDK](https://github.com/CTR-tools/CTR-ModSDK) project decompiled Crash Team Racing: the community reconstructed the game's original code from the PlayStation release. On top of that work, [ctr-native](https://github.com/CTR-tools/ctr-native) rebuilds the game as a real PC program. Both projects are open source, and neither is affiliated with the game's publisher.
 
-A decompilation does more than enable a PC port. Because the game's code is readable again, modding becomes practical in a way it never was on the original disc. The randomizer covered [elsewhere on this site](/guides/ctr) exists because of exactly that.
+A decompilation does more than enable a PC port. Because the game's code is readable again, modding becomes practical in a way it never was on the original disc. The randomizer covered [elsewhere on this site](/ctr/setup) exists because of exactly that.
 
 ## What you need
 
@@ -30,4 +30,4 @@ Keep in mind that the port is in active development and its releases are marked 
 
 ## Want more than vanilla?
 
-The same decompilation powers a growing mod scene, and the biggest thing built on it so far is **CTR Archipelago**: a randomizer that shuffles the adventure mode's progression and can connect your race to a multiworld with your friends' games. It ships as its own standalone build of the port, so it is one download with the same setup as above. Start with [our CTR Archipelago guide](/guides/ctr), and if multiworlds are new to you, [Getting started with Archipelago](/guides/getting-started) explains the concept first.
+The same decompilation powers a growing mod scene, and the biggest thing built on it so far is **CTR Archipelago**: a randomizer that shuffles the adventure mode's progression and can connect your race to a multiworld with your friends' games. It ships as its own standalone build of the port, so it is one download with the same setup as above. Start with [our CTR Archipelago guide](/ctr/setup), and if multiworlds are new to you, [Getting started with Archipelago](/guides/getting-started) explains the concept first.

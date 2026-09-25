@@ -1,6 +1,6 @@
 **CTR Archipelago 0.2.0 is the current stable release, published September 10, 2026.** It adds more things to find, more ways to build your kart and more choices for your Adventure Mode goal. Most new systems are optional settings chosen before the game is generated.
 
-**[Download 0.2.0](/ctr/download)** · **[Setup guide](/guides/ctr)** · **[Build a 0.2.0 YAML](/yaml-builder/ctr?version=0.2.0)**
+**[Download 0.2.0](/ctr/download)** · **[Setup guide](/ctr/setup)** · **[Build a 0.2.0 YAML](/yaml-builder/ctr?version=0.2.0)**
 
 ## At a glance
 
@@ -14,7 +14,7 @@ In Archipelago, a **check** is an action that awards something, such as winning 
 
 ## Where should I start?
 
-- **Joining a room that is already generated?** Follow the [CTR setup guide](/guides/ctr): download the client, add your disc image and connect with the server address and slot name your host provides. You do not need to install the APWorld just to play.
+- **Joining a room that is already generated?** Follow the [CTR setup guide](/ctr/setup): download the client, add your disc image and connect with the server address and slot name your host provides. You do not need to install the APWorld just to play.
 - **Preparing settings for a new room?** Open the [0.2.0 YAML Builder](/yaml-builder/ctr?version=0.2.0), set your player name and options, download the YAML and send it to your host. The [YAML guide](/guides/setting-up-your-yaml) explains the file.
 - **Generating or hosting the multiworld?** Install the matching [0.2.0 APWorld](/ctr/download/apworld), collect everyone's YAMLs and follow the [hosting guide](/guides/hosting-a-multiworld). AP-Pie helps prepare and collect settings; generation and the game server run through Archipelago.
 
@@ -25,7 +25,7 @@ Prefer video? Watch Appie's [CTR setup walkthrough](https://youtu.be/9x63P6JP93E
 - **New games:** use the matching 0.2.0 client and APWorld, a 0.2.0 YAML and a fresh seed. A seed is the generated game shared by the room.
 - **An ongoing room:** ask the host before changing versions. Do not assume an Alpha seed can be mixed with the final 0.2.0 pair. A 0.1.5 client cannot play a 0.2.0 seed correctly.
 - **Before replacing a client:** back up the existing folder, including settings and saves. Get the full archive for your platform from the [download page](/ctr/download).
-- **Your disc:** you need your own North American (NTSC-U) CTR disc image. No game data is included. A raw `.bin` works directly; `.chd` extraction needs Python and `chdman`, as explained in [setup](/guides/ctr).
+- **Your disc:** you need your own North American (NTSC-U) CTR disc image. No game data is included. A raw `.bin` works directly; `.chd` extraction needs Python and `chdman`, as explained in [setup](/ctr/setup).
 
 ## Practical limitations and testing
 
@@ -44,7 +44,7 @@ Automated checks passed for the final release, but some gameplay and connection 
 
 `box_locations` adds up to 241 authored AP crates across the 18 race tracks. These are extra places to search, with numbered names for boxes on the same track. `shortcut_knowledge` controls whether easy, medium or hard routes may be required.
 
-Only the local player can break an AP crate. Once checked, it stays gone for that seed. The pad shows how many remain, and kart and direct-projectile contact is more forgiving in the final release. Complete PopTracker mapping and per-track box maps are still being developed.
+Only the local player can break an AP crate. Once checked, it stays gone for that seed. The pad shows how many remain, and kart and direct-projectile contact is more forgiving in the final release. Every box has a labelled picture and a track map on the [AP box locations](/ctr/reference/ap-boxes) pages. Complete PopTracker mapping is still being developed.
 
 ### Itemsanity
 
@@ -72,7 +72,7 @@ The optional `Tizi Helper` makes the first four boxes after the Papu's Pyramid s
 
 `character_unlocks` puts the other racers in the item pool. Use **Select Character** in the Adventure pause menu to choose a racer you have received.
 
-`racer_locked_pads` sets the maximum number of pads that may require a particular racer. Zero turns it off; higher values require Character Unlocks. A pad shows **REQUIRES &lt;CHARACTER&gt;** until you receive that racer. Entering uses the required racer for that race and restores your previous selection on returning to the hub.
+`racer_locked_pads` sets the maximum number of pads that may require a particular racer. Zero turns it off; higher values require Character Unlocks. A pad shows **REQUIRES &lt;CHARACTER&gt;** until you receive that racer. Entering uses the required racer for that race and restores your previous selection on returning to the hub. [Warp pads and requirements](/ctr/reference/warp-pads) explains how to read the pad.
 
 The starting racer and driving class can be chosen in the YAML. Optional manual stat editing is in the pause-menu character screen, not the Garage. Progressive Stats takes priority when enabled.
 
@@ -85,7 +85,7 @@ Boost can be an upgrade ladder shared across the roster or received separately f
 3. The second enables Ultimate Sacred Fire speeds on routes that support them.
 4. An optional third enables Blue Fire, with blue exhaust and stronger reserves that can survive U-turns.
 
-Turn the option off to keep ordinary boost behavior. Disable the Blue Fire tier to end the ladder at Ultimate Sacred Fire.
+Turn the option off to keep ordinary boost behavior. Disable the Blue Fire tier to end the ladder at Ultimate Sacred Fire. [Progression and kart upgrades](/ctr/reference/progression) covers both ladders in more detail.
 
 ### Progressive Stats
 

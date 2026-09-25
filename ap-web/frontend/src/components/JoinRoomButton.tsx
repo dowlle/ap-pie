@@ -23,13 +23,13 @@ export default function JoinRoomButton({ roomId, open }: { roomId: string; open:
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not join room"); }
     finally { setBusy(false); }
   };
-  if (!user) return open ? <button className="btn btn-sm" onClick={() => login(`/r/${roomId}`)}>Sign in to join room</button> : null;
+  if (!user) return open ? <div className="join-room"><button className="btn btn-primary" onClick={() => login(`/r/${roomId}`)}>Sign in to join room</button><p className="muted">Joining keeps this room in your list, so you can add YAMLs to it now or later.</p></div> : null;
   if (!open && !joined) return null;
-  return <div>
-    <button type="button" className="btn btn-sm" disabled={busy || loading} onClick={() => void toggle()}>
+  return <div className="join-room">
+    <button type="button" className={joined ? "btn btn-sm" : "btn btn-primary"} disabled={busy || loading} onClick={() => void toggle()}>
       {busy ? "Saving..." : joined ? "Leave room" : "Join room"}
     </button>
-    <p className="muted" role="status">{joined ? "Joined. You can select this room in the YAML builder." : "Join now and send your YAML later."}</p>
+    <p className="muted" role="status">{joined ? "Joined. Add your YAML below, now or later; the YAML Builder also lists this room." : "Joining keeps this room in your list, so you can add YAMLs to it now or later."}</p>
     {error && <p className="error" role="alert">{error}</p>}
   </div>;
 }

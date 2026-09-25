@@ -1,173 +1,177 @@
 {% extends "guides/base.html" %}
 {% block head_extra %}
   <style>
-    .ctr-hero { text-align: left; padding: 1.5rem 0 2.5rem; }
-    .ctr-hero .kicker {
-      font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.9rem;
-    }
+    main:has(.ctr-hero) { max-width: 66rem; }
+    .ctr-hero { display: grid; gap: 2rem; align-items: center; padding: 0.5rem 0 2.5rem; }
+    @media (min-width: 900px) { .ctr-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
     .ctr-hero h1 { font-size: 2.6rem; margin-bottom: 1rem; }
     @media (max-width: 640px) { .ctr-hero h1 { font-size: 2rem; } }
-    .ctr-hero .lede { color: var(--text-muted); font-size: 1.15rem; line-height: 1.6; max-width: 38rem; margin-bottom: 1.75rem; }
+    .ctr-hero .lede { color: var(--text-muted); font-size: 1.15rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .ctr-hero img { display: block; width: 100%; height: auto; border: 1px solid var(--border-strong); border-radius: 12px; }
     .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
-    .cta-aside { color: var(--text-muted); font-size: 0.9rem; }
-    .hero-note { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.9rem; max-width: 38rem; }
-    .shot { margin: 1.5rem 0; }
-    .shot img, .shot video {
-      display: block; width: 100%; max-width: 42rem; height: auto;
-      border: 1px solid var(--border-strong); border-radius: 12px;
-    }
-    .shot figcaption { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; max-width: 42rem; }
-    .shot-grid { display: grid; gap: 1rem; align-items: start; }
-    @media (min-width: 640px) { .shot-grid { grid-template-columns: 1fr 1fr; } .shot-grid .shot { margin: 1.5rem 0 0; } }
-    .ctr-section { margin: 2.75rem 0; }
-    .ctr-section h2 {
+    .hero-note { color: var(--text-muted); font-size: 0.88rem; margin-top: 1rem; }
+    .ctr-section { margin: 3rem 0; }
+    .ctr-section > h2 {
       font-family: var(--font-display); font-weight: 500; color: var(--text-h);
-      font-size: 1.5rem; letter-spacing: -0.01em; margin-bottom: 0.85rem;
-      scroll-margin-top: 2rem;
+      font-size: 1.6rem; letter-spacing: -0.01em; margin-bottom: 0.85rem; scroll-margin-top: 2rem;
     }
-    .ctr-section p { margin-bottom: 1rem; max-width: 42rem; }
-    .ctr-section strong { color: var(--text-h); }
-    .flow-card {
+    .ctr-section > p { margin-bottom: 1rem; max-width: 44rem; }
+    .ctr-steps { list-style: none; counter-reset: step; display: grid; gap: 1rem; margin: 1.25rem 0 0; padding: 0; }
+    @media (min-width: 760px) { .ctr-steps { grid-template-columns: repeat(3, 1fr); } .ctr-steps-four { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1000px) { .ctr-steps-four { grid-template-columns: repeat(4, 1fr); } }
+    .ctr-steps li {
+      counter-increment: step; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.2rem 1.3rem;
+    }
+    .ctr-steps li::before {
+      content: counter(step); display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem;
+      border-radius: 999px; background: var(--accent-dim); color: var(--accent-light);
+      font-weight: 700; margin-bottom: 0.7rem;
+    }
+    .ctr-steps h3 { color: var(--text-h); font-size: 1.05rem; margin: 0 0 0.4rem; }
+    .ctr-steps p { color: var(--text-muted); margin: 0 0 0.6rem; font-size: 0.95rem; }
+    .ctr-features { display: grid; gap: 1rem; margin-top: 1.25rem; }
+    @media (min-width: 640px) { .ctr-features { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 960px) { .ctr-features { grid-template-columns: repeat(3, 1fr); } }
+    .ctr-feature {
+      display: flex; flex-direction: column; overflow: hidden; color: var(--text);
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-      padding: 1.4rem 1.6rem; margin: 1.25rem 0; display: grid; gap: 1.25rem;
     }
-    @media (min-width: 640px) { .flow-card { grid-template-columns: 1fr 1fr; } }
-    .flow-col .flow-label {
-      font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--accent); margin-bottom: 0.6rem;
-    }
-    .flow-col ol { margin: 0 0 0 1.25rem; color: var(--text-muted); }
-    .flow-col li { margin-bottom: 0.35rem; }
-    .flow-col li strong { color: var(--text-h); font-weight: 600; }
-    .ctr-final { border-top: 1px dashed var(--border-strong); margin-top: 3rem; padding-top: 2.25rem; }
+    .ctr-feature:hover { border-color: var(--accent); text-decoration: none; }
+    .ctr-feature img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--border); }
+    .ctr-feature div { padding: 1rem 1.15rem 1.2rem; display: flex; flex-direction: column; flex: 1; }
+    .ctr-feature h3 { color: var(--text-h); font-size: 1.08rem; margin: 0 0 0.4rem; }
+    .ctr-feature p { color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+    .ctr-feature .more { color: var(--accent-light); font-weight: 600; margin-top: auto; padding-top: 0.8rem; font-size: 0.92rem; }
+    .ctr-faq { display: grid; gap: 0.6rem; max-width: 46rem; margin-top: 1.25rem; }
+    .ctr-faq details { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1.1rem; }
+    .ctr-faq summary { color: var(--text-h); font-weight: 600; cursor: pointer; }
+    .ctr-faq details p { margin: 0.6rem 0 0; }
+    .video-caption { color: var(--text-muted); font-size: 0.9rem; margin: 0.6rem 0 0; max-width: 44rem; }
+    .ctr-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
   </style>
 {% endblock %}
 {% block main %}
-  <nav class="section-subnav" aria-label="CTR section">
-    <a class="current" aria-current="page" href="/ctr">Overview</a>
-    <a href="/ctr/download">Download</a>
-    <a href="/guides/ctr">Setup guide</a>
-    <a href="/ctr/reference">Reference</a>
-    <a href="/guides/crash-team-racing-pc">Vanilla CTR on PC</a>
-  </nav>
   <div class="ctr-hero">
-    <h1>Crash Team Racing Archipelago</h1>
-    <p class="lede">
-      Race through the original Crash Team Racing as an Archipelago randomizer.
-      Your races and challenges can hold progression for you or for other
-      players, and their games send items back into yours.
-    </p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="/ctr/download">Download CTR Archipelago</a>
-      <a class="btn btn-secondary" href="/yaml-builder/ctr">Build your CTR YAML</a>
-      <a class="btn btn-secondary" href="/guides/ctr">Setup guide</a>
-      <span class="cta-aside">Current stable release: {{ stable.version }}</span>
+    <div>
+      <h1>Crash Team Racing Archipelago</h1>
+      <p class="lede">
+        Play the original Crash Team Racing as an Archipelago randomizer. Your
+        races can unlock progress in other players' games, and their games send
+        the Trophies, Keys and Relics you need back to you.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/ctr/download">Download CTR Archipelago {{ stable.version }}</a>
+        <a class="btn btn-secondary" href="/ctr/setup">Setup guide</a>
+      </div>
+      <p class="hero-note"><strong>Hosting?</strong> <a href="#generate">Generate and host a CTR seed</a></p>
+      <p class="hero-note">Free and open source for Windows, Linux and Steam Deck. You need a disc image of your own North American Crash Team Racing disc. <a href="/ctr/releases/{{ latest_release.slug }}">What's new in {{ latest_release.verified_against }}</a></p>
     </div>
-    <p class="hero-note">Requires a disc image made from your own North American (NTSC-U) Crash Team Racing disc. No game data is included.</p>
-    <p><a href="/ctr/reference/0-2-0-release-notes">Read the 0.2.0 release notes</a> for the new checks, racers, kart upgrades, traps and known limitations.</p>
+    <picture>
+      <source srcset="/img/ctr/checks-feed.webp" type="image/webp" />
+      <img src="/img/ctr/checks-feed.jpg" alt="The Adventure hub while the on-screen feed lists items just found: a wumpa fruit, a CTR letter, a character, and a relic" width="1554" height="904" fetchpriority="high" />
+    </picture>
   </div>
 
-  <section class="ctr-section">
-    <h2>Win a race, unlock another world</h2>
-    <p>
-      CTR Archipelago connects Crash Team Racing directly to an
-      <a href="/guides/getting-started">Archipelago multiworld</a>. Winning a
-      race or clearing a challenge can send an important item to another
-      player, and somebody exploring a completely different game can find the
-      item that opens your next track.
-    </p>
-    <div class="flow-card">
-      <div class="flow-col">
-        <div class="flow-label">You, in CTR</div>
-        <ol>
-          <li>Win <strong>Cortex Castle</strong></li>
-          <li>That race held a <strong>Hookshot</strong></li>
-          <li>It lands in <strong>another player's game</strong></li>
-        </ol>
-      </div>
-      <div class="flow-col">
-        <div class="flow-label">Meanwhile, elsewhere</div>
-        <ol>
-          <li>A friend opens a <strong>chest in their game</strong></li>
-          <li>It held one of <strong>your unlock keys</strong></li>
-          <li>A new <strong>hub door opens in CTR</strong></li>
-        </ol>
-      </div>
-    </div>
-    <p>
-      Every player's game stays its own game. Archipelago connects the
-      progression between them.
-    </p>
-    <figure class="shot">
-      <picture>
-        <source srcset="/img/ctr/checks-feed.webp" type="image/webp" />
-        <img src="/img/ctr/checks-feed.jpg" alt="The Adventure hub while the on-screen feed lists items just found: a wumpa fruit, a CTR letter, a character, and a relic" loading="lazy" width="1554" height="904" />
-      </picture>
-      <figcaption>The in-game feed listing checks and items as they come in. The screenshot shows 0.2.0 preview content.</figcaption>
-    </figure>
+  <section class="ctr-section" aria-labelledby="first-race">
+    <h2 id="first-race">Join a game in three steps</h2>
+    <p>Joining a multiworld somebody else is hosting? This is all you need. The <a href="/ctr/setup">setup guide</a> has the details.</p>
+    <ol class="ctr-steps">
+      <li>
+        <h3>Download the game client</h3>
+        <p>Unzip it into a folder of its own. There is no emulator or separate connector to install.</p>
+        <a href="/ctr/download">Downloads</a>
+      </li>
+      <li>
+        <h3>Add your disc image</h3>
+        <p>Copy the <code>.bin</code> of your North American disc into the <code>assets</code> folder. The game finds it by itself.</p>
+        <a href="/ctr/setup#step-2-drop-in-your-disc-image">How to add your disc</a>
+      </li>
+      <li>
+        <h3>Connect to your room</h3>
+        <p>In Options, then Connection, enter the room address, your slot name and the password if there is one.</p>
+        <a href="/ctr/setup#step-3-connect-to-your-room">How to connect</a>
+      </li>
+    </ol>
   </section>
 
-  <section class="ctr-section">
-    <h2>Adventure Mode becomes a new puzzle every time</h2>
-    <p>
-      The familiar Adventure Mode hub turns into a randomized progression
-      puzzle. Every newly generated world asks something different of the
-      warp pads, and trophies, keys, gems, and relics become items that can
-      arrive from any game in your multiworld. Instead of following the same
-      route every time, you work with what your multiworld gives you.
-    </p>
-    <div class="shot-grid">
-      <figure class="shot">
+  <section class="ctr-section" aria-labelledby="generate">
+    <h2 id="generate">Generate a CTR seed</h2>
+    <p>Hosting the multiworld? The seed is generated on your own computer with the Archipelago Launcher, then hosted on archipelago.gg or your own machine. The <a href="/guides/hosting-a-multiworld">hosting guide</a> covers every game; these are the CTR parts.</p>
+    <div class="video-embed">
+      <button type="button" class="video-facade"
+              data-embed-src="https://www.youtube-nocookie.com/embed/CpRbyRodayM?autoplay=1"
+              data-embed-title="How to Host an Archipelago Multiworld (Step-by-Step)"
+              style="background-image:url('/img/guides/hosting-video-thumb.jpg')"
+              aria-label="Play video: How to Host an Archipelago Multiworld (Step-by-Step)">
+        <span class="play-icon" aria-hidden="true"></span>
+        <span class="facade-note">Loads a video from YouTube on click</span>
+      </button>
+    </div>
+    <p class="video-caption">Appie generates and hosts a multiworld with Crash Team Racing and Poképelago, from YAMLs to a running room (8 min). It uses a 0.2.0 test build as its example; use the current downloads. <a href="https://youtu.be/CpRbyRodayM" rel="noopener noreferrer">Watch on YouTube</a></p>
+    <ol class="ctr-steps ctr-steps-four">
+      <li>
+        <h3>Install the CTR APWorld</h3>
+        <p>Download it, then use <strong>Install APWorld</strong> in the Archipelago Launcher. Only the person generating needs it.</p>
+        <a href="/ctr/download/apworld">Download the APWorld ({{ stable.version }})</a>
+      </li>
+      <li>
+        <h3>Collect the YAMLs</h3>
+        <p>Players make theirs in the <a href="/yaml-builder/ctr?version={{ stable.version }}">CTR YAML Builder</a>. A collection room gathers them in one place, with a deadline.</p>
+        <a href="/guides/hosting-on-archipelago-pie">Collect YAMLs in a collection room</a>
+      </li>
+      <li>
+        <h3>Generate on your computer</h3>
+        <p>Put the YAMLs in the <code>Players</code> folder and click <strong>Generate</strong>. The generator and YAML checker on archipelago.gg don't include the CTR APWorld, so generate locally.</p>
+        <a href="/guides/hosting-a-multiworld#step-2-generate-the-game">How generation works</a>
+      </li>
+      <li>
+        <h3>Host the room</h3>
+        <p>Upload the <code>AP_...zip</code> from the <code>output</code> folder to archipelago.gg, or click <strong>Host</strong> in the launcher to run the server yourself.</p>
+        <a href="/guides/hosting-a-multiworld#step-3-put-the-server-online">Put the server online</a>
+      </li>
+    </ol>
+    <p style="margin-top:1.25rem"><strong>Use one version for everything.</strong> The APWorld you generate with, the players' YAMLs and their game clients must all come from the same CTR release. <a href="/ctr/reference/randomized-content">What can be randomized?</a> explains the options.</p>
+  </section>
+
+  <section class="ctr-section" aria-labelledby="what-changes">
+    <h2 id="what-changes">What changes in your game</h2>
+    <p>Adventure Mode becomes a new puzzle every seed. Instead of following the same route, you play with what your multiworld gives you.</p>
+    <div class="ctr-features">
+      <a class="ctr-feature" href="/ctr/reference/warp-pads">
         <picture>
           <source srcset="/img/ctr/warp-pad-requirements.webp" type="image/webp" />
-          <img src="/img/ctr/warp-pad-requirements.jpg" alt="The Slide Coliseum warp pad with item icons hovering above it, showing what this seed asks for" loading="lazy" width="800" height="600" />
+          <img src="/img/ctr/warp-pad-requirements.jpg" alt="The Slide Coliseum warp pad with item icons hovering above it, showing what this seed asks for" width="800" height="600" loading="lazy" />
         </picture>
-        <figcaption>A warp pad showing what this seed asks for before it opens. The screenshot shows 0.2.0 preview content.</figcaption>
-      </figure>
-      <figure class="shot">
+        <div><h3>Warp pads ask for new things</h3><p>Every pad gets its own requirement each seed, shown above the pad.</p><span class="more">Warp pads and requirements</span></div>
+      </a>
+      <a class="ctr-feature" href="/ctr/reference/progression">
         <picture>
           <source srcset="/img/ctr/warp-pad-hub.webp" type="image/webp" />
-          <img src="/img/ctr/warp-pad-hub.jpg" alt="The Crash Cove warp pad in the Adventure hub, with the Archipelago symbol hovering above it" loading="lazy" width="1554" height="904" />
+          <img src="/img/ctr/warp-pad-hub.jpg" alt="The Crash Cove warp pad in the Adventure hub, with the Archipelago symbol hovering above it" width="1554" height="904" loading="lazy" />
         </picture>
-        <figcaption>The Crash Cove pad carrying the Archipelago marker. The screenshot shows 0.2.0 preview content.</figcaption>
-      </figure>
+        <div><h3>Your progress comes from anywhere</h3><p>Trophies, Keys, Relics and Gems are items, and another player's game may be holding yours.</p><span class="more">Progression and kart upgrades</span></div>
+      </a>
+      <a class="ctr-feature" href="/ctr/reference/ap-boxes">
+        <img src="/img/ctr/ap-boxes/mystery-caves/box-13.webp" alt="Mystery Caves: Item Box 13, marked with a yellow ring and arrow" width="1280" height="720" loading="lazy" />
+        <div><h3>AP boxes on every track</h3><p>Up to 241 extra boxes to break, each one sending an item to its player.</p><span class="more">AP box locations</span></div>
+      </a>
+      <a class="ctr-feature" href="/ctr/reference/progression#progressive-boost">
+        <div><h3>Your kart gets upgrades</h3><p>Boost, speed, acceleration and turning can arrive as items, for the whole roster or per racer.</p><span class="more">Kart upgrades</span></div>
+      </a>
+      <a class="ctr-feature" href="/ctr/reference/randomized-content#characters">
+        <div><h3>Racers arrive as items</h3><p>Unlock the roster through the multiworld, and some pads can require a particular racer.</p><span class="more">Characters</span></div>
+      </a>
+      <a class="ctr-feature" href="/ctr/reference/randomized-content#traps-and-useful-items">
+        <div><h3>Twenty traps</h3><p>Icy Road, Low Gravity, Mirror Mode and more can change the race you are in.</p><span class="more">Traps and useful items</span></div>
+      </a>
     </div>
+    <p style="margin-top:1.25rem"><a href="/ctr/reference">Everything the randomizer changes</a></p>
   </section>
 
-  <section class="ctr-section">
-    <h2>No emulator, no patching</h2>
-    <p>
-      CTR Archipelago is built on the community decompilation work around the
-      original game, so it runs as a native application on Windows, Linux, and
-      Steam Deck and connects to your Archipelago room on its own. There is no
-      emulator, no ROM patching, no separate connector client, and no Python
-      install just to play. If you only want plain Crash Team Racing on PC,
-      see <a href="/guides/crash-team-racing-pc">Play Crash Team Racing on PC</a>.
-    </p>
-    <figure class="shot">
-      <video controls muted loop playsinline preload="none" poster="/img/ctr/custom-resolutions-poster.webp" width="1554" height="904">
-        <source src="/img/ctr/custom-resolutions.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-      <figcaption>Resizing the window live: the game follows custom resolutions and aspect ratios.</figcaption>
-    </figure>
-    <div class="notice notice-warning">
-      <p>
-        <strong>Bring your own disc.</strong> CTR Archipelago contains no
-        retail game data. You need a disc image of your own North American
-        (NTSC-U) Crash Team Racing disc.
-      </p>
-    </div>
-  </section>
-
-  <section class="ctr-section">
-    <h2>Watch how it works</h2>
-    <p>
-      A full walkthrough for joining a room somebody else is hosting: getting
-      the client, your disc image, and your YAML settings, then connecting
-      and playing.
-    </p>
+  <section class="ctr-section" aria-labelledby="watch">
+    <h2 id="watch">Watch the player walkthrough</h2>
+    <p>Appie's walkthrough for joining a room: the client, your disc image, your YAML settings and connecting. It was recorded before 0.2.0, so use the current download and the written guide alongside it.</p>
     <div class="video-embed">
       <button type="button" class="video-facade"
               data-embed-src="https://www.youtube-nocookie.com/embed/9x63P6JP93E?autoplay=1"
@@ -178,27 +182,28 @@
         <span class="facade-note">Loads a video from YouTube on click</span>
       </button>
     </div>
-    <p><a href="https://youtu.be/9x63P6JP93E" rel="noopener noreferrer">Watch the CTR setup video on YouTube</a>. It covers the setup flow; use the current download and written guide for 0.2.0.</p>
-    <p>Organizing the multiworld? <a href="https://youtu.be/CpRbyRodayM" rel="noopener noreferrer">Watch Appie's hosting walkthrough</a> or follow the <a href="/guides/hosting-a-multiworld">written hosting guide</a>.</p>
-    <p>A dedicated CTR 0.2.0 YAML explanation video is coming soon. For now, use the <a href="/yaml-builder/ctr?version=0.2.0">0.2.0 YAML Builder</a> and <a href="/guides/setting-up-your-yaml">written YAML guide</a>.</p>
+    <p>Hosting instead? See <a href="#generate">Generate a CTR seed</a>.</p>
   </section>
 
-  <section class="ctr-section ctr-final">
-    <h2>Ready to race?</h2>
-    <p>
-      Joining a multiworld somebody else generated takes a download, your
-      disc image, and your room details. The setup guide walks through all of
-      it, and if your group's host needs the add-on that generates CTR worlds
-      (the APWorld), it is on the download page. No room details yet?
-      <a href="/guides/getting-started">Getting started with Archipelago</a>
-      explains how multiworld games get organized.
-    </p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="/ctr/download">Download CTR Archipelago</a>
-      <a class="btn btn-secondary" href="/yaml-builder/ctr">Build your CTR YAML</a>
-      <a class="btn btn-secondary" href="/guides/ctr">Follow the setup guide</a>
-      <a class="btn btn-secondary" href="https://github.com/dowlle/ctr-native-ap" rel="noopener noreferrer">View on GitHub</a>
-      <a class="btn btn-secondary" href="https://github.com/dowlle/ctr-native-ap/issues/new/choose" rel="noopener noreferrer">Report a problem</a>
+  <section class="ctr-section" aria-labelledby="questions">
+    <h2 id="questions">Questions</h2>
+    <div class="ctr-faq">
+      {% for item in faq %}
+      <details>
+        <summary>{{ item.q }}</summary>
+        <p>{{ item.a_html|safe }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="ctr-section" aria-labelledby="community">
+    <h2 id="community">Community</h2>
+    <p>Questions, feedback or a seed to show off? Find the Crash Team Racing channel on the Archipelago Discord.</p>
+    <div class="ctr-links">
+      <a class="btn btn-primary" href="https://discord.com/channels/731205301247803413/1222304293751750777" rel="noopener noreferrer">Crash Team Racing channel</a>
+      <a class="btn btn-secondary" href="https://github.com/dowlle/ctr-native-ap" rel="noopener noreferrer">Source on GitHub</a>
+      <a class="btn btn-secondary" href="/ctr/releases">All releases</a>
     </div>
   </section>
 {% endblock %}
