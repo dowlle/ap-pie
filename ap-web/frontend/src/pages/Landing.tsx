@@ -121,7 +121,7 @@ export default function Landing() {
         </div>
 
         <div className="lp-sect">What do you want to do?</div>
-        <div className="lp-tools">
+        <div className="lp-tools lp-tools-four">
           <a className="lp-tool" href="/guides">
             <span className="lp-k">Learn</span>
             <h3>Read the guides</h3>
