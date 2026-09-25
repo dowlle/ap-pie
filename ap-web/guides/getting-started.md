@@ -155,4 +155,4 @@ Use these official pages when you need a game-specific guide or more detail:
 - The [supported games list](https://archipelago.gg/games) links each bundled game's setup and options pages.
 - The [community APWorld index](/apworlds) lists more games, setup links, downloads, and the checks AP-Pie has run for each version.
 
-For Crash Team Racing, [our complete setup guide](/guides/ctr) covers the native client from download to connection. If you get stuck, ask in the [Archipelago Discord](https://discord.gg/8Z65BR2) or the support space named by your game's maintainer.
+For Crash Team Racing, [our complete setup guide](/ctr/setup) covers the native client from download to connection. If you get stuck, ask in the [Archipelago Discord](https://discord.gg/8Z65BR2) or the support space named by your game's maintainer.

@@ -1,6 +1,6 @@
 **CTR Archipelago 0.2.0 is the current stable release, published September 10, 2026.** It adds more things to find, more ways to build your kart and more choices for your Adventure Mode goal. Most new systems are optional settings chosen before the game is generated.
 
-**[Download 0.2.0](/ctr/download)** · **[Setup guide](/guides/ctr)** · **[Build a 0.2.0 YAML](/yaml-builder/ctr?version=0.2.0)**
+**[Download 0.2.0](/ctr/download)** · **[Setup guide](/ctr/setup)** · **[Build a 0.2.0 YAML](/yaml-builder/ctr?version=0.2.0)**
 
 ## At a glance
 
@@ -14,7 +14,7 @@ In Archipelago, a **check** is an action that awards something, such as winning 
 
 ## Where should I start?
 
-- **Joining a room that is already generated?** Follow the [CTR setup guide](/guides/ctr): download the client, add your disc image and connect with the server address and slot name your host provides. You do not need to install the APWorld just to play.
+- **Joining a room that is already generated?** Follow the [CTR setup guide](/ctr/setup): download the client, add your disc image and connect with the server address and slot name your host provides. You do not need to install the APWorld just to play.
 - **Preparing settings for a new room?** Open the [0.2.0 YAML Builder](/yaml-builder/ctr?version=0.2.0), set your player name and options, download the YAML and send it to your host. The [YAML guide](/guides/setting-up-your-yaml) explains the file.
 - **Generating or hosting the multiworld?** Install the matching [0.2.0 APWorld](/ctr/download/apworld), collect everyone's YAMLs and follow the [hosting guide](/guides/hosting-a-multiworld). AP-Pie helps prepare and collect settings; generation and the game server run through Archipelago.
 
@@ -25,7 +25,7 @@ Prefer video? Watch Appie's [CTR setup walkthrough](https://youtu.be/9x63P6JP93E
 - **New games:** use the matching 0.2.0 client and APWorld, a 0.2.0 YAML and a fresh seed. A seed is the generated game shared by the room.
 - **An ongoing room:** ask the host before changing versions. Do not assume an Alpha seed can be mixed with the final 0.2.0 pair. A 0.1.5 client cannot play a 0.2.0 seed correctly.
 - **Before replacing a client:** back up the existing folder, including settings and saves. Get the full archive for your platform from the [download page](/ctr/download).
-- **Your disc:** you need your own North American (NTSC-U) CTR disc image. No game data is included. A raw `.bin` works directly; `.chd` extraction needs Python and `chdman`, as explained in [setup](/guides/ctr).
+- **Your disc:** you need your own North American (NTSC-U) CTR disc image. No game data is included. A raw `.bin` works directly; `.chd` extraction needs Python and `chdman`, as explained in [setup](/ctr/setup).
 
 ## Practical limitations and testing
 

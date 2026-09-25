@@ -55,6 +55,6 @@ The experimental [Baby T Park preview](/ctr/releases/0-2-0#baby-t-park-preview) 
 
 These options change progression and selected parts of gameplay. They do not automatically shuffle every visual, track layout, opponent or physics value. The Builder shows the settings supported by the version your host is using.
 
-You still need a disc image made from your own North American copy of CTR. The [setup guide](/guides/ctr) explains how to use it; no game data is included with the client.
+You still need a disc image made from your own North American copy of CTR. The [setup guide](/ctr/setup) explains how to use it; no game data is included with the client.
 
 Ready to choose your settings? [Open the CTR 0.2.0 YAML Builder](/yaml-builder/ctr?version=0.2.0), review the file, and download it for your host.

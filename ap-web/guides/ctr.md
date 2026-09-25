@@ -2,7 +2,7 @@
 
 [CTR Archipelago](/ctr) turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own, so you do not need an emulator, ROM patching, or a separate client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
 
-New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. A **check** is an action that awards an **item**, such as winning a race; the item may go to any player in the multiworld. This page gets the game itself running. For plain CTR without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc).
+New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. A **check** is an action that awards an **item**, such as winning a race; the item may go to any player in the multiworld. This page gets the game itself running. For plain CTR without the randomizer, see [Play Crash Team Racing on PC](/ctr/play-on-pc).
 
 ## Choose your next step
 

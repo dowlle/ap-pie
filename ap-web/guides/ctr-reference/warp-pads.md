@@ -30,4 +30,4 @@ Randomized requirements are not limited to the sixteen ordinary Trophy Race pads
 
 ## If a pad looks wrong
 
-First check whether the destination was shuffled and whether the pad is showing a second-stage requirement. If the displayed item is already in your inventory but the pad remains closed, make a support bundle as described in the [setup guide](/guides/ctr#when-something-goes-wrong) and report the seed and pad. The client display and the Archipelago server are intended to enforce the same requirement.
+First check whether the destination was shuffled and whether the pad is showing a second-stage requirement. If the displayed item is already in your inventory but the pad remains closed, make a support bundle as described in the [setup guide](/ctr/setup#when-something-goes-wrong) and report the seed and pad. The client display and the Archipelago server are intended to enforce the same requirement.

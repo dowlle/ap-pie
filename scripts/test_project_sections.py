@@ -97,6 +97,26 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertEqual(latest.status_code, 302)
         self.assertTrue(latest.headers["Location"].endswith("/ctr/releases/0-2-0"))
 
+    def test_moved_guides_redirect_permanently_and_keep_the_query(self) -> None:
+        moved = {
+            "/guides/ctr": "/ctr/setup",
+            "/guides/crash-team-racing-pc": "/ctr/play-on-pc",
+            "/guides/pokepelago": "/pokepelago/setup",
+            "/guides/pokepelago-twitch": "/pokepelago/twitch",
+        }
+        for old, new in moved.items():
+            for variant in (old, old + "/"):
+                with self.subTest(old=variant):
+                    response = self.get(variant)
+                    self.assertEqual(response.status_code, 301)
+                    self.assertTrue(response.headers["Location"].endswith(new))
+                    page = self.get(new)
+                    self.assertEqual(page.status_code, 200)
+                    self.assertIn(f'<link rel="canonical" href="{config.PUBLIC_BASE_URL}{new}"', page.get_data(as_text=True))
+        tagged = self.get("/guides/ctr?utm_source=youtube")
+        self.assertTrue(tagged.headers["Location"].endswith("/ctr/setup?utm_source=youtube"))
+        self.assertEqual(self.get("/guides/getting-started").status_code, 200)
+
     def test_section_pages_only_link_to_pages_that_answer_directly(self) -> None:
         pages = [p for key in sections.SECTIONS for p in sections.section_paths(key)]
         pages += ["/guides", "/ctr/reference/ap-boxes/mystery-caves"]
@@ -124,13 +144,15 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertIn('href="/ctr/reference"', html)
         self.assertIn('href="/ctr/reference/ap-boxes"', html)
 
-    def test_sitemap_and_llms_list_new_urls_only(self) -> None:
+    def test_sitemap_and_llms_list_only_the_new_urls(self) -> None:
         base = config.PUBLIC_BASE_URL
         for surface in ("/sitemap.xml", "/llms.txt"):
             with self.subTest(surface=surface):
                 body = self.get(surface).get_data(as_text=True)
-                self.assertIn(f"{base}/ctr/releases/0-2-0", body)
-                self.assertNotIn("0-2-0-release-notes", body)
+                for path in ("/ctr/releases/0-2-0", "/ctr/setup", "/ctr/play-on-pc", "/pokepelago/setup", "/pokepelago/twitch"):
+                    self.assertIn(f"{base}{path}", body)
+                for old in ("0-2-0-release-notes", "/guides/ctr", "/guides/crash-team-racing-pc", "/guides/pokepelago"):
+                    self.assertNotIn(old, body)
 
 
 if __name__ == "__main__":
