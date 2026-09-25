@@ -465,8 +465,9 @@
       .crumbs a { color: var(--text-muted); }
       .crumbs a:hover { color: var(--text-h); }
       .crumbs .sep { margin: 0 0.45rem; opacity: 0.6; }
+      .section-nav { margin-bottom: 1.25rem; }
       .section-subnav {
-        display: flex; gap: 0.2rem; overflow-x: auto; margin-bottom: 1.75rem;
+        display: flex; gap: 0.2rem; overflow-x: auto;
         border-bottom: 1px solid var(--border); scrollbar-width: thin;
       }
       .section-subnav a {
@@ -479,6 +480,9 @@
         border-bottom-color: var(--accent); color: var(--text-h); background: transparent;
         pointer-events: none;
       }
+      .section-subnav a.active { border-bottom-color: var(--border-strong); color: var(--text-h); }
+      .section-subnav-sub { border-bottom-style: dashed; }
+      .section-subnav-sub a { min-height: 2.1rem; font-weight: 500; }
       .related-block { border-top: 1px dashed var(--border-strong); margin-top: 3rem; padding-top: 1.75rem; }
       .related-label {
         font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);
@@ -547,6 +551,7 @@
     </header>
 
     <main>
+      {% if section %}{% include "guides/_section-nav.html" %}{% endif %}
       {% block main %}{% endblock %}
     </main>
 

@@ -1,12 +1,12 @@
 In CTR Archipelago, your next Key, racer or kart upgrade can arrive from anywhere in the multiworld. You choose which systems to use in your YAML before the world is generated.
 
-> This page describes stable 0.2.0. See the [release notes](/ctr/reference/0-2-0-release-notes) for experimental features and remaining testing coverage.
+> This page describes stable 0.2.0. See the [release notes](/ctr/releases/0-2-0) for experimental features and remaining testing coverage.
 
 ## Adventure progression
 
 Trophies, Keys, Relics, coloured CTR Tokens, and Gems can enter the Archipelago item pool. The reward for a race or challenge is no longer guaranteed to be the reward the original game placed there.
 
-When you clear a location, its item may belong to you or to somebody playing another game. Your own next Key or Trophy can arrive from anywhere in the multiworld. Warp pads count the items you have received, so winning a race does not necessarily bring you closer to a pad's Trophy requirement.
+When you clear a location, its item may belong to you or to somebody playing another game. Your own next Key or Trophy can arrive from anywhere in the multiworld. [Warp pads](/ctr/reference/warp-pads) count the items you have received, so winning a race does not necessarily bring you closer to a pad's Trophy requirement.
 
 Keys let you travel between the Adventure hubs. Boss garages use Trophy counts instead: Ripper Roo, Papu Papu, Komodo Joe and Pinstripe open at 4, 8, 12 and 16 Trophies respectively. Those are received Trophies, not a requirement to win that many races yourself.
 
@@ -40,4 +40,4 @@ When Progressive Stats is off, the seed's character and stat settings apply. Edi
 
 ## What happens on reconnect
 
-Your upgrades are saved for your Archipelago player slot and restored when you reconnect to it. You do not have to find them again after closing the game. A large backlog of items can still cause a pause while reconnecting; see the [release notes](/ctr/reference/0-2-0-release-notes#practical-limitations-and-testing) for current limitations.
+Your upgrades are saved for your Archipelago player slot and restored when you reconnect to it. You do not have to find them again after closing the game. A large backlog of items can still cause a pause while reconnecting; see the [release notes](/ctr/releases/0-2-0#practical-limitations-and-testing) for current limitations.

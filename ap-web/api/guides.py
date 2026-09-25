@@ -23,6 +23,7 @@ from flask import Blueprint, Response, abort, render_template, request, session
 import analytics
 import config
 import seo
+from api import sections as project_sections
 
 _GUIDES_DIR = Path(__file__).resolve().parent.parent / "guides"
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
@@ -41,7 +42,17 @@ bp = Blueprint("guides", __name__, template_folder=str(_TEMPLATES_DIR))
 # a ghosted placeholder card until that project's guide ships.
 PROJECTS: list[dict] = [
     {"key": "ap", "name": "Archipelago basics", "sub": "start here if multiworld is new", "color": "#6da8c9"},
-    {"key": "ctr", "name": "Crash Team Racing", "sub": "native PC port + randomizer", "color": "#e8a857"},
+    {
+        "key": "ctr", "name": "Crash Team Racing", "sub": "native PC port + randomizer", "color": "#e8a857",
+        # Section pages outside /guides that belong on the shelf next to the
+        # guides, so the guides index reaches the whole CTR section.
+        "links": [
+            {"path": "/ctr/reference", "kicker": "Reference", "title": "How CTR Archipelago works",
+             "blurb": "Warp pads, progression, and everything a seed can randomize."},
+            {"path": "/ctr/reference/ap-boxes", "kicker": "Reference", "title": "CTR AP box locations",
+             "blurb": "A labelled picture of every AP item box, one page per track."},
+        ],
+    },
     {
         "key": "poke", "name": "Pokepelago", "sub": "catch across worlds", "color": "#e05d5d",
         "action": {
@@ -278,7 +289,7 @@ GUIDES: list[dict[str, str]] = [
             "connected to your multiworld room."
         ),
         "published": "2026-07-22",
-        "updated": "2026-09-10",
+        "updated": "2026-09-25",
         "project": "ctr",
         "kicker": "Randomizer",
         "featured": True,
@@ -336,6 +347,7 @@ def guides_index() -> str:
             if g.get("project") == p["key"]
         ]
         cards.sort(key=lambda c: not c["featured"])
+        cards += [{**link, "featured": False} for link in p.get("links", [])]
         shelves.append({
             "key": p["key"],
             "name": p["name"],
@@ -437,6 +449,10 @@ def guide_page(slug: str) -> str:
         if g.get("project") == guide.get("project") and g["slug"] != slug
     ]
     canonical_url = _canonical(f"/guides/{slug}")
+    nav = {}
+    section_key = guide.get("project")
+    if section_key in project_sections.SECTIONS and f"/guides/{slug}" in project_sections.section_paths(section_key):
+        nav = project_sections.context(section_key, f"/guides/{slug}", guide["h1"])
     article = {
         "@type": "TechArticle",
         "@id": f"{canonical_url}#article",
@@ -492,7 +508,7 @@ def guide_page(slug: str) -> str:
                 }
             ],
         }
-    breadcrumb = {
+    breadcrumb = nav.get("breadcrumb_node") or {
         "@type": "BreadcrumbList",
         "@id": f"{canonical_url}#breadcrumb",
         "itemListElement": [
@@ -503,6 +519,8 @@ def guide_page(slug: str) -> str:
     }
     return render_template(
         "guides/guide.html",
+        section=nav.get("section"),
+        crumbs=nav.get("crumbs"),
         project_name=project["name"] if project else None,
         related=related,
         h1=guide["h1"],

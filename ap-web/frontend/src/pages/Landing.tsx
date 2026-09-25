@@ -163,6 +163,7 @@ export default function Landing() {
             <div className="lp-glyph">CT</div>
             <h3>CTR Archipelago</h3>
             <p>The 1999 kart racer as a native PC randomizer. Warp pads, trophies, and relics join the pool.</p>
+            <span className="lp-pj-link">Explore CTR Archipelago <small>Download, setup and how it works</small></span>
           </a>
           <a className="lp-pj" style={{ "--c": "#e05d5d" } as React.CSSProperties} href="/pokepelago">
             <span className="lp-st">Released</span>
