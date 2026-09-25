@@ -23,11 +23,11 @@
 - **Ongoing rooms:** ask the host before changing versions, and keep the APWorld that generated the room for its server and Universal Tracker.
 - **Replacing the client:** back up your client folder first, including settings and saves. Each platform archive has the client and the matching `ctr.apworld`.
 - **Your disc:** you need your own North American (NTSC-U) disc; no game data is included. The client now finds your disc from a path given at startup, a remembered path or the existing assets folder, and shows a file picker on first start if it finds none. Existing setups keep working. The first-start picker wasn't part of the test pass.
-- **Linux and Steam Deck:** use the Linux tarball; it needs glibc 2.36 or newer. The Linux build passed its automated checks, and I gave the release build a quick check on the Steam Deck.
+- **Linux and Steam Deck:** use the Linux tarball; it needs glibc 2.36 or newer. The Linux build passed its automated checks, and I gave the release candidate a quick check on the Steam Deck.
 
 ## Known issues and testing
 
-I played through the Windows test list on the release build in Steam: the new box look and colours, the tracker, room links (including a room hosted on archipelago.gg), racer locks, the Options pages, podium skipping and Hit Character checks. Automated tests, both platform builds and the full generation fuzz matrix passed; a local fuzz run on the exact `ctr.apworld` did 19,500 generations with no failures or timeouts. I also gave the same build a quick check on the Steam Deck.
+I played through the Windows test list in Steam on the release candidate: the new box look and colours, the tracker, room links (including a room hosted on archipelago.gg), racer locks, the Options pages, podium skipping and Hit Character checks. Automated tests, both platform builds and the full generation fuzz matrix passed; a local fuzz run on the exact `ctr.apworld` did 19,500 generations with no failures or timeouts. I also gave the release candidate a quick check on the Steam Deck.
 
 - **Reconnecting:** a large backlog of received items can stall the game for a while. If it happens, include the support bundle in your report. See [#147](https://github.com/dowlle/ctr-native-ap/issues/147).
 - **Steam Deck:** turning on Fullscreen can cause heavy lag. Leave it off. See [#260](https://github.com/dowlle/ctr-native-ap/issues/260).
@@ -63,7 +63,8 @@ I played through the Windows test list on the release build in Steam: the new bo
 - **Racer names:** locked pads use the same racer names as the item feed, for example PENTA instead of PENGUIN (thanks [venusyprime](https://github.com/venusyprime), [#362](https://github.com/dowlle/ctr-native-ap/issues/362)).
 - **Widescreen:** the gold glow behind a juiced item no longer splits in the middle. Checked at 16:9.
 - **Not yet confirmed in game:** Ripper Roo's defeat line now names the item in his check, and whose world it goes to. Wumpa Fruit packages use the real Wumpa Fruit model from your disc, with the AP marker as a fallback. Nitro Drop and Red Potion traps now land in your path at full speed instead of behind you. These are in the release but weren't part of the test pass; please report anything that looks off.
-- **Smaller changes:** recorded AI picks the right lap recordings on Cortex Vortex, and the Custom Content screen shows the full path where it saved the custom-track YAML.
+- **Custom tracks:** the Custom Content page now uses Baby T Park 1.0.2, the current version on Project Saphi, when no seed asks for a specific version, so Download Saphi, Copy YAML and Save YAML all use 1.0.2. Seeds made for 1.0.0 still play with your installed 1.0.0 files. The page also shows the full path where it saved the custom-track YAML.
+- **Smaller changes:** recorded AI picks the right lap recordings on Cortex Vortex.
 
 ## Moved to a later release
 
