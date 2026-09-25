@@ -5,7 +5,7 @@
 ## At a glance
 
 - Add Trophy Races and CTR Challenges to Slide Coliseum and Turbo Track, or turn on Hit Character checks for every racer you hit.
-- Race Oxide's Final Challenge on Lockheart's Cortex Vortex, and optionally put the track on a warp pad and in Gem Cups too.
+- Race Oxide's Final Challenge on [Lockheart's Cortex Vortex](https://www.youtube.com/watch?v=pV2NdYr8W0Y), and optionally put the track on a warp pad and in Gem Cups too.
 - Open the Adventure tracker from the hub pause menu to see checks per destination, racer locks and what you've received.
 - Click your slot's link on an Archipelago room page and the game opens and connects (Windows).
 - AP boxes get a new crate look and can show the colour of the item inside.
@@ -72,7 +72,7 @@ The 0.2.0 notes planned these for 0.2.1, and they aren't in it: the optional che
 
 ## Credits
 
-Cortex Vortex is by Lockheart. The AP box face art is by JurnthReinal. The Archipelago logo is by Krista Corkos and Christopher Wilson, CC BY-NC 4.0. Thanks to [venusyprime](https://github.com/venusyprime) for the pad and racer name reports, and to everyone who tested the alphas and sent feedback.
+[Cortex Vortex](https://www.youtube.com/watch?v=pV2NdYr8W0Y) is by Lockheart. The AP box face art is by JurnthReinal. The Archipelago logo is by Krista Corkos and Christopher Wilson, CC BY-NC 4.0. Thanks to [venusyprime](https://github.com/venusyprime) for the pad and racer name reports, and to everyone who tested the alphas and sent feedback.
 
 ## Reporting a problem
 
