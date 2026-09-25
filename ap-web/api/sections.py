@@ -34,7 +34,13 @@ SECTIONS: dict[str, dict] = {
                     {"label": "AP box locations", "path": "/ctr/reference/ap-boxes"},
                 ],
             },
-            {"label": "Release notes", "path": "/ctr/releases/0-2-0", "crumb": "0.2.0 release notes"},
+            {
+                "label": "Releases",
+                "path": "/ctr/releases",
+                "children": [
+                    {"label": "0.2.0 release notes", "path": "/ctr/releases/0-2-0"},
+                ],
+            },
             {"label": "Vanilla CTR on PC", "path": "/ctr/play-on-pc", "crumb": "Play CTR on PC"},
         ],
     },
