@@ -108,6 +108,7 @@ RELEASE_PAGES: list[dict] = [
     {
         "slug": "0-2-0",
         "title": "What changed in 0.2.0?",
+        "page_title": "CTR Archipelago 0.2.0 release notes",
         "short_title": "0.2.0 release notes",
         "blurb": "The complete player-facing changelog from 0.1.5 to stable 0.2.0, with setup, videos and known limitations.",
         "description": "Everything new in CTR Archipelago 0.2.0: checks, racers, kart progression, twenty traps, goals, experimental recorded AI and community testing.",
@@ -375,7 +376,7 @@ def ctr_reference_index() -> str:
         props={"page": "reference", "from_path": analytics.entry_path(request)},
         req=request,
     )
-    title = "CTR Archipelago reference | Archipelago Pie"
+    title = "How CTR Archipelago works | Archipelago Pie"
     description = (
         "Learn how CTR Archipelago changes Crash Team Racing, including "
         "randomized warp pads, progression, kart upgrades, and checks."
@@ -414,7 +415,7 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str)
         req=request,
     )
     canonical_url = _canonical(path)
-    title = f"{page['title']} | {title_suffix}"
+    title = f"{page.get('page_title', page['title'])} | {title_suffix}"
     nav = _section(path, page["short_title"])
     page_node = seo.page(config.PUBLIC_BASE_URL, "WebPage", canonical_url, title, page["description"])
     page_node["mainEntity"] = {"@id": f"{canonical_url}#article"}
@@ -504,7 +505,7 @@ def ctr_release_page(slug: str):
     page = _RELEASE_BY_SLUG.get(slug)
     if page is None:
         abort(404)
-    return _article_page(page, f"/ctr/releases/{slug}", "CTR Archipelago", f"releases/{slug}")
+    return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}")
 
 
 @bp.route("/ctr/reference/ap-boxes", strict_slashes=False)

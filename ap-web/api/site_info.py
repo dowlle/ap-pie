@@ -15,6 +15,11 @@ PAGES = {
     "/report-issue": ("Report an issue", "Report a problem with Archipelago Pie or find the right place for an APWorld issue.", "report-issue.md"),
 }
 
+# Search titles where the page name alone says too little.
+PAGE_TITLES = {
+    "/pokepelago": "Poképelago: Pokémon Guessing Game | Archipelago Pie",
+}
+
 
 def _pokepelago_game() -> dict:
     base = config.PUBLIC_BASE_URL
@@ -40,7 +45,7 @@ def _page(path):
     return render_template(
         "guides/site-page.html", h1=title, body_html=html,
         section=nav.get("section"), crumbs=nav.get("crumbs"),
-        page_title=f"{title} | Archipelago Pie", meta_description=description,
+        page_title=PAGE_TITLES.get(path, f"{title} | Archipelago Pie"), meta_description=description,
         canonical_url=canonical, og_type="website",
         og_image=(f"{config.PUBLIC_BASE_URL}/img/guides/pokepelago-gameplay.png"
                   if path == "/pokepelago" else None),
