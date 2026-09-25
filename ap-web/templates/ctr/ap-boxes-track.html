@@ -3,13 +3,6 @@
 {% include "ctr/_ap-boxes-style.html" %}
 {% endblock %}
 {% block main %}
-  <nav class="section-subnav" aria-label="CTR section">
-    <a href="/ctr">Overview</a>
-    <a href="/ctr/download">Download</a>
-    <a href="/guides/ctr">Setup guide</a>
-    <a class="current" aria-current="page" href="/ctr/reference">Reference</a>
-  </nav>
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="/ctr">CTR Archipelago</a><span class="sep">/</span><a href="/ctr/reference">Reference</a><span class="sep">/</span><a href="/ctr/reference/ap-boxes">AP box locations</a><span class="sep">/</span>{{ track.name }}</nav>
   <header class="apbox-hero">
     <h1>{{ track.name }} AP box locations</h1>
     <p class="lede">{{ track.boxes|length }} AP item boxes, in the order of their Item Box numbers. Select a picture to see it full size.</p>

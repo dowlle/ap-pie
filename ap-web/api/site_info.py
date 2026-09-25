@@ -5,6 +5,7 @@ from flask import Blueprint, render_template
 
 import config
 import seo
+from api import sections
 
 bp = Blueprint("site_info", __name__)
 PAGES_UPDATED = "2026-09-14"
@@ -20,15 +21,17 @@ def _page(path):
     title, description, filename = PAGES[path]
     html, _ = _render_markdown(Path(__file__).resolve().parent.parent / "site_pages" / filename)
     canonical = f"{config.PUBLIC_BASE_URL}{path}"
+    nav = sections.context("poke", path, title) if path == "/pokepelago" else {}
     return render_template(
         "guides/site-page.html", h1=title, body_html=html,
+        section=nav.get("section"), crumbs=nav.get("crumbs"),
         page_title=f"{title} | Archipelago Pie", meta_description=description,
         canonical_url=canonical, og_type="website",
         og_image=(f"{config.PUBLIC_BASE_URL}/img/guides/pokepelago-gameplay.png"
                   if path == "/pokepelago" else None),
         structured_data=seo.graph(config.PUBLIC_BASE_URL, seo.page(
             config.PUBLIC_BASE_URL, "WebPage", canonical, title, description,
-        )),
+        ), *([nav["breadcrumb_node"]] if nav else [])),
     )
 
 

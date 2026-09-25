@@ -44,7 +44,7 @@ Automated checks passed for the final release, but some gameplay and connection 
 
 `box_locations` adds up to 241 authored AP crates across the 18 race tracks. These are extra places to search, with numbered names for boxes on the same track. `shortcut_knowledge` controls whether easy, medium or hard routes may be required.
 
-Only the local player can break an AP crate. Once checked, it stays gone for that seed. The pad shows how many remain, and kart and direct-projectile contact is more forgiving in the final release. Complete PopTracker mapping and per-track box maps are still being developed.
+Only the local player can break an AP crate. Once checked, it stays gone for that seed. The pad shows how many remain, and kart and direct-projectile contact is more forgiving in the final release. Every box has a labelled picture and a track map on the [AP box locations](/ctr/reference/ap-boxes) pages. Complete PopTracker mapping is still being developed.
 
 ### Itemsanity
 
@@ -72,7 +72,7 @@ The optional `Tizi Helper` makes the first four boxes after the Papu's Pyramid s
 
 `character_unlocks` puts the other racers in the item pool. Use **Select Character** in the Adventure pause menu to choose a racer you have received.
 
-`racer_locked_pads` sets the maximum number of pads that may require a particular racer. Zero turns it off; higher values require Character Unlocks. A pad shows **REQUIRES &lt;CHARACTER&gt;** until you receive that racer. Entering uses the required racer for that race and restores your previous selection on returning to the hub.
+`racer_locked_pads` sets the maximum number of pads that may require a particular racer. Zero turns it off; higher values require Character Unlocks. A pad shows **REQUIRES &lt;CHARACTER&gt;** until you receive that racer. Entering uses the required racer for that race and restores your previous selection on returning to the hub. [Warp pads and requirements](/ctr/reference/warp-pads) explains how to read the pad.
 
 The starting racer and driving class can be chosen in the YAML. Optional manual stat editing is in the pause-menu character screen, not the Garage. Progressive Stats takes priority when enabled.
 
@@ -85,7 +85,7 @@ Boost can be an upgrade ladder shared across the roster or received separately f
 3. The second enables Ultimate Sacred Fire speeds on routes that support them.
 4. An optional third enables Blue Fire, with blue exhaust and stronger reserves that can survive U-turns.
 
-Turn the option off to keep ordinary boost behavior. Disable the Blue Fire tier to end the ladder at Ultimate Sacred Fire.
+Turn the option off to keep ordinary boost behavior. Disable the Blue Fire tier to end the ladder at Ultimate Sacred Fire. [Progression and kart upgrades](/ctr/reference/progression) covers both ladders in more detail.
 
 ### Progressive Stats
 

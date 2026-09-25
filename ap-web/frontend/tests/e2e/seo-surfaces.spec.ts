@@ -215,7 +215,7 @@ test("contextual pages link directly to the YAML Builder", async ({ page, reques
     ["/guides/hosting-on-archipelago-pie", 'href="/yaml-builder"'],
     ["/guides/hosting-a-multiworld", 'href="/yaml-builder"'],
     ["/ctr/reference/randomized-content", 'href="/yaml-builder/ctr"'],
-    ["/ctr/reference/0-2-0-release-notes", 'href="/yaml-builder/ctr?version=0.2.0"'],
+    ["/ctr/releases/0-2-0", 'href="/yaml-builder/ctr?version=0.2.0"'],
   ] as const;
 
   for (const [path, link] of expectedGuideLinks) {
@@ -251,6 +251,10 @@ test("server-rendered pages expose linked, page-appropriate JSON-LD", async ({ r
     { path: "/privacy", types: ["WebPage", "BreadcrumbList"], absent: "TechArticle" },
     { path: "/ctr", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },
     { path: "/ctr/download", types: ["WebPage", "SoftwareApplication", "BreadcrumbList"], absent: "TechArticle" },
+    { path: "/ctr/reference", types: ["CollectionPage", "BreadcrumbList"], absent: "TechArticle" },
+    { path: "/ctr/reference/warp-pads", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
+    { path: "/ctr/releases/0-2-0", types: ["WebPage", "TechArticle", "BreadcrumbList"], absent: "SoftwareApplication" },
+    { path: "/pokepelago", types: ["WebPage", "BreadcrumbList"], absent: "TechArticle" },
   ];
 
   for (const entry of cases) {
@@ -293,7 +297,7 @@ test("server-rendered guides share the approved navigation and component contrac
 
 test("CTR references consume approved actions, notices, badges and tabs", async ({ page }) => {
   await page.goto("/ctr/reference");
-  await expect(page.locator(".section-subnav [aria-current='page']")).toHaveText("Reference");
+  await expect(page.locator(".section-subnav [aria-current='page']")).toHaveText("How it works");
   await expect(page.locator(".reference-note")).toHaveClass(/\bnotice-warning\b/);
   await expect(page.locator(".version-pill").first()).toHaveClass(/\bbadge\b/);
 

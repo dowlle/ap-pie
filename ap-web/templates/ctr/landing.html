@@ -44,13 +44,6 @@
   </style>
 {% endblock %}
 {% block main %}
-  <nav class="section-subnav" aria-label="CTR section">
-    <a class="current" aria-current="page" href="/ctr">Overview</a>
-    <a href="/ctr/download">Download</a>
-    <a href="/guides/ctr">Setup guide</a>
-    <a href="/ctr/reference">Reference</a>
-    <a href="/guides/crash-team-racing-pc">Vanilla CTR on PC</a>
-  </nav>
   <div class="ctr-hero">
     <h1>Crash Team Racing Archipelago</h1>
     <p class="lede">
@@ -65,7 +58,7 @@
       <span class="cta-aside">Current stable release: {{ stable.version }}</span>
     </div>
     <p class="hero-note">Requires a disc image made from your own North American (NTSC-U) Crash Team Racing disc. No game data is included.</p>
-    <p><a href="/ctr/reference/0-2-0-release-notes">Read the 0.2.0 release notes</a> for the new checks, racers, kart upgrades, traps and known limitations.</p>
+    <p><a href="/ctr/releases/0-2-0">Read the 0.2.0 release notes</a> for the new checks, racers, kart upgrades, traps and known limitations.</p>
   </div>
 
   <section class="ctr-section">
@@ -181,6 +174,17 @@
     <p><a href="https://youtu.be/9x63P6JP93E" rel="noopener noreferrer">Watch the CTR setup video on YouTube</a>. It covers the setup flow; use the current download and written guide for 0.2.0.</p>
     <p>Organizing the multiworld? <a href="https://youtu.be/CpRbyRodayM" rel="noopener noreferrer">Watch Appie's hosting walkthrough</a> or follow the <a href="/guides/hosting-a-multiworld">written hosting guide</a>.</p>
     <p>A dedicated CTR 0.2.0 YAML explanation video is coming soon. For now, use the <a href="/yaml-builder/ctr?version=0.2.0">0.2.0 YAML Builder</a> and <a href="/guides/setting-up-your-yaml">written YAML guide</a>.</p>
+  </section>
+
+  <section class="ctr-section">
+    <h2>How it works</h2>
+    <p>Once you are racing, these pages explain what the randomizer changes.</p>
+    <div class="guide-cards">
+      <a class="guide-card" href="/ctr/reference/warp-pads"><h2>Warp pads and requirements</h2><p>How to read a pad and why your route changes every seed.</p></a>
+      <a class="guide-card" href="/ctr/reference/progression"><h2>Progression and kart upgrades</h2><p>What opens the Adventure hubs, and how boost and stat upgrades arrive.</p></a>
+      <a class="guide-card" href="/ctr/reference/randomized-content"><h2>What can be randomized?</h2><p>Every reward, racer, kart upgrade, trap and goal a seed can change.</p></a>
+      <a class="guide-card" href="/ctr/reference/ap-boxes"><h2>AP box locations</h2><p>A labelled picture of every AP item box, one page per track.</p></a>
+    </div>
   </section>
 
   <section class="ctr-section ctr-final">
