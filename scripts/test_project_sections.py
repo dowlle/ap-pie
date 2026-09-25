@@ -85,7 +85,7 @@ class ProjectSectionsTest(unittest.TestCase):
         )
         self.assertIn('<a href="/ctr/reference/ap-boxes" class="active">AP box locations</a>', html)
 
-    def test_moved_release_notes_redirect_permanently_in_one_hop(self) -> None:
+    def test_release_notes_moved_and_listed_in_the_overview(self) -> None:
         for old in ("/ctr/reference/0-2-0-release-notes", "/ctr/reference/0-2-0-release-notes/"):
             with self.subTest(old=old):
                 response = self.get(old)
@@ -93,9 +93,9 @@ class ProjectSectionsTest(unittest.TestCase):
                 target = response.headers["Location"]
                 self.assertTrue(target.endswith("/ctr/releases/0-2-0"), target)
                 self.assertEqual(self.get("/ctr/releases/0-2-0").status_code, 200)
-        latest = self.get("/ctr/releases")
-        self.assertEqual(latest.status_code, 302)
-        self.assertTrue(latest.headers["Location"].endswith("/ctr/releases/0-2-0"))
+        overview = self.get("/ctr/releases").get_data(as_text=True)
+        self.assertIn('href="/ctr/releases/0-2-0"', overview)
+        self.assertIn('href="https://github.com/dowlle/ctr-native-ap/releases/tag/v0.1.0"', overview)
 
     def test_moved_guides_redirect_permanently_and_keep_the_query(self) -> None:
         moved = {
