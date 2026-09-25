@@ -106,6 +106,20 @@ _REFERENCE_BY_SLUG = {page["slug"]: page for page in REFERENCE_PAGES}
 # answering with a permanent redirect so links and search results carry over.
 RELEASE_PAGES: list[dict] = [
     {
+        "slug": "0-2-1",
+        "title": "What changed in 0.2.1?",
+        "page_title": "CTR Archipelago 0.2.1 release notes",
+        "short_title": "0.2.1 release notes",
+        "blurb": "Everything new since 0.2.0: Hit Character, Slide Coliseum and Turbo Track races, Cortex Vortex, the Adventure tracker and room links.",
+        "description": "Everything new in CTR Archipelago 0.2.1: Hit Character checks, trial track races, Cortex Vortex, the in-game Adventure tracker, room links on Windows, item box colours and logic fixes.",
+        "file": "0-2-1-release-notes.md",
+        "published": "2026-09-25",
+        "updated": "2026-09-25",
+        "verified_against": "0.2.1",
+        # Draft until the GitHub release is published; then "Full release notes".
+        "status_label": "Upcoming release",
+    },
+    {
         "slug": "0-2-0",
         "title": "What changed in 0.2.0?",
         "page_title": "CTR Archipelago 0.2.0 release notes",
@@ -125,8 +139,12 @@ RELEASE_REDIRECTS = {"0-2-0-release-notes": "/ctr/releases/0-2-0"}
 # Stable releases for /ctr/releases, newest first. `notes` is the page on
 # this site when one exists, otherwise the GitHub release. Summaries are the
 # release titles from GitHub. Test builds are linked as a group, not listed.
+# `upcoming` marks a release whose notes are up before the GitHub release is
+# published; drop it and bump STABLE when the release goes out.
 _GITHUB_RELEASES = "https://github.com/dowlle/ctr-native-ap/releases"
 RELEASE_HISTORY: list[dict] = [
+    {"version": "0.2.1", "date": "2026-09-25", "notes": "/ctr/releases/0-2-1", "upcoming": True,
+     "summary": "Hit Character checks, trial track races, Cortex Vortex, the Adventure tracker and room links."},
     {"version": "0.2.0", "date": "2026-09-10", "notes": "/ctr/releases/0-2-0",
      "summary": "Stable release: new checks, racers, kart progression, twenty traps and more goals."},
     {"version": "0.1.5", "date": "2026-08-06", "notes": f"{_GITHUB_RELEASES}/tag/v0.1.5",

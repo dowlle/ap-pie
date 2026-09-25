@@ -95,6 +95,8 @@ class ProjectSectionsTest(unittest.TestCase):
                 self.assertEqual(self.get("/ctr/releases/0-2-0").status_code, 200)
         overview = self.get("/ctr/releases").get_data(as_text=True)
         self.assertIn('href="/ctr/releases/0-2-0"', overview)
+        self.assertIn('href="/ctr/releases/0-2-1"', overview)
+        self.assertEqual(self.get("/ctr/releases/0-2-1").status_code, 200)
         self.assertIn('href="https://github.com/dowlle/ctr-native-ap/releases/tag/v0.1.0"', overview)
 
     def test_moved_guides_redirect_permanently_and_keep_the_query(self) -> None:
