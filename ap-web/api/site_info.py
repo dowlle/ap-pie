@@ -16,6 +16,21 @@ PAGES = {
 }
 
 
+def _pokepelago_game() -> dict:
+    base = config.PUBLIC_BASE_URL
+    return {
+        "@type": "VideoGame",
+        "@id": f"{base}/pokepelago#game",
+        "name": "Poképelago",
+        "description": PAGES["/pokepelago"][1],
+        "url": "https://pokepelago.ap-pie.com/",
+        "gamePlatform": "Web browser",
+        "image": f"{base}/img/guides/pokepelago-gameplay.png",
+        "subjectOf": {"@id": f"{base}/pokepelago#page"},
+        "publisher": {"@id": seo.organization_id(base)},
+    }
+
+
 def _page(path):
     from api.guides import _render_markdown
     title, description, filename = PAGES[path]
@@ -29,9 +44,11 @@ def _page(path):
         canonical_url=canonical, og_type="website",
         og_image=(f"{config.PUBLIC_BASE_URL}/img/guides/pokepelago-gameplay.png"
                   if path == "/pokepelago" else None),
-        structured_data=seo.graph(config.PUBLIC_BASE_URL, seo.page(
-            config.PUBLIC_BASE_URL, "WebPage", canonical, title, description,
-        ), *([nav["breadcrumb_node"]] if nav else [])),
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            seo.page(config.PUBLIC_BASE_URL, "WebPage", canonical, title, description),
+            *([nav["breadcrumb_node"], _pokepelago_game()] if nav else []),
+        ),
     )
 
 

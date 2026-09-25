@@ -50,7 +50,14 @@ PUBLIC_ROUTE_SEO = {
         "heading": "Your games, connected by one randomizer.",
         "intro": "Archipelago Pie helps beginners learn Archipelago, build player YAMLs, browse community game integrations, and organize multiworld sessions.",
         "schema_type": "WebPage",
+        # Rendered in the HTML before JavaScript runs, so crawlers that do not
+        # execute the app still reach the main sections from the homepage.
         "links": [
+            {"href": "/guides", "label": "Archipelago guides: getting started, YAMLs, hosting"},
+            {"href": "/apworlds", "label": "Browse community APWorlds"},
+            {"href": "/yaml-builder", "label": "Build a player YAML"},
+            {"href": "/ctr", "label": "CTR Archipelago: Crash Team Racing as a native PC randomizer"},
+            {"href": "/pokepelago", "label": "Poképelago: catch Pokémon by name in your browser"},
             {
                 "href": "https://pokepelago.ap-pie.com/",
                 "label": "Play Poképelago, a browser guessing game for Archipelago",

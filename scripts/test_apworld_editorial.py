@@ -25,11 +25,13 @@ from apworld_editorial import (  # noqa: E402
 class ReviewedAPWorldMetadataTests(unittest.TestCase):
     def test_current_fixtures_load_and_keep_drafts_private(self) -> None:
         records = load_reviewed_apworlds()
-        self.assertEqual(set(records), {"sm", "animal_well", "ctr"})
+        self.assertEqual(set(records), {"sm", "animal_well", "ctr", "pokepelago"})
         self.assertTrue(records["sm"].is_beta_preview)
         self.assertFalse(records["sm"].is_public)
         self.assertFalse(records["animal_well"].is_public)
         self.assertEqual(records["ctr"].route.path, "/ctr")
+        self.assertTrue(records["pokepelago"].is_public)
+        self.assertEqual(records["pokepelago"].route.path, "/pokepelago")
 
     def test_join_keeps_upstream_and_editorial_namespaces_separate(self) -> None:
         records = load_reviewed_apworlds()
