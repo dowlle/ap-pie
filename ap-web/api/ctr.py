@@ -525,6 +525,20 @@ def ctr_ap_boxes_track(track_slug: str) -> str:
     page_node = seo.page(config.PUBLIC_BASE_URL, "WebPage", canonical_url, title, description)
     og_image = _canonical(f"/img/ctr/ap-boxes/og/{track_slug}.jpg")
     page_node["primaryImageOfPage"] = og_image
+    # Every box picture as an ImageObject, so image search can match a
+    # query like "Mystery Caves item box 13" to its labelled picture.
+    page_node["image"] = [
+        {
+            "@type": "ImageObject",
+            "contentUrl": _canonical(box["full"]),
+            "thumbnailUrl": _canonical(box["thumb"]),
+            "name": box["name"],
+            "caption": f"{box['name']}. {box['hint']}" if box.get("hint") else box["name"],
+            "width": 1280,
+            "height": 720,
+        }
+        for box in track["boxes"]
+    ]
     nav = _section(path, track["name"], [(track["name"], path)])
     return render_template(
         "ctr/ap-boxes-track.html",

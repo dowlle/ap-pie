@@ -1,0 +1,33 @@
+schema_version = 1
+apworld_name = "pokepelago"
+slug = "pokepelago"
+review_state = "reviewed"
+publication_status = "published"
+reviewed_by = "Appie"
+reviewed_at = "2026-09-25"
+next_review_at = "2026-12-24"
+
+[editorial]
+copy_status = "approved_original"
+writing_policy = "original-ap-pie-copy"
+copy_reviewed_by = "Appie"
+copy_reviewed_at = "2026-09-25"
+
+[[sources]]
+id = "pokepelago-ap-pie-authority"
+kind = "ap_pie_authority"
+url = "https://ap-pie.com/pokepelago"
+verified_at = "2026-09-25"
+
+[[claims]]
+id = "pokepelago-established-route"
+topic = "routing"
+fact = "Poképelago already has a dedicated AP-Pie authority section, so a second APWorld detail page would duplicate that route's purpose."
+source_refs = ["pokepelago-ap-pie-authority"]
+applies_to_versions = ["*"]
+verified_at = "2026-09-25"
+
+[route]
+action = "replace_detail_route"
+path = "/pokepelago"
+kind = "server"
