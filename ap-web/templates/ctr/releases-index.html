@@ -21,7 +21,7 @@
     {% for release in releases %}
     <li>
       <span class="release-version">{{ release.version }}</span>
-      <span class="release-date"><time datetime="{{ release.date }}">{{ release.date }}</time>{% if release.version == stable.version %} · current stable{% endif %}</span>
+      <span class="release-date"><time datetime="{{ release.date }}">{{ release.date }}</time>{% if release.version == stable.version %} · current stable{% elif release.upcoming %} · upcoming{% endif %}</span>
       <p class="release-summary">{{ release.summary }}</p>
       {% if release.notes.startswith("/") %}
       <a href="{{ release.notes }}">Release notes</a>
