@@ -53,16 +53,16 @@ def release_assets(version: str) -> dict:
 
 
 STABLE: dict = {
-    "version": "0.2.0",
-    "released": "2026-09-10",
-    "downloads": release_assets("0.2.0"),
+    "version": "0.2.1",
+    "released": "2026-09-25",
+    "downloads": release_assets("0.2.1"),
 }
 
 # Stable releases that stay downloadable from /ctr/download after a newer one
 # replaces them, newest first. Whatever STABLE is not shows under "Older
 # versions", with version-pinned aliases at /ctr/download/<version>/<asset>.
 # Add the outgoing version here when STABLE moves on.
-KEPT_VERSIONS: list[str] = ["0.2.0"]
+KEPT_VERSIONS: list[str] = ["0.2.1", "0.2.0"]
 
 
 def older_versions() -> list[str]:
@@ -135,8 +135,11 @@ RELEASE_PAGES: list[dict] = [
         "published": "2026-09-25",
         "updated": "2026-09-25",
         "verified_against": "0.2.1",
-        # Draft until the GitHub release is published; then "Full release notes".
-        "status_label": "Upcoming release",
+        "status_label": "Full release notes",
+        "og_image": "/img/ctr/cortex-vortex-hero-og.jpg",
+        "og_image_width": 1200,
+        "og_image_height": 630,
+        "og_image_alt": "Racing on Cortex Vortex in CTR Archipelago 0.2.1",
     },
     {
         "slug": "0-2-0",
@@ -162,7 +165,7 @@ RELEASE_REDIRECTS = {"0-2-0-release-notes": "/ctr/releases/0-2-0"}
 # published; drop it and bump STABLE when the release goes out.
 _GITHUB_RELEASES = "https://github.com/dowlle/ctr-native-ap/releases"
 RELEASE_HISTORY: list[dict] = [
-    {"version": "0.2.1", "date": "2026-09-25", "notes": "/ctr/releases/0-2-1", "upcoming": True,
+    {"version": "0.2.1", "date": "2026-09-25", "notes": "/ctr/releases/0-2-1",
      "summary": "Hit Character checks, trial track races, Cortex Vortex, the Adventure tracker and room links."},
     {"version": "0.2.0", "date": "2026-09-10", "notes": "/ctr/releases/0-2-0",
      "summary": "Stable release: new checks, racers, kart progression, twenty traps and more goals."},
@@ -496,6 +499,10 @@ def ctr_reference_index() -> str:
         pages=REFERENCE_PAGES,
         ap_box_total=AP_BOX_TOTAL,
         stable=STABLE,
+        stable_notes=next(
+            (f"/ctr/releases/{p['slug']}" for p in RELEASE_PAGES if p["verified_against"] == STABLE["version"]),
+            "/ctr/releases",
+        ),
         page_title=title,
         meta_description=description,
         canonical_url=canonical_url,
@@ -537,7 +544,7 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str)
         "dateModified": page["updated"],
         "mainEntityOfPage": {"@id": f"{canonical_url}#page"},
         "isPartOf": {"@id": seo.website_id(config.PUBLIC_BASE_URL)},
-        "image": _canonical("/img/ctr/og-ctr.jpg"),
+        "image": _canonical(page.get("og_image", "/img/ctr/og-ctr.jpg")),
         "inLanguage": "en",
     }
     return render_template(
@@ -550,7 +557,10 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str)
         meta_description=page["description"],
         canonical_url=canonical_url,
         og_type="article",
-        og_image=_canonical("/img/ctr/og-ctr.jpg"),
+        og_image=_canonical(page.get("og_image", "/img/ctr/og-ctr.jpg")),
+        og_image_width=page.get("og_image_width"),
+        og_image_height=page.get("og_image_height"),
+        og_image_alt=page.get("og_image_alt"),
         site_url=_canonical("/"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,

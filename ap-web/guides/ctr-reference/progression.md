@@ -1,6 +1,6 @@
 In CTR Archipelago, your next Key, racer or kart upgrade can arrive from anywhere in the multiworld. You choose which systems to use in your YAML before the world is generated.
 
-> This page describes stable 0.2.0. See the [release notes](/ctr/releases/0-2-0) for experimental features and remaining testing coverage.
+> This page describes stable 0.2.1. See the [release notes](/ctr/releases/0-2-1) for experimental features and remaining testing coverage.
 
 ## Adventure progression
 
@@ -40,4 +40,4 @@ When Progressive Stats is off, the seed's character and stat settings apply. Edi
 
 ## What happens on reconnect
 
-Your upgrades are saved for your Archipelago player slot and restored when you reconnect to it. You do not have to find them again after closing the game. A large backlog of items can still cause a pause while reconnecting; see the [release notes](/ctr/releases/0-2-0#practical-limitations-and-testing) for current limitations.
+Your upgrades are saved for your Archipelago player slot and restored when you reconnect to it. You do not have to find them again after closing the game. A large backlog of items can still cause a pause while reconnecting; see the [release notes](/ctr/releases/0-2-1#known-issues-and-testing) for current limitations.

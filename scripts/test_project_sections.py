@@ -100,20 +100,24 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertIn('href="https://github.com/dowlle/ctr-native-ap/releases/tag/v0.1.0"', overview)
 
     def test_older_versions_stay_downloadable_after_a_new_stable(self) -> None:
-        self.assertNotIn('id="older-versions"', self.get("/ctr/download").get_data(as_text=True))
-        with mock.patch.dict(ctr.STABLE, {"version": "0.2.1", "downloads": ctr.release_assets("0.2.1")}), \
-                mock.patch.object(ctr, "KEPT_VERSIONS", ["0.2.1", "0.2.0"]):
+        # 0.2.1 is stable today; 0.2.0 stays downloadable under "Older versions".
+        page = self.get("/ctr/download").get_data(as_text=True)
+        self.assertIn('id="older-versions"', page)
+        self.assertIn('href="/ctr/download/0.2.0/windows"', page)
+        self.assertIn('href="/ctr/releases/0-2-0"', page)
+        response = self.get("/ctr/download/0.2.0/windows")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.headers["Location"],
+            "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.0/ctr-archipelago-v0.2.0-windows-x86.zip",
+        )
+        self.assertTrue(self.get("/ctr/download/windows").headers["Location"].endswith("/v0.2.1/ctr-archipelago-v0.2.1-windows-x86.zip"))
+        # A future stable bump keeps the outgoing 0.2.1 downloadable the same way.
+        with mock.patch.dict(ctr.STABLE, {"version": "0.3.0", "downloads": ctr.release_assets("0.3.0")}), \
+                mock.patch.object(ctr, "KEPT_VERSIONS", ["0.3.0", "0.2.1"]):
             page = self.get("/ctr/download").get_data(as_text=True)
-            self.assertIn('id="older-versions"', page)
-            self.assertIn('href="/ctr/download/0.2.0/windows"', page)
-            self.assertIn('href="/ctr/releases/0-2-0"', page)
-            response = self.get("/ctr/download/0.2.0/windows")
-            self.assertEqual(response.status_code, 302)
-            self.assertEqual(
-                response.headers["Location"],
-                "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.0/ctr-archipelago-v0.2.0-windows-x86.zip",
-            )
-            self.assertTrue(self.get("/ctr/download/windows").headers["Location"].endswith("/v0.2.1/ctr-archipelago-v0.2.1-windows-x86.zip"))
+            self.assertIn('href="/ctr/download/0.2.1/windows"', page)
+            self.assertTrue(self.get("/ctr/download/windows").headers["Location"].endswith("/v0.3.0/ctr-archipelago-v0.3.0-windows-x86.zip"))
         self.assertEqual(self.get("/ctr/download/0.1.0/windows").status_code, 404)
 
     def test_moved_guides_redirect_permanently_and_keep_the_query(self) -> None:

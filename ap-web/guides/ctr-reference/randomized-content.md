@@ -2,7 +2,7 @@ You can keep CTR close to the original Adventure Mode or add new checks, unlocka
 
 A **check** is something you do to send an item, such as winning a race or breaking an AP box. That item might be for you or for someone playing another game. Your next Key could come from their world instead of a boss race in yours.
 
-> This page covers CTR Archipelago 0.2.0. Most features below are optional. The [release notes](/ctr/releases/0-2-0) explain experimental features and known limitations.
+> This page covers CTR Archipelago 0.2.1. Most features below are optional. The [release notes](/ctr/releases/0-2-1) explain experimental features and known limitations.
 
 ## Adventure routes
 
@@ -57,4 +57,4 @@ These options change progression and selected parts of gameplay. They do not aut
 
 You still need a disc image made from your own North American copy of CTR. The [setup guide](/ctr/setup) explains how to use it; no game data is included with the client.
 
-Ready to choose your settings? [Open the CTR 0.2.0 YAML Builder](/yaml-builder/ctr?version=0.2.0), review the file, and download it for your host.
+Ready to choose your settings? [Open the CTR 0.2.1 YAML Builder](/yaml-builder/ctr?version=0.2.1), review the file, and download it for your host.

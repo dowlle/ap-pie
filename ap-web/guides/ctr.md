@@ -7,15 +7,15 @@ New to Archipelago itself? Read [Getting started with Archipelago](/guides/getti
 ## Choose your next step
 
 - **Your room is already generated:** follow the installation and connection steps below. You need the game client, your disc image and the connection details from the host.
-- **Your host is collecting players:** make a [0.2.0 YAML](/yaml-builder/ctr?version=0.2.0), the file containing your player name and settings, and send it to them before generation.
+- **Your host is collecting players:** make a [0.2.1 YAML](/yaml-builder/ctr?version=0.2.1), the file containing your player name and settings, and send it to them before generation.
 - **You are generating or hosting:** install the matching [APWorld](/ctr/download/apworld), the package that adds CTR to Archipelago, and follow the [hosting guide](/guides/hosting-a-multiworld). Players joining your room do not need to install this package themselves.
 - **You are already playing:** [How CTR Archipelago works](/ctr/reference) explains [warp-pad requirements](/ctr/reference/warp-pads), [progression and kart upgrades](/ctr/reference/progression) and where to find every [AP box](/ctr/reference/ap-boxes).
 
-**Updating an existing install?** Back up its folder, including settings and saves. For a new game, use the matching 0.2.0 client, APWorld and YAML. For an ongoing room, check with the host before updating; older Alpha seeds are not automatically interchangeable with the final release.
+**Updating an existing install?** Back up its folder, including settings and saves. For a new game, use the matching 0.2.1 client, APWorld and YAML. For an ongoing room, check with the host before updating; older Alpha seeds are not automatically interchangeable with the final release.
 
 ## What you need
 
-**0.2.0 is the current stable release.** Read the [full release notes](/ctr/releases/0-2-0) for the new settings, experimental features and remaining testing coverage. Use a matching 0.2.0 client and APWorld when generating a new game, with fresh seeds.
+**0.2.1 is the current stable release.** Read the [full release notes](/ctr/releases/0-2-1) for the new settings, experimental features and remaining testing coverage. Use a matching 0.2.1 client and APWorld when generating a new game, with fresh seeds.
 
 Prefer video? [Watch Appie's CTR setup walkthrough](https://youtu.be/9x63P6JP93E). It predates 0.2.0, so use the current downloads and written instructions alongside it. If you are organizing the multiworld, the [hosting video](https://youtu.be/CpRbyRodayM) and [written hosting guide](/guides/hosting-a-multiworld) cover generation and running the server.
 
@@ -33,7 +33,7 @@ Run `ctr_native_ap.exe` (Windows) or `ctr_native_ap` (Linux) once. On a fresh st
 
 Copy your raw `.bin` disc image into that `assets` folder. The filename does not matter: the game scans the `.bin` files and recognizes a valid North American disc automatically. Launch again and the game boots to the main menu.
 
-For a `.chd`, use the bundled `extract_assets.py` with Python and `chdman`, following the [extraction instructions](https://github.com/dowlle/ctr-native-ap/blob/v0.2.0/SETUP.md#appendix-extracting-the-assets-most-people-should-skip-this). The automatic drop-in path above is for raw `.bin` images.
+For a `.chd`, use the bundled `extract_assets.py` with Python and `chdman`, following the [extraction instructions](https://github.com/dowlle/ctr-native-ap/blob/v0.2.1/SETUP.md#appendix-extracting-the-assets-most-people-should-skip-this). The automatic drop-in path above is for raw `.bin` images.
 
 ## Step 3: connect to your room
 
