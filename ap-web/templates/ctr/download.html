@@ -31,22 +31,12 @@
   </style>
 {% endblock %}
 {% block main %}
-  <nav class="crumbs" aria-label="Breadcrumb">
-    <a href="/ctr">CTR Archipelago</a><span class="sep">/</span>Downloads
-  </nav>
-  <nav class="section-subnav" aria-label="CTR section">
-    <a href="/ctr">Overview</a>
-    <a class="current" aria-current="page" href="/ctr/download">Download</a>
-    <a href="/guides/ctr">Setup guide</a>
-    <a href="/ctr/reference">Reference</a>
-    <a href="/guides/crash-team-racing-pc">Vanilla CTR on PC</a>
-  </nav>
   <div class="dl-head">
     <h1>Download CTR Archipelago</h1>
     <p>
       The latest stable release is <strong>{{ stable.version }}</strong>,
       published {{ stable.released }}. Pick your platform, then follow the
-      <a href="/guides/ctr">setup guide</a> to get connected. Every build
+      <a href="/ctr/setup">setup guide</a> to get connected. Every build
       needs a disc image made from your own North American (NTSC-U) Crash
       Team Racing disc.
     </p>
@@ -57,17 +47,17 @@
       <h2>Windows</h2>
       <p class="dl-meta">CTR Archipelago {{ stable.version }} for Windows</p>
       <a class="btn btn-primary" href="/ctr/download/windows">Download for Windows</a>
-      <a class="dl-sub" href="/guides/ctr">Setup guide</a>
+      <a class="dl-sub" href="/ctr/setup">Setup guide</a>
     </div>
     <div class="dl-card">
       <h2>Linux and Steam Deck</h2>
       <p class="dl-meta">CTR Archipelago {{ stable.version }} for Linux</p>
       <a class="btn btn-primary" href="/ctr/download/linux">Download for Linux</a>
-      <a class="dl-sub" href="/guides/ctr">Linux and Steam Deck setup</a>
+      <a class="dl-sub" href="/ctr/setup">Linux and Steam Deck setup</a>
     </div>
   </div>
 
-  <p><a href="/ctr/reference/0-2-0-release-notes">What's new in 0.2.0</a>: full release notes, compatibility and remaining testing coverage. Use the matching client and APWorld, and fresh seeds for new games.</p>
+  <p><a href="{{ stable_notes }}">What's new in {{ stable.version }}</a>: full release notes, compatibility and remaining testing coverage. Use the matching client and APWorld, and fresh seeds for new games.</p>
   <p><strong>Why is the download small?</strong> The archive contains the game client, matching APWorld and setup/support files. Your own disc supplies the large game assets. Debug symbols for investigating crashes are separate GitHub release downloads; you do not need them to play.</p>
 
   <div class="notice notice-warning">
@@ -78,6 +68,23 @@
       disc. The European and Japanese versions are not supported.
     </p>
   </div>
+
+  {% if older_versions %}
+  <div class="dl-section" id="older-versions">
+    <h2>Older versions</h2>
+    <p>For a room that still uses an older version. Ask your host which version the room was generated with, and use the matching APWorld and template YAML.</p>
+    {% for older in older_versions %}
+    <h3>CTR Archipelago {{ older.version }}</h3>
+    <ul class="dl-links">
+      <li><a href="/ctr/download/{{ older.version }}/windows">Windows</a></li>
+      <li><a href="/ctr/download/{{ older.version }}/linux">Linux and Steam Deck</a></li>
+      <li><a href="/ctr/download/{{ older.version }}/apworld">APWorld</a></li>
+      <li><a href="/ctr/download/{{ older.version }}/template">Template YAML</a></li>
+      <li><a href="{{ older.notes }}">Release notes</a></li>
+    </ul>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   {% if prerelease %}
   <div class="dl-section">

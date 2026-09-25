@@ -6,7 +6,7 @@ Poképelago keeps a leaderboard of which viewers caught the most Pokémon, and e
 
 Everything runs inside the Poképelago page in your browser. There is no bot to install and nothing to add to your Twitch channel. Chat guessing only works while that Poképelago tab is open.
 
-This guide assumes you already have the client running. If not, start with the [Poképelago setup guide](/guides/pokepelago), which covers sprites and connecting to a room.
+This guide assumes you already have the client running. If not, start with the [Poképelago setup guide](/pokepelago/setup), which covers sprites and connecting to a room.
 
 ## Turn on the Twitch integration
 
@@ -103,4 +103,4 @@ Each viewer can guess once every 5 seconds. Ask them to wait a moment and try ag
 
 ## Where to get help
 
-For everything else about setting up the game, see the [Poképelago setup guide](/guides/pokepelago). Report reproducible problems in the [Poképelago issue tracker](https://github.com/dowlle/PokepelagoClient/issues).
+For everything else about setting up the game, see the [Poképelago setup guide](/pokepelago/setup). Report reproducible problems in the [Poképelago issue tracker](https://github.com/dowlle/PokepelagoClient/issues).

@@ -19,7 +19,7 @@ The site keeps a server-side log of things that happen on it, so its own funnel 
 - what happened, as a short code such as `guide_view` or `submit_rejected`
 - when it happened
 - the page path it happened on
-- which page on this site you came from, as a bare path such as `/guides/ctr`. On the app's first page view, an outside source is reduced in your browser to `search`, `community`, `other_external`, or `direct`. The source address is discarded and never sent because it can contain search terms
+- which page on this site you came from, as a bare path such as `/ctr/setup`. On the app's first page view, an outside source is reduced in your browser to `search`, `community`, `other_external`, or `direct`. The source address is discarded and never sent because it can contain search terms
 - a two-letter country code, supplied by Cloudflare
 - whether the device looked like a desktop, a mobile, a bot, or a recognised synthetic test
 - a small set of technical details for that event type, such as a game name, a version number, a rejection reason code, whether a YAML was hand-edited rather than built from the form, or that a community preset was used. Builder events may also carry a random attempt value so one opening, its furthest stage, and its outcome are counted together

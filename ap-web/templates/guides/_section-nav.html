@@ -1,0 +1,27 @@
+{# Project section navigation and breadcrumbs, from api/sections.py. #}
+<nav class="section-nav" aria-label="{{ section.name }} pages">
+  <div class="section-subnav">
+    {% for item in section["items"] %}
+    <a href="{{ item.path }}"{% if item.exact %} class="current" aria-current="page"{% elif item.current %} class="active"{% endif %}{% if item.external %} rel="noopener noreferrer"{% endif %}>{{ item.label }}</a>
+    {% endfor %}
+  </div>
+  {% if section.sub %}
+  <div class="section-subnav section-subnav-sub">
+    {% for item in section.sub %}
+    <a href="{{ item.path }}"{% if item.exact %} class="current" aria-current="page"{% elif item.current %} class="active"{% endif %}>{{ item.label }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</nav>
+<nav class="crumbs" aria-label="Breadcrumb">
+  {% for crumb in crumbs %}{% if not loop.last %}<a href="{{ crumb.path }}">{{ crumb.name }}</a><span class="sep">/</span>{% else %}<span aria-current="page">{{ crumb.name }}</span>{% endif %}{% endfor %}
+</nav>
+<script>
+  // On narrow screens the rows scroll sideways; bring the current page into view.
+  document.querySelectorAll(".section-subnav").forEach(function (row) {
+    var here = row.querySelector(".current, .active");
+    if (here && row.scrollWidth > row.clientWidth) {
+      row.scrollLeft = here.offsetLeft - (row.clientWidth - here.offsetWidth) / 2;
+    }
+  });
+</script>

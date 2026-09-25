@@ -18,11 +18,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import markdown
-from flask import Blueprint, Response, abort, render_template, request, session
+from flask import Blueprint, Response, abort, redirect, render_template, request, session
 
 import analytics
 import config
 import seo
+from api import sections as project_sections
 
 _GUIDES_DIR = Path(__file__).resolve().parent.parent / "guides"
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
@@ -41,7 +42,17 @@ bp = Blueprint("guides", __name__, template_folder=str(_TEMPLATES_DIR))
 # a ghosted placeholder card until that project's guide ships.
 PROJECTS: list[dict] = [
     {"key": "ap", "name": "Archipelago basics", "sub": "start here if multiworld is new", "color": "#6da8c9"},
-    {"key": "ctr", "name": "Crash Team Racing", "sub": "native PC port + randomizer", "color": "#e8a857"},
+    {
+        "key": "ctr", "name": "Crash Team Racing", "sub": "native PC port + randomizer", "color": "#e8a857",
+        # Section pages outside /guides that belong on the shelf next to the
+        # guides, so the guides index reaches the whole CTR section.
+        "links": [
+            {"path": "/ctr/reference", "kicker": "Reference", "title": "How CTR Archipelago works",
+             "blurb": "Warp pads, progression, and everything a seed can randomize."},
+            {"path": "/ctr/reference/ap-boxes", "kicker": "Reference", "title": "CTR AP box locations",
+             "blurb": "A labelled picture of every AP item box, one page per track."},
+        ],
+    },
     {
         "key": "poke", "name": "Pokepelago", "sub": "catch across worlds", "color": "#e05d5d",
         "action": {
@@ -205,6 +216,7 @@ GUIDES: list[dict[str, str]] = [
     },
     {
         "slug": "pokepelago",
+        "path": "/pokepelago/setup",
         "file": "pokepelago.md",
         "h1": "Poképelago setup guide",
         "page_title": "Poképelago Setup Guide | Archipelago Pie",
@@ -225,6 +237,7 @@ GUIDES: list[dict[str, str]] = [
     },
     {
         "slug": "pokepelago-twitch",
+        "path": "/pokepelago/twitch",
         "file": "pokepelago-twitch.md",
         "h1": "Poképelago Twitch chat guessing",
         "page_title": "Poképelago Twitch Chat Guessing for Streamers | Archipelago Pie",
@@ -245,6 +258,7 @@ GUIDES: list[dict[str, str]] = [
     },
     {
         "slug": "crash-team-racing-pc",
+        "path": "/ctr/play-on-pc",
         "file": "crash-team-racing-pc.md",
         "h1": "Play Crash Team Racing on PC",
         "page_title": "Play Crash Team Racing on PC | Archipelago Pie",
@@ -265,6 +279,7 @@ GUIDES: list[dict[str, str]] = [
     },
     {
         "slug": "ctr",
+        "path": "/ctr/setup",
         "file": "ctr.md",
         "h1": "Crash Team Racing setup guide",
         "page_title": "CTR Archipelago Setup Guide | Archipelago Pie",
@@ -278,7 +293,7 @@ GUIDES: list[dict[str, str]] = [
             "connected to your multiworld room."
         ),
         "published": "2026-07-22",
-        "updated": "2026-09-10",
+        "updated": "2026-09-25",
         "project": "ctr",
         "kicker": "Randomizer",
         "featured": True,
@@ -293,6 +308,18 @@ GUIDES: list[dict[str, str]] = [
 ]
 
 _GUIDES_BY_SLUG = {g["slug"]: g for g in GUIDES}
+
+
+def guide_path(guide: dict) -> str:
+    """Canonical path of a guide. Project guides live in their project's
+    section (`path`); the rest stay under /guides/<slug>."""
+    return guide.get("path") or f"/guides/{guide['slug']}"
+
+
+# Project guides moved out of /guides on 2026-09-25. Their old URLs answer
+# with a permanent redirect for good: they are in video descriptions,
+# Discord posts and search results.
+MOVED_GUIDES = {g["slug"]: g["path"] for g in GUIDES if g.get("path")}
 
 
 def _canonical(path: str) -> str:
@@ -326,7 +353,7 @@ def guides_index() -> str:
     for p in PROJECTS:
         cards = [
             {
-                "path": f"/guides/{g['slug']}",
+                "path": guide_path(g),
                 "kicker": g.get("kicker", "Guide"),
                 "title": g["card_title"],
                 "blurb": g["card_blurb"],
@@ -336,6 +363,7 @@ def guides_index() -> str:
             if g.get("project") == p["key"]
         ]
         cards.sort(key=lambda c: not c["featured"])
+        cards += [{**link, "featured": False} for link in p.get("links", [])]
         shelves.append({
             "key": p["key"],
             "name": p["name"],
@@ -353,7 +381,7 @@ def guides_index() -> str:
             "@type": "ListItem",
             "position": position,
             "name": guide["card_title"],
-            "url": _canonical(f"/guides/{guide['slug']}"),
+            "url": _canonical(guide_path(guide)),
         }
         for position, guide in enumerate(GUIDES, start=1)
     ]
@@ -392,11 +420,21 @@ def guides_index() -> str:
     )
 
 
-@bp.route("/guides/<slug>")
-def guide_page(slug: str) -> str:
+@bp.route("/guides/<slug>", strict_slashes=False)
+def guide_page(slug: str):
     guide = _GUIDES_BY_SLUG.get(slug)
     if guide is None:
         abort(404)
+    if slug in MOVED_GUIDES:
+        target = MOVED_GUIDES[slug]
+        if request.query_string:
+            target += "?" + request.query_string.decode("utf-8", "replace")
+        return redirect(target, code=301)
+    return _guide(slug)
+
+
+def _guide(slug: str) -> str:
+    guide = _GUIDES_BY_SLUG[slug]
     md_path = _GUIDES_DIR / guide["file"]
     if not md_path.is_file():
         abort(404)
@@ -431,12 +469,17 @@ def guide_page(slug: str) -> str:
              "blurb": "Current stable builds for Windows and Linux."},
         ]
     related += [
-        {"path": f"/guides/{g['slug']}", "kicker": g.get("kicker", "Guide"),
+        {"path": guide_path(g), "kicker": g.get("kicker", "Guide"),
          "title": g["card_title"], "blurb": g["card_blurb"]}
         for g in GUIDES
         if g.get("project") == guide.get("project") and g["slug"] != slug
     ]
-    canonical_url = _canonical(f"/guides/{slug}")
+    path = guide_path(guide)
+    canonical_url = _canonical(path)
+    nav = {}
+    section_key = guide.get("project")
+    if section_key in project_sections.SECTIONS and path in project_sections.section_paths(section_key):
+        nav = project_sections.context(section_key, path, guide["h1"])
     article = {
         "@type": "TechArticle",
         "@id": f"{canonical_url}#article",
@@ -492,7 +535,7 @@ def guide_page(slug: str) -> str:
                 }
             ],
         }
-    breadcrumb = {
+    breadcrumb = nav.get("breadcrumb_node") or {
         "@type": "BreadcrumbList",
         "@id": f"{canonical_url}#breadcrumb",
         "itemListElement": [
@@ -503,6 +546,8 @@ def guide_page(slug: str) -> str:
     }
     return render_template(
         "guides/guide.html",
+        section=nav.get("section"),
+        crumbs=nav.get("crumbs"),
         project_name=project["name"] if project else None,
         related=related,
         h1=guide["h1"],
@@ -535,6 +580,13 @@ def guide_page(slug: str) -> str:
     )
 
 
+for _slug, _path in MOVED_GUIDES.items():
+    bp.add_url_rule(
+        _path, endpoint=f"guide_{_slug.replace('-', '_')}",
+        view_func=lambda _slug=_slug: _guide(_slug), strict_slashes=False,
+    )
+
+
 @bp.route("/sitemap.xml")
 def sitemap() -> Response:
     from api.site_info import PAGES as SITE_PAGES, PAGES_UPDATED as SITE_UPDATED
@@ -548,7 +600,7 @@ def sitemap() -> Response:
         {"loc": _canonical("/yaml-builder"), "lastmod": "2026-08-24"},
         {"loc": _canonical("/guides"), "lastmod": max(g["updated"] for g in GUIDES)},
     ] + [
-        {"loc": _canonical(f"/guides/{g['slug']}"), "lastmod": g["updated"]}
+        {"loc": _canonical(guide_path(g)), "lastmod": g["updated"]}
         for g in GUIDES
     ] + [
         {"loc": _canonical(p["path"]), "lastmod": p.get("lastmod", CTR_UPDATED)}
@@ -599,7 +651,7 @@ def llms() -> Response:
     ]
     for g in GUIDES:
         lines.append(
-            f"- [{g['card_title']}]({_canonical('/guides/' + g['slug'])}): {g['card_blurb']}"
+            f"- [{g['card_title']}]({_canonical(guide_path(g))}): {g['card_blurb']}"
         )
     from api.ctr import CTR_PAGES
 

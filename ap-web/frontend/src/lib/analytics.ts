@@ -128,7 +128,7 @@ function sendBeacon(event: QueuedEvent): boolean {
  * Where this document was opened from, as a bare internal path.
  *
  * The point is to make journeys across the server-rendered pages and the
- * app measurable - "someone read /guides/ctr and then landed on the index" -
+ * app measurable - "someone read /ctr/setup and then landed on the index" -
  * without any identifier that survives a page load. Only same-origin paths
  * are kept; an external referrer becomes the literal string "external" and
  * its URL is discarded, because an external referrer can carry search terms

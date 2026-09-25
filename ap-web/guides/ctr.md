@@ -2,19 +2,20 @@
 
 [CTR Archipelago](/ctr) turns the 1999 PlayStation classic into a native PC randomizer that connects to Archipelago multiworlds on its own, so you do not need an emulator, ROM patching, or a separate client. Warp pads ask for new requirements every seed, and trophies, keys, gems, and relics become items that can come from any world in your multiworld.
 
-New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. A **check** is an action that awards an **item**, such as winning a race; the item may go to any player in the multiworld. This page gets the game itself running. For plain CTR without the randomizer, see [Play Crash Team Racing on PC](/guides/crash-team-racing-pc).
+New to Archipelago itself? Read [Getting started with Archipelago](/guides/getting-started) first. A **check** is an action that awards an **item**, such as winning a race; the item may go to any player in the multiworld. This page gets the game itself running. For plain CTR without the randomizer, see [Play Crash Team Racing on PC](/ctr/play-on-pc).
 
 ## Choose your next step
 
 - **Your room is already generated:** follow the installation and connection steps below. You need the game client, your disc image and the connection details from the host.
 - **Your host is collecting players:** make a [0.2.0 YAML](/yaml-builder/ctr?version=0.2.0), the file containing your player name and settings, and send it to them before generation.
 - **You are generating or hosting:** install the matching [APWorld](/ctr/download/apworld), the package that adds CTR to Archipelago, and follow the [hosting guide](/guides/hosting-a-multiworld). Players joining your room do not need to install this package themselves.
+- **You are already playing:** [How CTR Archipelago works](/ctr/reference) explains [warp-pad requirements](/ctr/reference/warp-pads), [progression and kart upgrades](/ctr/reference/progression) and where to find every [AP box](/ctr/reference/ap-boxes).
 
 **Updating an existing install?** Back up its folder, including settings and saves. For a new game, use the matching 0.2.0 client, APWorld and YAML. For an ongoing room, check with the host before updating; older Alpha seeds are not automatically interchangeable with the final release.
 
 ## What you need
 
-**0.2.0 is the current stable release.** Read the [full release notes](/ctr/reference/0-2-0-release-notes) for the new settings, experimental features and remaining testing coverage. Use a matching 0.2.0 client and APWorld when generating a new game, with fresh seeds.
+**0.2.0 is the current stable release.** Read the [full release notes](/ctr/releases/0-2-0) for the new settings, experimental features and remaining testing coverage. Use a matching 0.2.0 client and APWorld when generating a new game, with fresh seeds.
 
 Prefer video? [Watch Appie's CTR setup walkthrough](https://youtu.be/9x63P6JP93E). It predates 0.2.0, so use the current downloads and written instructions alongside it. If you are organizing the multiworld, the [hosting video](https://youtu.be/CpRbyRodayM) and [written hosting guide](/guides/hosting-a-multiworld) cover generation and running the server.
 
@@ -58,7 +59,7 @@ The easiest way is the browser builder: **[open the CTR YAML Builder](/yaml-buil
 
 You can also start from the [template YAML published as a separate release asset](/ctr/download/template) and edit it by hand if you would rather; [Setting up your YAML](/guides/setting-up-your-yaml) explains the format in depth. Use the template that matches the CTR APWorld version your host is generating with. The [setup guide on GitHub](https://github.com/dowlle/ctr-native-ap/blob/main/SETUP.md) has the full details.
 
-A dedicated CTR 0.2.0 YAML explanation video is coming soon. Until then, the [0.2.0 Builder](/yaml-builder/ctr?version=0.2.0), its option help and the [CTR reference](/ctr/reference) cover the available settings.
+A dedicated CTR 0.2.0 YAML explanation video is coming soon. Until then, the [0.2.0 Builder](/yaml-builder/ctr?version=0.2.0), its option help and [What can be randomized?](/ctr/reference/randomized-content) cover the available settings.
 
 ## When something goes wrong
 

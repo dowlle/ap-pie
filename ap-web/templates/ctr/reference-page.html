@@ -1,32 +1,13 @@
 {% extends "guides/base.html" %}
 {% block head_extra %}
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "TechArticle",
-    "headline": {{ page.title|tojson }},
-    "description": {{ meta_description|tojson }},
-    "author": {"@type": "Person", "name": "Appie", "url": {{ site_url|tojson }}},
-    "publisher": {"@type": "Organization", "name": "Archipelago Pie", "url": {{ site_url|tojson }}},
-    "datePublished": {{ page.published|tojson }},
-    "dateModified": {{ page.updated|tojson }},
-    "mainEntityOfPage": {"@type": "WebPage", "@id": {{ canonical_url|tojson }}},
-    "inLanguage": "en"
-  }
-  </script>
   <style>
+    .reference-pager { display: flex; justify-content: space-between; gap: 1rem; border-top: 1px dashed var(--border-strong); margin-top: 3rem; padding-top: 1.5rem; }
     .reference-version {
       margin: -0.75rem 0 1.5rem;
     }
   </style>
 {% endblock %}
 {% block main %}
-  <nav class="section-subnav" aria-label="CTR section">
-    <a href="/ctr">Overview</a>
-    <a href="/ctr/download">Download</a>
-    <a href="/guides/ctr">Setup guide</a>
-    <a class="current" aria-current="page" href="/ctr/reference">Reference</a>
-  </nav>
   <div class="guide-layout">
     {% if sections|length > 1 %}
     <nav class="guide-toc" aria-label="On this page">
@@ -35,18 +16,17 @@
     </nav>
     {% endif %}
     <article>
-      <nav class="crumbs" aria-label="Breadcrumb"><a href="/ctr">CTR Archipelago</a><span class="sep">/</span><a href="/ctr/reference">Reference</a><span class="sep">/</span>{{ page.short_title }}</nav>
       <h1>{{ page.title }}</h1>
       <div class="reference-version badge">{{ page.status_label }} · Verified against {{ page.verified_against }} · Published <time datetime="{{ page.published }}">{{ page.published }}</time> · Updated <time datetime="{{ page.updated }}">{{ page.updated }}</time></div>
       <div class="guide-body">{{ body_html|safe }}</div>
-      <div class="related-block">
-        <div class="related-label">More CTR reference pages</div>
-        <div class="guide-cards">
-          {% for item in related %}
-          <a class="guide-card" href="/ctr/reference/{{ item.slug }}"><h2>{{ item.title }}</h2><p>{{ item.blurb }}</p></a>
-          {% endfor %}
-        </div>
-      </div>
+      {% set steps = section.sub %}
+      {% for item in steps if item.exact %}
+      {% set i = steps.index(item) %}
+      <nav class="reference-pager" aria-label="Previous and next">
+        {% if i > 0 %}<a href="{{ steps[i - 1].path }}">← {{ steps[i - 1].label }}</a>{% else %}<a href="/ctr/reference">← How it works</a>{% endif %}
+        {% if i + 1 < steps|length %}<a href="{{ steps[i + 1].path }}">{{ steps[i + 1].label }} →</a>{% endif %}
+      </nav>
+      {% endfor %}
     </article>
   </div>
 {% endblock %}

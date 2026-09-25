@@ -5,6 +5,7 @@ from flask import Blueprint, render_template
 
 import config
 import seo
+from api import sections
 
 bp = Blueprint("site_info", __name__)
 PAGES_UPDATED = "2026-09-14"
@@ -14,21 +15,45 @@ PAGES = {
     "/report-issue": ("Report an issue", "Report a problem with Archipelago Pie or find the right place for an APWorld issue.", "report-issue.md"),
 }
 
+# Search titles where the page name alone says too little.
+PAGE_TITLES = {
+    "/pokepelago": "Poképelago: Pokémon Guessing Game | Archipelago Pie",
+}
+
+
+def _pokepelago_game() -> dict:
+    base = config.PUBLIC_BASE_URL
+    return {
+        "@type": "VideoGame",
+        "@id": f"{base}/pokepelago#game",
+        "name": "Poképelago",
+        "description": PAGES["/pokepelago"][1],
+        "url": "https://pokepelago.ap-pie.com/",
+        "gamePlatform": "Web browser",
+        "image": f"{base}/img/guides/pokepelago-gameplay.png",
+        "subjectOf": {"@id": f"{base}/pokepelago#page"},
+        "publisher": {"@id": seo.organization_id(base)},
+    }
+
 
 def _page(path):
     from api.guides import _render_markdown
     title, description, filename = PAGES[path]
     html, _ = _render_markdown(Path(__file__).resolve().parent.parent / "site_pages" / filename)
     canonical = f"{config.PUBLIC_BASE_URL}{path}"
+    nav = sections.context("poke", path, title) if path == "/pokepelago" else {}
     return render_template(
         "guides/site-page.html", h1=title, body_html=html,
-        page_title=f"{title} | Archipelago Pie", meta_description=description,
+        section=nav.get("section"), crumbs=nav.get("crumbs"),
+        page_title=PAGE_TITLES.get(path, f"{title} | Archipelago Pie"), meta_description=description,
         canonical_url=canonical, og_type="website",
         og_image=(f"{config.PUBLIC_BASE_URL}/img/guides/pokepelago-gameplay.png"
                   if path == "/pokepelago" else None),
-        structured_data=seo.graph(config.PUBLIC_BASE_URL, seo.page(
-            config.PUBLIC_BASE_URL, "WebPage", canonical, title, description,
-        )),
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            seo.page(config.PUBLIC_BASE_URL, "WebPage", canonical, title, description),
+            *([nav["breadcrumb_node"], _pokepelago_game()] if nav else []),
+        ),
     )
 
 

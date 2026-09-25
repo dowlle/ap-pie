@@ -2,7 +2,7 @@ You can keep CTR close to the original Adventure Mode or add new checks, unlocka
 
 A **check** is something you do to send an item, such as winning a race or breaking an AP box. That item might be for you or for someone playing another game. Your next Key could come from their world instead of a boss race in yours.
 
-> This page covers CTR Archipelago 0.2.0. Most features below are optional. The [release notes](/ctr/reference/0-2-0-release-notes) explain experimental features and known limitations.
+> This page covers CTR Archipelago 0.2.0. Most features below are optional. The [release notes](/ctr/releases/0-2-0) explain experimental features and known limitations.
 
 ## Adventure routes
 
@@ -39,7 +39,7 @@ Winning Cortex Castle might send an item to another player. Your own next upgrad
 
 ## Traps and useful items
 
-Received traps can temporarily change the way a race plays. 0.2.0 includes twenty effects, from Icy Road and Low Gravity to Nitro Drop, Mirror Mode, Warpball Ambush and Demo Camera. Use Trap Fill Percentage to choose how much filler becomes traps, and Trap Weights to make individual effects more common or turn them off. See the [full trap roster](/ctr/reference/0-2-0-release-notes#traps-and-comfort-items).
+Received traps can temporarily change the way a race plays. 0.2.0 includes twenty effects, from Icy Road and Low Gravity to Nitro Drop, Mirror Mode, Warpball Ambush and Demo Camera. Use Trap Fill Percentage to choose how much filler becomes traps, and Trap Weights to make individual effects more common or turn them off. See the [full trap roster](/ctr/releases/0-2-0#traps-and-comfort-items).
 
 Some items help during a race. For example, a received Turbo waits until you are racing with a free weapon slot before it is delivered. Comfort items can remove natural terrain penalties, such as slowing down on grass or slipping on ice.
 
@@ -49,12 +49,12 @@ Some items help during a race. For example, a received Turbo waits until you are
 
 **DeathLink** shares mishaps with other participating players. You can send one when the mask carries you back after a fall, or after any hit. Receiving a DeathLink forces a mask reset in your game. It is off by default.
 
-The experimental [Baby T Park preview](/ctr/reference/0-2-0-release-notes#baby-t-park-preview) lets a prepared seed replace the Purple Gem Cup with one supported custom track. Stable 0.2.0 does not support general custom-track libraries or custom multiplayer maps.
+The experimental [Baby T Park preview](/ctr/releases/0-2-0#baby-t-park-preview) lets a prepared seed replace the Purple Gem Cup with one supported custom track. Stable 0.2.0 does not support general custom-track libraries or custom multiplayer maps.
 
 ## What does not change
 
 These options change progression and selected parts of gameplay. They do not automatically shuffle every visual, track layout, opponent or physics value. The Builder shows the settings supported by the version your host is using.
 
-You still need a disc image made from your own North American copy of CTR. The [setup guide](/guides/ctr) explains how to use it; no game data is included with the client.
+You still need a disc image made from your own North American copy of CTR. The [setup guide](/ctr/setup) explains how to use it; no game data is included with the client.
 
 Ready to choose your settings? [Open the CTR 0.2.0 YAML Builder](/yaml-builder/ctr?version=0.2.0), review the file, and download it for your host.

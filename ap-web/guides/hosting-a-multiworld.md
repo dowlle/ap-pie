@@ -24,7 +24,7 @@ A collection room only gathers YAMLs before generation. Game clients connect to 
 
 Put all the YAML files in the `Players` folder inside your Archipelago install. If you downloaded a ZIP of YAMLs from a collection room, extract the YAML files first. Keep only the slots intended for this seed in `Players`. On Windows the default install location is `C:\ProgramData\Archipelago`, so the folder is usually `C:\ProgramData\Archipelago\Players`. If you chose a different location or cannot find it, the launcher's **Browse Files** entry opens your install folder.
 
-The same install folder holds `custom_worlds`. That is where APWorlds live for games Archipelago does not ship with, and the launcher's **Install APWorld** entry puts them there. A host generating [Crash Team Racing](/guides/ctr) or [Poképelago](/guides/pokepelago) needs that game's APWorld installed before generation will work.
+The same install folder holds `custom_worlds`. That is where APWorlds live for games Archipelago does not ship with, and the launcher's **Install APWorld** entry puts them there. A host generating [Crash Team Racing](/ctr/setup) or [Poképelago](/pokepelago/setup) needs that game's APWorld installed before generation will work.
 
 Agree on the version of each game integration before players create their YAMLs. The generator's APWorld, the YAML options and the players' clients need to be compatible; follow that release's setup guide. The video uses CTR 0.2.0 alpha 7 and Poképelago 0.6.4 as its example, not as a requirement to use those versions for every future seed.
 
