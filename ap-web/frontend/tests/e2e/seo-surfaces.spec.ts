@@ -461,6 +461,7 @@ test("CTR screenshots prefer WebP and every fallback stays below 100 KB", async 
   }
 
   await page.goto("/ctr");
+  // Every JPG screenshot on /ctr is served through <picture> with a WebP source.
   await expect(page.locator('picture source[type="image/webp"]')).toHaveCount(3);
-  await expect(page.locator('video[poster$="custom-resolutions-poster.webp"]')).toHaveCount(1);
+  await expect(page.locator('img[src^="/img/ctr/"][src$=".jpg"]:not(picture img)')).toHaveCount(0);
 });
