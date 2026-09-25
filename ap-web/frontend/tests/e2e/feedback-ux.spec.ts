@@ -116,7 +116,7 @@ async function mockHostRoom(page: Page, status: "open" | "closed" = "closed") {
       policy: "required",
       auto_latest: false,
       stability: "alpha",
-      setup_guide: "/guides/ctr",
+      setup_guide: "/ctr/setup",
       tracker: null,
       updated_at: "2026-09-01",
     }]);
@@ -164,7 +164,7 @@ test("room APWorld action says Download and retains Setup guide", async ({ page 
   await page.getByRole("tab", { name: "APWorlds" }).click();
   const settings = page.locator("dialog.settings-modal");
   await expect(settings.getByRole("link", { name: "Download", exact: true })).toHaveAttribute("download", "");
-  await expect(settings.getByRole("link", { name: "Setup guide" })).toHaveAttribute("href", "/guides/ctr");
+  await expect(settings.getByRole("link", { name: "Setup guide" })).toHaveAttribute("href", "/ctr/setup");
   await expect(settings.getByRole("link", { name: "Preview", exact: true })).toHaveCount(0);
 });
 

@@ -329,7 +329,7 @@ def _ua_class(ua: str) -> str:
 def entry_path(req=None) -> str | None:
     """Where a server-rendered page was reached from, as a bare path.
 
-    Makes cross-page journeys measurable ("readers of /guides/ctr go on to
+    Makes cross-page journeys measurable ("readers of /ctr/setup go on to
     the index") without any identifier that survives a page load, which is
     the thing we deliberately do not have.
 

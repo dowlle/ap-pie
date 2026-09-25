@@ -1,10 +1,10 @@
 """Project sections: one registry per project for navigation and breadcrumbs.
 
-A project section (CTR Archipelago, Poképelago) groups pages that live under
-different URL trees: the project hub and its own pages, plus the setup guides
-that stay under /guides. Every page in a section shows the same section
-navigation, and its visible breadcrumbs and BreadcrumbList structured data
-come from the same trail, so the three cannot drift apart.
+A project section (CTR Archipelago, Poképelago) groups the project hub, its
+own pages and its guides, which moved from /guides into their section on
+2026-09-25. Every page in a section shows the same section navigation, and
+its visible breadcrumbs and BreadcrumbList structured data come from the
+same trail, so the three cannot drift apart.
 
 Items with `children` form a group: the group's own page opens the second
 navigation row, and every child page shows the group as its parent in the
@@ -22,7 +22,7 @@ SECTIONS: dict[str, dict] = {
         "items": [
             {"label": "Overview", "path": "/ctr"},
             {"label": "Download", "path": "/ctr/download"},
-            {"label": "Setup guide", "path": "/guides/ctr"},
+            {"label": "Setup guide", "path": "/ctr/setup"},
             {
                 "label": "How it works",
                 "path": "/ctr/reference",
@@ -35,7 +35,7 @@ SECTIONS: dict[str, dict] = {
                 ],
             },
             {"label": "Release notes", "path": "/ctr/releases/0-2-0", "crumb": "0.2.0 release notes"},
-            {"label": "Vanilla CTR on PC", "path": "/guides/crash-team-racing-pc", "crumb": "Play CTR on PC"},
+            {"label": "Vanilla CTR on PC", "path": "/ctr/play-on-pc", "crumb": "Play CTR on PC"},
         ],
     },
     "poke": {
@@ -43,8 +43,8 @@ SECTIONS: dict[str, dict] = {
         "path": "/pokepelago",
         "items": [
             {"label": "Overview", "path": "/pokepelago"},
-            {"label": "Setup guide", "path": "/guides/pokepelago"},
-            {"label": "Twitch chat guessing", "path": "/guides/pokepelago-twitch"},
+            {"label": "Setup guide", "path": "/pokepelago/setup"},
+            {"label": "Twitch chat guessing", "path": "/pokepelago/twitch"},
             {"label": "Play Poképelago", "path": "https://pokepelago.ap-pie.com/", "external": True},
         ],
     },
