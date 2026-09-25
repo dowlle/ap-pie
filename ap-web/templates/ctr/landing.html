@@ -17,7 +17,8 @@
     }
     .ctr-section > p { margin-bottom: 1rem; max-width: 44rem; }
     .ctr-steps { list-style: none; counter-reset: step; display: grid; gap: 1rem; margin: 1.25rem 0 0; padding: 0; }
-    @media (min-width: 760px) { .ctr-steps { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 760px) { .ctr-steps { grid-template-columns: repeat(3, 1fr); } .ctr-steps-four { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1000px) { .ctr-steps-four { grid-template-columns: repeat(4, 1fr); } }
     .ctr-steps li {
       counter-increment: step; background: var(--bg-card); border: 1px solid var(--border);
       border-radius: 12px; padding: 1.2rem 1.3rem;
@@ -46,6 +47,7 @@
     .ctr-faq details { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1.1rem; }
     .ctr-faq summary { color: var(--text-h); font-weight: 600; cursor: pointer; }
     .ctr-faq details p { margin: 0.6rem 0 0; }
+    .video-caption { color: var(--text-muted); font-size: 0.9rem; margin: 0.6rem 0 0; max-width: 44rem; }
     .ctr-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
   </style>
 {% endblock %}
@@ -61,6 +63,7 @@
       <div class="cta-row">
         <a class="btn btn-primary" href="/ctr/download">Download CTR Archipelago {{ stable.version }}</a>
         <a class="btn btn-secondary" href="/ctr/setup">Setup guide</a>
+        <a class="btn btn-secondary" href="#generate">Host a game</a>
       </div>
       <p class="hero-note">Free and open source for Windows, Linux and Steam Deck. You need a disc image of your own North American Crash Team Racing disc. <a href="/ctr/releases/{{ latest_release.slug }}">What's new in {{ latest_release.verified_against }}</a></p>
     </div>
@@ -71,7 +74,7 @@
   </div>
 
   <section class="ctr-section" aria-labelledby="first-race">
-    <h2 id="first-race">Your first race in three steps</h2>
+    <h2 id="first-race">Join a game in three steps</h2>
     <p>Joining a multiworld somebody else is hosting? This is all you need. The <a href="/ctr/setup">setup guide</a> has the details.</p>
     <ol class="ctr-steps">
       <li>
@@ -90,6 +93,45 @@
         <a href="/ctr/setup#step-3-connect-to-your-room">How to connect</a>
       </li>
     </ol>
+  </section>
+
+  <section class="ctr-section" aria-labelledby="generate">
+    <h2 id="generate">Generate a CTR seed</h2>
+    <p>Hosting the multiworld? The seed is generated on your own computer with the Archipelago Launcher, then hosted on archipelago.gg or your own machine. The <a href="/guides/hosting-a-multiworld">hosting guide</a> covers every game; these are the CTR parts.</p>
+    <div class="video-embed">
+      <button type="button" class="video-facade"
+              data-embed-src="https://www.youtube-nocookie.com/embed/CpRbyRodayM?autoplay=1"
+              data-embed-title="How to Host an Archipelago Multiworld (Step-by-Step)"
+              style="background-image:url('/img/guides/hosting-video-thumb.jpg')"
+              aria-label="Play video: How to Host an Archipelago Multiworld (Step-by-Step)">
+        <span class="play-icon" aria-hidden="true"></span>
+        <span class="facade-note">Loads a video from YouTube on click</span>
+      </button>
+    </div>
+    <p class="video-caption">Appie generates and hosts a multiworld with Crash Team Racing and Poképelago, from YAMLs to a running room (8 min). It uses a 0.2.0 test build as its example; use the current downloads. <a href="https://youtu.be/CpRbyRodayM" rel="noopener noreferrer">Watch on YouTube</a></p>
+    <ol class="ctr-steps ctr-steps-four">
+      <li>
+        <h3>Install the CTR APWorld</h3>
+        <p>Download it, then use <strong>Install APWorld</strong> in the Archipelago Launcher. Only the person generating needs it.</p>
+        <a href="/ctr/download/apworld">Download the APWorld ({{ stable.version }})</a>
+      </li>
+      <li>
+        <h3>Collect the YAMLs</h3>
+        <p>Players make theirs in the <a href="/yaml-builder/ctr?version={{ stable.version }}">CTR YAML Builder</a>. A collection room gathers them in one place, with a deadline.</p>
+        <a href="/guides/hosting-on-archipelago-pie">Collect YAMLs in a collection room</a>
+      </li>
+      <li>
+        <h3>Generate on your computer</h3>
+        <p>Put the YAMLs in the <code>Players</code> folder and click <strong>Generate</strong>. The generator and YAML checker on archipelago.gg don't include the CTR APWorld, so generate locally.</p>
+        <a href="/guides/hosting-a-multiworld#step-2-generate-the-game">How generation works</a>
+      </li>
+      <li>
+        <h3>Host the room</h3>
+        <p>Upload the <code>AP_...zip</code> from the <code>output</code> folder to archipelago.gg, or click <strong>Host</strong> in the launcher to run the server yourself.</p>
+        <a href="/guides/hosting-a-multiworld#step-3-put-the-server-online">Put the server online</a>
+      </li>
+    </ol>
+    <p style="margin-top:1.25rem"><strong>Use one version for everything.</strong> The APWorld you generate with, the players' YAMLs and their game clients must all come from the same CTR release. <a href="/ctr/reference/randomized-content">What can be randomized?</a> explains the options.</p>
   </section>
 
   <section class="ctr-section" aria-labelledby="what-changes">
@@ -128,7 +170,7 @@
   </section>
 
   <section class="ctr-section" aria-labelledby="watch">
-    <h2 id="watch">Watch the walkthrough</h2>
+    <h2 id="watch">Watch the player walkthrough</h2>
     <p>Appie's walkthrough for joining a room: the client, your disc image, your YAML settings and connecting. It was recorded before 0.2.0, so use the current download and the written guide alongside it.</p>
     <div class="video-embed">
       <button type="button" class="video-facade"
@@ -140,7 +182,7 @@
         <span class="facade-note">Loads a video from YouTube on click</span>
       </button>
     </div>
-    <p>Organizing the multiworld? <a href="https://youtu.be/CpRbyRodayM" rel="noopener noreferrer">Watch the hosting walkthrough</a> or read the <a href="/guides/hosting-a-multiworld">hosting guide</a>.</p>
+    <p>Hosting instead? See <a href="#generate">Generate a CTR seed</a>.</p>
   </section>
 
   <section class="ctr-section" aria-labelledby="questions">
