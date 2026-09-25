@@ -139,14 +139,12 @@ test('failed attachment after room creation keeps the YAML and can be retried', 
   expect(events).not.toContain('builder_abandoned');
 });
 
-test('intent entry validates invitations and preserves organizer sign-in destination', async ({ page }) => {
+test('homepage entry points lead to the Builder and preserve organizer sign-in destination', async ({ page }) => {
   await fixtures(page, false);
   await page.goto('/');
-  await expect(page.getByRole('link', { name: 'Prepare a YAML', exact: true })).toHaveAttribute('href', '/yaml-builder');
-  await page.getByLabel('Collection-room link').fill('https://example.org/r/unsafe');
-  await page.getByRole('button', { name: 'Open invitation' }).click();
-  await expect(page.getByRole('alert')).toContainText('Paste the collection-room link');
-  await page.getByRole('button', { name: 'Sign in to organize a room' }).click();
+  await expect(page.getByRole('link', { name: /Make a player YAML/ })).toHaveAttribute('href', '/yaml-builder');
+  await expect(page.getByLabel('Collection-room link')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Organize a multiworld' }).click();
   await expect(page).toHaveURL(/\/rooms$/);
 });
 

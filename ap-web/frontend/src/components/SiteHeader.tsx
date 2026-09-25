@@ -66,9 +66,9 @@ export default function SiteHeader() {
           if ((event.target as HTMLElement).closest("a, button")) setMenuOpen(false);
         }}
       >
+        <a href="/guides">Guides</a>
         <NavLink to="/apworlds">APWorlds</NavLink>
         <NavLink to="/yaml-builder">YAML Builder</NavLink>
-        <a href="/guides">Guides</a>
         {showRoomsLink && <NavLink to="/rooms">Rooms</NavLink>}
         {user && <NavLink to="/my/yamls">My</NavLink>}
         {showAdminTools && generationOn && (

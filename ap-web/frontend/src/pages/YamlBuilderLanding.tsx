@@ -159,7 +159,7 @@ export default function YamlBuilderLanding() {
           {user && <Link className="btn" to="/my/yamls">My saved YAMLs</Link>}
         </div>
       </header>
-      {!roomContext && <p>Joining a group? <Link to="/#choose-your-path">Open your room invitation first</Link> to use the versions your host requested.</p>}
+      {!roomContext && <p>Joining a group? Open the room link your host shared and press <strong>Join room</strong> first, so the Builder uses the versions your host requested.</p>}
 
       {drafts.length > 0 && (
         <section className="yaml-builder-landing-section" aria-labelledby="builder-drafts-title">
