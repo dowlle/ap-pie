@@ -16,3 +16,12 @@
 <nav class="crumbs" aria-label="Breadcrumb">
   {% for crumb in crumbs %}{% if not loop.last %}<a href="{{ crumb.path }}">{{ crumb.name }}</a><span class="sep">/</span>{% else %}<span aria-current="page">{{ crumb.name }}</span>{% endif %}{% endfor %}
 </nav>
+<script>
+  // On narrow screens the rows scroll sideways; bring the current page into view.
+  document.querySelectorAll(".section-subnav").forEach(function (row) {
+    var here = row.querySelector(".current, .active");
+    if (here && row.scrollWidth > row.clientWidth) {
+      row.scrollLeft = here.offsetLeft - (row.clientWidth - here.offsetWidth) / 2;
+    }
+  });
+</script>
