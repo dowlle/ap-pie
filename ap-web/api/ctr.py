@@ -16,6 +16,7 @@ public URL does not.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import markdown
@@ -273,6 +274,43 @@ def _software_node() -> dict:
     }
 
 
+# Questions on /ctr. `a_html` is shown on the page; the FAQPage structured
+# data uses the same answer with the tags removed, so the two cannot differ.
+CTR_FAQ: list[dict] = [
+    {"q": "Do I need an emulator?",
+     "a_html": "No. CTR Archipelago is a native PC game built on the community decompilation of Crash Team Racing. It connects to your Archipelago room by itself, without an emulator, ROM patching or a separate client."},
+    {"q": "Which disc do I need?",
+     "a_html": "A disc image of your own North American (NTSC-U) Crash Team Racing disc: a <code>.bin</code>, a <code>.cue</code> with its <code>.bin</code>, or a <code>.chd</code>. The European and Japanese releases are refused, and no game data is included."},
+    {"q": "Does it run on Linux and Steam Deck?",
+     "a_html": "Yes. There is a Linux build next to the Windows one. On Steam Deck, add the game to Steam and start it from Gaming Mode; the on-screen keyboard opens when you select a connection field."},
+    {"q": "Do players need to install the APWorld?",
+     "a_html": "No. Only the person who generates the multiworld installs the APWorld. Players need the game client, their disc image and the room details. See the <a href=\"/ctr/setup\">setup guide</a>."},
+    {"q": "Is it free?",
+     "a_html": "Yes. CTR Archipelago is free and open source under the GPL-3.0 licence, on <a href=\"https://github.com/dowlle/ctr-native-ap\" rel=\"noopener noreferrer\">GitHub</a>. You need your own copy of the game."},
+    {"q": "Can I play Crash Team Racing on PC without the randomizer?",
+     "a_html": "Yes. <a href=\"/ctr/play-on-pc\">Play Crash Team Racing on PC</a> explains how to run the plain game natively."},
+    {"q": "Something went wrong. Where do I get help?",
+     "a_html": "Run <code>support-bundle.bat</code> (Windows) or <code>support-bundle.sh</code> (Linux) next to the game, then attach the archive to a <a href=\"https://github.com/dowlle/ctr-native-ap/issues/new/choose\" rel=\"noopener noreferrer\">GitHub issue</a> or bring it to the Crash Team Racing channel on the Archipelago Discord."},
+]
+
+
+def _faq_node(url: str) -> dict:
+    return {
+        "@type": "FAQPage",
+        "@id": f"{url}#faq",
+        "isPartOf": {"@id": f"{url}#page"},
+        "inLanguage": "en",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": item["q"],
+                "acceptedAnswer": {"@type": "Answer", "text": re.sub(r"<[^>]+>", "", item["a_html"])},
+            }
+            for item in CTR_FAQ
+        ],
+    }
+
+
 def _section(path: str, title: str, extra: list[tuple[str, str]] | None = None) -> dict:
     return sections.context("ctr", path, title, extra)
 
@@ -302,6 +340,8 @@ def ctr_landing() -> str:
     return render_template(
         "ctr/landing.html",
         **nav,
+        faq=CTR_FAQ,
+        latest_release=next(p for p in RELEASE_PAGES if p["verified_against"] == STABLE["version"]),
         stable=STABLE,
         page_title="Crash Team Racing Archipelago | Archipelago Pie",
         meta_description=description,
@@ -314,6 +354,7 @@ def ctr_landing() -> str:
             page_node,
             _software_node(),
             nav["breadcrumb_node"],
+            _faq_node(canonical_url),
         ),
     )
 
