@@ -15,13 +15,13 @@
   </style>
 {% endblock %}
 {% block main %}
-  <h1>CTR Archipelago releases</h1>
-  <p class="guide-lede">Every stable release, newest first. The current stable release is {{ stable.version }}; get it from the <a href="/ctr/download">download page</a>.</p>
+  <h1>{{ releases_heading }}</h1>
+  <p class="guide-lede">{% if releases_lede_html %}{{ releases_lede_html|safe }}{% else %}Every stable release, newest first. The current stable release is {{ stable.version }}; get it from the <a href="{{ download_path }}">download page</a>.{% endif %}</p>
   <ul class="release-list">
     {% for release in releases %}
     <li>
       <span class="release-version">{{ release.version }}</span>
-      <span class="release-date"><time datetime="{{ release.date }}">{{ release.date }}</time>{% if release.version == stable.version %} · current stable{% elif release.upcoming %} · upcoming{% endif %}</span>
+      <span class="release-date">{% if release.date %}<time datetime="{{ release.date }}">{{ release.date }}</time>{% else %}Date to be announced{% endif %}{% if release.upcoming %} · upcoming{% elif release.version == stable.version %} · current stable{% endif %}</span>
       <p class="release-summary">{{ release.summary }}</p>
       {% if release.notes.startswith("/") %}
       <a href="{{ release.notes }}">Release notes</a>
@@ -31,5 +31,8 @@
     </li>
     {% endfor %}
   </ul>
+  {% if test_builds_url %}
   <p>Test builds for the next version are published as pre-releases on <a href="{{ test_builds_url }}" rel="noopener noreferrer">GitHub</a>. Use them only if you are helping to test.</p>
+  {% endif %}
+  {% if releases_footer_html %}<p>{{ releases_footer_html|safe }}</p>{% endif %}
 {% endblock %}

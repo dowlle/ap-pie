@@ -1,6 +1,6 @@
 """Project sections: one registry per project for navigation and breadcrumbs.
 
-A project section (CTR Archipelago, Poképelago) groups the project hub, its
+A project section (CTR Archipelago, Timberborn Archipelago, Poképelago) groups the project hub, its
 own pages and its guides, which moved from /guides into their section on
 2026-09-25. Every page in a section shows the same section navigation, and
 its visible breadcrumbs and BreadcrumbList structured data come from the
@@ -42,6 +42,37 @@ SECTIONS: dict[str, dict] = {
                 ],
             },
             {"label": "Vanilla CTR on PC", "path": "/ctr/play-on-pc", "crumb": "Play CTR on PC"},
+        ],
+    },
+    # FEAT-58, behind config.FEATURES["timberborn_section"]: every route in
+    # this section answers 404 while the setting is off (api/timberborn.py).
+    "timber": {
+        "name": "Timberborn Archipelago",
+        "path": "/timberborn",
+        "feature": "timberborn_section",
+        "items": [
+            {"label": "Overview", "path": "/timberborn"},
+            {"label": "Download", "path": "/timberborn/download"},
+            {"label": "Setup guide", "path": "/timberborn/setup"},
+            {
+                "label": "How it works",
+                "path": "/timberborn/reference",
+                "crumb": "How it works",
+                "children": [
+                    {"label": "Checks", "path": "/timberborn/reference/checks"},
+                    {"label": "Items", "path": "/timberborn/reference/items"},
+                    {"label": "Goals and survival", "path": "/timberborn/reference/goals"},
+                    {"label": "Factions", "path": "/timberborn/reference/factions"},
+                    {"label": "Options", "path": "/timberborn/reference/options"},
+                ],
+            },
+            {
+                "label": "Releases",
+                "path": "/timberborn/releases",
+                "children": [
+                    {"label": "0.1.0 release notes", "path": "/timberborn/releases/0-1-0"},
+                ],
+            },
         ],
     },
     "poke": {
@@ -155,6 +186,12 @@ def context(key: str, path: str, title: str, extra: list[tuple[str, str]] | None
         "crumbs": crumbs,
         "breadcrumb_node": breadcrumb_node(crumbs, path),
     }
+
+
+def enabled(key: str) -> bool:
+    """False while a section's feature setting is off."""
+    feature = SECTIONS[key].get("feature")
+    return feature is None or bool(config.FEATURES.get(feature))
 
 
 def section_paths(key: str) -> list[str]:

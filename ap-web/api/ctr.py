@@ -19,13 +19,12 @@ import json
 import re
 from pathlib import Path
 
-import markdown
 from flask import Blueprint, abort, redirect, render_template, request, session
 
 import analytics
 import config
 import seo
-from api import sections
+from api import project_pages, sections
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 _REFERENCE_DIR = Path(__file__).resolve().parent.parent / "guides" / "ctr-reference"
@@ -275,18 +274,6 @@ def _canonical(path: str) -> str:
     return f"{config.PUBLIC_BASE_URL}{path}"
 
 
-def _render_reference_markdown(md_path: Path) -> tuple[str, list[dict]]:
-    text = md_path.read_text(encoding="utf-8")
-    renderer = markdown.Markdown(extensions=["toc"], output_format="html")
-    html = renderer.convert(text)
-    sections = [
-        {"id": token["id"], "name": token["name"]}
-        for token in renderer.toc_tokens
-        if token["level"] == 2
-    ]
-    return html, sections
-
-
 def _software_node() -> dict:
     return {
         "@type": "SoftwareApplication",
@@ -530,54 +517,16 @@ def ctr_reference_index() -> str:
 
 
 def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str) -> str:
-    md_path = _REFERENCE_DIR / page["file"]
-    if not md_path.is_file():
-        abort(404)
-    body_html, sections_on_page = _render_reference_markdown(md_path)
-    analytics.record_event(
-        "ctr_view",
-        user_id=session.get("user_id"),
-        props={"page": analytics_page, "from_path": analytics.entry_path(request)},
-        req=request,
-    )
-    canonical_url = _canonical(path)
-    title = f"{page.get('page_title', page['title'])} | {title_suffix}"
-    nav = _section(path, page["short_title"])
-    page_node = seo.page(config.PUBLIC_BASE_URL, "WebPage", canonical_url, title, page["description"])
-    page_node["mainEntity"] = {"@id": f"{canonical_url}#article"}
-    article = {
-        "@type": "TechArticle",
-        "@id": f"{canonical_url}#article",
-        "headline": page["title"],
-        "description": page["description"],
-        "author": {"@id": seo.author_id(config.PUBLIC_BASE_URL)},
-        "publisher": {"@id": seo.organization_id(config.PUBLIC_BASE_URL)},
-        "datePublished": page["published"],
-        "dateModified": page["updated"],
-        "mainEntityOfPage": {"@id": f"{canonical_url}#page"},
-        "isPartOf": {"@id": seo.website_id(config.PUBLIC_BASE_URL)},
-        "image": _canonical("/img/ctr/og-ctr-title.jpg"),
-        "inLanguage": "en",
-    }
-    return render_template(
-        "ctr/reference-page.html",
-        **nav,
+    return project_pages.article_page(
+        section_key="ctr",
+        content_dir=_REFERENCE_DIR,
         page=page,
-        body_html=body_html,
-        sections=sections_on_page,
-        page_title=title,
-        meta_description=page["description"],
-        canonical_url=canonical_url,
-        og_type="article",
-        og_image=_canonical("/img/ctr/og-ctr-title.jpg"),
-        site_url=_canonical("/"),
-        structured_data=seo.graph(
-            config.PUBLIC_BASE_URL,
-            seo.author(config.PUBLIC_BASE_URL),
-            page_node,
-            article,
-            nav["breadcrumb_node"],
-        ),
+        path=path,
+        title_suffix=title_suffix,
+        event="ctr_view",
+        analytics_page=analytics_page,
+        default_image="/img/ctr/og-ctr-title.jpg",
+        pager_back={"path": "/ctr/reference", "label": "How it works"},
     )
 
 
@@ -607,8 +556,10 @@ def ctr_releases_index() -> str:
     canonical_url = _canonical("/ctr/releases")
     nav = _section("/ctr/releases", "Releases")
     return render_template(
-        "ctr/releases-index.html",
+        "project/releases-index.html",
         **nav,
+        releases_heading="CTR Archipelago releases",
+        download_path="/ctr/download",
         releases=RELEASE_HISTORY,
         stable=STABLE,
         test_builds_url=_GITHUB_RELEASES,

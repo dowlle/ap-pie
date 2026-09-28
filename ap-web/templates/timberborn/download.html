@@ -1,0 +1,115 @@
+{% extends "guides/base.html" %}
+{% block head_extra %}
+  <style>
+    .dl-head { padding: 1rem 0 1.5rem; }
+    .dl-head .kicker {
+      font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.9rem;
+    }
+    .dl-head p { color: var(--text-muted); max-width: 40rem; }
+    .dl-cards { display: grid; gap: 1rem; margin: 1.5rem 0; }
+    @media (min-width: 560px) { .dl-cards { grid-template-columns: 1fr 1fr; } }
+    .dl-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.4rem 1.5rem;
+    }
+    .dl-card h2 {
+      font-family: var(--font-display); font-weight: 500; color: var(--text-h);
+      font-size: 1.25rem; margin-bottom: 0.35rem;
+    }
+    .dl-card .dl-meta { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem; }
+    .dl-card .dl-sub { display: block; margin-top: 0.8rem; font-size: 0.9rem; }
+    .dl-section { margin: 2.5rem 0; }
+    .dl-section h2 {
+      font-family: var(--font-display); font-weight: 500; color: var(--text-h);
+      font-size: 1.35rem; margin-bottom: 0.75rem;
+    }
+    .dl-section p { margin-bottom: 0.9rem; max-width: 42rem; }
+    .dl-section p strong { color: var(--text-h); }
+    .dl-links { list-style: none; margin: 0; padding: 0; }
+    .dl-links li { margin-bottom: 0.5rem; }
+    .tb-placeholder { border: 1px dashed var(--border-strong); border-radius: 10px; padding: 0.7rem 1rem; color: var(--text-muted); font-size: 0.92rem; margin-top: 0.8rem; }
+  </style>
+{% endblock %}
+{% block main %}
+  <div class="dl-head">
+    <h1>Download Timberborn Archipelago</h1>
+    {% if stable.available %}
+    <p>
+      The latest release is <strong>{{ stable.version }}</strong>, published
+      {{ stable.released }}. Install the mod, then follow the
+      <a href="/timberborn/setup">setup guide</a> to get connected. The mod is
+      built for Timberborn 1.1.
+    </p>
+    {% else %}
+    <p>
+      The next release is <strong>{{ stable.version }}</strong>, the first for
+      Timberborn 1.1. It is not published yet; until it is, the download links
+      below open the list of releases on GitHub.
+    </p>
+    {% endif %}
+  </div>
+
+  <div class="dl-cards">
+    <div class="dl-card">
+      <h2>mod.io or Steam Workshop</h2>
+      <p class="dl-meta">Subscribe once, and the game keeps the mod up to date.</p>
+      {% if listings.modio %}<a class="btn btn-primary" href="{{ listings.modio }}" rel="noopener noreferrer">Get it on mod.io</a>{% endif %}
+      {% if listings.workshop %}<a class="btn btn-secondary" href="{{ listings.workshop }}" rel="noopener noreferrer">Get it on Steam Workshop</a>{% endif %}
+      {% if not listings.modio or not listings.workshop %}
+      <p class="tb-placeholder"><strong>Placeholder for release:</strong> the mod.io and Steam Workshop links. The listings go live with the {{ stable.version }} release.</p>
+      {% endif %}
+    </div>
+    <div class="dl-card">
+      <h2>Manual install</h2>
+      <p class="dl-meta">Timberborn Archipelago {{ stable.version }}: <code>Archipelago.zip</code></p>
+      <a class="btn btn-primary" href="/timberborn/download/mod">Download the mod</a>
+      <a class="dl-sub" href="/timberborn/setup#step-1-install-the-mod">Extract it into your Mods folder</a>
+    </div>
+  </div>
+
+  <p><a href="{{ stable_notes }}">What's new in {{ stable.version }}</a>: the full release notes. Use the mod, APWorld and YAML from the same release, and a fresh seed for a new game.</p>
+
+  <div class="dl-section">
+    <h2>Hosting or generating?</h2>
+    <p>
+      Players only need the mod. If you generate the multiworld, you also need
+      the Timberborn APWorld in your Archipelago install (0.6.7 or newer).
+      The template YAML lists every option with its default; the
+      <a href="/yaml-builder/timberborn">YAML Builder</a> makes one in your browser.
+    </p>
+    <ul class="dl-links">
+      <li><a href="/timberborn/download/apworld">Download the Timberborn APWorld ({{ stable.version }})</a></li>
+      <li><a href="/timberborn/download/yaml">Download the template YAML ({{ stable.version }})</a></li>
+      <li><a href="/timberborn/reference/options">Every option explained</a></li>
+      <li><a href="/guides/hosting-a-multiworld">Hosting an Archipelago multiworld</a></li>
+      <li><a href="/guides/setting-up-your-yaml">Setting up your YAML</a></li>
+    </ul>
+  </div>
+
+  {% if older_versions %}
+  <div class="dl-section" id="older-versions">
+    <h2>Older versions</h2>
+    <p>For a room that still uses an older version. Ask your host which version the room was generated with.</p>
+    {% for older in older_versions %}
+    <h3>Timberborn Archipelago {{ older.version }}</h3>
+    <ul class="dl-links">
+      <li><a href="/timberborn/download/{{ older.version }}/mod">Mod</a></li>
+      <li><a href="/timberborn/download/{{ older.version }}/apworld">APWorld</a></li>
+      <li><a href="/timberborn/download/{{ older.version }}/yaml">Template YAML</a></li>
+      <li><a href="{{ older.notes }}">Release notes</a></li>
+    </ul>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="dl-section">
+    <h2>Everything else</h2>
+    <ul class="dl-links">
+      <li><a href="{{ github_releases }}" rel="noopener noreferrer">All releases on GitHub, including the pre-alpha builds for Timberborn 1.0</a></li>
+      <li><a href="{{ mod_repo }}" rel="noopener noreferrer">Source code of the mod</a></li>
+      <li><a href="https://github.com/dowlle/TimberbornArchipelago" rel="noopener noreferrer">Source code of the APWorld</a></li>
+      <li><a href="{{ mod_repo }}/issues" rel="noopener noreferrer">Report a bug</a></li>
+    </ul>
+  </div>
+{% endblock %}
