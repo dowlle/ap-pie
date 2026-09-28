@@ -255,6 +255,11 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
         "client": False,
         "props": {"asset": _STR, "version": _STR, "from_path": _STR},
     },
+    "timberborn_view": {"client": False, "props": {"page": _STR, "from_path": _STR}},
+    "timberborn_download": {
+        "client": False,
+        "props": {"asset": _STR, "version": _STR, "from_path": _STR},
+    },
     "machine_index_view": {"client": False, "props": {"surface": _STR}},
 
     # ── Security signals ──

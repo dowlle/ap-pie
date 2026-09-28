@@ -57,6 +57,11 @@ PUBLIC_ROUTE_SEO = {
             {"href": "/apworlds", "label": "Browse community APWorlds"},
             {"href": "/yaml-builder", "label": "Build a player YAML"},
             {"href": "/ctr", "label": "CTR Archipelago: Crash Team Racing as a native PC randomizer"},
+            {
+                "href": "/timberborn",
+                "label": "Timberborn Archipelago: the beaver colony sim as an Archipelago randomizer",
+                "feature": "timberborn_section",
+            },
             {"href": "/pokepelago", "label": "Poképelago: catch Pokémon by name in your browser"},
             {
                 "href": "https://pokepelago.ap-pie.com/",
@@ -177,6 +182,7 @@ def _public_spa_response(path: str) -> Response:
     fallback_links = "".join(
         f'<li><a href="{html.escape(link["href"], quote=True)}">{html.escape(link["label"])}</a></li>'
         for link in route.get("links", [])
+        if not link.get("feature") or config.FEATURES.get(link["feature"])
     )
     fallback_list = f"<ul>{fallback_links}</ul>" if fallback_links else ""
     fallback = (
@@ -534,6 +540,7 @@ def create_app() -> Flask:
     from api.guides import bp as guides_bp
     from api.site_info import bp as site_info_bp
     from api.ctr import bp as ctr_bp
+    from api.timberborn import bp as timberborn_bp
     from api.events import bp as events_bp
     from api.presets import bp as presets_bp
     from api.user_yamls import bp as user_yamls_bp
@@ -566,6 +573,9 @@ def create_app() -> Flask:
     # FEAT-40: server-rendered CTR section (/ctr, /ctr/download + stable
     # download redirects). Same before-the-catch-all rule as guides.
     app.register_blueprint(ctr_bp)
+    # FEAT-58: Timberborn section; its routes answer 404 while
+    # FEATURES["timberborn_section"] is off (production until v0.1.0).
+    app.register_blueprint(timberborn_bp)
     # FEAT-31: analytics event intake + admin read surface, and the
     # server-rendered /privacy page that documents what they record.
     app.register_blueprint(events_bp)
