@@ -53,16 +53,16 @@ def release_assets(version: str) -> dict:
 
 
 STABLE: dict = {
-    "version": "0.2.0",
-    "released": "2026-09-10",
-    "downloads": release_assets("0.2.0"),
+    "version": "0.2.2",
+    "released": "2026-09-28",
+    "downloads": release_assets("0.2.2"),
 }
 
 # Stable releases that stay downloadable from /ctr/download after a newer one
 # replaces them, newest first. Whatever STABLE is not shows under "Older
 # versions", with version-pinned aliases at /ctr/download/<version>/<asset>.
 # Add the outgoing version here when STABLE moves on.
-KEPT_VERSIONS: list[str] = ["0.2.0"]
+KEPT_VERSIONS: list[str] = ["0.2.2", "0.2.1", "0.2.0"]
 
 
 def older_versions() -> list[str]:
@@ -77,7 +77,7 @@ def older_versions() -> list[str]:
 PRERELEASE: dict | None = None
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-09-25"
+PAGES_UPDATED = "2026-09-28"
 
 REFERENCE_PAGES: list[dict] = [
     {
@@ -125,6 +125,19 @@ _REFERENCE_BY_SLUG = {page["slug"]: page for page in REFERENCE_PAGES}
 # answering with a permanent redirect so links and search results carry over.
 RELEASE_PAGES: list[dict] = [
     {
+        "slug": "0-2-2",
+        "title": "What changed in 0.2.2?",
+        "page_title": "CTR Archipelago 0.2.2 release notes",
+        "short_title": "0.2.2 release notes",
+        "blurb": "Everything new since 0.2.1: Remove Playable Oxide, Relic Race Perfect checks, DeathLink race loss, Skip Cutscenes, Discord Status and the freeze fix.",
+        "description": "Everything new in CTR Archipelago 0.2.2: new YAML options, Held 1st logic, Skip Cutscenes, Discord Status, fewer freezes, the Steam Deck fullscreen fix, trap and cutscene fixes and signed downloads.",
+        "file": "0-2-2-release-notes.md",
+        "published": "2026-09-28",
+        "updated": "2026-09-28",
+        "verified_against": "0.2.2",
+        "status_label": "Full release notes",
+    },
+    {
         "slug": "0-2-1",
         "title": "What changed in 0.2.1?",
         "page_title": "CTR Archipelago 0.2.1 release notes",
@@ -162,7 +175,9 @@ RELEASE_REDIRECTS = {"0-2-0-release-notes": "/ctr/releases/0-2-0"}
 # published; drop it and bump STABLE when the release goes out.
 _GITHUB_RELEASES = "https://github.com/dowlle/ctr-native-ap/releases"
 RELEASE_HISTORY: list[dict] = [
-    {"version": "0.2.1", "date": "2026-09-25", "notes": "/ctr/releases/0-2-1", "upcoming": True,
+    {"version": "0.2.2", "date": "2026-09-28", "notes": "/ctr/releases/0-2-2",
+     "summary": "Remove Playable Oxide, Relic Race Perfect checks, DeathLink race loss, Skip Cutscenes, Discord Status and the freeze fix."},
+    {"version": "0.2.1", "date": "2026-09-25", "notes": "/ctr/releases/0-2-1",
      "summary": "Hit Character checks, trial track races, Cortex Vortex, the Adventure tracker and room links."},
     {"version": "0.2.0", "date": "2026-09-10", "notes": "/ctr/releases/0-2-0",
      "summary": "Stable release: new checks, racers, kart progression, twenty traps and more goals."},
