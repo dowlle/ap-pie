@@ -97,12 +97,15 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertIn('href="/ctr/releases/0-2-0"', overview)
         self.assertIn('href="/ctr/releases/0-2-1"', overview)
         self.assertEqual(self.get("/ctr/releases/0-2-1").status_code, 200)
+        self.assertIn('href="/ctr/releases/0-2-2"', overview)
+        self.assertEqual(self.get("/ctr/releases/0-2-2").status_code, 200)
         self.assertIn('href="https://github.com/dowlle/ctr-native-ap/releases/tag/v0.1.0"', overview)
 
     def test_older_versions_stay_downloadable_after_a_new_stable(self) -> None:
-        # 0.2.1 is stable today; 0.2.0 stays downloadable under "Older versions".
+        # 0.2.2 is stable today; 0.2.1 and 0.2.0 stay downloadable under "Older versions".
         page = self.get("/ctr/download").get_data(as_text=True)
         self.assertIn('id="older-versions"', page)
+        self.assertIn('href="/ctr/download/0.2.1/windows"', page)
         self.assertIn('href="/ctr/download/0.2.0/windows"', page)
         self.assertIn('href="/ctr/releases/0-2-0"', page)
         response = self.get("/ctr/download/0.2.0/windows")
@@ -111,12 +114,12 @@ class ProjectSectionsTest(unittest.TestCase):
             response.headers["Location"],
             "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.0/ctr-archipelago-v0.2.0-windows-x86.zip",
         )
-        self.assertTrue(self.get("/ctr/download/windows").headers["Location"].endswith("/v0.2.1/ctr-archipelago-v0.2.1-windows-x86.zip"))
-        # A future stable bump keeps the outgoing 0.2.1 downloadable the same way.
+        self.assertTrue(self.get("/ctr/download/windows").headers["Location"].endswith("/v0.2.2/ctr-archipelago-v0.2.2-windows-x86.zip"))
+        # A future stable bump keeps the outgoing 0.2.2 downloadable the same way.
         with mock.patch.dict(ctr.STABLE, {"version": "0.3.0", "downloads": ctr.release_assets("0.3.0")}), \
-                mock.patch.object(ctr, "KEPT_VERSIONS", ["0.3.0", "0.2.1"]):
+                mock.patch.object(ctr, "KEPT_VERSIONS", ["0.3.0", "0.2.2"]):
             page = self.get("/ctr/download").get_data(as_text=True)
-            self.assertIn('href="/ctr/download/0.2.1/windows"', page)
+            self.assertIn('href="/ctr/download/0.2.2/windows"', page)
             self.assertTrue(self.get("/ctr/download/windows").headers["Location"].endswith("/v0.3.0/ctr-archipelago-v0.3.0-windows-x86.zip"))
         self.assertEqual(self.get("/ctr/download/0.1.0/windows").status_code, 404)
 
