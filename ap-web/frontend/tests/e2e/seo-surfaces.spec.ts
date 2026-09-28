@@ -451,6 +451,7 @@ test("CTR screenshots prefer WebP and every fallback stays below 100 KB", async 
     "warp-pad-requirements",
     "custom-resolutions-poster",
     "og-ctr",
+    "og-ctr-title",
   ];
   for (const name of names) {
     for (const extension of ["webp", "jpg"]) {
