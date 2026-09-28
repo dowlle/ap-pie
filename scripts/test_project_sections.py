@@ -1,4 +1,4 @@
-"""Project section navigation, breadcrumbs and redirects (CTR, Poképelago).
+"""Project section navigation, breadcrumbs and redirects (CTR, Timberborn, Poképelago).
 
 Renders every page in api/sections.py through the real blueprints and checks
 that the section navigation, the visible breadcrumbs and the BreadcrumbList
@@ -21,13 +21,21 @@ from flask import Flask
 
 import analytics
 import config
-from api import ctr, guides, sections, site_info
+from api import ctr, guides, sections, site_info, timberborn
 
 HREF = re.compile(r'href="(/[^"#?]*)')
 LD_JSON = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
 # Links that leave these blueprints on purpose: the SPA, sign-in, and the
 # download aliases that redirect to GitHub release assets.
-OUTSIDE = ("/yaml-builder", "/apworlds", "/api/", "/ctr/download/", "/my/", "/rooms", "/img/", "/privacy", "/favicon")
+OUTSIDE = ("/yaml-builder", "/apworlds", "/api/", "/ctr/download/", "/timberborn/download/", "/my/", "/rooms", "/img/", "/privacy", "/favicon")
+
+
+def _app() -> Flask:
+    app = Flask(__name__, template_folder=os.path.join(repo_app, "templates"))
+    app.secret_key = "test-only"
+    for blueprint in (ctr.bp, site_info.bp, guides.bp, timberborn.bp):
+        app.register_blueprint(blueprint)
+    return app
 
 
 class ProjectSectionsTest(unittest.TestCase):
@@ -37,14 +45,14 @@ class ProjectSectionsTest(unittest.TestCase):
             mock.patch.object(analytics, "record_event", lambda *a, **k: None),
             mock.patch.object(analytics, "record_guide_entry", lambda *a, **k: None),
             mock.patch.object(analytics, "entry_path", lambda *a, **k: None),
+            # The Timberborn section is beta-only until its v0.1.0 release;
+            # these checks cover it switched on. TimberbornSwitchedOffTest
+            # covers the production state.
+            mock.patch.dict(config.FEATURES, {"timberborn_section": True}),
         ]
         for patch in cls.patches:
             patch.start()
-        app = Flask(__name__, template_folder=os.path.join(repo_app, "templates"))
-        app.secret_key = "test-only"
-        for blueprint in (ctr.bp, site_info.bp, guides.bp):
-            app.register_blueprint(blueprint)
-        cls.client = app.test_client()
+        cls.client = _app().test_client()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -170,15 +178,89 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertIn('href="/ctr/reference"', html)
         self.assertIn('href="/ctr/reference/ap-boxes"', html)
 
+    def test_guides_index_reaches_the_timberborn_section(self) -> None:
+        html = self.get("/guides").get_data(as_text=True)
+        for path in ("/timberborn/setup", "/timberborn/reference", "/timberborn/download"):
+            self.assertIn(f'href="{path}"', html)
+        self.assertNotIn("Coming soon.", html.split('id="timber"')[-1].split("</section>")[0])
+
+    def test_timberborn_downloads_wait_for_the_release(self) -> None:
+        # Until the GitHub release exists every alias opens the release list.
+        self.assertFalse(timberborn.STABLE["available"])
+        for asset in ("mod", "apworld", "yaml"):
+            with self.subTest(asset=asset):
+                response = self.get(f"/timberborn/download/{asset}")
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.headers["Location"], "https://github.com/dowlle/timberborn-modding/releases")
+        self.assertEqual(self.get("/timberborn/download/windows").status_code, 404)
+        self.assertEqual(self.get("/timberborn/download/0.0.5/mod").status_code, 404)
+        page = self.get("/timberborn/download").get_data(as_text=True)
+        self.assertIn("Placeholder for release", page)
+        with mock.patch.dict(timberborn.STABLE, {"available": True, "released": "2026-10-01"}):
+            self.assertEqual(
+                self.get("/timberborn/download/mod").headers["Location"],
+                "https://github.com/dowlle/timberborn-modding/releases/download/v0.1.0/Archipelago.zip",
+            )
+            self.assertTrue(self.get("/timberborn/download/0.1.0/apworld").headers["Location"].endswith("/v0.1.0/timberborn.apworld"))
+        with mock.patch.dict(timberborn.MOD_LISTINGS, {"modio": "https://mod.io/g/timberborn/m/example", "workshop": "https://steamcommunity.com/sharedfiles/filedetails/?id=1"}):
+            self.assertNotIn("Placeholder for release", self.get("/timberborn/download").get_data(as_text=True))
+
+    def test_timberborn_release_notes_are_a_marked_draft(self) -> None:
+        overview = self.get("/timberborn/releases").get_data(as_text=True)
+        self.assertIn('href="/timberborn/releases/0-1-0"', overview)
+        self.assertIn("upcoming", overview)
+        self.assertNotIn("current stable", overview)
+        notes = self.get("/timberborn/releases/0-1-0").get_data(as_text=True)
+        self.assertIn("Draft: these notes are for the upcoming 0.1.0 release", notes)
+
     def test_sitemap_and_llms_list_only_the_new_urls(self) -> None:
         base = config.PUBLIC_BASE_URL
         for surface in ("/sitemap.xml", "/llms.txt"):
             with self.subTest(surface=surface):
                 body = self.get(surface).get_data(as_text=True)
-                for path in ("/ctr/releases/0-2-0", "/ctr/setup", "/ctr/play-on-pc", "/pokepelago/setup", "/pokepelago/twitch"):
+                for path in ("/ctr/releases/0-2-0", "/ctr/setup", "/ctr/play-on-pc", "/pokepelago/setup", "/pokepelago/twitch",
+                             "/timberborn", "/timberborn/setup", "/timberborn/reference/options", "/timberborn/releases/0-1-0"):
                     self.assertIn(f"{base}{path}", body)
                 for old in ("0-2-0-release-notes", "/guides/ctr", "/guides/crash-team-racing-pc", "/guides/pokepelago"):
                     self.assertNotIn(old, body)
+
+
+
+class TimberbornSwitchedOffTest(unittest.TestCase):
+    """Production state until the Timberborn v0.1.0 release: no Timberborn
+    page answers, and nothing links or lists one."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.patches = [
+            mock.patch.object(analytics, "record_event", lambda *a, **k: None),
+            mock.patch.object(analytics, "record_guide_entry", lambda *a, **k: None),
+            mock.patch.object(analytics, "entry_path", lambda *a, **k: None),
+            mock.patch.dict(config.FEATURES, {"timberborn_section": False}),
+        ]
+        for patch in cls.patches:
+            patch.start()
+        cls.client = _app().test_client()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        for patch in cls.patches:
+            patch.stop()
+
+    def test_every_timberborn_url_answers_404(self) -> None:
+        paths = sections.section_paths("timber") + [
+            "/timberborn/download/mod", "/timberborn/download/0.1.0/mod", "/guides/timberborn",
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 404)
+
+    def test_no_surface_links_or_lists_timberborn(self) -> None:
+        for surface in ("/guides", "/sitemap.xml", "/llms.txt", "/ctr", "/pokepelago"):
+            with self.subTest(surface=surface):
+                body = self.client.get(surface).get_data(as_text=True)
+                self.assertNotIn("/timberborn", body)
+        self.assertIn("Coming soon.", self.client.get("/guides").get_data(as_text=True))
 
 
 if __name__ == "__main__":

@@ -36,6 +36,7 @@ export async function setFavoriteGame(name: string, favorite: boolean): Promise<
 export interface Features {
   generation: boolean;
   open_room_creation: boolean;
+  timberborn_section: boolean;
 }
 
 export async function getFeatures(): Promise<Features> {

@@ -17,13 +17,14 @@
     {% endif %}
     <article>
       <h1>{{ page.title }}</h1>
+      {% if page.draft_notice %}<div class="notice notice-warning"><p>{{ page.draft_notice }}</p></div>{% endif %}
       <div class="reference-version badge">{{ page.status_label }} · Verified against {{ page.verified_against }} · Published <time datetime="{{ page.published }}">{{ page.published }}</time> · Updated <time datetime="{{ page.updated }}">{{ page.updated }}</time></div>
       <div class="guide-body">{{ body_html|safe }}</div>
       {% set steps = section.sub %}
       {% for item in steps if item.exact %}
       {% set i = steps.index(item) %}
       <nav class="reference-pager" aria-label="Previous and next">
-        {% if i > 0 %}<a href="{{ steps[i - 1].path }}">← {{ steps[i - 1].label }}</a>{% else %}<a href="/ctr/reference">← How it works</a>{% endif %}
+        {% if i > 0 %}<a href="{{ steps[i - 1].path }}">← {{ steps[i - 1].label }}</a>{% else %}<a href="{{ pager_back.path }}">← {{ pager_back.label }}</a>{% endif %}
         {% if i + 1 < steps|length %}<a href="{{ steps[i + 1].path }}">{{ steps[i + 1].label }} →</a>{% endif %}
       </nav>
       {% endfor %}
