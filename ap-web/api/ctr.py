@@ -304,7 +304,7 @@ def _software_node() -> dict:
         "operatingSystem": ["Windows", "Linux", "SteamOS"],
         "softwareVersion": STABLE["version"],
         "datePublished": STABLE["released"],
-        "image": _canonical("/img/ctr/og-ctr.jpg"),
+        "image": _canonical("/img/ctr/og-ctr-title.jpg"),
         "downloadUrl": [
             _canonical("/ctr/download/windows"),
             _canonical("/ctr/download/linux"),
@@ -387,7 +387,7 @@ def ctr_landing() -> str:
         meta_description=description,
         canonical_url=canonical_url,
         og_type="website",
-        og_image=_canonical("/img/ctr/og-ctr.jpg"),
+        og_image=_canonical("/img/ctr/og-ctr-title.jpg"),
         site_url=_canonical("/"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,
@@ -444,7 +444,7 @@ def ctr_download() -> str:
         meta_description=description,
         canonical_url=canonical_url,
         og_type="website",
-        og_image=_canonical("/img/ctr/og-ctr.jpg"),
+        og_image=_canonical("/img/ctr/og-ctr-title.jpg"),
         site_url=_canonical("/"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,
@@ -526,7 +526,7 @@ def ctr_reference_index() -> str:
         meta_description=description,
         canonical_url=canonical_url,
         og_type="website",
-        og_image=_canonical("/img/ctr/og-ctr.jpg"),
+        og_image=_canonical("/img/ctr/og-ctr-title.jpg"),
         site_url=_canonical("/"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,
@@ -563,7 +563,7 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str)
         "dateModified": page["updated"],
         "mainEntityOfPage": {"@id": f"{canonical_url}#page"},
         "isPartOf": {"@id": seo.website_id(config.PUBLIC_BASE_URL)},
-        "image": _canonical(page.get("og_image", "/img/ctr/og-ctr.jpg")),
+        "image": _canonical(page.get("og_image", "/img/ctr/og-ctr-title.jpg")),
         "inLanguage": "en",
     }
     return render_template(
@@ -576,7 +576,7 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str)
         meta_description=page["description"],
         canonical_url=canonical_url,
         og_type="article",
-        og_image=_canonical(page.get("og_image", "/img/ctr/og-ctr.jpg")),
+        og_image=_canonical(page.get("og_image", "/img/ctr/og-ctr-title.jpg")),
         og_image_width=page.get("og_image_width"),
         og_image_height=page.get("og_image_height"),
         og_image_alt=page.get("og_image_alt"),
@@ -626,7 +626,7 @@ def ctr_releases_index() -> str:
         meta_description=description,
         canonical_url=canonical_url,
         og_type="website",
-        og_image=_canonical("/img/ctr/og-ctr.jpg"),
+        og_image=_canonical("/img/ctr/og-ctr-title.jpg"),
         site_url=_canonical("/"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,

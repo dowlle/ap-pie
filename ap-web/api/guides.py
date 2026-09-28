@@ -496,7 +496,7 @@ def _guide(slug: str) -> str:
     og_image = None
     article_image = _canonical("/img/guides/og-guides.svg")
     if guide.get("project") == "ctr":
-        og_image = _canonical("/img/ctr/og-ctr.jpg")
+        og_image = _canonical("/img/ctr/og-ctr-title.jpg")
         article_image = og_image
     elif guide.get("project") == "poke":
         og_image = _canonical("/img/guides/pokepelago-gameplay.png")
