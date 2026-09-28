@@ -136,6 +136,10 @@ RELEASE_PAGES: list[dict] = [
         "updated": "2026-09-28",
         "verified_against": "0.2.2",
         "status_label": "Full release notes",
+        "og_image": "/img/ctr/ctr-0-2-2-title-og.jpg",
+        "og_image_width": 1200,
+        "og_image_height": 630,
+        "og_image_alt": "The CTR Archipelago 0.2.2 title screen, with the Archipelago colours on the ring behind Crash",
     },
     {
         "slug": "0-2-1",
