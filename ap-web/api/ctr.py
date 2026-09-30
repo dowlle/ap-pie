@@ -52,16 +52,16 @@ def release_assets(version: str) -> dict:
 
 
 STABLE: dict = {
-    "version": "0.2.2",
-    "released": "2026-09-28",
-    "downloads": release_assets("0.2.2"),
+    "version": "0.2.3",
+    "released": "2026-09-30",
+    "downloads": release_assets("0.2.3"),
 }
 
 # Stable releases that stay downloadable from /ctr/download after a newer one
 # replaces them, newest first. Whatever STABLE is not shows under "Older
 # versions", with version-pinned aliases at /ctr/download/<version>/<asset>.
 # Add the outgoing version here when STABLE moves on.
-KEPT_VERSIONS: list[str] = ["0.2.2", "0.2.1", "0.2.0"]
+KEPT_VERSIONS: list[str] = ["0.2.3", "0.2.2", "0.2.1", "0.2.0"]
 
 
 def older_versions() -> list[str]:
@@ -76,7 +76,7 @@ def older_versions() -> list[str]:
 PRERELEASE: dict | None = None
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-09-28"
+PAGES_UPDATED = "2026-09-30"
 
 REFERENCE_PAGES: list[dict] = [
     {
@@ -123,6 +123,19 @@ _REFERENCE_BY_SLUG = {page["slug"]: page for page in REFERENCE_PAGES}
 # /ctr/releases/<slug> on 2026-09-25; RELEASE_REDIRECTS keeps the old URLs
 # answering with a permanent redirect so links and search results carry over.
 RELEASE_PAGES: list[dict] = [
+    {
+        "slug": "0-2-3",
+        "title": "What changed in 0.2.3?",
+        "page_title": "CTR Archipelago 0.2.3 release notes",
+        "short_title": "0.2.3 release notes",
+        "blurb": "DeathLink rework and crash fix, a DeathLink Send option, relic race pad fix, hub frame rate and warp pad glow for every open location.",
+        "description": "Everything new in CTR Archipelago 0.2.3: DeathLink that is never queued, a popup for every death, choose what sends a death, the DeathLink race loss crash fix, the Relic Race Perfect pad fix, better hub frame rate and warp pads that show every open location.",
+        "file": "0-2-3-release-notes.md",
+        "published": "2026-09-30",
+        "updated": "2026-09-30",
+        "verified_against": "0.2.3",
+        "status_label": "Full release notes",
+    },
     {
         "slug": "0-2-2",
         "title": "What changed in 0.2.2?",
@@ -178,6 +191,8 @@ RELEASE_REDIRECTS = {"0-2-0-release-notes": "/ctr/releases/0-2-0"}
 # published; drop it and bump STABLE when the release goes out.
 _GITHUB_RELEASES = "https://github.com/dowlle/ctr-native-ap/releases"
 RELEASE_HISTORY: list[dict] = [
+    {"version": "0.2.3", "date": "2026-09-30", "notes": "/ctr/releases/0-2-3",
+     "summary": "DeathLink rework and crash fix, DeathLink Send option, relic pad fix, hub frame rate and pad glow for every open location."},
     {"version": "0.2.2", "date": "2026-09-28", "notes": "/ctr/releases/0-2-2",
      "summary": "Remove Playable Oxide, Relic Race Perfect checks, DeathLink race loss, Skip Cutscenes, Discord Status and the freeze fix."},
     {"version": "0.2.1", "date": "2026-09-25", "notes": "/ctr/releases/0-2-1",
