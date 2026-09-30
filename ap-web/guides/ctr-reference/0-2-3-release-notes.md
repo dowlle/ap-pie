@@ -11,7 +11,7 @@
 - There is no send-only DeathLink. Anything that sends also receives.
 - Three new rows on Options > Archipelago set the send conditions in game.
 - Fixed the Relic Race closing before you could take its Perfect check, and the warp pad now shows the item at the Perfect.
-- Much lower cost of the warp pads in the hubs, which was the cause of the low frame rate in Gem Stone Valley.
+- Better frame rate in the hubs, especially Gem Stone Valley. The warp pads were doing far too much work every frame.
 - Warp pads now show the item of every open location behind them: item boxes, CTR letters and Wumpa too.
 - Relic Race Perfect checks need Ultimate Sacred Fire on every track, Held 1st has no boost floor on hard, and Slide Coliseum and Turbo Track relics are gated like the other tracks.
 
