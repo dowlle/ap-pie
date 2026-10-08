@@ -9,9 +9,7 @@ Timberborn Archipelago is a mod for Timberborn plus an APWorld for Archipelago. 
 
 ## Step 1: Install the mod
 
-**From mod.io or Steam Workshop.** Subscribe to Timberborn Archipelago there and the game installs it for you.
-
-> **Placeholder for release:** the mod.io and Steam Workshop links go here. The listings go live with the 0.1.0 release; until then, use the zip below.
+**From mod.io or Steam Workshop.** Timberborn Archipelago is not listed there yet. The listings come with a later release; until then, install it from the zip.
 
 **Manually from the zip.** Download `Archipelago.zip` and extract it into `Documents/Timberborn/Mods/`. You should end up with a `Mods/Archipelago/` folder, with the mod's files directly inside it.
 

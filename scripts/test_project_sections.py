@@ -195,7 +195,16 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertEqual(self.get("/timberborn/download/windows").status_code, 404)
         self.assertEqual(self.get("/timberborn/download/0.0.5/mod").status_code, 404)
         page = self.get("/timberborn/download").get_data(as_text=True)
-        self.assertIn("Placeholder for release", page)
+        self.assertIn("Not listed yet", page)
+        # No internal placeholder text may reach the public pages.
+        for path in ("/timberborn", "/timberborn/download", "/timberborn/setup", "/timberborn/reference",
+                     "/timberborn/reference/checks", "/timberborn/reference/items", "/timberborn/reference/goals",
+                     "/timberborn/reference/factions", "/timberborn/reference/options", "/timberborn/releases",
+                     "/timberborn/releases/0-1-0"):
+            with self.subTest(path=path):
+                response = self.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertNotIn("placeholder for", response.get_data(as_text=True).lower())
         with mock.patch.dict(timberborn.STABLE, {"available": True, "released": "2026-10-01"}):
             self.assertEqual(
                 self.get("/timberborn/download/mod").headers["Location"],
@@ -203,7 +212,7 @@ class ProjectSectionsTest(unittest.TestCase):
             )
             self.assertTrue(self.get("/timberborn/download/0.1.0/apworld").headers["Location"].endswith("/v0.1.0/timberborn.apworld"))
         with mock.patch.dict(timberborn.MOD_LISTINGS, {"modio": "https://mod.io/g/timberborn/m/example", "workshop": "https://steamcommunity.com/sharedfiles/filedetails/?id=1"}):
-            self.assertNotIn("Placeholder for release", self.get("/timberborn/download").get_data(as_text=True))
+            self.assertNotIn("Not listed yet", self.get("/timberborn/download").get_data(as_text=True))
 
     def test_timberborn_release_notes_are_a_marked_draft(self) -> None:
         overview = self.get("/timberborn/releases").get_data(as_text=True)

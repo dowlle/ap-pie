@@ -62,4 +62,4 @@ Each trap is drawn with a chance of its weight divided by the sum of the three w
 
 ## Options every Archipelago game has
 
-Archipelago's common options, such as `progression_balancing`, `accessibility`, `local_items`, `non_local_items`, `start_inventory` and `start_hints`, work for Timberborn too. The [YAML guide](/guides/setting-up-your-yaml) explains them.
+Archipelago's common options, such as `progression_balancing`, `accessibility`, `local_items`, `non_local_items`, `start_inventory`, `start_inventory_from_pool` and `start_hints`, work for Timberborn too. The [YAML guide](/guides/setting-up-your-yaml) explains them.
