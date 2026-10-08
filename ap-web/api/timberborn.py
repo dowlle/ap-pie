@@ -79,7 +79,7 @@ MOD_LISTINGS: dict[str, str | None] = {"modio": None, "workshop": None}
 
 ASSET_LABELS = {"mod": "Mod (Archipelago.zip)", "apworld": "APWorld", "yaml": "Template YAML"}
 
-PAGES_UPDATED = "2026-09-28"
+PAGES_UPDATED = "2026-10-08"
 _DRAFT_STATUS = "Draft for 0.1.0"
 _DRAFT_VERIFIED = "the 0.1.0 release candidate"
 
@@ -139,7 +139,7 @@ RELEASE_PAGES: list[dict] = [
         "title": "What's new in 0.1.0?",
         "page_title": "Timberborn Archipelago 0.1.0 release notes",
         "short_title": "0.1.0 release notes",
-        "blurb": "The first release for Timberborn 1.1: new buildings, starting blueprints, trap and delivery options, survival logic and many fixes.",
+        "blurb": "The first test build for Timberborn 1.1: new buildings, starting blueprints, trap and delivery options, survival logic and many fixes.",
         "description": "Everything new in Timberborn Archipelago 0.1.0: Timberborn 1.1 support, ten new buildings, starting blueprints, trap weights, goods delivery, survival logic and fixes.",
         "file": "0-1-0-release-notes.md",
         "published": PAGES_UPDATED,
@@ -159,7 +159,7 @@ _RELEASE_BY_SLUG = {page["slug"]: page for page in RELEASE_PAGES}
 # the first release for Timberborn 1.1; the pre-alpha builds stay on GitHub.
 RELEASE_HISTORY: list[dict] = [
     {"version": "0.1.0", "date": "", "notes": "/timberborn/releases/0-1-0", "upcoming": True,
-     "summary": "The first release for Timberborn 1.1, with new buildings, starting blueprints, trap and delivery options and survival logic."},
+     "summary": "The first test build for Timberborn 1.1, with new buildings, starting blueprints, trap and delivery options and survival logic."},
 ]
 
 # Consumed by api/guides.py for /sitemap.xml and /llms.txt.

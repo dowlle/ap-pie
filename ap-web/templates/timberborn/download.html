@@ -57,7 +57,7 @@
       {% if listings.modio %}<a class="btn btn-primary" href="{{ listings.modio }}" rel="noopener noreferrer">Get it on mod.io</a>{% endif %}
       {% if listings.workshop %}<a class="btn btn-secondary" href="{{ listings.workshop }}" rel="noopener noreferrer">Get it on Steam Workshop</a>{% endif %}
       {% if not listings.modio or not listings.workshop %}
-      <p class="tb-placeholder"><strong>Placeholder for release:</strong> the mod.io and Steam Workshop links. The listings go live with the {{ stable.version }} release.</p>
+      <p class="tb-placeholder"><strong>Not listed yet.</strong> The mod.io and Steam Workshop listings come with a later release. Until then, use the manual install.</p>
       {% endif %}
     </div>
     <div class="dl-card">

@@ -1,4 +1,4 @@
-**Timberborn Archipelago 0.1.0 is the first release for Timberborn 1.1. It brings the ten new 1.1 buildings into the pool, new options for traps, deliveries and your first blueprints, survival logic, and a long list of fixes from the pre-alpha playtests.**
+**Timberborn Archipelago 0.1.0 is the first test build for Timberborn 1.1. It brings the ten new 1.1 buildings into the pool, new options for traps, deliveries and your first blueprints, survival logic, and a long list of fixes from the pre-alpha playtests.**
 
 **[Download 0.1.0](/timberborn/download)** · **[Setup guide](/timberborn/setup)** · **[Build a YAML](/yaml-builder/timberborn)**
 
@@ -20,7 +20,7 @@
 
 ## Compatibility and upgrading
 
-> **Placeholder for Stef:** the compatibility statement. What to say about seeds and saves from 0.0.5.x, and whether a 0.0.5 room can be played on the 0.1.0 mod. The draft facts so far: 0.1.0 needs Timberborn 1.1, and existing item and location IDs did not change.
+0.1.0 needs Timberborn 1.1 and will not load on 1.0. Existing item and location IDs did not change, but seeds and saves from 0.0.x were not tested with 0.1.0. Generate a new seed with the 0.1.0 APWorld and YAML, and start a new colony on 1.1.
 
 ## New for Timberborn 1.1
 
@@ -51,6 +51,7 @@
 - Received goods wait until there is room instead of being lost, and the wait survives a save.
 - Resource milestones keep counting after you load a save.
 - Blueprints can no longer be cut from the pool as filler.
+- Excluding a later shop slot, or giving one priority, no longer makes generation fail.
 
 ## Quality of life
 
@@ -63,11 +64,21 @@
 
 ## Known issues
 
-> **Placeholder for Stef:** known issues at release.
+- Traps can still arrive after you have reached your goal, through a release or collect, so a colony can die after goaling.
+- Large resource milestones, such as 1000 Logs, can be in logic much earlier than they should be.
+- Resource packages count toward resource milestones in game, so a package can complete one early.
+- Boosts are not applied to newly born beavers ([#14](https://github.com/dowlle/timberborn-modding/issues/14)).
+- The Wonder goal leaves a long wait with nothing to do while it builds ([#7](https://github.com/dowlle/timberborn-modding/issues/7)).
+- A websocket compression warning shows on every connect ([#23](https://github.com/dowlle/timberborn-modding/issues/23)).
 
 ## What was tested
 
-> **Placeholder for Stef:** what was played in game for this release, on which faction and game version.
+This is a test build. The APWorld unit tests and the full fuzz suite pass on both factions.
+
+Played in game on Timberborn 1.1 with Folktails: the Bots goal, a drought counting when it ends, connecting with a Wonder goal on a map where the Wonder was already finished (it does not complete at connect), and the shop, goods deliveries and traps. Moving to a new map on the same slot works too. On Iron Teeth a goods delivery worked, but the rest has had less play. Still open:
+
+1. Iron Teeth on 1.1: the renamed buildings and the new Iron Teeth buildings.
+2. Logic timing: checks that show up too early or too late. Tell us which check, which faction and what you had built.
 
 ## How it's made
 
@@ -76,4 +87,4 @@ Timberborn Archipelago is developed with AI assistance for code; there is no AI-
 ## Where the changes came from
 
 - Mod: [#29](https://github.com/dowlle/timberborn-modding/pull/29) (Timberborn 1.1 and the client changes), [#30](https://github.com/dowlle/timberborn-modding/pull/30) (connect fields, localhost, logo, scouts), plus fixes for the Sluice, the Water Storage goal and scouted slots.
-- APWorld: [#2](https://github.com/dowlle/TimberbornArchipelago/pull/2) (1.1 logic and options), [#3](https://github.com/dowlle/TimberbornArchipelago/pull/3) (Logic Difficulty removed), [#4](https://github.com/dowlle/TimberbornArchipelago/pull/4) (trap weights and percentage), plus the Well-being range, blueprint classification and scouted-slot fixes.
+- APWorld: [#2](https://github.com/dowlle/TimberbornArchipelago/pull/2) (1.1 logic and options), [#3](https://github.com/dowlle/TimberbornArchipelago/pull/3) (Logic Difficulty removed), [#4](https://github.com/dowlle/TimberbornArchipelago/pull/4) (trap weights and percentage), [#8](https://github.com/dowlle/TimberbornArchipelago/pull/8) (excluded and priority shop slots, `start_inventory_from_pool`), plus the Well-being range, blueprint classification and scouted-slot fixes.
