@@ -22,6 +22,17 @@ def canonical(path: str) -> str:
     return f"{config.PUBLIC_BASE_URL}{path}"
 
 
+def github_release_url(releases_url: str, version: str, history: list[dict]) -> str | None:
+    """The GitHub release page of one version, for the link on its notes page.
+
+    None while the notes are marked upcoming in the release history: the
+    GitHub release does not exist yet, so the page keeps no link."""
+    entry = next((row for row in history if row["version"] == version), None)
+    if entry is None or entry.get("upcoming"):
+        return None
+    return f"{releases_url}/tag/v{version}"
+
+
 def render_markdown(md_path: Path) -> tuple[str, list[dict]]:
     """Markdown to HTML plus the h2 sections for the on-page rail.
 
@@ -49,6 +60,7 @@ def article_page(
     analytics_page: str,
     default_image: str,
     pager_back: dict,
+    github_release: str | None = None,
 ) -> str:
     """Render one reference or release-notes page of a project section."""
     md_path = content_dir / page["file"]
@@ -86,6 +98,7 @@ def article_page(
         **nav,
         page=page,
         pager_back=pager_back,
+        github_release=github_release,
         body_html=body_html,
         sections=on_page,
         page_title=title,
