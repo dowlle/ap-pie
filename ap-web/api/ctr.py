@@ -538,7 +538,8 @@ def ctr_reference_index() -> str:
     )
 
 
-def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str) -> str:
+def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str,
+                  github_release: str | None = None) -> str:
     return project_pages.article_page(
         section_key="ctr",
         content_dir=_REFERENCE_DIR,
@@ -549,6 +550,7 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str)
         analytics_page=analytics_page,
         default_image="/img/ctr/og-ctr-title.jpg",
         pager_back={"path": "/ctr/reference", "label": "How it works"},
+        github_release=github_release,
     )
 
 
@@ -604,7 +606,8 @@ def ctr_release_page(slug: str):
     page = _RELEASE_BY_SLUG.get(slug)
     if page is None:
         abort(404)
-    return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}")
+    github_release = project_pages.github_release_url(_GITHUB_RELEASES, page["verified_against"], RELEASE_HISTORY)
+    return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}", github_release)
 
 
 @bp.route("/ctr/reference/ap-boxes", strict_slashes=False)

@@ -384,7 +384,8 @@ def timberborn_reference_index() -> str:
     )
 
 
-def _article(page: dict, path: str, title_suffix: str, analytics_page: str) -> str:
+def _article(page: dict, path: str, title_suffix: str, analytics_page: str,
+             github_release: str | None = None) -> str:
     return project_pages.article_page(
         section_key=SECTION,
         content_dir=_REFERENCE_DIR,
@@ -395,6 +396,7 @@ def _article(page: dict, path: str, title_suffix: str, analytics_page: str) -> s
         analytics_page=analytics_page,
         default_image=OG_IMAGE,
         pager_back={"path": "/timberborn/reference", "label": "How it works"},
+        github_release=github_release,
     )
 
 
@@ -443,4 +445,5 @@ def timberborn_release_page(slug: str):
     page = _RELEASE_BY_SLUG.get(slug)
     if page is None:
         abort(404)
-    return _article(page, f"/timberborn/releases/{slug}", "Archipelago Pie", f"releases/{slug}")
+    github_release = project_pages.github_release_url(_GITHUB_RELEASES, page["version"], RELEASE_HISTORY)
+    return _article(page, f"/timberborn/releases/{slug}", "Archipelago Pie", f"releases/{slug}", github_release)

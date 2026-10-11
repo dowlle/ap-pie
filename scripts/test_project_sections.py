@@ -247,6 +247,26 @@ class ProjectSectionsTest(unittest.TestCase):
 
 
 
+    def test_release_pages_link_their_github_release(self) -> None:
+        cases = [(f"/ctr/releases/{page['slug']}", "https://github.com/dowlle/ctr-native-ap/releases/tag/v" + page["verified_against"])
+                 for page in ctr.RELEASE_PAGES]
+        cases += [(f"/timberborn/releases/{page['slug']}", "https://github.com/dowlle/timberborn-modding/releases/tag/v" + page["version"])
+                  for page in timberborn.RELEASE_PAGES]
+        self.assertGreaterEqual(len(cases), 5)
+        for path, url in cases:
+            with self.subTest(path=path):
+                html = self.get(path).get_data(as_text=True)
+                self.assertIn(f'<a href="{url}" rel="noopener noreferrer">GitHub release', html)
+                self.assertIn("(checksums and files)", html)
+        # Reference pages are not releases and get no link.
+        self.assertNotIn("(checksums and files)", self.get("/timberborn/reference/checks").get_data(as_text=True))
+        # Notes marked upcoming have no GitHub release yet, so no link.
+        upcoming = [dict(row, upcoming=True) if row["version"] == "0.1.0" else row for row in timberborn.RELEASE_HISTORY]
+        with mock.patch.object(timberborn, "RELEASE_HISTORY", upcoming):
+            html = self.get("/timberborn/releases/0-1-0").get_data(as_text=True)
+            self.assertNotIn("releases/tag/v0.1.0", html)
+
+
 class TimberbornSwitchedOffTest(unittest.TestCase):
     """Production state until the Timberborn v0.1.0 release: no Timberborn
     page answers, and nothing links or lists one."""

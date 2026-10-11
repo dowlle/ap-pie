@@ -5,6 +5,7 @@
     .reference-version {
       margin: -0.75rem 0 1.5rem;
     }
+    .reference-github { margin: -0.75rem 0 1.5rem; font-size: 0.92rem; }
   </style>
 {% endblock %}
 {% block main %}
@@ -19,6 +20,7 @@
       <h1>{{ page.title }}</h1>
       {% if page.draft_notice %}<div class="notice notice-warning"><p>{{ page.draft_notice }}</p></div>{% endif %}
       <div class="reference-version badge">{{ page.status_label }} · Verified against {{ page.verified_against }} · Published <time datetime="{{ page.published }}">{{ page.published }}</time> · Updated <time datetime="{{ page.updated }}">{{ page.updated }}</time></div>
+      {% if github_release %}<p class="reference-github"><a href="{{ github_release }}" rel="noopener noreferrer">GitHub release {{ page.verified_against }}</a> (checksums and files)</p>{% endif %}
       <div class="guide-body">{{ body_html|safe }}</div>
       {% set steps = section.sub %}
       {% for item in steps if item.exact %}
