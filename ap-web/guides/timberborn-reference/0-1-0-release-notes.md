@@ -68,7 +68,6 @@
 - Large resource milestones, such as 1000 Logs, can be in logic much earlier than they should be.
 - Resource packages count toward resource milestones in game, so a package can complete one early.
 - Boosts are not applied to newly born beavers ([#14](https://github.com/dowlle/timberborn-modding/issues/14)).
-- The Wonder goal leaves a long wait with nothing to do while it builds ([#7](https://github.com/dowlle/timberborn-modding/issues/7)).
 - A websocket compression warning shows on every connect ([#23](https://github.com/dowlle/timberborn-modding/issues/23)).
 
 ## What was tested
