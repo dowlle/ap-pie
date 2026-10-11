@@ -15,6 +15,7 @@ import { getFeatures, type Features } from "../api";
 const SAFE_DEFAULTS: Features = {
   generation: true,
   open_room_creation: false,
+  timberborn_section: false,
 };
 
 const FeaturesContext = createContext<Features>(SAFE_DEFAULTS);

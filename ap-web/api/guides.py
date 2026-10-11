@@ -65,6 +65,15 @@ PROJECTS: list[dict] = [
     },
     {
         "key": "timber", "name": "Timberborn", "sub": "beavers meet the item pool", "color": "#7fa65a",
+        # FEAT-58: while the section setting is off, the shelf keeps its
+        # "soon" card and the Timberborn guide stays hidden.
+        "feature": "timberborn_section",
+        "links": [
+            {"path": "/timberborn/reference", "kicker": "Reference", "title": "How Timberborn Archipelago works",
+             "blurb": "The AP Shop, items, goals, factions and every option."},
+            {"path": "/timberborn/download", "kicker": "Downloads", "title": "Download Timberborn Archipelago",
+             "blurb": "The mod, the APWorld and the template YAML."},
+        ],
         "soon": {
             "kicker": "Setup",
             "title": "Timberborn Archipelago setup",
@@ -257,6 +266,28 @@ GUIDES: list[dict[str, str]] = [
         "featured": False,
     },
     {
+        "slug": "timberborn",
+        "path": "/timberborn/setup",
+        "file": "timberborn.md",
+        "h1": "Timberborn Archipelago setup guide",
+        "page_title": "Timberborn Archipelago Setup Guide | Archipelago Pie",
+        "meta_description": (
+            "Set up Timberborn Archipelago: install and enable the mod, start a colony "
+            "with your faction, connect to your room, and generate a seed as host."
+        ),
+        "card_title": "Timberborn Archipelago setup",
+        "card_blurb": (
+            "Install the mod, pick your faction, connect to your room, "
+            "and generate a Timberborn seed as the host."
+        ),
+        "published": "2026-09-28",
+        "updated": "2026-09-28",
+        "project": "timber",
+        "kicker": "Setup",
+        "featured": True,
+        "feature": "timberborn_section",
+    },
+    {
         "slug": "crash-team-racing-pc",
         "path": "/ctr/play-on-pc",
         "file": "crash-team-racing-pc.md",
@@ -310,6 +341,16 @@ GUIDES: list[dict[str, str]] = [
 _GUIDES_BY_SLUG = {g["slug"]: g for g in GUIDES}
 
 
+def _on(entry: dict) -> bool:
+    """False for a guide or shelf whose feature setting is off (FEAT-58)."""
+    feature = entry.get("feature")
+    return feature is None or bool(config.FEATURES.get(feature))
+
+
+def live_guides() -> list[dict]:
+    return [g for g in GUIDES if _on(g)]
+
+
 def guide_path(guide: dict) -> str:
     """Canonical path of a guide. Project guides live in their project's
     section (`path`); the rest stay under /guides/<slug>."""
@@ -351,6 +392,7 @@ def _render_markdown(md_path: Path) -> tuple[str, list[dict]]:
 def guides_index() -> str:
     shelves = []
     for p in PROJECTS:
+        enabled = _on(p)
         cards = [
             {
                 "path": guide_path(g),
@@ -359,20 +401,22 @@ def guides_index() -> str:
                 "blurb": g["card_blurb"],
                 "featured": bool(g.get("featured")),
             }
-            for g in GUIDES
+            for g in live_guides()
             if g.get("project") == p["key"]
         ]
         cards.sort(key=lambda c: not c["featured"])
-        cards += [{**link, "featured": False} for link in p.get("links", [])]
+        if enabled:
+            cards += [{**link, "featured": False} for link in p.get("links", [])]
+        soon = None if (enabled and p.get("feature")) else p.get("soon")
         shelves.append({
             "key": p["key"],
             "name": p["name"],
             "sub": p["sub"],
             "color": p["color"],
             "cards": cards,
-            "soon": p.get("soon"),
+            "soon": soon,
             "action": p.get("action"),
-            "count": len(cards) + (1 if p.get("soon") else 0) + (1 if p.get("action") else 0),
+            "count": len(cards) + (1 if soon else 0) + (1 if p.get("action") else 0),
         })
     canonical_url = _canonical("/guides")
     item_list_id = f"{canonical_url}#guide-list"
@@ -383,7 +427,7 @@ def guides_index() -> str:
             "name": guide["card_title"],
             "url": _canonical(guide_path(guide)),
         }
-        for position, guide in enumerate(GUIDES, start=1)
+        for position, guide in enumerate(live_guides(), start=1)
     ]
     collection = seo.page(
         config.PUBLIC_BASE_URL,
@@ -423,7 +467,7 @@ def guides_index() -> str:
 @bp.route("/guides/<slug>", strict_slashes=False)
 def guide_page(slug: str):
     guide = _GUIDES_BY_SLUG.get(slug)
-    if guide is None:
+    if guide is None or not _on(guide):
         abort(404)
     if slug in MOVED_GUIDES:
         target = MOVED_GUIDES[slug]
@@ -435,6 +479,8 @@ def guide_page(slug: str):
 
 def _guide(slug: str) -> str:
     guide = _GUIDES_BY_SLUG[slug]
+    if not _on(guide):
+        abort(404)
     md_path = _GUIDES_DIR / guide["file"]
     if not md_path.is_file():
         abort(404)
@@ -468,10 +514,19 @@ def _guide(slug: str) -> str:
             {"path": "/ctr/download", "kicker": "Downloads", "title": "Download CTR Archipelago",
              "blurb": "Current stable builds for Windows and Linux."},
         ]
+    elif guide.get("project") == "timber":
+        related += [
+            {"path": "/timberborn", "kicker": "Overview", "title": "Timberborn Archipelago",
+             "blurb": "What the randomizer changes in your colony."},
+            {"path": "/timberborn/download", "kicker": "Downloads", "title": "Download Timberborn Archipelago",
+             "blurb": "The mod, the APWorld and the template YAML."},
+            {"path": "/timberborn/reference", "kicker": "Reference", "title": "How Timberborn Archipelago works",
+             "blurb": "The AP Shop, items, goals, factions and every option."},
+        ]
     related += [
         {"path": guide_path(g), "kicker": g.get("kicker", "Guide"),
          "title": g["card_title"], "blurb": g["card_blurb"]}
-        for g in GUIDES
+        for g in live_guides()
         if g.get("project") == guide.get("project") and g["slug"] != slug
     ]
     path = guide_path(guide)
@@ -500,6 +555,9 @@ def _guide(slug: str) -> str:
         article_image = og_image
     elif guide.get("project") == "poke":
         og_image = _canonical("/img/guides/pokepelago-gameplay.png")
+        article_image = og_image
+    elif guide.get("project") == "timber":
+        og_image = _canonical("/img/timberborn/og-timberborn.jpg")
         article_image = og_image
     article["image"] = article_image
     page_node = seo.page(
@@ -591,6 +649,7 @@ for _slug, _path in MOVED_GUIDES.items():
 def sitemap() -> Response:
     from api.site_info import PAGES as SITE_PAGES, PAGES_UPDATED as SITE_UPDATED
     from api.ctr import CTR_PAGES, PAGES_UPDATED as CTR_UPDATED
+    from api.timberborn import TIMBERBORN_PAGES, PAGES_UPDATED as TIMBERBORN_UPDATED
     from api.legal import PRIVACY_PATH as LEGAL_PRIVACY_PATH
     from api.legal import PRIVACY_UPDATED as LEGAL_PRIVACY_UPDATED
 
@@ -598,13 +657,16 @@ def sitemap() -> Response:
         {"loc": _canonical("/"), "lastmod": None},
         {"loc": _canonical("/apworlds"), "lastmod": "2026-08-19"},
         {"loc": _canonical("/yaml-builder"), "lastmod": "2026-08-24"},
-        {"loc": _canonical("/guides"), "lastmod": max(g["updated"] for g in GUIDES)},
+        {"loc": _canonical("/guides"), "lastmod": max(g["updated"] for g in live_guides())},
     ] + [
         {"loc": _canonical(guide_path(g)), "lastmod": g["updated"]}
-        for g in GUIDES
+        for g in live_guides()
     ] + [
         {"loc": _canonical(p["path"]), "lastmod": p.get("lastmod", CTR_UPDATED)}
         for p in CTR_PAGES
+    ] + [
+        {"loc": _canonical(p["path"]), "lastmod": p.get("lastmod", TIMBERBORN_UPDATED)}
+        for p in (TIMBERBORN_PAGES if project_sections.enabled("timber") else [])
     ] + [
         {"loc": _canonical(LEGAL_PRIVACY_PATH), "lastmod": LEGAL_PRIVACY_UPDATED},
     ]
@@ -649,7 +711,7 @@ def llms() -> Response:
         "## Guides",
         "",
     ]
-    for g in GUIDES:
+    for g in live_guides():
         lines.append(
             f"- [{g['card_title']}]({_canonical(guide_path(g))}): {g['card_blurb']}"
         )
@@ -662,6 +724,12 @@ def llms() -> Response:
     ]
     for p in CTR_PAGES:
         lines.append(f"- [{p['title']}]({_canonical(p['path'])}): {p['blurb']}")
+    if project_sections.enabled("timber"):
+        from api.timberborn import TIMBERBORN_PAGES
+
+        lines += ["", "## Timberborn Archipelago", ""]
+        for p in TIMBERBORN_PAGES:
+            lines.append(f"- [{p['title']}]({_canonical(p['path'])}): {p['blurb']}")
     lines += [
         "",
         "## Games",

@@ -1,0 +1,154 @@
+{% extends "guides/base.html" %}
+{% block head_extra %}
+  <style>
+    main:has(.tb-hero) { max-width: 66rem; }
+    .tb-hero { display: grid; gap: 2rem; align-items: center; padding: 0.5rem 0 2.5rem; }
+    @media (min-width: 900px) { .tb-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
+    .tb-hero h1 { font-size: 2.6rem; margin-bottom: 1rem; }
+    @media (max-width: 640px) { .tb-hero h1 { font-size: 2rem; } }
+    .tb-hero .lede { color: var(--text-muted); font-size: 1.15rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .tb-hero img { display: block; width: 100%; height: auto; border: 1px solid var(--border-strong); border-radius: 12px; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+    .hero-note { color: var(--text-muted); font-size: 0.88rem; margin-top: 1rem; }
+    .tb-section { margin: 3rem 0; }
+    .tb-section > h2 {
+      font-family: var(--font-display); font-weight: 500; color: var(--text-h);
+      font-size: 1.6rem; letter-spacing: -0.01em; margin-bottom: 0.85rem; scroll-margin-top: 2rem;
+    }
+    .tb-section > p { margin-bottom: 1rem; max-width: 44rem; }
+    .tb-steps { list-style: none; counter-reset: step; display: grid; gap: 1rem; margin: 1.25rem 0 0; padding: 0; }
+    @media (min-width: 760px) { .tb-steps { grid-template-columns: repeat(3, 1fr); } .tb-steps-four { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1000px) { .tb-steps-four { grid-template-columns: repeat(4, 1fr); } }
+    .tb-steps li {
+      counter-increment: step; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.2rem 1.3rem;
+    }
+    .tb-steps li::before {
+      content: counter(step); display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem;
+      border-radius: 999px; background: var(--accent-dim); color: var(--accent-light);
+      font-weight: 700; margin-bottom: 0.7rem;
+    }
+    .tb-steps h3 { color: var(--text-h); font-size: 1.05rem; margin: 0 0 0.4rem; }
+    .tb-steps p { color: var(--text-muted); margin: 0 0 0.6rem; font-size: 0.95rem; }
+    .tb-features { display: grid; gap: 1rem; margin-top: 1.25rem; }
+    @media (min-width: 640px) { .tb-features { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 960px) { .tb-features { grid-template-columns: repeat(3, 1fr); } }
+    .tb-feature {
+      display: flex; flex-direction: column; overflow: hidden; color: var(--text);
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    }
+    .tb-feature:hover { border-color: var(--accent); text-decoration: none; }
+    .tb-feature img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--border); }
+    .tb-feature div { padding: 1rem 1.15rem 1.2rem; display: flex; flex-direction: column; flex: 1; }
+    .tb-feature h3 { color: var(--text-h); font-size: 1.08rem; margin: 0 0 0.4rem; }
+    .tb-feature p { color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+    .tb-feature .more { color: var(--accent-light); font-weight: 600; margin-top: auto; padding-top: 0.8rem; font-size: 0.92rem; }
+    .tb-faq { display: grid; gap: 0.6rem; max-width: 46rem; margin-top: 1.25rem; }
+    .tb-faq details { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1.1rem; }
+    .tb-faq summary { color: var(--text-h); font-weight: 600; cursor: pointer; }
+    .tb-faq details p { margin: 0.6rem 0 0; }
+    .video-caption { color: var(--text-muted); font-size: 0.9rem; margin: 0.6rem 0 0; max-width: 44rem; }
+    .tb-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+    .tb-placeholder { border: 1px dashed var(--border-strong); border-radius: 10px; padding: 0.7rem 1rem; color: var(--text-muted); font-size: 0.92rem; }
+    .tb-disclosure { color: var(--text-muted); font-size: 0.95rem; max-width: 44rem; }
+  </style>
+{% endblock %}
+{% block main %}
+  <div class="tb-hero">
+    <div>
+      <h1>Timberborn Archipelago</h1>
+      <p class="lede">
+        Play Timberborn as an Archipelago randomizer. The buildings you would
+        normally unlock with science are spread across the multiworld: you buy
+        checks in the AP Shop, and other players' games send you the blueprints
+        your colony needs.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/timberborn/download">Download Timberborn Archipelago {{ stable.version }}</a>
+        <a class="btn btn-secondary" href="/timberborn/setup">Setup guide</a>
+      </div>
+      <p class="hero-note"><strong>Hosting?</strong> <a href="/timberborn/setup#for-the-host-generate-the-seed">Generate a Timberborn seed</a></p>
+      <p class="hero-note">A free, open source mod for Timberborn 1.1, for both Folktails and Iron Teeth. <a href="/timberborn/releases/{{ latest_release.slug }}">What's new in {{ latest_release.version }}</a>{% if not stable.available %} (upcoming){% endif %}</p>
+    </div>
+    <picture>
+      <source srcset="/img/timberborn/colony-hero.webp" type="image/webp" />
+      <img src="/img/timberborn/colony-hero.jpg" alt="A Folktails colony with farms and a water wheel beside a river, while the AP Log on the right lists milestones and blueprints received from the multiworld" width="1600" height="900" fetchpriority="high" />
+    </picture>
+  </div>
+
+  <section class="tb-section" aria-labelledby="join">
+    <h2 id="join">Join a game in three steps</h2>
+    <p>Joining a multiworld somebody else is hosting? This is all you need. The <a href="/timberborn/setup">setup guide</a> has the details.</p>
+    <ol class="tb-steps">
+      <li>
+        <h3>Install the mod</h3>
+        <p>From mod.io or Steam Workshop, or extract the zip into your Timberborn <code>Mods</code> folder. Then enable it in the Mods window.</p>
+        <a href="/timberborn/setup#step-1-install-the-mod">How to install</a>
+      </li>
+      <li>
+        <h3>Make your YAML</h3>
+        <p>Pick your faction, goal and options, and send the file to your host.</p>
+        <a href="/yaml-builder/timberborn">Open the YAML Builder</a>
+      </li>
+      <li>
+        <h3>Connect to your room</h3>
+        <p>Start a colony with your faction, open the AP Shop from the bottom toolbar and enter the room details.</p>
+        <a href="/timberborn/setup#step-4-connect-to-your-room">How to connect</a>
+      </li>
+    </ol>
+  </section>
+
+  <section class="tb-section" aria-labelledby="what-changes">
+    <h2 id="what-changes">What changes in your game</h2>
+    <p>Your beavers start with almost nothing. Every seed spreads the tech tree differently, so you build with what the multiworld gives you.</p>
+    <div class="tb-features">
+      <a class="tb-feature" href="/timberborn/reference/checks">
+        <picture>
+          <source srcset="/img/timberborn/ap-shop-connect.webp" type="image/webp" />
+          <img src="/img/timberborn/ap-shop-connect.jpg" alt="The AP Shop with four paths, each showing a science price" width="820" height="790" loading="lazy" />
+        </picture>
+        <div><h3>Science buys checks</h3><p>Four shop paths with rising prices and tiers. You never see what a slot holds until you buy it.</p><span class="more">Checks: the AP Shop and milestones</span></div>
+      </a>
+      <a class="tb-feature" href="/timberborn/reference/items">
+        <picture>
+          <source srcset="/img/timberborn/locked-levee-tooltip.webp" type="image/webp" />
+          <img src="/img/timberborn/locked-levee-tooltip.jpg" alt="The Levee tooltip showing the Archipelago logo as its unlock cost" width="1178" height="500" loading="lazy" />
+        </picture>
+        <div><h3>Blueprints come from anywhere</h3><p>Buildings stay locked until their blueprint arrives, along with boosts, goods and traps.</p><span class="more">Items</span></div>
+      </a>
+      <a class="tb-feature" href="/timberborn/reference/goals">
+        <div><h3>Seven goals</h3><p>Build your Wonder, grow your population, or outlast droughts and badtides.</p><span class="more">Goals and survival</span></div>
+      </a>
+      <a class="tb-feature" href="/timberborn/reference/factions">
+        <div><h3>Both factions</h3><p>Folktails and Iron Teeth each get their own buildings and logic. The mod unlocks Iron Teeth for you.</p><span class="more">Factions</span></div>
+      </a>
+      <a class="tb-feature" href="/timberborn/reference/options">
+        <div><h3>Tune your seed</h3><p>Shop prices, starting blueprints, milestones, package sizes and trap weights.</p><span class="more">Every option</span></div>
+      </a>
+    </div>
+    <p style="margin-top:1.25rem"><a href="/timberborn/reference">Everything the randomizer changes</a></p>
+  </section>
+
+  <section class="tb-section" aria-labelledby="questions">
+    <h2 id="questions">Questions</h2>
+    <div class="tb-faq">
+      {% for item in faq %}
+      <details>
+        <summary>{{ item.q }}</summary>
+        <p>{{ item.a_html|safe }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="tb-section" aria-labelledby="community">
+    <h2 id="community">Community</h2>
+    <p>Questions, feedback or a colony to show off? Find Appie in the Archipelago Discord, or open an issue on GitHub.</p>
+    <p class="tb-disclosure">Timberborn Archipelago is made with AI assistance for code, and uses no AI-generated art. <a href="{{ ai_disclosure_url }}" rel="noopener noreferrer">Read the full disclosure</a>.</p>
+    <div class="tb-links">
+      <a class="btn btn-primary" href="{{ mod_repo }}/issues" rel="noopener noreferrer">Report a bug</a>
+      <a class="btn btn-secondary" href="{{ mod_repo }}" rel="noopener noreferrer">Source on GitHub</a>
+      <a class="btn btn-secondary" href="/timberborn/releases">All releases</a>
+    </div>
+  </section>
+{% endblock %}

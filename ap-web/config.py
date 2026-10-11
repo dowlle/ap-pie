@@ -30,6 +30,16 @@ FEATURES: dict[str, bool] = {
     # Keep this opt-in so code can reach beta before the public switch and so
     # operators retain a one-variable rollback without reverting a release.
     "open_room_creation": _bool_env("FEATURE_OPEN_ROOM_CREATION", False),
+    # FEAT-58: the Timberborn Archipelago section (/timberborn and its pages,
+    # its sitemap and llms.txt entries, the guides shelf and the homepage card).
+    # Built ahead of the Timberborn v0.1.0 release: on for the beta deployment,
+    # off everywhere else. FEATURE_TIMBERBORN_SECTION overrides that; an empty
+    # value (docker-compose passes one when it is unset) keeps the default.
+    "timberborn_section": _bool_env(
+        "FEATURE_TIMBERBORN_SECTION", os.environ.get("AP_DEPLOYMENT_LABEL", "") == "beta"
+    ) if os.environ.get("FEATURE_TIMBERBORN_SECTION") else (
+        os.environ.get("AP_DEPLOYMENT_LABEL", "") == "beta"
+    ),
 }
 
 # Open-room abuse ceilings. When FEATURE_OPEN_ROOM_CREATION is enabled, every

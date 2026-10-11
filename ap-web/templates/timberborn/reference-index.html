@@ -1,0 +1,37 @@
+{% extends "guides/base.html" %}
+{% block head_extra %}
+  <style>
+    .reference-hero { padding: 1rem 0 2rem; }
+    .reference-hero h1 { margin-bottom: 0.8rem; }
+    .reference-hero .lede { color: var(--text-muted); font-size: 1.12rem; max-width: 42rem; }
+    .reference-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .reference-card {
+      display: flex; flex-direction: column; min-height: 13rem; padding: 1.35rem;
+      border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); color: var(--text);
+    }
+    .reference-card:hover { border-color: var(--accent); background: var(--bg-hover); text-decoration: none; }
+    .reference-card h2 { color: var(--text-h); font-family: var(--font-display); font-size: 1.25rem; margin: 0.45rem 0; }
+    .reference-card p { color: var(--text-muted); margin: 0; }
+    .reference-card .open { color: var(--accent-light); margin-top: auto; padding-top: 1rem; font-weight: 650; }
+    @media (max-width: 640px) { .reference-grid { grid-template-columns: 1fr; } .reference-card { min-height: 0; } }
+  </style>
+{% endblock %}
+{% block main %}
+  <header class="reference-hero">
+    <h1>How Timberborn Archipelago works</h1>
+    <p class="lede">The rules and systems Timberborn Archipelago adds to Timberborn: the AP Shop, what the multiworld sends you, goals, factions and every option.</p>
+  </header>
+  <div class="reference-note notice notice-warning">
+    <p><strong>This reference covers Timberborn Archipelago {{ stable.version }}.</strong> What changed in this release is in the <a href="{{ stable_notes }}">release notes</a>.</p>
+  </div>
+  <div class="reference-grid">
+    {% for page in pages %}
+    <a class="reference-card" href="/timberborn/reference/{{ page.slug }}">
+      <span class="version-pill badge">{{ page.status_label }}</span>
+      <h2>{{ page.title }}</h2>
+      <p>{{ page.blurb }}</p>
+      <span class="open">Read the explanation →</span>
+    </a>
+    {% endfor %}
+  </div>
+{% endblock %}
