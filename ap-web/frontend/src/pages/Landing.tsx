@@ -21,7 +21,7 @@ import { useFeature } from "../context/FeaturesContext";
 export default function Landing() {
   const { user, login } = useAuth();
   const openRoomCreation = useFeature("open_room_creation");
-  // FEAT-58: beta shows the Timberborn section card; production keeps "In development".
+  // FEAT-58: with the section switched on the card links /timberborn; switched off it keeps "In development".
   const timberbornSection = useFeature("timberborn_section");
   const pending = !!user && !user.is_approved && !user.is_admin && !openRoomCreation;
   // Mirrors RequireRoomAccess in App.tsx. Members who can reach /rooms get links
@@ -120,7 +120,7 @@ export default function Landing() {
                 <img src="/img/timberborn/colony-hero.jpg" alt="Timberborn Archipelago: a Folktails colony beside a river, with the AP Log listing received blueprints" width={1600} height={900} loading="lazy" />
               </picture>
               <div>
-                <span className="lp-st">Coming with 0.1.0</span>
+                <span className="lp-st">Released</span>
                 <h3>Timberborn Archipelago</h3>
                 <p>Beaver colonies with the tech tree spread across the multiworld. Buy checks with science, and survive on the blueprints other players send you.</p>
                 <span className="lp-pj-link">Explore Timberborn Archipelago <small>Download, setup and how it works</small></span>

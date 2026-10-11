@@ -64,8 +64,8 @@ def release_assets(version: str) -> dict:
 # instead of a missing asset.
 STABLE: dict = {
     "version": "0.1.0",
-    "released": None,
-    "available": False,
+    "released": "2026-10-11",
+    "available": True,
     "downloads": release_assets("0.1.0"),
 }
 
@@ -79,9 +79,10 @@ MOD_LISTINGS: dict[str, str | None] = {"modio": None, "workshop": None}
 
 ASSET_LABELS = {"mod": "Mod (Archipelago.zip)", "apworld": "APWorld", "yaml": "Template YAML"}
 
-PAGES_UPDATED = "2026-10-08"
-_DRAFT_STATUS = "Draft for 0.1.0"
-_DRAFT_VERIFIED = "the 0.1.0 release candidate"
+PAGES_PUBLISHED = "2026-10-08"
+PAGES_UPDATED = "2026-10-11"
+_STATUS = "Current stable"
+_VERIFIED = "0.1.0"
 
 REFERENCE_PAGES: list[dict] = [
     {
@@ -126,10 +127,10 @@ REFERENCE_PAGES: list[dict] = [
     },
 ]
 for _page in REFERENCE_PAGES:
-    _page.setdefault("published", PAGES_UPDATED)
+    _page.setdefault("published", PAGES_PUBLISHED)
     _page.setdefault("updated", PAGES_UPDATED)
-    _page.setdefault("verified_against", _DRAFT_VERIFIED)
-    _page.setdefault("status_label", _DRAFT_STATUS)
+    _page.setdefault("verified_against", _VERIFIED)
+    _page.setdefault("status_label", _STATUS)
 _REFERENCE_BY_SLUG = {page["slug"]: page for page in REFERENCE_PAGES}
 
 RELEASE_PAGES: list[dict] = [
@@ -142,11 +143,10 @@ RELEASE_PAGES: list[dict] = [
         "blurb": "The first test build for Timberborn 1.1: new buildings, starting blueprints, trap and delivery options, survival logic and many fixes.",
         "description": "Everything new in Timberborn Archipelago 0.1.0: Timberborn 1.1 support, ten new buildings, starting blueprints, trap weights, goods delivery, survival logic and fixes.",
         "file": "0-1-0-release-notes.md",
-        "published": PAGES_UPDATED,
+        "published": "2026-10-11",
         "updated": PAGES_UPDATED,
         "verified_against": "0.1.0",
-        "status_label": "Draft release notes",
-        "draft_notice": "Draft: these notes are for the upcoming 0.1.0 release and can still change before it is published.",
+        "status_label": "Full release notes",
         "og_image": OG_IMAGE,
         "og_image_width": 1200,
         "og_image_height": 630,
@@ -158,7 +158,7 @@ _RELEASE_BY_SLUG = {page["slug"]: page for page in RELEASE_PAGES}
 # Releases on /timberborn/releases, newest first. The list starts at 0.1.0,
 # the first release for Timberborn 1.1; the pre-alpha builds stay on GitHub.
 RELEASE_HISTORY: list[dict] = [
-    {"version": "0.1.0", "date": "", "notes": "/timberborn/releases/0-1-0", "upcoming": True,
+    {"version": "0.1.0", "date": "2026-10-11", "notes": "/timberborn/releases/0-1-0",
      "summary": "The first test build for Timberborn 1.1, with new buildings, starting blueprints, trap and delivery options and survival logic."},
 ]
 

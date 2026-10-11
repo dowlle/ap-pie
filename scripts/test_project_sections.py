@@ -187,14 +187,21 @@ class ProjectSectionsTest(unittest.TestCase):
             self.assertIn(f'href="{path}"', html)
         self.assertNotIn("Coming soon.", html.split('id="timber"')[-1].split("</section>")[0])
 
-    def test_timberborn_downloads_wait_for_the_release(self) -> None:
-        # Until the GitHub release exists every alias opens the release list.
-        self.assertFalse(timberborn.STABLE["available"])
-        for asset in ("mod", "apworld", "yaml"):
+    def test_timberborn_downloads_open_the_release_assets(self) -> None:
+        # 0.1.0 is published: every alias opens its GitHub asset in one hop.
+        self.assertTrue(timberborn.STABLE["available"])
+        expected = {"mod": "Archipelago.zip", "apworld": "timberborn.apworld", "yaml": "Timberborn.yaml"}
+        for asset, filename in expected.items():
             with self.subTest(asset=asset):
                 response = self.get(f"/timberborn/download/{asset}")
                 self.assertEqual(response.status_code, 302)
-                self.assertEqual(response.headers["Location"], "https://github.com/dowlle/timberborn-modding/releases")
+                self.assertEqual(response.headers["Location"],
+                                 f"https://github.com/dowlle/timberborn-modding/releases/download/v0.1.0/{filename}")
+        self.assertTrue(self.get("/timberborn/download/0.1.0/apworld").headers["Location"].endswith("/v0.1.0/timberborn.apworld"))
+        # Before a release exists the aliases open the release list instead.
+        with mock.patch.dict(timberborn.STABLE, {"available": False, "released": None}):
+            self.assertEqual(self.get("/timberborn/download/mod").headers["Location"],
+                             "https://github.com/dowlle/timberborn-modding/releases")
         self.assertEqual(self.get("/timberborn/download/windows").status_code, 404)
         self.assertEqual(self.get("/timberborn/download/0.0.5/mod").status_code, 404)
         page = self.get("/timberborn/download").get_data(as_text=True)
@@ -208,22 +215,24 @@ class ProjectSectionsTest(unittest.TestCase):
                 response = self.get(path)
                 self.assertEqual(response.status_code, 200)
                 self.assertNotIn("placeholder for", response.get_data(as_text=True).lower())
-        with mock.patch.dict(timberborn.STABLE, {"available": True, "released": "2026-10-01"}):
-            self.assertEqual(
-                self.get("/timberborn/download/mod").headers["Location"],
-                "https://github.com/dowlle/timberborn-modding/releases/download/v0.1.0/Archipelago.zip",
-            )
-            self.assertTrue(self.get("/timberborn/download/0.1.0/apworld").headers["Location"].endswith("/v0.1.0/timberborn.apworld"))
         with mock.patch.dict(timberborn.MOD_LISTINGS, {"modio": "https://mod.io/g/timberborn/m/example", "workshop": "https://steamcommunity.com/sharedfiles/filedetails/?id=1"}):
             self.assertNotIn("Not listed yet", self.get("/timberborn/download").get_data(as_text=True))
 
-    def test_timberborn_release_notes_are_a_marked_draft(self) -> None:
+    def test_timberborn_release_notes_are_published(self) -> None:
         overview = self.get("/timberborn/releases").get_data(as_text=True)
         self.assertIn('href="/timberborn/releases/0-1-0"', overview)
-        self.assertIn("upcoming", overview)
-        self.assertNotIn("current stable", overview)
+        self.assertIn('<time datetime="2026-10-11">', overview)
+        self.assertIn("current stable", overview)
+        self.assertNotIn("upcoming", overview)
         notes = self.get("/timberborn/releases/0-1-0").get_data(as_text=True)
-        self.assertIn("Draft: these notes are for the upcoming 0.1.0 release", notes)
+        self.assertNotIn("Draft:", notes)
+        self.assertNotIn("upcoming", notes)
+        for path in ("/timberborn", "/timberborn/download", "/timberborn/reference/checks"):
+            with self.subTest(path=path):
+                body = self.get(path).get_data(as_text=True)
+                self.assertNotIn("Draft for 0.1.0", body)
+                self.assertNotIn("(upcoming)", body)
+                self.assertNotIn("not published yet", body)
 
     def test_sitemap_and_llms_list_only_the_new_urls(self) -> None:
         base = config.PUBLIC_BASE_URL
