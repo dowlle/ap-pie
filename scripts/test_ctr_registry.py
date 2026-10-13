@@ -675,6 +675,14 @@ class WithDatabase(unittest.TestCase):
                                sleep=lambda s: None, notifier=lambda t, m: None)
         self.assertEqual((out["created"], out["errors"], out["missing"]), (1, 1, 0))
 
+    def test_original_category_is_skipped(self):
+        raws = [{"id": 1, "name": "Crash Cove", "author": "Naughty Dog", "track_type": "original"},
+                {"id": 2, "name": "Real Custom", "author": "Maker", "track_type": "community"}]
+        dls = {2: [{"id": 5, "type": "lev", "version": "1.0.0", "crc32_hash": 1}]}
+        out = saphi.run_import(self.fake_fetch(raws, dls), sleep=lambda s: None, notifier=lambda t, m: None)
+        self.assertEqual((out["created"], out["skipped"], out["errors"]), (1, 1, 0))
+        self.assertEqual([e["display_title"] for e in store.list_entries()], ["Real Custom"])
+
     def test_missing_tracks_become_source_unavailable_but_a_truncated_list_does_not(self):
         raws = [{"id": i, "title": f"T{i}"} for i in range(1, 11)]
         dls = {i: [] for i in range(1, 11)}

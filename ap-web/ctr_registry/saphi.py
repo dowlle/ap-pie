@@ -40,6 +40,11 @@ PAUSE_SECONDS = 1.0
 MAX_MISSING_SHARE = 0.2
 
 
+#: Saphi's `track_type` values that are never imported: `original` entries are
+#: the retail tracks themselves.
+SKIPPED_CATEGORIES = ("original",)
+
+
 class SaphiError(RuntimeError):
     pass
 
@@ -265,6 +270,11 @@ def run_import(fetch: Callable[[str], object] = http_get_json, *, conn=None,
     for raw in listing[: limit if limit else None]:
         base = normalize_track(raw)
         if base is None or not base["active"]:
+            summary["skipped"] += 1
+            continue
+        if str(base["category"]).lower() in SKIPPED_CATEGORIES:
+            # Retail tracks listed on Saphi, not custom tracks.
+            seen_ids.add(base["saphi_id"])
             summary["skipped"] += 1
             continue
         sleep(pause)
