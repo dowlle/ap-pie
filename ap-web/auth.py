@@ -214,6 +214,10 @@ def apply_auth_to_app(app):
         # blueprint carries @requires_auth itself, and the admin routes live
         # under /api/admin where the middleware still gates them.
         "/api/presets",
+        # CTR track registry: public reads; every write route carries
+        # @requires_auth itself and the review routes sit under /api/admin.
+        # The whole blueprint 404s while the ctr_registry flag is off.
+        "/api/ctr/",
     )
 
     @app.before_request

@@ -16,6 +16,7 @@ const SAFE_DEFAULTS: Features = {
   generation: true,
   open_room_creation: false,
   timberborn_section: false,
+  ctr_registry: false,
 };
 
 const FeaturesContext = createContext<Features>(SAFE_DEFAULTS);

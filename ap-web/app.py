@@ -38,6 +38,8 @@ SPA_DYNAMIC_PATHS = (
 # robots value. Without a generic pattern beta served only those two hardcoded
 # slugs, so the preview could not be opened against a real world. Beta accepts
 # any slug; production behaviour is unchanged.
+CTR_REGISTRY_SPA_PATHS = frozenset({"custom-tracks", "admin/ctr-tracks"})
+
 SPA_BETA_DYNAMIC_PATHS = (
     re.compile(r"apworlds/[^/]+"),
 )
@@ -203,6 +205,9 @@ def _is_spa_route(path: str) -> bool:
     if normalized in SPA_STATIC_PATHS:
         return True
     if any(pattern.fullmatch(normalized) for pattern in SPA_DYNAMIC_PATHS):
+        return True
+    # CTR track registry pages exist only while the feature flag is on.
+    if config.FEATURES.get("ctr_registry") and normalized in CTR_REGISTRY_SPA_PATHS:
         return True
     return config.DEPLOYMENT_LABEL == "beta" and any(
         pattern.fullmatch(normalized) for pattern in SPA_BETA_DYNAMIC_PATHS
@@ -541,6 +546,7 @@ def create_app() -> Flask:
     from api.site_info import bp as site_info_bp
     from api.ctr import bp as ctr_bp
     from api.timberborn import bp as timberborn_bp
+    from api.ctr_tracks import bp as ctr_tracks_bp
     from api.events import bp as events_bp
     from api.presets import bp as presets_bp
     from api.user_yamls import bp as user_yamls_bp
@@ -581,6 +587,9 @@ def create_app() -> Flask:
     app.register_blueprint(events_bp)
     # FEAT-42: community presets for the YAML builder.
     app.register_blueprint(presets_bp)
+    # CTR custom-track name registry: every route 404s unless the
+    # ctr_registry feature flag is on (beta only for now).
+    app.register_blueprint(ctr_tracks_bp)
     # FEAT-43: the player's own YAML library and submission history.
     app.register_blueprint(user_yamls_bp)
     app.register_blueprint(account_bp)
