@@ -233,6 +233,22 @@ class ValidationAndCaps(unittest.TestCase):
         self.assertTrue(rules.revision_compatible(rev, "garbage"))
 
 
+class SpaRoutes(unittest.TestCase):
+    def test_registry_pages_are_spa_routes_only_while_the_flag_is_on(self):
+        import app as appmod
+        original = dict(config.FEATURES)
+        try:
+            config.FEATURES["ctr_registry"] = True
+            self.assertTrue(appmod._is_spa_route("custom-tracks"))
+            self.assertTrue(appmod._is_spa_route("admin/ctr-tracks/"))
+            config.FEATURES["ctr_registry"] = False
+            self.assertFalse(appmod._is_spa_route("custom-tracks"))
+            self.assertFalse(appmod._is_spa_route("admin/ctr-tracks"))
+        finally:
+            config.FEATURES.clear()
+            config.FEATURES.update(original)
+
+
 class RateLimit(unittest.TestCase):
     def test_window_slides_per_user(self):
         now = [1000.0]
