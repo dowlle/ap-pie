@@ -52,16 +52,16 @@ def release_assets(version: str) -> dict:
 
 
 STABLE: dict = {
-    "version": "0.2.3",
-    "released": "2026-09-30",
-    "downloads": release_assets("0.2.3"),
+    "version": "0.2.4",
+    "released": "2026-10-13",
+    "downloads": release_assets("0.2.4"),
 }
 
 # Stable releases that stay downloadable from /ctr/download after a newer one
 # replaces them, newest first. Whatever STABLE is not shows under "Older
 # versions", with version-pinned aliases at /ctr/download/<version>/<asset>.
 # Add the outgoing version here when STABLE moves on.
-KEPT_VERSIONS: list[str] = ["0.2.3", "0.2.2", "0.2.1", "0.2.0"]
+KEPT_VERSIONS: list[str] = ["0.2.4", "0.2.3", "0.2.2", "0.2.1", "0.2.0"]
 
 
 def older_versions() -> list[str]:
@@ -76,7 +76,7 @@ def older_versions() -> list[str]:
 PRERELEASE: dict | None = None
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-09-30"
+PAGES_UPDATED = "2026-10-13"
 
 REFERENCE_PAGES: list[dict] = [
     {
@@ -123,6 +123,19 @@ _REFERENCE_BY_SLUG = {page["slug"]: page for page in REFERENCE_PAGES}
 # /ctr/releases/<slug> on 2026-09-25; RELEASE_REDIRECTS keeps the old URLs
 # answering with a permanent redirect so links and search results carry over.
 RELEASE_PAGES: list[dict] = [
+    {
+        "slug": "0-2-4",
+        "title": "What changed in 0.2.4?",
+        "page_title": "CTR Archipelago 0.2.4 release notes",
+        "short_title": "0.2.4 release notes",
+        "blurb": "Faster generation for big rooms, fewer refused YAMLs, race-loss DeathLink only when the race counts, and fixes for the trial pad spin, boss goals after a Collect and itemsanity pads.",
+        "description": "Everything new in CTR Archipelago 0.2.4: much faster generation in large rooms, fewer YAMLs refused at generation, race-loss DeathLink that only sends while the race's win is open and in logic, the Slide Coliseum and Turbo Track pad fix after a Collect, boss goals that count only your own wins, itemsanity pads that stay raceable, and the BIN prompt and Demo Camera fixes.",
+        "file": "0-2-4-release-notes.md",
+        "published": "2026-10-13",
+        "updated": "2026-10-13",
+        "verified_against": "0.2.4",
+        "status_label": "Full release notes",
+    },
     {
         "slug": "0-2-3",
         "title": "What changed in 0.2.3?",
@@ -191,6 +204,8 @@ RELEASE_REDIRECTS = {"0-2-0-release-notes": "/ctr/releases/0-2-0"}
 # published; drop it and bump STABLE when the release goes out.
 _GITHUB_RELEASES = "https://github.com/dowlle/ctr-native-ap/releases"
 RELEASE_HISTORY: list[dict] = [
+    {"version": "0.2.4", "date": "2026-10-13", "notes": "/ctr/releases/0-2-4",
+     "summary": "Faster generation, fewer refused YAMLs, race-loss DeathLink only when the race counts, trial pad, boss goal and itemsanity pad fixes."},
     {"version": "0.2.3", "date": "2026-09-30", "notes": "/ctr/releases/0-2-3",
      "summary": "DeathLink rework and crash fix, DeathLink Send option, relic pad fix, hub frame rate and pad glow for every open location."},
     {"version": "0.2.2", "date": "2026-09-28", "notes": "/ctr/releases/0-2-2",
