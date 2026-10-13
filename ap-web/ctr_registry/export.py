@@ -11,7 +11,8 @@ Layout (all JSON is canonical: sorted keys, two-space indent, trailing newline):
     README.md             what the repository is and is not
     registry.json         every recorded track, revisions without descriptors
     tracks/<key>.json     one file per track, with full revisions and descriptors
-    named_tracks.json     the apworld build input (format 1), named blocks only
+    named_tracks.json     the apworld build input (format 1), blocks to mint only
+                          (mint_status 'mint'; reserved and builtin are left out)
     tools/check_registry.py   stdlib-only schema, identity and freeze checker
     DIGEST.json           sha256 over registry.json and tracks/*, plus time
 
@@ -46,7 +47,8 @@ Saphi.
 - `registry.json` lists every recorded track and its revisions.
 - `tracks/<key>.json` holds one track with the full descriptor of each revision.
 - `named_tracks.json` is the input an apworld build pins. It lists tracks that
-  have a named id block, in block order.
+  have a named id block, in block order. Entries marked `reserved` or `builtin`
+  keep their `block_index` but are left out: nothing is minted for them.
 - `tools/check_registry.py` runs the schema, identity and freeze checks. Run it
   with `--previous <older checkout>` to compare against the last published set.
 
@@ -93,6 +95,8 @@ def entry_doc(entry: dict, revisions: list[dict], keys_by_id: dict, with_descrip
         "provenance": provenance,
         "block_index": entry.get("block_index"),
         "ap_name": entry.get("ap_name"),
+        "mint_status": entry.get("mint_status") or "mint",
+        "maps_to": entry.get("maps_to"),
         "shipped_in": entry.get("shipped_in"),
         "review": {
             "reviewed_at": _date(entry.get("reviewed_at")),
@@ -131,7 +135,7 @@ def build_files(records: Iterable[tuple[dict, list[dict]]],
         {"track_key": e["track_key"], "block_index": e["block_index"], "ap_name": e["ap_name"],
          "shipped_in": e["shipped_in"],
          "revisions": [r["content_id"] for r in revs if r.get("content_id")]}
-        for e, revs in rows if e["block_index"] is not None
+        for e, revs in rows if e["block_index"] is not None and (e.get("mint_status") or "mint") == "mint"
     ]
     files["named_tracks.json"] = canonical({
         "format": 1,

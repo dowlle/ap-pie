@@ -46,6 +46,13 @@ _TRANSITIONS = {
     SOURCE_UNAVAILABLE: {CANDIDATE, APPROVED, NAMED, WITHDRAWN},
 }
 
+#: What the apworld build does with a block. `mint` creates the named ids.
+#: `reserved` keeps the block_index but mints nothing until it is set to `mint`
+#: (for example a hub whose race mode is not confirmed). `builtin` means the
+#: track is an existing in-game named block (`maps_to`); its block_index is
+#: permanently unused and never minted.
+MINT_STATUSES = ("mint", "reserved", "builtin")
+
 SUBMISSION_KINDS = ("new_track", "new_revision", "correction")
 HASH_STATES = ("pending", "claimed", "verified")
 
@@ -236,6 +243,11 @@ def freeze_violations(old: Mapping, new: Mapping) -> list[str]:
         problems.append("track_key")
     if old.get("block_index") is not None and new.get("block_index") != old["block_index"]:
         problems.append("block_index")
+    old_mint, new_mint = old.get("mint_status") or "mint", new.get("mint_status") or "mint"
+    if old_mint == "builtin" and (new_mint != "builtin" or new.get("maps_to") != old.get("maps_to")):
+        problems.append("mint_status")
+    elif old.get("shipped_in") is not None and new_mint != old_mint:
+        problems.append("mint_status")
     if old.get("shipped_in") is not None:
         if new.get("shipped_in") != old["shipped_in"]:
             problems.append("shipped_in")

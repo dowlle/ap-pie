@@ -152,6 +152,33 @@ UP = [
     "DROP TRIGGER IF EXISTS ctr_track_revisions_freeze ON ctr_track_revisions",
     """CREATE TRIGGER ctr_track_revisions_freeze BEFORE UPDATE ON ctr_track_revisions
        FOR EACH ROW EXECUTE FUNCTION ctr_track_revisions_freeze()""",
+    # Minting status (ruled 2026-10-13 22:00): reserved or builtin blocks keep their
+    # block_index but the apworld build mints nothing for them.
+    "ALTER TABLE ctr_track_entries ADD COLUMN IF NOT EXISTS mint_status TEXT NOT NULL DEFAULT 'mint'",
+    "ALTER TABLE ctr_track_entries ADD COLUMN IF NOT EXISTS maps_to TEXT",
+    "ALTER TABLE ctr_track_entries DROP CONSTRAINT IF EXISTS ctr_entry_mint_status",
+    """ALTER TABLE ctr_track_entries ADD CONSTRAINT ctr_entry_mint_status CHECK (
+           mint_status IN ('mint','reserved','builtin')
+           AND (mint_status <> 'builtin' OR (maps_to IS NOT NULL AND block_index IS NOT NULL))
+           AND (mint_status = 'reserved' OR mint_status = 'builtin' OR maps_to IS NULL)
+           AND (shipped_in IS NULL OR mint_status = 'mint'))""",
+    """
+    CREATE OR REPLACE FUNCTION ctr_track_entries_mint_freeze() RETURNS trigger AS $$
+    BEGIN
+        IF OLD.mint_status = 'builtin' AND (NEW.mint_status IS DISTINCT FROM OLD.mint_status
+                                            OR NEW.maps_to IS DISTINCT FROM OLD.maps_to) THEN
+            RAISE EXCEPTION 'ctr registry: a builtin mapping is permanent' USING ERRCODE = 'check_violation';
+        END IF;
+        IF OLD.shipped_in IS NOT NULL AND NEW.mint_status IS DISTINCT FROM OLD.mint_status THEN
+            RAISE EXCEPTION 'ctr registry: mint_status is frozen once shipped' USING ERRCODE = 'check_violation';
+        END IF;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql
+    """,
+    "DROP TRIGGER IF EXISTS ctr_track_entries_mint_freeze ON ctr_track_entries",
+    """CREATE TRIGGER ctr_track_entries_mint_freeze BEFORE UPDATE ON ctr_track_entries
+       FOR EACH ROW EXECUTE FUNCTION ctr_track_entries_mint_freeze()""",
 ]
 
 # Reverse order of dependency. Triggers go with their tables; the functions
@@ -164,6 +191,7 @@ DOWN = [
     "DROP TABLE IF EXISTS ctr_track_entries",
     "DROP FUNCTION IF EXISTS ctr_track_revisions_freeze()",
     "DROP FUNCTION IF EXISTS ctr_track_entries_freeze()",
+    "DROP FUNCTION IF EXISTS ctr_track_entries_mint_freeze()",
 ]
 
 TABLES = (

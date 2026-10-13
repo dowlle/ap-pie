@@ -7,7 +7,7 @@ Exit status 0 when every check passes, 1 otherwise. This is the file the
 registry repository's CI runs. It is copied from AP-Pie's export, so it holds
 its own copies of the id constants (a test in AP-Pie keeps them in step).
 
-Checks: file set and digest, schema version, unique keys and block indexes,
+Checks: file set and digest, mint_status (mint, reserved, builtin), schema version, unique keys and block indexes,
 id ranges, name rules, named_tracks.json agreement, no private fields, and with
 --previous the freeze rules: no track, block, shipped name or verified hash
 that was in the older set may change or disappear.
@@ -26,6 +26,7 @@ MAX_BLOCKS = 10_000
 LOCATION_BASE, LOCATIONS_PER_TRACK = 35_200_000, 200
 ITEM_BASE, ITEMS_PER_TRACK = 35_100_000, 5
 NAME_MAX_BYTES = 105
+MINT_STATUSES = {"mint", "reserved", "builtin"}
 STATES = {"approved", "named", "withdrawn", "source-unavailable"}
 PRIVATE_KEYS = {"submitter", "submitter_user_id", "discord_id", "discord_username", "email",
                 "reviewed_by", "decided_by", "user_id"}
@@ -104,6 +105,15 @@ def check(root: Path, previous: Path | None = None) -> list[str]:
                 if name.casefold() in names:
                     errors.append(f"{key}: ap_name {name!r} also used by {names[name.casefold()]}")
                 names[name.casefold()] = key
+            ms = t.get("mint_status", "mint")
+            if ms not in MINT_STATUSES:
+                errors.append(f"{key}: bad mint_status {ms!r}")
+            elif ms == "builtin" and not t.get("maps_to"):
+                errors.append(f"{key}: a builtin entry needs maps_to")
+            elif ms == "mint" and t.get("maps_to"):
+                errors.append(f"{key}: maps_to is only for builtin or reserved entries")
+            elif ms != "mint" and t.get("shipped_in"):
+                errors.append(f"{key}: {ms} entries cannot be shipped")
         elif t.get("state") == "named":
             errors.append(f"{key}: state named without a block_index")
         if t.get("shipped_in") and bi is None:
@@ -126,6 +136,7 @@ def check(root: Path, previous: Path | None = None) -> list[str]:
          "shipped_in": t["shipped_in"],
          "revisions": [r["content_id"] for r in t["revisions"] if r.get("content_id")]}
         for t in tracks if t.get("block_index") is not None and t.get("track_key")
+        and t.get("mint_status", "mint") == "mint"
     ]
     if named.get("format") != 1 or named.get("tracks") != expected:
         errors.append("named_tracks.json does not match registry.json")
@@ -148,7 +159,12 @@ def freeze_errors(previous: Path, current_by_key: dict) -> list[str]:
             continue
         if t.get("block_index") is not None and now.get("block_index") != t["block_index"]:
             errors.append(f"frozen: {key} block_index changed")
+        if t.get("mint_status") == "builtin" and (now.get("mint_status") != "builtin"
+                                                   or now.get("maps_to") != t.get("maps_to")):
+            errors.append(f"frozen: {key} builtin mapping changed")
         if t.get("shipped_in"):
+            if now.get("mint_status", "mint") != t.get("mint_status", "mint"):
+                errors.append(f"frozen: {key} mint_status changed after shipping")
             if now.get("shipped_in") != t["shipped_in"]:
                 errors.append(f"frozen: {key} shipped_in changed")
             if now.get("ap_name") != t.get("ap_name"):

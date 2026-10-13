@@ -350,6 +350,16 @@ def admin_promote(entry_id: int):
     return jsonify(_serialize(store.promote_entry(entry_id, g.user["id"], _body().get("ap_name"))))
 
 
+@bp.route("/api/admin/ctr/tracks/<int:entry_id>/minting", methods=["POST"])
+@requires_admin
+def admin_minting(entry_id: int):
+    if (err := _db_check()):
+        return err
+    body = _body()
+    return jsonify(_serialize(store.set_minting(entry_id, g.user["id"], str(body.get("status", "")),
+                                                body.get("maps_to"))))
+
+
 @bp.route("/api/admin/ctr/tracks/<int:entry_id>/<action>", methods=["POST"])
 @requires_admin
 def admin_state(entry_id: int, action: str):

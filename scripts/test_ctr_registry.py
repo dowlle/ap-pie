@@ -426,6 +426,34 @@ class SaphiNormalizing(unittest.TestCase):
             saphi.http_get_json("https://www.projectsaphi.com/api/v2/tracks/1/downloads/727")
 
 
+class CheckerMinting(unittest.TestCase):
+    def build(self, tracks):
+        files, digest = export.build_files([(e, []) for e in tracks])
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(root, ignore_errors=True))
+        (root / "tracks").mkdir()
+        for rel, data in files.items():
+            (root / rel).write_bytes(data)
+        (root / "DIGEST.json").write_bytes(export.canonical({"digest": digest}))
+        return root
+
+    def test_checker_rules_for_mint_status(self):
+        ok = make_entry(1, "cortex-vortex", block=0, name="Cortex Vortex")
+        ok.update(mint_status="builtin", maps_to="Cortex Vortex")
+        self.assertEqual(registry_check.check(self.build([ok])), [])
+        bad = dict(ok, maps_to=None)
+        self.assertTrue(any("needs maps_to" in e for e in registry_check.check(self.build([bad]))))
+        weird = dict(ok, mint_status="sometimes")
+        self.assertTrue(any("bad mint_status" in e for e in registry_check.check(self.build([weird]))))
+
+    def test_checker_freeze_blocks_unmapping_a_builtin(self):
+        old = make_entry(1, "cortex-vortex", block=0, name="Cortex Vortex")
+        old.update(mint_status="builtin", maps_to="Cortex Vortex")
+        new = dict(old, mint_status="mint", maps_to=None)
+        errors = registry_check.check(self.build([new]), self.build([old]))
+        self.assertTrue(any("builtin mapping changed" in e for e in errors), errors)
+
+
 @unittest.skipUnless(os.environ.get("DATABASE_URL"), "DATABASE_URL not set")
 class WithDatabase(unittest.TestCase):
     @classmethod
@@ -787,6 +815,71 @@ class WithDatabase(unittest.TestCase):
         (out / "README.md").write_text("repository readme\n")
         export.write_export(store.record_entries(), str(out), now=self.FIXED_NOW)
         self.assertEqual((out / "README.md").read_text(), "repository readme\n")
+
+    # -- minting status (reserved and builtin blocks) ---------------------
+    def named_three(self):
+        keys = []
+        for title, c in (("Alpha Cove", "a"), ("Cortex Vortex", "b"), ("Winter Hub", "c")):
+            e = self.approved(title, c)
+            store.promote_entry(e["id"], self.admin)
+            keys.append(store.get_entry(entry_id=e["id"]))
+        return keys
+
+    def test_reserved_and_builtin_blocks_keep_their_index_but_are_not_minted(self):
+        a, cortex, hub = self.named_three()
+        store.set_minting(cortex["id"], self.admin, "builtin", "Cortex Vortex")
+        store.set_minting(hub["id"], self.admin, "reserved")
+        out = Path(self.export_dir) / "m"
+        export.write_export(store.record_entries(), str(out), now=self.FIXED_NOW)
+        self.assertEqual(registry_check.check(out), [])
+        named = json.loads((out / "named_tracks.json").read_text())
+        self.assertEqual([(t["track_key"], t["block_index"]) for t in named["tracks"]], [("alpha-cove", 0)])
+        reg = {t["track_key"]: t for t in json.loads((out / "registry.json").read_text())["tracks"]}
+        self.assertEqual((reg["cortex-vortex"]["block_index"], reg["cortex-vortex"]["mint_status"],
+                          reg["cortex-vortex"]["maps_to"]), (1, "builtin", "Cortex Vortex"))
+        self.assertEqual(reg["winter-hub"]["mint_status"], "reserved")
+        # the index is never reused
+        new = self.approved("Fresh Track", "d")
+        self.assertEqual(store.promote_entry(new["id"], self.admin)["block_index"], 3)
+
+    def test_builtin_is_permanent_and_reserved_can_be_confirmed(self):
+        a, cortex, hub = self.named_three()
+        store.set_minting(cortex["id"], self.admin, "builtin", "Cortex Vortex")
+        with self.assertRaises(RuleError):
+            store.set_minting(cortex["id"], self.admin, "mint")
+        with self.assertRaises(RuleError):
+            store.set_minting(hub["id"], self.admin, "builtin")  # needs maps_to
+        store.set_minting(hub["id"], self.admin, "reserved")
+        self.assertEqual(store.set_minting(hub["id"], self.admin, "mint")["mint_status"], "mint")
+        with self.conn.cursor() as cur:
+            with self.assertRaises(Exception):
+                cur.execute("UPDATE ctr_track_entries SET mint_status = 'mint', maps_to = NULL WHERE id = %s",
+                            (cortex["id"],))
+        self.conn.rollback()
+
+    def test_unminted_blocks_cannot_be_marked_shipped(self):
+        a, cortex, hub = self.named_three()
+        store.set_minting(hub["id"], self.admin, "reserved")
+        with self.assertRaises(RuleError):
+            store.mark_shipped("0.3.0", ["winter-hub"], self.admin)
+        store.mark_shipped("0.3.0", ["alpha-cove"], self.admin)
+        with self.assertRaises(RuleError):
+            store.set_minting(a["id"], self.admin, "reserved")  # frozen once shipped
+
+    def test_seed_round_trip_keeps_minting_status(self):
+        from ctr_registry import seed
+        a, cortex, hub = self.named_three()
+        store.set_minting(cortex["id"], self.admin, "builtin", "Cortex Vortex")
+        store.set_minting(hub["id"], self.admin, "reserved")
+        src = Path(self.export_dir) / "s"
+        export.write_export(store.record_entries(), str(src), now=self.FIXED_NOW)
+        self.wipe()
+        seed.seed_from_directory(str(src))
+        again = Path(self.export_dir) / "s2"
+        export.write_export(store.record_entries(), str(again), now=self.FIXED_NOW)
+        for p in src.rglob("*"):
+            if p.is_file():
+                self.assertEqual(p.read_bytes(), (again / p.relative_to(src)).read_bytes(), p)
 
     def test_seed_dry_run_writes_nothing(self):
         from ctr_registry import seed

@@ -21,7 +21,7 @@ _LOCK_ID = 7_306_001  # advisory lock key for registry mutations
 ENTRY_COLUMNS = (
     "id, track_key, block_index, state, ap_name, shipped_in, display_title, credits, links, "
     "provenance, saphi_track_id, source, reviewed_at, reviewed_by, superseded_by, "
-    "report_count, created_at, updated_at"
+    "report_count, created_at, updated_at, mint_status, maps_to"
 )
 
 
@@ -535,6 +535,41 @@ def set_state(entry_id: int, actor_id: Optional[int], action: str, conn=None) ->
     return _run(conn, work)
 
 
+def set_minting(entry_id: int, actor_id: Optional[int], status: str,
+                maps_to: Optional[str] = None, conn=None) -> dict:
+    """Set what the apworld build does with this entry's block.
+
+    `reserved`: keep the block_index, mint nothing until set back to `mint`.
+    `builtin`: the entry is an existing in-game named block (`maps_to` names it);
+    permanent. The block_index stays assigned and is never reused."""
+    if status not in rules.MINT_STATUSES:
+        raise RuleError("mint_status", "mint_status must be mint, reserved or builtin")
+    maps_to = (maps_to or "").strip() or None
+    if status == "builtin" and not maps_to:
+        raise RuleError("maps_to", "A builtin entry needs maps_to, the existing named block")
+    if status == "mint":
+        maps_to = None
+    conn = _conn(conn)
+
+    def work(cur):
+        entry = get_entry(entry_id=entry_id, cur=cur, for_update=True)
+        if entry is None:
+            raise RuleError("not_found", "Track not found")
+        if entry["block_index"] is None:
+            raise RuleError("not_named", "Only a track with a block_index has a minting status")
+        bad = rules.freeze_violations(entry, {**entry, "mint_status": status, "maps_to": maps_to})
+        if bad:
+            raise RuleError("frozen", "Frozen fields: " + ", ".join(bad))
+        cur.execute("UPDATE ctr_track_entries SET mint_status = %s, maps_to = %s, updated_at = NOW() "
+                    "WHERE id = %s RETURNING *", (status, maps_to, entry_id))
+        row = _rows(cur)[0]
+        record_action(cur, "set_minting", entry_id=entry_id, actor_id=actor_id,
+                      detail={"from": entry["mint_status"], "to": status, "maps_to": maps_to})
+        return row
+
+    return _run(conn, work)
+
+
 def mark_shipped(version: str, track_keys: list[str], actor_id: Optional[int], conn=None) -> list[dict]:
     """Record the first apworld release that minted these blocks. From then on
     their ap_name is frozen (database trigger and rules.freeze_violations)."""
@@ -550,6 +585,8 @@ def mark_shipped(version: str, track_keys: list[str], actor_id: Optional[int], c
                 raise RuleError("not_named", f"{key} has no named block")
             if entry["shipped_in"] is not None:
                 continue
+            if entry["mint_status"] != "mint":
+                raise RuleError("not_minted", f"{key} is {entry['mint_status']} and was not minted")
             cur.execute("UPDATE ctr_track_entries SET shipped_in = %s, updated_at = NOW() "
                         "WHERE id = %s RETURNING *", (version, entry["id"]))
             row = _rows(cur)[0]

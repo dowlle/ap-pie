@@ -80,6 +80,7 @@ def _entry_values(doc: dict) -> dict:
         "credits": doc.get("credits") or [], "links": doc.get("links") or {},
         "provenance": doc.get("provenance") or {}, "block_index": doc.get("block_index"),
         "ap_name": doc.get("ap_name"), "shipped_in": doc.get("shipped_in"),
+        "mint_status": doc.get("mint_status") or "mint", "maps_to": doc.get("maps_to"),
         "saphi_track_id": saphi.get("track_id"), "source": "saphi_import" if saphi else "admin",
         "reviewed_at": reviewed_at,
     }
@@ -143,11 +144,11 @@ def seed_from_directory(directory: str, *, dry_run: bool = False, conn=None) -> 
             cur.execute(
                 """INSERT INTO ctr_track_entries
                        (track_key, block_index, state, ap_name, shipped_in, display_title, credits,
-                        links, provenance, saphi_track_id, source, reviewed_at)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                        links, provenance, saphi_track_id, source, reviewed_at, mint_status, maps_to)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
                 (v["track_key"], v["block_index"], v["state"], v["ap_name"], v["shipped_in"],
                  v["display_title"], Json(v["credits"]), Json(v["links"]), Json(v["provenance"]),
-                 v["saphi_track_id"], v["source"], v["reviewed_at"]))
+                 v["saphi_track_id"], v["source"], v["reviewed_at"], v["mint_status"], v["maps_to"]))
             entry_id = cur.fetchone()[0]
             inserted_ids[doc["track_key"]] = entry_id
             for rev in doc.get("revisions", []):
