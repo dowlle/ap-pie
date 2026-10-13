@@ -2,6 +2,7 @@
 
     import-saphi [--limit N]   read Saphi's public track endpoints, add candidates
     export DIR                 write the registry repository files to DIR
+    seed-from-registry DIR [--dry-run]  load a registry directory into the database
     pending-hashes             list revisions waiting for the CTR verifier
     attach-evidence FILE       store one verifier result (see ctr_registry.hashing)
     migrate-down --yes         drop the registry tables (reversible UP is automatic)
@@ -24,6 +25,9 @@ def main(argv=None) -> int:
     p.add_argument("--limit", type=int)
     p = sub.add_parser("export")
     p.add_argument("out_dir")
+    p = sub.add_parser("seed-from-registry")
+    p.add_argument("registry_dir")
+    p.add_argument("--dry-run", action="store_true")
     sub.add_parser("pending-hashes")
     p = sub.add_parser("attach-evidence")
     p.add_argument("file")
@@ -36,12 +40,18 @@ def main(argv=None) -> int:
         return 2
     import db
     db.init_db(os.environ["DATABASE_URL"])
-    from ctr_registry import export, hashing, migrations, saphi, store
+    from ctr_registry import export, hashing, migrations, saphi, seed, store
 
     if args.cmd == "import-saphi":
         out = saphi.run_import(limit=args.limit)
     elif args.cmd == "export":
         out = export.write_export(store.record_entries(), args.out_dir)
+    elif args.cmd == "seed-from-registry":
+        try:
+            out = seed.seed_from_directory(args.registry_dir, dry_run=args.dry_run)
+        except seed.SeedError as exc:
+            print(json.dumps({"error": "seed refused", "problems": exc.problems}, indent=2), file=sys.stderr)
+            return 1
     elif args.cmd == "pending-hashes":
         out = store.json_safe(hashing.pending())
     elif args.cmd == "attach-evidence":

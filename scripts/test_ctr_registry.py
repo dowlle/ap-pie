@@ -714,6 +714,130 @@ class WithDatabase(unittest.TestCase):
         named = json.loads((out / "named_tracks.json").read_text())
         self.assertEqual([t["track_key"] for t in named["tracks"]], ["baby-t-park"])
 
+    # -- seed from a registry directory ----------------------------------
+    FIXED_NOW = datetime(2026, 10, 14, 12, 0, 0, tzinfo=timezone.utc)
+
+    def seeded_source(self):
+        """Three tracks: verified+named, named with a pending revision, approved (no block)."""
+        a = self.approved("Alpha Cove", "a")
+        rev = store.revisions_for([a["id"]])[a["id"]][0]
+        store.attach_evidence(rev["id"], content_id=H("a"), files={"lev": {"sha256": H("a"), "size": 4}},
+                              evidence={"level": "static"}, modes=["time_trial"], apworld_min="0.3.0")
+        store.promote_entry(a["id"], self.admin)
+        b = self.approved("Beta Ridge", "b")
+        store.promote_entry(b["id"], self.admin)
+        self.approved("Gamma Pit", "c")
+        src = Path(self.export_dir) / "source"
+        export.write_export(store.record_entries(), str(src), now=self.FIXED_NOW)
+        return src
+
+    def wipe(self):
+        with self.conn.cursor() as cur:
+            for t in ("ctr_track_reports", "ctr_track_review_actions", "ctr_track_submissions",
+                      "ctr_track_revisions", "ctr_track_entries"):
+                cur.execute(f"DELETE FROM {t}")
+        self.conn.commit()
+
+    def test_seed_round_trip_is_byte_identical(self):
+        from ctr_registry import seed
+        src = self.seeded_source()
+        self.wipe()
+        out = seed.seed_from_directory(str(src))
+        self.assertEqual(out["inserted"], 3)
+        again = Path(self.export_dir) / "again"
+        export.write_export(store.record_entries(), str(again), now=self.FIXED_NOW)
+        names = sorted(str(p.relative_to(src)) for p in src.rglob("*") if p.is_file())
+        self.assertEqual(names, sorted(str(p.relative_to(again)) for p in again.rglob("*") if p.is_file()))
+        for rel in names:
+            self.assertEqual((src / rel).read_bytes(), (again / rel).read_bytes(), rel)
+
+    def test_seed_preserves_identity_exactly(self):
+        from ctr_registry import seed
+        src = self.seeded_source()
+        self.wipe()
+        seed.seed_from_directory(str(src))
+        alpha = store.get_entry(track_key="alpha-cove")
+        self.assertEqual((alpha["block_index"], alpha["ap_name"], alpha["state"]), (0, "Alpha Cove", "named"))
+        beta = store.get_entry(track_key="beta-ridge")
+        self.assertEqual(beta["block_index"], 1)
+        rev = store.revisions_for([alpha["id"]])[alpha["id"]][0]
+        self.assertEqual((rev["content_id"], rev["hash_state"]), (H("a"), "verified"))
+        # The next promotion continues after the seeded blocks.
+        gamma = store.get_entry(track_key="gamma-pit")
+        self.assertEqual(store.promote_entry(gamma["id"], self.admin)["block_index"], 2)
+
+    def test_seed_is_idempotent(self):
+        from ctr_registry import seed
+        src = self.seeded_source()
+        self.wipe()
+        seed.seed_from_directory(str(src))
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT count(*) FROM ctr_track_review_actions WHERE action = 'seed'")
+            actions = cur.fetchone()[0]
+        out = seed.seed_from_directory(str(src))
+        self.assertEqual((out["inserted"], out["skipped"]), (0, 3))
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT count(*) FROM ctr_track_review_actions WHERE action = 'seed'")
+            self.assertEqual(cur.fetchone()[0], actions)
+
+    def test_seed_dry_run_writes_nothing(self):
+        from ctr_registry import seed
+        src = self.seeded_source()
+        self.wipe()
+        out = seed.seed_from_directory(str(src), dry_run=True)
+        self.assertEqual(out["would_insert"], 3)
+        self.assertEqual(store.record_entries(), [])
+
+    def test_seed_refuses_a_conflicting_row_and_writes_nothing(self):
+        from ctr_registry import seed
+        src = self.seeded_source()
+        self.wipe()
+        # A different track already holds block 0.
+        other = self.approved("Other Place", "z")
+        store.promote_entry(other["id"], self.admin)
+        with self.assertRaises(seed.SeedError) as ctx:
+            seed.seed_from_directory(str(src))
+        self.assertTrue(any("block_index 0" in p for p in ctx.exception.problems), ctx.exception.problems)
+        self.assertEqual([e["track_key"] for e, _ in store.record_entries()], ["other-place"])
+
+    def test_seed_refuses_a_same_key_row_with_different_values(self):
+        from ctr_registry import seed
+        src = self.seeded_source()
+        with self.conn.cursor() as cur:
+            cur.execute("UPDATE ctr_track_entries SET display_title = 'Changed' WHERE track_key = 'beta-ridge'")
+        self.conn.commit()
+        with self.assertRaises(seed.SeedError) as ctx:
+            seed.seed_from_directory(str(src))
+        self.assertTrue(any("beta-ridge" in p and "display_title" in p for p in ctx.exception.problems))
+
+    def test_seed_refuses_a_tampered_directory(self):
+        from ctr_registry import seed
+        src = self.seeded_source()
+        self.wipe()
+        target = src / "tracks" / "beta-ridge.json"
+        target.write_text(target.read_text().replace("Beta Ridge", "Beta Ridgx"))
+        with self.assertRaises(seed.SeedError):
+            seed.seed_from_directory(str(src))
+        self.assertEqual(store.record_entries(), [])
+
+    def test_seed_cli_reports_json_and_refuses_with_status_1(self):
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        from ctr_registry import cli
+        src = self.seeded_source()
+        self.wipe()
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            self.assertEqual(cli.main(["seed-from-registry", str(src)]), 0)
+        self.assertEqual(json.loads(buf.getvalue())["inserted"], 3)
+        with self.conn.cursor() as cur:
+            cur.execute("UPDATE ctr_track_entries SET display_title = 'Changed' WHERE track_key = 'alpha-cove'")
+        self.conn.commit()
+        err = io.StringIO()
+        with redirect_stdout(io.StringIO()), redirect_stderr(err):
+            self.assertEqual(cli.main(["seed-from-registry", str(src)]), 1)
+        self.assertIn("seed refused", err.getvalue())
+
     # -- API -------------------------------------------------------------
     def make_app(self):
         from api.ctr_tracks import bp, _submit_limiter, _report_limiter

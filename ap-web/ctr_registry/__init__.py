@@ -15,6 +15,7 @@ Layout:
 - saphi.py     candidate import from Project Saphi's public v2 track endpoints
 - hashing.py   hook for the later Atlas CTR-verifier step
 - export.py    registry repository file layout, written to a local directory
+- seed.py      load a registry directory into the database (the repository is the record)
 - check.py     stdlib-only registry checker (copied into the export as tools/)
 - notify.py    Home Assistant push (stub unless configured)
 - cli.py       `python -m ctr_registry.cli ...` for the Atlas-side jobs
