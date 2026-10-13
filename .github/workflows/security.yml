@@ -78,6 +78,7 @@ jobs:
       - run: python scripts/test_builder_favorites_membership.py
       - run: python scripts/test_yaml_journeys.py
       - run: python scripts/test_project_sections.py
+      - run: python scripts/test_ctr_registry.py
       # OPS-21 refresh endpoint: auth fails closed, and a failed git sync
       # can't report success. Needs no database, but rides along here so
       # there is one place that runs the backend checks.

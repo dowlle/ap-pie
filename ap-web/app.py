@@ -541,6 +541,7 @@ def create_app() -> Flask:
     from api.site_info import bp as site_info_bp
     from api.ctr import bp as ctr_bp
     from api.timberborn import bp as timberborn_bp
+    from api.ctr_tracks import bp as ctr_tracks_bp
     from api.events import bp as events_bp
     from api.presets import bp as presets_bp
     from api.user_yamls import bp as user_yamls_bp
@@ -581,6 +582,9 @@ def create_app() -> Flask:
     app.register_blueprint(events_bp)
     # FEAT-42: community presets for the YAML builder.
     app.register_blueprint(presets_bp)
+    # CTR custom-track name registry: every route 404s unless the
+    # ctr_registry feature flag is on (beta only for now).
+    app.register_blueprint(ctr_tracks_bp)
     # FEAT-43: the player's own YAML library and submission history.
     app.register_blueprint(user_yamls_bp)
     app.register_blueprint(account_bp)

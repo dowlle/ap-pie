@@ -37,6 +37,7 @@ export interface Features {
   generation: boolean;
   open_room_creation: boolean;
   timberborn_section: boolean;
+  ctr_registry: boolean;
 }
 
 export async function getFeatures(): Promise<Features> {
@@ -1977,4 +1978,126 @@ export async function recoverMyAccount(): Promise<void> {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || "Failed to recover account");
   }
+}
+
+
+// ── CTR custom-track name registry ───────────────────────────────
+
+export interface CtrCredit { name: string; role: "track" | "music" | "ap_boxes" | "other" }
+
+export interface CtrTrackRevision {
+  revision: string;
+  content_id: string | null;
+  hash_state: "pending" | "claimed" | "verified";
+  modes: string[];
+}
+
+export interface CtrTrack {
+  track_key: string;
+  state: string;
+  display_title: string;
+  credits: CtrCredit[];
+  links: Record<string, string>;
+  block_index: number | null;
+  ap_name: string | null;
+  revisions: CtrTrackRevision[];
+}
+
+export interface CtrSubmission {
+  id: number;
+  kind: "new_track" | "new_revision" | "correction";
+  status: "pending" | "approved" | "rejected" | "merged";
+  title: string | null;
+  target_track_key: string | null;
+  reject_reason: string | null;
+  created_at: string;
+}
+
+async function ctrJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `${res.status} ${res.statusText}`);
+  return body as T;
+}
+
+const ctrPost = (body: unknown, method = "POST"): RequestInit => ({
+  method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}),
+});
+
+export async function getCtrTracks(q = ""): Promise<CtrTrack[]> {
+  const qs = q ? `?q=${encodeURIComponent(q)}` : "";
+  return (await ctrJson<{ tracks: CtrTrack[] }>(`${BASE}/ctr/tracks${qs}`)).tracks;
+}
+
+export async function getMyCtrSubmissions(): Promise<CtrSubmission[]> {
+  return (await ctrJson<{ submissions: CtrSubmission[] }>(`${BASE}/ctr/tracks/submissions/mine`)).submissions;
+}
+
+export async function submitCtrTrack(input: {
+  kind: CtrSubmission["kind"];
+  track_key?: string;
+  title?: string;
+  credits?: CtrCredit[];
+  links?: Record<string, string>;
+  descriptor?: unknown;
+  revision?: string;
+  note?: string;
+}): Promise<CtrSubmission> {
+  return ctrJson(`${BASE}/ctr/tracks/submissions`, ctrPost(input));
+}
+
+export async function reportCtrTrack(trackKey: string, reason: string): Promise<{ status: string }> {
+  return ctrJson(`${BASE}/ctr/tracks/${encodeURIComponent(trackKey)}/report`, ctrPost({ reason }));
+}
+
+export interface CtrAdminSubmission extends CtrSubmission {
+  source: string;
+  submitter_name: string | null;
+  target_title: string | null;
+  payload: Record<string, unknown>;
+}
+
+export interface CtrAdminTrack {
+  id: number;
+  track_key: string | null;
+  state: string;
+  display_title: string;
+  credits: CtrCredit[];
+  links: Record<string, string>;
+  block_index: number | null;
+  ap_name: string | null;
+  shipped_in: string | null;
+  source: string;
+  report_count: number;
+  revisions: { id: number; revision: string; content_id: string | null; hash_state: string }[];
+}
+
+export async function adminCtrSubmissions(status = "pending"): Promise<CtrAdminSubmission[]> {
+  return (await ctrJson<{ submissions: CtrAdminSubmission[] }>(
+    `${BASE}/admin/ctr/track-submissions?status=${encodeURIComponent(status)}`)).submissions;
+}
+
+export async function adminCtrTracks(state = ""): Promise<CtrAdminTrack[]> {
+  const qs = state ? `?state=${encodeURIComponent(state)}` : "";
+  return (await ctrJson<{ tracks: CtrAdminTrack[] }>(`${BASE}/admin/ctr/tracks${qs}`)).tracks;
+}
+
+export async function adminCtrSubmissionAction(
+  id: number, action: "approve" | "reject" | "merge", body: Record<string, unknown> = {},
+): Promise<void> {
+  await ctrJson(`${BASE}/admin/ctr/track-submissions/${id}/${action}`, ctrPost(body));
+}
+
+export async function adminCtrTrackAction(
+  id: number, action: "approve" | "promote" | "withdraw" | "restore", body: Record<string, unknown> = {},
+): Promise<void> {
+  await ctrJson(`${BASE}/admin/ctr/tracks/${id}/${action}`, ctrPost(body));
+}
+
+export async function adminCtrApproveBatch(ids: number[]): Promise<{ approved: string[]; failed: { id: number; error: string }[] }> {
+  return ctrJson(`${BASE}/admin/ctr/tracks/approve`, ctrPost({ ids }));
+}
+
+export async function adminCtrEditTrack(id: number, body: { display_title?: string; credits?: CtrCredit[]; links?: Record<string, string> }): Promise<void> {
+  await ctrJson(`${BASE}/admin/ctr/tracks/${id}`, ctrPost(body, "PATCH"));
 }

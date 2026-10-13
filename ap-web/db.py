@@ -806,6 +806,11 @@ def init_db(db_url: str) -> None:
                 PRIMARY KEY (user_id, room_id)
             )
         """)
+        # CTR custom-track name registry (tables stay empty while the feature
+        # flag is off). Append-only and idempotent; the reversible DOWN lives
+        # in ctr_registry/migrations.py.
+        from ctr_registry import migrations as ctr_registry_migrations
+        ctr_registry_migrations.apply_up(cur)
     conn.autocommit = False
     conn.close()
     _db_url = db_url
