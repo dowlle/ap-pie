@@ -156,14 +156,17 @@ def write_export(records, out_dir: str, now: Optional[datetime] = None) -> dict:
     """Write the registry files to `out_dir` and return a summary.
 
     Files are replaced one at a time (temp file, then rename) and stale
-    tracks/*.json are removed; DIGEST.json is written last, so a reader that
+    tracks/*.json are removed; an existing README.md is kept; DIGEST.json is written last, so a reader that
     sees a DIGEST.json matching the data sees a complete set. An existing
     `.git` directory in `out_dir` is left alone. Nothing is deleted outside
     tracks/."""
     files, digest = build_files(records)
-    files["README.md"] = README.encode("utf-8")
     files["tools/check_registry.py"] = _checker_source()
     out = Path(out_dir)
+    # The README is only a starting point. The public repository owns its own
+    # README, so an existing one is never overwritten.
+    if not (out / "README.md").exists():
+        files["README.md"] = README.encode("utf-8")
     out.mkdir(parents=True, exist_ok=True)
     (out / "tracks").mkdir(exist_ok=True)
     (out / "tools").mkdir(exist_ok=True)

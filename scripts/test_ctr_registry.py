@@ -780,6 +780,14 @@ class WithDatabase(unittest.TestCase):
             cur.execute("SELECT count(*) FROM ctr_track_review_actions WHERE action = 'seed'")
             self.assertEqual(cur.fetchone()[0], actions)
 
+    def test_export_keeps_an_existing_readme(self):
+        self.seeded_source()
+        out = Path(self.export_dir) / "keep"
+        out.mkdir()
+        (out / "README.md").write_text("repository readme\n")
+        export.write_export(store.record_entries(), str(out), now=self.FIXED_NOW)
+        self.assertEqual((out / "README.md").read_text(), "repository readme\n")
+
     def test_seed_dry_run_writes_nothing(self):
         from ctr_registry import seed
         src = self.seeded_source()
