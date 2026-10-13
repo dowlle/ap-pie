@@ -75,6 +75,32 @@ def _items(doc: object, *keys: str) -> list:
     raise SaphiError("Unexpected response shape")
 
 
+def fetch_all(fetch, url: str, pause: float = PAUSE_SECONDS, sleep=time.sleep, max_pages: int = 20) -> list:
+    """Collect every item of a paged listing (`{"data": [...], "meta": {...}}`).
+
+    Plain lists and unpaged documents come back as they are."""
+    joiner = "&" if "?" in url else "?"
+    doc = fetch(url)
+    items = list(_items(doc, "tracks", "downloads", "data", "results"))
+    meta = doc.get("meta") if isinstance(doc, dict) else None
+    pages = meta.get("total_pages") if isinstance(meta, dict) else 1
+    for page in range(2, min(pages if type(pages) is int else 1, max_pages) + 1):
+        sleep(pause)
+        items += _items(fetch(f"{url}{joiner}page={page}"), "tracks", "downloads", "data", "results")
+    return items
+
+
+#: File types that identify a track version. Banners and thumbnails carry no
+#: version and are ignored.
+TRACK_FILE_TYPES = ("lev", "vrm", "sca")
+
+
+def _crc_text(value) -> Optional[str]:
+    if type(value) is int:
+        return f"{value:08x}"
+    return str(value).lower() if value not in (None, "") else None
+
+
 def normalize_track(raw: dict, downloads: Optional[list] = None) -> Optional[dict]:
     """A Saphi track as the importer uses it, or None when it has no id/title."""
     if not isinstance(raw, dict):
@@ -97,20 +123,20 @@ def normalize_track(raw: dict, downloads: Optional[list] = None) -> Optional[dic
         if not isinstance(d, dict):
             continue
         did = _first(d, "id", "download_id")
-        if type(did) is not int:
+        kind = str(_first(d, "type", "file_type", "kind", "format", default="")).lower()
+        if type(did) is not int or kind not in TRACK_FILE_TYPES or d.get("version") in (None, ""):
             continue
-        version = str(_first(d, "version", "name", default=did))
-        crc = _first(d, "crc32", "crc", "checksum")
-        groups.setdefault(version, []).append({
+        groups.setdefault(str(d["version"]), []).append({
             "download_id": did,
-            "kind": str(_first(d, "type", "file_type", "kind", "format", default="")).lower() or None,
-            "crc32": str(crc).lower() if crc is not None else None,
+            "kind": kind,
+            "crc32": _crc_text(_first(d, "crc32_hash", "crc32", "crc", "checksum")),
         })
     return {
         "saphi_id": track_id,
         "title": title.strip(),
         "authors": names,
-        "category": _first(raw, "type", "category", "kind"),
+        "category": _first(raw, "track_type", "type", "category", "kind"),
+        "active": raw.get("is_active", True) is not False,
         "url": url if isinstance(url, str) and url.startswith("https://") else None,
         "versions": groups,
     }
@@ -231,19 +257,19 @@ def run_import(fetch: Callable[[str], object] = http_get_json, *, conn=None,
     Only reads list and downloads-listing endpoints. A track whose download
     listing fails is skipped this run (counted under `errors`), not lost."""
     conn = store._conn(conn)
-    listing = _items(fetch(f"{BASE}/tracks"), "tracks", "data", "results")
+    listing = fetch_all(fetch, f"{BASE}/tracks", pause, sleep)
     summary = {"seen": 0, "created": 0, "refreshed": 0, "unchanged": 0, "drift": 0,
                "errors": 0, "missing": 0, "skipped": 0}
     queue: list = []
     seen_ids: set[int] = set()
     for raw in listing[: limit if limit else None]:
         base = normalize_track(raw)
-        if base is None:
+        if base is None or not base["active"]:
             summary["skipped"] += 1
             continue
         sleep(pause)
         try:
-            downloads = _items(fetch(f"{BASE}/tracks/{base['saphi_id']}/downloads"), "downloads", "data", "results")
+            downloads = fetch_all(fetch, f"{BASE}/tracks/{base['saphi_id']}/downloads", pause, sleep)
         except Exception:  # noqa: BLE001 - one bad track must not stop the run
             summary["errors"] += 1
             continue

@@ -400,6 +400,18 @@ class SaphiNormalizing(unittest.TestCase):
         self.assertEqual(sorted(t["versions"]), ["1.0.0", "1.0.2"])
         self.assertEqual(t["versions"]["1.0.2"][0], {"download_id": 727, "kind": "lev", "crc32": "abcd1234"})
 
+    def test_live_shape_ints_crc_paging_and_non_track_files(self):
+        raw = {"id": 1, "name": "Drive Thru Danger", "author": "Boxic", "track_type": "saphi", "is_active": True}
+        dl = [{"id": 10, "type": "lev", "crc32_hash": 1307466109, "version": "1.0.0"},
+              {"id": 64, "type": "track_banner", "crc32_hash": 5, "version": None},
+              {"id": 339, "type": "sca", "crc32_hash": 255, "version": "1.0.0"}]
+        t = saphi.normalize_track(raw, dl)
+        self.assertEqual((t["title"], t["authors"], t["category"]), ("Drive Thru Danger", ["Boxic"], "saphi"))
+        self.assertEqual(t["versions"], {"1.0.0": [{"download_id": 10, "kind": "lev", "crc32": "4dee597d"},
+                                                    {"download_id": 339, "kind": "sca", "crc32": "000000ff"}]})
+        pages = {"u": {"data": [1], "meta": {"total_pages": 2}}, "u?page=2": {"data": [2], "meta": {}}}
+        self.assertEqual(saphi.fetch_all(lambda url: pages[url], "u", 0, lambda s: None), [1, 2])
+
     def test_normalize_rejects_rows_without_id_or_title(self):
         self.assertIsNone(saphi.normalize_track({"id": "x", "title": "a"}))
         self.assertIsNone(saphi.normalize_track({"id": 1}))
