@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import unittest
+from unittest import mock
 import zipfile
 
 repo_app = os.path.join(os.path.dirname(__file__), "..", "ap-web")
@@ -340,14 +341,15 @@ option_groups = {"Characters": [RacerLocks]}
             "bomb.yaml": "game: Fixture Game\nFixture Game:\n  x: &a [x,x,x,x,x,x,x,x,x,x]\n"
                          "  goal: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a,*a]\n"
                          "  bonus: [*b,*b,*b,*b,*b,*b,*b,*b,*b,*b]\n",
-            # merge keys stay plain keys (nested six levels deep here), so this drops on depth
+            # merge keys stay plain keys (nested six levels deep here): PyYAML refuses them and the preset is dropped
             "merge.yaml": "game: Fixture Game\nFixture Game:\n  m0: &m0 {a: 1, b: 2}\n"
                           + "".join(f"  m{i}: &m{i}\n    <<: [*m{i-1}, *m{i-1}, *m{i-1}, *m{i-1}]\n" for i in range(1, 7))
                           + "  goal: long\n  bonus: *m6\n",
             "nan.yaml": "game: Fixture Game\nFixture Game:\n  goal: .nan\n",
             "deep.yaml": "game: Fixture Game\nFixture Game:\n  goal: " + "[" * 3000 + "]" * 3000 + "\n",
         }
-        schema = parse_apworld_options_bytes(_presets_fixture_apworld(index, files), stem_hint="fixture")
+        with mock.patch("apworld_options_parser._MAX_BUNDLED_PRESETS", 32):  # every row below is read
+            schema = parse_apworld_options_bytes(_presets_fixture_apworld(index, files), stem_hint="fixture")
         assert schema is not None
         self.assertEqual([p["id"] for p in schema["bundled_presets"]], ["good"])
         for text in ("not json", json.dumps({"presets": "no"}), json.dumps([])):

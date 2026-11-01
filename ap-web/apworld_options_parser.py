@@ -143,12 +143,13 @@ def _plain_value(value, budget: list[int], depth: int = 0) -> bool:
 
 
 def _preset_loader():
-    """A safe YAML loader without merge keys.
+    """A safe YAML loader that does not expand merge keys.
 
     `<<` merges copy their source mapping once per use, so a small preset can
-    nest them into an exponential load that no later size check can stop. A
-    `<<` key stays a plain key and is dropped with every other unknown option.
-    Plain aliases share one object and cost nothing to load."""
+    nest them into an exponential load that no later size check can stop. With
+    the merge step off, PyYAML refuses the `<<` key, and that whole preset is
+    dropped by the caller (the schema is kept). Plain aliases share one object
+    and cost nothing to load."""
     import yaml
 
     class NoMergeLoader(yaml.SafeLoader):
