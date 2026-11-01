@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import io
 import json
+import math
 import re
 import zipfile
 from pathlib import Path
@@ -127,7 +128,9 @@ def _plain_value(value, budget: list[int], depth: int = 0) -> bool:
     budget[0] -= 1
     if budget[0] < 0 or depth > _MAX_PRESET_DEPTH:
         return False
-    if value is None or isinstance(value, (bool, int, float)):
+    if isinstance(value, float):
+        return math.isfinite(value)  # .nan and .inf are not JSON
+    if value is None or isinstance(value, (bool, int)):
         return True
     if isinstance(value, str):
         return len(value) <= 256
@@ -137,6 +140,22 @@ def _plain_value(value, budget: list[int], depth: int = 0) -> bool:
         return all(isinstance(k, str) and len(k) <= 128 and _plain_value(v, budget, depth + 1)
                    for k, v in value.items())
     return False
+
+
+def _preset_loader():
+    """A safe YAML loader without merge keys.
+
+    `<<` merges copy their source mapping once per use, so a small preset can
+    nest them into an exponential load that no later size check can stop. A
+    `<<` key stays a plain key and is dropped with every other unknown option.
+    Plain aliases share one object and cost nothing to load."""
+    import yaml
+
+    class NoMergeLoader(yaml.SafeLoader):
+        def flatten_mapping(self, node):
+            return None
+
+    return NoMergeLoader
 
 
 def _bundled_presets(zf: zipfile.ZipFile, stem: str, game_name: str, option_names: set[str]) -> list[dict]:
@@ -160,6 +179,7 @@ def _bundled_presets(zf: zipfile.ZipFile, stem: str, game_name: str, option_name
     if not isinstance(entries, list):
         return []
     allowed = option_names | {"accessibility", "progression_balancing"}
+    loader = _preset_loader()
     out: list[dict] = []
     for entry in entries[:_MAX_BUNDLED_PRESETS]:
         if not isinstance(entry, dict):
@@ -175,7 +195,7 @@ def _bundled_presets(zf: zipfile.ZipFile, stem: str, game_name: str, option_name
         if len(text.encode("utf-8")) > _MAX_PRESET_YAML_BYTES:
             continue
         try:
-            doc = yaml.safe_load(text)
+            doc = yaml.load(text, Loader=loader)  # noqa: S506 - SafeLoader subclass
             block = doc.get(game_name) if isinstance(doc, dict) and doc.get("game") == game_name else None
             if not isinstance(block, dict) or len(block) > _MAX_PRESET_VALUES:
                 continue
