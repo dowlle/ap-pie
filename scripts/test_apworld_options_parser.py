@@ -320,18 +320,25 @@ option_groups = {"Characters": [RacerLocks]}
     def test_bad_presets_are_dropped_not_fatal(self) -> None:
         good = "name: P\ngame: Fixture Game\nFixture Game:\n  goal: long\n"
         index = json.dumps({"schema": 1, "presets": [
+            {"id": "good", "file": "good.yaml", "label": "Good", "summary": "Kept"},
             {"id": "path", "file": "../evil.yaml", "label": "Path", "summary": "x"},
             {"id": "other", "file": "other.yaml", "label": "Other game", "summary": "x"},
             {"id": "broken", "file": "broken.yaml", "label": "Broken", "summary": "x"},
             {"id": "gone", "file": "missing.yaml", "label": "Missing", "summary": "x"},
+            {"id": "bomb", "file": "bomb.yaml", "label": "Bomb", "summary": "x"},
+            {"id": "deep", "file": "deep.yaml", "label": "Deep", "summary": "x"},
             {"id": "nolabel", "file": "good.yaml", "summary": "x"},
             "not an object",
-            {"id": "good", "file": "good.yaml", "label": "Good", "summary": "Kept"},
         ]})
         files = {
             "good.yaml": good,
             "other.yaml": "game: Other\nOther:\n  goal: long\n",
             "broken.yaml": "game: [unclosed",
+            # alias expansion: 10 x 10 x 10 nodes behind two declared options
+            "bomb.yaml": "game: Fixture Game\nFixture Game:\n  x: &a [x,x,x,x,x,x,x,x,x,x]\n"
+                         "  goal: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a,*a]\n"
+                         "  bonus: [*b,*b,*b,*b,*b,*b,*b,*b,*b,*b]\n",
+            "deep.yaml": "game: Fixture Game\nFixture Game:\n  goal: " + "[" * 3000 + "]" * 3000 + "\n",
         }
         schema = parse_apworld_options_bytes(_presets_fixture_apworld(index, files), stem_hint="fixture")
         assert schema is not None

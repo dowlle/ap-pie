@@ -114,6 +114,29 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
 _PRESETS_DIR = "solo/presets"
 _MAX_BUNDLED_PRESETS = 8
 _MAX_PRESET_VALUES = 128
+_MAX_PRESET_YAML_BYTES = 16 * 1024
+_MAX_PRESET_NODES = 256
+_MAX_PRESET_DEPTH = 4
+
+
+def _plain_value(value, budget: list[int], depth: int = 0) -> bool:
+    """True when `value` is plain JSON-like data inside the node budget.
+
+    YAML aliases share one object, so the walk counts every visit: a small
+    "billion laughs" preset runs out of budget instead of expanding."""
+    budget[0] -= 1
+    if budget[0] < 0 or depth > _MAX_PRESET_DEPTH:
+        return False
+    if value is None or isinstance(value, (bool, int, float)):
+        return True
+    if isinstance(value, str):
+        return len(value) <= 256
+    if isinstance(value, list):
+        return all(_plain_value(v, budget, depth + 1) for v in value)
+    if isinstance(value, dict):
+        return all(isinstance(k, str) and len(k) <= 128 and _plain_value(v, budget, depth + 1)
+                   for k, v in value.items())
+    return False
 
 
 def _bundled_presets(zf: zipfile.ZipFile, stem: str, game_name: str, option_names: set[str]) -> list[dict]:
@@ -149,17 +172,17 @@ def _bundled_presets(zf: zipfile.ZipFile, stem: str, game_name: str, option_name
         text = _read_member(zf, f"{stem}/{_PRESETS_DIR}/{file}")
         if text is None:
             continue
+        if len(text.encode("utf-8")) > _MAX_PRESET_YAML_BYTES:
+            continue
         try:
             doc = yaml.safe_load(text)
-        except yaml.YAMLError:
-            continue
-        block = doc.get(game_name) if isinstance(doc, dict) and doc.get("game") == game_name else None
-        if not isinstance(block, dict) or len(block) > _MAX_PRESET_VALUES:
-            continue
-        values = {k: v for k, v in block.items() if k in allowed}
-        try:
-            json.dumps(values)
-        except (TypeError, ValueError):
+            block = doc.get(game_name) if isinstance(doc, dict) and doc.get("game") == game_name else None
+            if not isinstance(block, dict) or len(block) > _MAX_PRESET_VALUES:
+                continue
+            values = {k: v for k, v in block.items() if k in allowed}
+            if not _plain_value(values, [_MAX_PRESET_NODES]):
+                continue
+        except (yaml.YAMLError, RecursionError, MemoryError):
             continue
         out.append({"id": ident, "label": label, "summary": summary, "values": values})
     return out
