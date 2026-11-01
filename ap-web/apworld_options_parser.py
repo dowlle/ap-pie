@@ -5,12 +5,13 @@ from __future__ import annotations
 import ast
 import io
 import json
+import math
 import re
 import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 7
+BUILDER_SCHEMA_FORMAT_VERSION = 8
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -92,7 +93,7 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
         if opt["category"] not in categories:
             categories.append(opt["category"])
 
-    return {
+    schema = {
         "_format_version": BUILDER_SCHEMA_FORMAT_VERSION,
         "game": game_name,
         "ap_version": "",
@@ -100,6 +101,112 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
         "categories": categories,
         "options": options,
     }
+    bundled = _bundled_presets(zf, stem, game_name, {o["name"] for o in options})
+    if bundled:
+        schema["bundled_presets"] = bundled
+    return schema
+
+
+# Presets an apworld ships for its own players (CTR Archipelago: the three
+# presets Play Solo offers, in `<stem>/solo/presets/`). `presets.json` lists
+# them in order; each file is a player YAML with one block for the game. The
+# builder offers them as official presets for exactly this version, so they
+# can never drift from the apworld that will generate the YAML.
+_PRESETS_DIR = "solo/presets"
+_MAX_BUNDLED_PRESETS = 8
+_MAX_PRESET_VALUES = 128
+_MAX_PRESET_YAML_BYTES = 16 * 1024
+_MAX_PRESET_NODES = 256
+_MAX_PRESET_DEPTH = 4
+
+
+def _plain_value(value, budget: list[int], depth: int = 0) -> bool:
+    """True when `value` is plain JSON-like data inside the node budget.
+
+    YAML aliases share one object, so the walk counts every visit: a small
+    "billion laughs" preset runs out of budget instead of expanding."""
+    budget[0] -= 1
+    if budget[0] < 0 or depth > _MAX_PRESET_DEPTH:
+        return False
+    if isinstance(value, float):
+        return math.isfinite(value)  # .nan and .inf are not JSON
+    if value is None or isinstance(value, (bool, int)):
+        return True
+    if isinstance(value, str):
+        return len(value) <= 256
+    if isinstance(value, list):
+        return all(_plain_value(v, budget, depth + 1) for v in value)
+    if isinstance(value, dict):
+        return all(isinstance(k, str) and len(k) <= 128 and _plain_value(v, budget, depth + 1)
+                   for k, v in value.items())
+    return False
+
+
+def _preset_loader():
+    """A safe YAML loader that does not expand merge keys.
+
+    `<<` merges copy their source mapping once per use, so a small preset can
+    nest them into an exponential load that no later size check can stop. With
+    the merge step off, PyYAML refuses the `<<` key, and that whole preset is
+    dropped by the caller (the schema is kept). Plain aliases share one object
+    and cost nothing to load."""
+    import yaml
+
+    class NoMergeLoader(yaml.SafeLoader):
+        def flatten_mapping(self, node):
+            return None
+
+    return NoMergeLoader
+
+
+def _bundled_presets(zf: zipfile.ZipFile, stem: str, game_name: str, option_names: set[str]) -> list[dict]:
+    """Return [{id, label, summary, values}] for the presets this archive ships.
+
+    Fail-soft: anything unreadable or unexpected drops that preset (or all of
+    them) rather than the whole schema. Only option names the schema declares
+    (plus the two core options) are kept, so a preset can never carry `game`,
+    plando or triggers into the builder form.
+    """
+    import yaml
+
+    raw = _read_member(zf, f"{stem}/{_PRESETS_DIR}/presets.json")
+    if raw is None:
+        return []
+    try:
+        index = json.loads(raw)
+        entries = index["presets"]
+    except (ValueError, KeyError, TypeError):
+        return []
+    if not isinstance(entries, list):
+        return []
+    allowed = option_names | {"accessibility", "progression_balancing"}
+    loader = _preset_loader()
+    out: list[dict] = []
+    for entry in entries[:_MAX_BUNDLED_PRESETS]:
+        if not isinstance(entry, dict):
+            continue
+        ident, label, summary, file = (entry.get(k) for k in ("id", "label", "summary", "file"))
+        if not all(isinstance(v, str) and v for v in (ident, label, summary, file)):
+            continue
+        if "/" in file or "\\" in file or file.startswith("."):
+            continue
+        text = _read_member(zf, f"{stem}/{_PRESETS_DIR}/{file}")
+        if text is None:
+            continue
+        if len(text.encode("utf-8")) > _MAX_PRESET_YAML_BYTES:
+            continue
+        try:
+            doc = yaml.load(text, Loader=loader)  # noqa: S506 - SafeLoader subclass
+            block = doc.get(game_name) if isinstance(doc, dict) and doc.get("game") == game_name else None
+            if not isinstance(block, dict) or len(block) > _MAX_PRESET_VALUES:
+                continue
+            values = {k: v for k, v in block.items() if k in allowed}
+            if not _plain_value(values, [_MAX_PRESET_NODES]):
+                continue
+        except (yaml.YAMLError, RecursionError, MemoryError):
+            continue
+        out.append({"id": ident, "label": label, "summary": summary, "values": values})
+    return out
 
 
 def _detect_module_dir(zf: zipfile.ZipFile, stem_hint: str | None) -> str | None:
