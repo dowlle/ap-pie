@@ -498,7 +498,7 @@ export default function YamlBuilder({
       setManualYaml(null);
       setStep("options");
     }
-    recordPresetUse(p.id);
+    if (!p.bundled) recordPresetUse(p.id);
   };
 
   /** FEAT-43: keep this YAML in your own library. Distinct from saving a
@@ -869,10 +869,12 @@ export default function YamlBuilder({
                         </div>
                         {p.description && <p className="preset-row-desc">{p.description}</p>}
                         <p className="preset-row-meta">
-                          {p.author_username ? `by ${p.author_username}` : "by an unknown author"}
-                          {` · ${p.uses === 1 ? "used once" : `used ${p.uses} times`}`}
+                          {p.bundled
+                            ? `Ships with the game's v${p.version} APWorld`
+                            : p.author_username ? `by ${p.author_username}` : "by an unknown author"}
+                          {!p.bundled && ` · ${p.uses === 1 ? "used once" : `used ${p.uses} times`}`}
                           {p.score > 0 && ` · ${p.score} upvote${p.score === 1 ? "" : "s"}`}
-                          {p.version !== entry?.version && ` · written for v${p.version}`}
+                          {!p.bundled && p.version !== entry?.version && ` · written for v${p.version}`}
                           {p.stale_keys.length > 0 && ` · ${p.stale_keys.length} old option${p.stale_keys.length === 1 ? "" : "s"} skipped`}
                         </p>
                       </div>

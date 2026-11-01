@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 7
+BUILDER_SCHEMA_FORMAT_VERSION = 8
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -92,7 +92,7 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
         if opt["category"] not in categories:
             categories.append(opt["category"])
 
-    return {
+    schema = {
         "_format_version": BUILDER_SCHEMA_FORMAT_VERSION,
         "game": game_name,
         "ap_version": "",
@@ -100,6 +100,69 @@ def _parse_zip(zf: zipfile.ZipFile, stem_hint: str | None) -> dict | None:
         "categories": categories,
         "options": options,
     }
+    bundled = _bundled_presets(zf, stem, game_name, {o["name"] for o in options})
+    if bundled:
+        schema["bundled_presets"] = bundled
+    return schema
+
+
+# Presets an apworld ships for its own players (CTR Archipelago: the three
+# presets Play Solo offers, in `<stem>/solo/presets/`). `presets.json` lists
+# them in order; each file is a player YAML with one block for the game. The
+# builder offers them as official presets for exactly this version, so they
+# can never drift from the apworld that will generate the YAML.
+_PRESETS_DIR = "solo/presets"
+_MAX_BUNDLED_PRESETS = 8
+_MAX_PRESET_VALUES = 128
+
+
+def _bundled_presets(zf: zipfile.ZipFile, stem: str, game_name: str, option_names: set[str]) -> list[dict]:
+    """Return [{id, label, summary, values}] for the presets this archive ships.
+
+    Fail-soft: anything unreadable or unexpected drops that preset (or all of
+    them) rather than the whole schema. Only option names the schema declares
+    (plus the two core options) are kept, so a preset can never carry `game`,
+    plando or triggers into the builder form.
+    """
+    import yaml
+
+    raw = _read_member(zf, f"{stem}/{_PRESETS_DIR}/presets.json")
+    if raw is None:
+        return []
+    try:
+        index = json.loads(raw)
+        entries = index["presets"]
+    except (ValueError, KeyError, TypeError):
+        return []
+    if not isinstance(entries, list):
+        return []
+    allowed = option_names | {"accessibility", "progression_balancing"}
+    out: list[dict] = []
+    for entry in entries[:_MAX_BUNDLED_PRESETS]:
+        if not isinstance(entry, dict):
+            continue
+        ident, label, summary, file = (entry.get(k) for k in ("id", "label", "summary", "file"))
+        if not all(isinstance(v, str) and v for v in (ident, label, summary, file)):
+            continue
+        if "/" in file or "\\" in file or file.startswith("."):
+            continue
+        text = _read_member(zf, f"{stem}/{_PRESETS_DIR}/{file}")
+        if text is None:
+            continue
+        try:
+            doc = yaml.safe_load(text)
+        except yaml.YAMLError:
+            continue
+        block = doc.get(game_name) if isinstance(doc, dict) and doc.get("game") == game_name else None
+        if not isinstance(block, dict) or len(block) > _MAX_PRESET_VALUES:
+            continue
+        values = {k: v for k, v in block.items() if k in allowed}
+        try:
+            json.dumps(values)
+        except (TypeError, ValueError):
+            continue
+        out.append({"id": ident, "label": label, "summary": summary, "values": values})
+    return out
 
 
 def _detect_module_dir(zf: zipfile.ZipFile, stem_hint: str | None) -> str | None:

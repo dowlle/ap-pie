@@ -119,6 +119,36 @@ class FixtureOptions(PerGameCommonOptions):
     return output.getvalue()
 
 
+def _presets_fixture_apworld(index: str, files: dict[str, str]) -> bytes:
+    """A world that ships presets the way CTR Archipelago does: `solo/presets/`."""
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w") as archive:
+        archive.writestr("fixture/__init__.py", 'class FixtureWorld:\n    game = "Fixture Game"\n')
+        archive.writestr(
+            "fixture/Options.py",
+            """from dataclasses import dataclass
+from Options import Choice, PerGameCommonOptions, Toggle
+
+class Goal(Choice):
+    option_short = 0
+    option_long = 1
+    default = 0
+
+class Bonus(Toggle):
+    pass
+
+@dataclass
+class FixtureOptions(PerGameCommonOptions):
+    goal: Goal
+    bonus: Bonus
+""",
+        )
+        archive.writestr("fixture/solo/presets/presets.json", index)
+        for name, text in files.items():
+            archive.writestr(f"fixture/solo/presets/{name}", text)
+    return output.getvalue()
+
+
 class APWorldOptionsParser(unittest.TestCase):
     def test_package_resource_range_and_dictionary_groups(self):
         for resource, expected in [("data/pads.json", 3), ("../outside.json", None)]:
@@ -261,6 +291,55 @@ option_groups = {"Characters": [RacerLocks]}
         self.assertEqual(option["mapping_value_kind"], "number")
         self.assertEqual(option["valid_keys"], ["slow", "spin"])
         self.assertEqual(option["default"], {"slow": 5, "spin": 2})
+
+    def test_bundled_presets_come_from_the_archive_in_index_order(self) -> None:
+        index = json.dumps({"schema": 1, "presets": [
+            {"id": "b", "file": "b.yaml", "label": "Bee", "summary": "Second in file, first in index"},
+            {"id": "a", "file": "a.yaml", "label": "Aye", "summary": "Plain"},
+        ]})
+        files = {
+            "a.yaml": "name: P\ngame: Fixture Game\nFixture Game:\n  goal: long\n",
+            "b.yaml": "name: P\ngame: Fixture Game\nFixture Game:\n  goal: short\n  bonus: true\n"
+                      "  accessibility: full\n  unknown_option: 1\n  plando_items: [x]\n",
+        }
+        schema = parse_apworld_options_bytes(_presets_fixture_apworld(index, files), stem_hint="fixture")
+        assert schema is not None
+        self.assertEqual(schema["_format_version"], BUILDER_SCHEMA_FORMAT_VERSION)
+        self.assertEqual([p["id"] for p in schema["bundled_presets"]], ["b", "a"])
+        # Only declared options and the two core options survive; nothing that
+        # could carry plando or triggers into the form.
+        self.assertEqual(schema["bundled_presets"][0]["values"],
+                         {"goal": "short", "bonus": True, "accessibility": "full"})
+        self.assertEqual(schema["bundled_presets"][1]["label"], "Aye")
+
+    def test_a_world_without_presets_has_no_bundled_key(self) -> None:
+        schema = parse_apworld_options_bytes(_fixture_apworld(), stem_hint="fixture")
+        assert schema is not None
+        self.assertNotIn("bundled_presets", schema)
+
+    def test_bad_presets_are_dropped_not_fatal(self) -> None:
+        good = "name: P\ngame: Fixture Game\nFixture Game:\n  goal: long\n"
+        index = json.dumps({"schema": 1, "presets": [
+            {"id": "path", "file": "../evil.yaml", "label": "Path", "summary": "x"},
+            {"id": "other", "file": "other.yaml", "label": "Other game", "summary": "x"},
+            {"id": "broken", "file": "broken.yaml", "label": "Broken", "summary": "x"},
+            {"id": "gone", "file": "missing.yaml", "label": "Missing", "summary": "x"},
+            {"id": "nolabel", "file": "good.yaml", "summary": "x"},
+            "not an object",
+            {"id": "good", "file": "good.yaml", "label": "Good", "summary": "Kept"},
+        ]})
+        files = {
+            "good.yaml": good,
+            "other.yaml": "game: Other\nOther:\n  goal: long\n",
+            "broken.yaml": "game: [unclosed",
+        }
+        schema = parse_apworld_options_bytes(_presets_fixture_apworld(index, files), stem_hint="fixture")
+        assert schema is not None
+        self.assertEqual([p["id"] for p in schema["bundled_presets"]], ["good"])
+        for text in ("not json", json.dumps({"presets": "no"}), json.dumps([])):
+            schema = parse_apworld_options_bytes(_presets_fixture_apworld(text, {}), stem_hint="fixture")
+            assert schema is not None
+            self.assertNotIn("bundled_presets", schema)
 
 
 if __name__ == "__main__":

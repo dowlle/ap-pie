@@ -1747,6 +1747,9 @@ export interface Preset {
   yaml_content: string | null;
   author_username: string | null;
   is_official: boolean;
+  /** Shipped inside the APWorld of this version (a negative id): no uses,
+   *  votes or reports. */
+  bundled?: boolean;
   status: "private" | "published" | "hidden";
   uses: number;
   score: number;
