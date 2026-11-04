@@ -325,7 +325,18 @@ export default function YamlBuilder({
       };
       const timer = window.setTimeout(() => {
         if (draft.playerName) setPlayerName(draft.playerName);
-        if (draft.values) setValues((current) => ({ ...current, ...draft.values }));
+        if (draft.values) {
+          const restored = { ...draft.values };
+          // null was the “use game default” marker for unresolved lists.
+          // When a newer schema knows that default, show its selections while
+          // retaining the rest of the player's draft, including explicit [].
+          if (!draft.manualYaml) for (const option of entry.schema!.options) {
+            if (option.type === "list" && restored[option.name] === null && Array.isArray(option.default)) {
+              restored[option.name] = option.default;
+            }
+          }
+          setValues((current) => ({ ...current, ...restored }));
+        }
         if (draft.coreValues) setCoreValues(draft.coreValues);
         if (draft.manualYaml !== undefined) setManualYaml(draft.manualYaml);
         if (draft.step) setStep(draft.step === "form" ? "options" : draft.step);
@@ -872,7 +883,7 @@ export default function YamlBuilder({
               type="button"
               className="btn btn-primary yaml-builder-default-start"
               disabled={!schema}
-              onClick={() => { setError(""); setManualYaml(null); setStep("options"); }}
+              onClick={() => { setError(""); setValues({ ...defaultValues }); setCoreValues({}); setManualYaml(null); setStep("options"); }}
             >
               Start with the game defaults
             </button>
