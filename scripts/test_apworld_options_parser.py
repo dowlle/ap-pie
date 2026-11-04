@@ -151,6 +151,28 @@ class FixtureOptions(PerGameCommonOptions):
 
 
 class APWorldOptionsParser(unittest.TestCase):
+    def test_unresolved_collection_default_defers_to_generator(self) -> None:
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive:
+            archive.writestr("fixture/__init__.py", 'class FixtureWorld:\n    game = "Fixture Game"\n')
+            archive.writestr("fixture/Options.py", '''from dataclasses import dataclass
+from Options import OptionSet, PerGameCommonOptions
+class Arenas(OptionSet):
+    default = frozenset(build_arena_names())
+class Empty(OptionSet):
+    default = frozenset()
+@dataclass
+class FixtureOptions(PerGameCommonOptions):
+    arenas: Arenas
+    empty: Empty
+''')
+        schema = parse_apworld_options_bytes(output.getvalue(), stem_hint="fixture")
+        options = {o["name"]: o for o in schema["options"]}
+        self.assertIsNone(options["arenas"]["default"])
+        self.assertTrue(options["arenas"]["default_unresolved"])
+        self.assertEqual(options["empty"]["default"], [])
+        self.assertNotIn("default_unresolved", options["empty"])
+
     def test_package_resource_range_and_dictionary_groups(self):
         for resource, expected in [("data/pads.json", 3), ("../outside.json", None)]:
             output = io.BytesIO()

@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 8
+BUILDER_SCHEMA_FORMAT_VERSION = 9
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -775,6 +775,12 @@ def _parse_options_source(
                 "type": "list",
                 "default": default_list,
             }
+            # An unevaluated expression is not an empty collection. Omit this
+            # option until the player explicitly supplies a value, allowing
+            # the generator to apply its actual default without running code
+            # from the archive in the web process.
+            if raw.get("default") is not None and default is None:
+                entry.update(default=None, default_unresolved=True)
             if isinstance(valid_keys, (set, frozenset)):
                 entry["choices"] = sorted(valid_keys)
             elif isinstance(valid_keys, (list, tuple)):

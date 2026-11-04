@@ -1464,6 +1464,7 @@ const MAX_EDITABLE_YAML_BYTES = 64 * 1024;
 
 function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "custom" | "invalid" {
   if (value === undefined) return "form";
+  if (option.default_unresolved && value === null) return "form";
   if (typeof value === "object" && value !== null && option.type !== "list" && option.type !== "dict") {
     return "custom"; // Weighted YAML values are valid AP input, but not one form value.
   }
@@ -1584,6 +1585,20 @@ function OptionControl({
   value: unknown;
   onChange: (val: unknown) => void;
 }) {
+  if (option.default_unresolved) {
+    const inherited = value === undefined || value === null;
+    return (
+      <div>
+        <label>
+          <input type="checkbox" checked={inherited}
+            onChange={(e) => onChange(e.target.checked ? null : [])} />
+          Use game default
+        </label>
+        {!inherited && <OptionControl option={{...option, default_unresolved: false}}
+          value={value} onChange={onChange} />}
+      </div>
+    );
+  }
   switch (option.type) {
     case "toggle": {
       // Three states rather than a checkbox: Archipelago accepts "random"
