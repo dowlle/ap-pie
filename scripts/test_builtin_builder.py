@@ -46,7 +46,7 @@ class BuiltinBuilderTests(unittest.TestCase):
             self.assertEqual(self.app.test_client().get('/api/apworlds/sm/builder-schema?version=0.6.6').status_code, 404)
 
     def test_catalog_build_versions_do_not_invent_downloads(self):
-        self.assertEqual(build_versions(self.world), [{'version': '0.6.7'}])
+        self.assertEqual(build_versions(self.world), [{'version': '0.6.7', 'test_build': False}])
         self.assertEqual(self.world.to_dict()['downloadable_versions'], [])
 
 if __name__ == '__main__':

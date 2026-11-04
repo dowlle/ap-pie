@@ -297,6 +297,9 @@ function VersionRow({
             nothing; clean is a tiny green dot; flaky/broken are coloured
             pills with worst_hook tooltip. */}
         <FuzzResultPill fuzz_result={v.fuzz_result} version={v.version} />
+        {world.builder_versions?.some((b) => b.version === v.version && b.test_build) && (
+          <span className="badge badge-test-build">test build</span>
+        )}
         {isCurrent && <span className="badge badge-done apworld-version-current">installed</span>}
       </span>
       <span className="apworld-version-actions">
@@ -492,9 +495,14 @@ function WorldCard({
   const builtinOnly = downloadable.length === 0;
   const [showAllVersions, setShowAllVersions] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
-  const latestVersion = versions[0];
+  // The server lists the default version first. It is the newest release,
+  // except where AP-Pie pins a stable release above a newer test build
+  // (CTR 0.2.4 while 0.3.0-alpha1 is in the index).
+  const defaultVersion = world.versions[0]?.version;
+  const latestVersion = versions.find((v) => v.version === defaultVersion) ?? versions[0];
   const reviewNeedsAttention = latestVersion?.security_review && latestVersion.security_review.status !== "pass";
-  const latestDownloadable = downloadable[0];
+  const defaultDownloadable = world.downloadable_versions[0]?.version;
+  const latestDownloadable = downloadable.find((v) => v.version === defaultDownloadable) ?? downloadable[0];
   const latestBuilderVersion = (world.builder_versions ?? world.downloadable_versions)[0]?.version;
   const initials = world.display_name
     .split(/\s+/)

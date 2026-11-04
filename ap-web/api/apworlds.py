@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import re
 import subprocess
 import threading
@@ -23,8 +24,10 @@ from ap_lib.apworld_index import (
     download_apworld,
     fetch_index,
     index_head_sha,
+    is_test_build,
     list_installed,
     parse_index_dir,
+    pin_default_version,
     resolve_local_path,
 )
 
@@ -33,6 +36,8 @@ import security_reviews
 from builtin_builder import builtin_record, build_versions
 from apworld_editorial import join_index_record, load_reviewed_apworlds
 from fuzz_evidence import attach_fuzz_evidence, load_provenance
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("apworlds", __name__)
 
@@ -153,6 +158,30 @@ def _index_updated_map(index_dir: Path) -> dict[str, str]:
         return {}
 
 
+def _stable_defaults() -> dict[str, str]:
+    """Worlds whose default version AP-Pie pins to a stable release.
+
+    CTR's stable channel lives in api/ctr.py and moves on the release
+    checklist. Pinning it here keeps a newer test build (0.3.0-alpha1 while
+    0.2.4 is stable) from becoming the default download, Builder version
+    and room pin. Every other world keeps the newest indexed version.
+    """
+    from api.ctr import STABLE as ctr_stable
+
+    return {"ctr": ctr_stable["version"]}
+
+
+def _pin_stable_defaults(worlds: list[APWorldInfo]) -> None:
+    pins = _stable_defaults()
+    for world in worlds:
+        if world.name in pins and not pin_default_version(world, pins[world.name]):
+            logger.warning(
+                "apworld_index: stable %s %s is not indexed; default stays %s",
+                world.name, pins[world.name],
+                world.versions[0].version if world.versions else None,
+            )
+
+
 def _load_index_into_cache():
     """Populate all three index caches in one parse pass. Caller holds the
     lock. Cache is invalidated by `refresh_index` and on first read."""
@@ -160,6 +189,7 @@ def _load_index_into_cache():
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
+        _pin_stable_defaults(worlds)
         head = index_head_sha(index_dir)
         fuzz_stamp, fuzz_records = _fuzz_snapshot()
         for world in worlds:
@@ -915,6 +945,15 @@ def apworld_builder_schema(name: str):
     rows = builder_schemas_for_pins([{"apworld_name": name, "version": version}])
     if not rows:
         abort(404, description=f"APWorld '{name}' not in index")
+    # The standalone Builder's version picker: every buildable version, the
+    # default first, test builds flagged so they can be labelled.
+    buildable = build_versions(world)
+    rows[0] = {
+        **rows[0],
+        "versions": buildable,
+        "default_version": buildable[0]["version"] if buildable else None,
+        "test_build": not builtin and is_test_build(version),
+    }
     # FEAT-31: the server-side half of builder usage. `derivable` false means
     # this apworld is Tier 0 (no option form can be derived), which is the
     # signal for which games still send people to paste a YAML by hand.

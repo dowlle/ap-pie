@@ -337,6 +337,11 @@ export default function YamlBuilderPage() {
             { replace: true },
           );
         }}
+        onVersionChange={context === "standalone" && !sourceId ? (next) => {
+          const params = new URLSearchParams(searchParams);
+          params.set("version", next);
+          navigate(`/yaml-builder/${encodeURIComponent(apworld)}?${params}`);
+        } : undefined}
         surface={context === "standalone" ? "apworlds" : context === "public-room" ? "room_public" : "room_detail"}
         roomId={roomId || undefined}
         initialYaml={initialYaml}

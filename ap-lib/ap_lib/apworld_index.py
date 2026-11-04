@@ -178,6 +178,36 @@ def _version_sort_key(ver_str: str) -> tuple:
     return parts(base), not bool(suffix), parts(suffix)
 
 
+# A version whose numeric base is followed by a hyphen suffix, such as
+# 0.3.0-alpha1 or 1.0.0-rc3. Tags with a name prefix (spyro-v0.4.1) or build
+# metadata (2.0.0+pre-release-2b) do not match and are not labelled.
+_TEST_BUILD_RE = re.compile(r"^\d+(?:\.\d+)*-[0-9A-Za-z]")
+
+
+def is_test_build(version: str) -> bool:
+    """True for a prerelease-shaped version, shown as a test build."""
+    return bool(_TEST_BUILD_RE.match(version or ""))
+
+
+def pin_default_version(world: APWorldInfo, version: str | None) -> bool:
+    """Make `version` the world's default by moving it to the front.
+
+    `versions[0]` is what every default reads: the catalog card, the
+    Builder, room pins and saved YAML freshness. A newer test build stays
+    listed and selectable by name; it just stops being the default while
+    a stable release is pinned. Returns False when the version is not
+    indexed, leaving the order untouched.
+    """
+    if not version:
+        return False
+    for i, v in enumerate(world.versions):
+        if v.version == version:
+            if i:
+                world.versions.insert(0, world.versions.pop(i))
+            return True
+    return False
+
+
 def parse_world_toml(key: str, data: dict) -> APWorldInfo:
     """Parse a single APWorld TOML file into an APWorldInfo."""
     default_url = data.get("default_url")
