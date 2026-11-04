@@ -174,6 +174,27 @@ def _check_against_schema(preset: dict, schema_row) -> dict:
     return out
 
 
+def _bundled_presets(apworld_name: str, schema_row) -> list[dict]:
+    """The presets an apworld ships for its own players, for the version of
+    `schema_row`. The parser reads them from the archive's `solo/presets/`
+    (CTR Archipelago: Quick, Standard, Full Adventure, the same three Play Solo
+    offers), so they always match the apworld that will generate the YAML.
+    They are not stored and have no votes or uses; ids are negative so they
+    can never collide with a stored preset."""
+    schema = (schema_row or {}).get("schema") or {}
+    version = (schema_row or {}).get("version") or ""
+    rows = []
+    for n, b in enumerate(schema.get("bundled_presets") or [], start=1):
+        rows.append({
+            "id": -n, "apworld_name": apworld_name, "version": version,
+            "name": b["label"], "description": b["summary"], "kind": "simple",
+            "values": b["values"], "yaml_content": None, "author_username": None,
+            "is_official": True, "status": "published", "uses": 0, "score": 0,
+            "bundled": True,
+        })
+    return rows
+
+
 def _public_preset(p: dict, voted_ids: set[int]) -> dict:
     """Shape sent to clients. The author's Discord display name is included
     because attribution is the point of publishing; nothing else about them
@@ -189,6 +210,7 @@ def _public_preset(p: dict, voted_ids: set[int]) -> dict:
         "yaml_content": p.get("yaml_content"),
         "author_username": p.get("author_username"),
         "is_official": p["is_official"],
+        "bundled": bool(p.get("bundled")),
         "status": p["status"],
         "uses": p["uses"],
         "score": p["score"],
@@ -209,15 +231,16 @@ def list_presets(name: str):
     user_id = _current_user_id()
     version = request.args.get("version")
     presets = list_presets_for_apworld(name, viewer_user_id=user_id)
-    if not presets:
+    _, schema_row = _schema_for(name, version)
+    bundled = _bundled_presets(name, schema_row)
+    if not presets and not bundled:
         return jsonify({"presets": []})
 
-    _, schema_row = _schema_for(name, version)
-    voted = has_voted([p["id"] for p in presets], user_id)
+    voted = has_voted([p["id"] for p in presets], user_id) if presets else set()
     return jsonify({
         "presets": [
             _public_preset(_check_against_schema(p, schema_row), voted)
-            for p in presets
+            for p in bundled + presets
         ],
     })
 
