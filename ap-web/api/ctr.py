@@ -76,7 +76,7 @@ def older_versions() -> list[str]:
 PRERELEASE: dict | None = None
 
 # Bump when page content materially changes; feeds the sitemap lastmod.
-PAGES_UPDATED = "2026-10-13"
+PAGES_UPDATED = "2026-11-04"
 
 REFERENCE_PAGES: list[dict] = [
     {
@@ -123,6 +123,20 @@ _REFERENCE_BY_SLUG = {page["slug"]: page for page in REFERENCE_PAGES}
 # /ctr/releases/<slug> on 2026-09-25; RELEASE_REDIRECTS keeps the old URLs
 # answering with a permanent redirect so links and search results carry over.
 RELEASE_PAGES: list[dict] = [
+    {
+        "slug": "0-3-0",
+        "title": "What changed in 0.3.0 alpha 1?",
+        "page_title": "CTR Archipelago 0.3.0 alpha 1 test build notes",
+        "short_title": "0.3.0 alpha 1 notes",
+        "blurb": "Test build notes for one generator, custom tracks, Play Solo, the Wumpa Shop and more.",
+        "description": "CTR Archipelago 0.3.0 alpha 1 test build notes. 0.2.4 remains the current stable release.",
+        "file": "0-3-0-release-notes.md",
+        "published": "2026-11-04",
+        "updated": "2026-11-04",
+        "verified_against": "0.3.0-alpha1",
+        "status_label": "Alpha 1 test build notes",
+        "github_release": "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha1",
+    },
     {
         "slug": "0-2-4",
         "title": "What changed in 0.2.4?",
@@ -202,10 +216,17 @@ RELEASE_REDIRECTS = {"0-2-0-release-notes": "/ctr/releases/0-2-0"}
 
 # Stable releases for /ctr/releases, newest first. `notes` is the page on
 # this site when one exists, otherwise the GitHub release. Summaries are the
-# release titles from GitHub. Test builds are linked as a group, not listed.
+# release titles from GitHub. Test builds have a separate entry above this list.
 # `upcoming` marks a release whose notes are up before the GitHub release is
 # published; drop it and bump STABLE when the release goes out.
 _GITHUB_RELEASES = "https://github.com/dowlle/ctr-native-ap/releases"
+TEST_BUILD: dict = {
+    "version": "0.3.0 alpha 1",
+    "date": "2026-11-04",
+    "notes": "/ctr/releases/0-3-0",
+    "download": f"{_GITHUB_RELEASES}/tag/v0.3.0-alpha1",
+    "summary": "One generator and a flat YAML, custom tracks, Play Solo, Wumpa Shop, boss randomization, new checks and traps, in-game updater.",
+}
 RELEASE_HISTORY: list[dict] = [
     {"version": "0.2.4", "date": "2026-10-13", "notes": "/ctr/releases/0-2-4",
      "summary": "Faster generation, fewer refused YAMLs, race-loss DeathLink only when the race counts, trial pad, boss goal and itemsanity pad fixes."},
@@ -274,7 +295,7 @@ CTR_PAGES: list[dict] = [
     {
         "path": "/ctr/releases",
         "title": "CTR Archipelago releases",
-        "blurb": "Every stable CTR Archipelago release with its date and release notes.",
+        "blurb": "CTR Archipelago test build notes and stable releases.",
     },
     *[
         {
@@ -399,6 +420,7 @@ def ctr_landing() -> str:
         **nav,
         faq=CTR_FAQ,
         latest_release=next(p for p in RELEASE_PAGES if p["verified_against"] == STABLE["version"]),
+        test_build=TEST_BUILD,
         stable=STABLE,
         page_title="Crash Team Racing Archipelago | Archipelago Pie",
         meta_description=description,
@@ -589,8 +611,8 @@ def ctr_releases_index() -> str:
     )
     title = "CTR Archipelago releases | Archipelago Pie"
     description = (
-        "Every stable CTR Archipelago release with its date and release notes, "
-        f"from the first public version to the current {STABLE['version']}."
+        "CTR Archipelago 0.3.0 alpha 1 test build notes and every stable release, "
+        f"through the current stable {STABLE['version']}."
     )
     canonical_url = _canonical("/ctr/releases")
     nav = _section("/ctr/releases", "Releases")
@@ -600,6 +622,7 @@ def ctr_releases_index() -> str:
         releases_heading="CTR Archipelago releases",
         download_path="/ctr/download",
         releases=RELEASE_HISTORY,
+        test_build=TEST_BUILD,
         stable=STABLE,
         test_builds_url=_GITHUB_RELEASES,
         page_title=title,
@@ -621,7 +644,7 @@ def ctr_release_page(slug: str):
     page = _RELEASE_BY_SLUG.get(slug)
     if page is None:
         abort(404)
-    github_release = project_pages.github_release_url(_GITHUB_RELEASES, page["verified_against"], RELEASE_HISTORY)
+    github_release = page.get("github_release") or project_pages.github_release_url(_GITHUB_RELEASES, page["verified_against"], RELEASE_HISTORY)
     return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}", github_release)
 
 
