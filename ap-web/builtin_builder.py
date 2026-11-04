@@ -22,8 +22,14 @@ def builtin_record(world, version=None):
     return record
 
 def build_versions(world):
-    versions = [{'version': v.version} for v in world.versions if v.url or v.local]
+    """Buildable versions in index order: the default first."""
+    from ap_lib.apworld_index import is_test_build
+
+    versions = [
+        {'version': v.version, 'test_build': is_test_build(v.version)}
+        for v in world.versions if v.url or v.local
+    ]
     record = builtin_record(world)
     if record:
-        versions.append({'version': record['version']})
+        versions.append({'version': record['version'], 'test_build': False})
     return versions

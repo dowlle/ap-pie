@@ -56,6 +56,7 @@ export default function YamlBuilder({
   presentation = "modal",
   draftKey,
   onGameChange,
+  onVersionChange,
   savedSource,
   onSaved,
 }: {
@@ -98,6 +99,9 @@ export default function YamlBuilder({
   /** sessionStorage key for route-level crash/refresh recovery. */
   draftKey?: string;
   onGameChange?: (apworldName: string) => void;
+  /** Standalone builder: switch to another indexed version of this game.
+   *  Without it the version stays fixed (rooms pin their own). */
+  onVersionChange?: (version: string) => void;
   savedSource?: UserYaml | null;
   onSaved?: (entry: UserYaml) => void;
 }) {
@@ -788,7 +792,25 @@ export default function YamlBuilder({
           <strong>Build your YAML</strong>
           {entry && (
             <span className="settings-modal-meta">
-              {entry.display_name} · v{entry.version}
+              {entry.display_name} ·{" "}
+              {onVersionChange && (entry.versions?.length ?? 0) > 1 ? (
+                <select
+                  className="yaml-builder-version-select"
+                  aria-label="APWorld version"
+                  value={entry.version}
+                  onChange={(e) => onVersionChange(e.target.value)}
+                >
+                  {entry.versions!.map((v) => (
+                    <option key={v.version} value={v.version}>
+                      v{v.version}
+                      {v.version === entry.default_version ? " (current release)" : v.test_build ? " (test build)" : ""}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <>v{entry.version}</>
+              )}
+              {entry.test_build && <span className="badge badge-test-build">Test build</span>}
             </span>
           )}
         </div>
@@ -833,6 +855,15 @@ export default function YamlBuilder({
       <div className="settings-modal-body">
         {step === "preset" && (
           <section className="settings-section yaml-builder-preset-step">
+            {entry?.test_build && (
+              <p className="yaml-builder-test-build-note" role="note">
+                <strong>v{entry.version} is a test build.</strong>{" "}
+                Use it only when everyone in your room plays this test build.
+                {entry.default_version && entry.default_version !== entry.version && (
+                  <> The current release is v{entry.default_version}.</>
+                )}
+              </p>
+            )}
             <h3>Pick a starting point</h3>
             <p className="settings-hint">
               A preset fills in a ready-made setup. You can change every option in the next step.

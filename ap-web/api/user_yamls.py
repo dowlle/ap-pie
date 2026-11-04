@@ -71,15 +71,44 @@ def _schema_for(apworld_name: str, version: str | None):
     return world, (rows[0] if rows else None)
 
 
+def _freshness_target(apworld_name: str, saved: str) -> str | None:
+    """The version a saved YAML is compared against.
+
+    Normally that is the default version. A save made on a test build newer
+    than the default is compared with the newest buildable version instead,
+    so a 0.3.0 alpha save is not told to "update" to the older stable 0.2.4,
+    but is told when a newer alpha or the final release arrives.
+    """
+    from functools import cmp_to_key
+
+    from ap_lib.apworld_index import is_test_build
+    from api.apworlds import _compare_versions, _get_index_worlds
+    from builtin_builder import build_versions
+
+    world = next((w for w in _get_index_worlds() if w.name == apworld_name), None)
+    if world is None:
+        return None
+    versions = [v["version"] for v in build_versions(world)]
+    if not versions:
+        return None
+    default = versions[0]
+    if saved and is_test_build(saved) and _compare_versions(saved, default) > 0:
+        newest = max(versions, key=cmp_to_key(_compare_versions))
+        if _compare_versions(newest, saved) >= 0:
+            return newest
+    return default
+
+
 def _annotate(entry: dict) -> dict:
-    """Attach a freshness verdict against the newest indexed version.
+    """Attach a freshness verdict against the version the save should track.
 
     This is the payoff of storing configurations rather than files: a saved
     YAML can say "two of these options no longer exist" long before its owner
     submits it somewhere and finds out the hard way.
     """
     out = dict(entry)
-    world, schema_row = _schema_for(entry["apworld_name"], None)
+    target = _freshness_target(entry["apworld_name"], entry.get("version") or "")
+    world, schema_row = _schema_for(entry["apworld_name"], target)
     latest = None
     if world is not None:
         latest = (schema_row or {}).get("version")

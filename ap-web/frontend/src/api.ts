@@ -249,7 +249,7 @@ export interface APWorldInfo {
   has_update: boolean;
   versions: APWorldVersion[];
   downloadable_versions: { version: string }[];
-  builder_versions?: { version: string }[];
+  builder_versions?: BuildableVersion[];
   // FEAT-34: optional metadata backfilled from the unofficial AP sheet
   // (OPS-16). `stability` is stable/unstable/alpha/beta; the other two
   // are URLs. Render `null` as silent absence.
@@ -1189,6 +1189,13 @@ export interface ParsedTemplate {
 
 // ── FEAT-38: guided YAML builder schemas ──────────────────────────
 
+/** A version the Builder can open. `test_build` marks a prerelease such as
+ *  0.3.0-alpha1, labelled as a test build next to the stable default. */
+export interface BuildableVersion {
+  version: string;
+  test_build?: boolean;
+}
+
 export interface BuilderSchemaEntry {
   /** YAML `game:` string (index game_name). */
   game: string;
@@ -1202,6 +1209,11 @@ export interface BuilderSchemaEntry {
   /** True when the server ran out of fetch budget (or hit a transient
    *  upstream failure) before deriving this entry - retry later. */
   pending?: boolean;
+  /** Standalone builder only: every buildable version, the default first. */
+  versions?: BuildableVersion[];
+  default_version?: string | null;
+  /** This version is a prerelease (test build). */
+  test_build?: boolean;
 }
 
 /** Per-pinned-game builder schemas for a room. Anonymous-accessible. */
