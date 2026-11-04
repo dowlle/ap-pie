@@ -5095,6 +5095,23 @@ details.yaml-builder-group > summary .muted {
 .yaml-builder-preset-step > h3,
 .yaml-builder-preset-step > p { margin: 0; }
 .yaml-builder-default-start { align-self: flex-start; }
+.yaml-builder-version-select {
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.1rem 0.3rem;
+  max-width: 15rem;
+}
+.badge-test-build { margin-left: 0.4rem; background: rgba(242, 173, 85, 0.12); color: var(--yellow); border-color: rgba(242, 173, 85, 0.4); }
+.yaml-builder-test-build-note {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-left: 4px solid var(--yellow);
+  background: rgba(242, 173, 85, 0.08);
+  border-radius: 4px;
+}
 .yaml-builder-preset-list-wrap { display: flex; flex-direction: column; gap: 0.7rem; }
 .yaml-builder-form-fieldset {
   display: contents;
