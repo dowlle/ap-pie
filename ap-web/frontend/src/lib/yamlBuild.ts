@@ -60,6 +60,7 @@ export function buildYamlContent(input: {
     gameSection[opt.name] = normalizeValue(opt, picked);
   }
   for (const opt of template.options) {
+    if (opt.default_unresolved && (values[opt.name] === undefined || values[opt.name] === null)) continue;
     gameSection[opt.name] = normalizeValue(opt, values[opt.name]);
   }
   doc[game] = gameSection;

@@ -1162,6 +1162,9 @@ export interface TemplateOption {
   description: string;
   category: string;
   default: unknown;
+  /** Static parser could not resolve the declared default. null means use
+   *  the game's own default by leaving this option out of the YAML. */
+  default_unresolved?: boolean;
   choices?: string[] | null;
   min?: number;
   max?: number;
