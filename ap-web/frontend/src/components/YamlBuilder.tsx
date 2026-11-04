@@ -1588,8 +1588,8 @@ function OptionControl({
   if (option.default_unresolved) {
     const inherited = value === undefined || value === null;
     return (
-      <div>
-        <label>
+      <div className="yaml-builder-default-control">
+        <label className="yaml-builder-default-choice">
           <input type="checkbox" checked={inherited}
             onChange={(e) => onChange(e.target.checked ? null : [])} />
           Use game default
