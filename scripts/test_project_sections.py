@@ -113,6 +113,42 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertEqual(self.get("/ctr/releases/0-2-4").status_code, 200)
         self.assertIn('href="https://github.com/dowlle/ctr-native-ap/releases/tag/v0.1.0"', overview)
 
+    def test_alpha_notes_are_separate_from_stable_release(self) -> None:
+        alpha_path = "/ctr/releases/0-3-0"
+        prerelease = "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha1"
+        overview = self.get("/ctr/releases").get_data(as_text=True)
+        # 0.2.4 stays the main version: the stable list comes first, the alpha is one line after it.
+        main = overview[overview.index('<h1>'):]
+        self.assertLess(main.index('href="/ctr/releases/0-2-4"'), main.index('href="' + alpha_path + '"'))
+        self.assertNotIn("<h2>Test build</h2>", overview)
+        self.assertIn("0.3.0 alpha 1", overview)
+        self.assertIn("test build", overview)
+        self.assertIn('href="' + prerelease + '"', overview)
+        self.assertIn("The current stable release is 0.2.4", overview)
+        self.assertEqual(ctr.RELEASE_HISTORY[0]["version"], "0.2.4")
+        self.assertEqual(ctr.STABLE["version"], "0.2.4")
+        self.assertEqual(ctr.KEPT_VERSIONS[0], "0.2.4")
+        self.assertNotIn("0.3.0", ctr.KEPT_VERSIONS)
+        self.assertTrue(self.get("/ctr/download/windows").headers["Location"].endswith(
+            "/v0.2.4/ctr-archipelago-v0.2.4-windows-x86.zip"))
+        download_page = self.get("/ctr/download").get_data(as_text=True)
+        self.assertIn('href="/yaml-builder/ctr?version=0.2.4"', download_page)
+        self.assertNotIn('href="/yaml-builder/ctr?version=0.3.0"', download_page)
+
+        response = self.get(alpha_path)
+        self.assertEqual(response.status_code, 200)
+        notes = response.get_data(as_text=True)
+        self.assertIn("This is alpha 1 of 0.3.0, a test build", notes)
+        self.assertIn("v0.2.4 is still the stable version", notes)
+        self.assertIn('href="' + prerelease + '"', notes)
+        self.assertNotIn('href="/yaml-builder/ctr?version=0.3.0"', notes)
+        self.assertNotIn("<!--", notes)
+        self.assertNotIn("[Check", notes)
+        self.assertNotIn("[Rewrite", notes)
+        self.assertNotIn("Moving from a 0.2.4 YAML", notes)
+        self.assertNotIn("What I tested", notes)
+        self.assertIn(f"{config.PUBLIC_BASE_URL}{alpha_path}", self.get("/sitemap.xml").get_data(as_text=True))
+
     def test_older_versions_stay_downloadable_after_a_new_stable(self) -> None:
         # 0.2.4 is stable today; 0.2.3, 0.2.2, 0.2.1 and 0.2.0 stay downloadable under "Older versions".
         page = self.get("/ctr/download").get_data(as_text=True)

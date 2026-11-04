@@ -31,7 +31,9 @@
     </li>
     {% endfor %}
   </ul>
-  {% if test_builds_url %}
+  {% if test_build %}
+  <p>Testing the next version? <a href="{{ test_build.notes }}">{{ test_build.version }}</a> is out as a test build on <a href="{{ test_build.download }}" rel="noopener noreferrer">GitHub</a>. Use it only if you are helping to test.</p>
+  {% elif test_builds_url %}
   <p>Test builds for the next version are published as pre-releases on <a href="{{ test_builds_url }}" rel="noopener noreferrer">GitHub</a>. Use them only if you are helping to test.</p>
   {% endif %}
   {% if releases_footer_html %}<p>{{ releases_footer_html|safe }}</p>{% endif %}
