@@ -16,20 +16,7 @@
 {% endblock %}
 {% block main %}
   <h1>{{ releases_heading }}</h1>
-  <p class="guide-lede">{% if releases_lede_html %}{{ releases_lede_html|safe }}{% elif test_build %}The 0.3.0 alpha is a test build. {{ stable.version }} remains the current stable release; get it from the <a href="{{ download_path }}">download page</a>. Stable releases are listed below, newest first.{% else %}Every stable release, newest first. The current stable release is {{ stable.version }}; get it from the <a href="{{ download_path }}">download page</a>.{% endif %}</p>
-  {% if test_build %}
-  <h2>Test build</h2>
-  <ul class="release-list">
-    <li>
-      <span class="release-version">{{ test_build.version }}</span>
-      <span class="release-date"><time datetime="{{ test_build.date }}">{{ test_build.date }}</time> · test build</span>
-      <p class="release-summary">{{ test_build.summary }}</p>
-      <a href="{{ test_build.notes }}">Test build notes</a>
-    </li>
-  </ul>
-  <p>Download this alpha from the <a href="{{ test_build.download }}" rel="noopener noreferrer">GitHub prerelease</a>. {{ stable.version }} remains the current stable release.</p>
-  <h2>Stable releases</h2>
-  {% endif %}
+  <p class="guide-lede">{% if releases_lede_html %}{{ releases_lede_html|safe }}{% else %}Every stable release, newest first. The current stable release is {{ stable.version }}; get it from the <a href="{{ download_path }}">download page</a>.{% endif %}</p>
   <ul class="release-list">
     {% for release in releases %}
     <li>
@@ -44,7 +31,9 @@
     </li>
     {% endfor %}
   </ul>
-  {% if test_builds_url and not test_build %}
+  {% if test_build %}
+  <p>Testing the next version? <a href="{{ test_build.notes }}">{{ test_build.version }}</a> is out as a test build on <a href="{{ test_build.download }}" rel="noopener noreferrer">GitHub</a>. Use it only if you are helping to test.</p>
+  {% elif test_builds_url %}
   <p>Test builds for the next version are published as pre-releases on <a href="{{ test_builds_url }}" rel="noopener noreferrer">GitHub</a>. Use them only if you are helping to test.</p>
   {% endif %}
   {% if releases_footer_html %}<p>{{ releases_footer_html|safe }}</p>{% endif %}

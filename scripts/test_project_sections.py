@@ -117,13 +117,16 @@ class ProjectSectionsTest(unittest.TestCase):
         alpha_path = "/ctr/releases/0-3-0"
         prerelease = "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha1"
         overview = self.get("/ctr/releases").get_data(as_text=True)
-        self.assertLess(overview.index('href="' + alpha_path + '"'), overview.index('<h2>Stable releases</h2>'))
+        # 0.2.4 stays the main version: the stable list comes first, the alpha is one line after it.
+        main = overview[overview.index('<h1>'):]
+        self.assertLess(main.index('href="/ctr/releases/0-2-4"'), main.index('href="' + alpha_path + '"'))
+        self.assertNotIn("<h2>Test build</h2>", overview)
         self.assertIn("0.3.0 alpha 1", overview)
         self.assertIn("test build", overview)
         self.assertIn('href="' + prerelease + '"', overview)
-        self.assertIn("0.2.4 remains the current stable release", overview)
+        self.assertIn("The current stable release is 0.2.4", overview)
         landing = self.get("/ctr").get_data(as_text=True)
-        self.assertIn('href="' + alpha_path + '">0.3.0 alpha 1 test build notes</a>', landing)
+        self.assertIn('href="' + alpha_path + '">0.3.0 alpha 1</a> is out as a test build', landing)
         self.assertEqual(ctr.RELEASE_HISTORY[0]["version"], "0.2.4")
         self.assertEqual(ctr.STABLE["version"], "0.2.4")
         self.assertEqual(ctr.KEPT_VERSIONS[0], "0.2.4")
