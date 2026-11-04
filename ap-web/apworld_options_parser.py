@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 
 
-BUILDER_SCHEMA_FORMAT_VERSION = 9
+BUILDER_SCHEMA_FORMAT_VERSION = 10
 
 
 def parse_apworld_options(apworld_path: Path) -> dict | None:
@@ -703,6 +703,10 @@ def _parse_options_source(
         range_start = _get_literal(raw.get("range_start"), literal_names)
         range_end = _get_literal(raw.get("range_end"), literal_names)
         valid_keys = _get_literal(raw.get("valid_keys"), literal_names)
+        if _has_unknown(default):
+            default = None
+        if _has_unknown(valid_keys):
+            valid_keys = None
         special_range_names = _get_literal(raw.get("special_range_names"), literal_names)
         option_values = {}
         for fname, fvalue in raw.items():
@@ -859,6 +863,21 @@ _LITERAL_CONSTRUCTORS = {
     "sorted": sorted,
 }
 
+# A static record can have a known name beside an unresolvable calculated
+# field. Retain that name for later projections, but never publish incomplete
+# records as option defaults or choices.
+_UNKNOWN = object()
+
+
+def _has_unknown(value):
+    if value is _UNKNOWN:
+        return True
+    if isinstance(value, dict):
+        return any(_has_unknown(k) or _has_unknown(v) for k, v in value.items())
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return any(_has_unknown(v) for v in value)
+    return False
+
 
 def _get_literal(
     node: ast.AST | None,
@@ -894,8 +913,31 @@ def _get_literal(
         return ast.literal_eval(node)
     except (ValueError, TypeError, SyntaxError):
         pass
+    if isinstance(node, ast.BinOp):
+        left = _get_literal(node.left, literal_names, local_names)
+        right = _get_literal(node.right, literal_names, local_names)
+        if isinstance(node.op, ast.BitOr) and isinstance(left, dict) and isinstance(right, dict):
+            return left | right
+        if isinstance(node.op, ast.Add) and type(left) is type(right) and isinstance(left, (tuple, list, str)):
+            return left + right
+    if isinstance(node, ast.Compare) and len(node.ops) == len(node.comparators) == 1:
+        left = _get_literal(node.left, literal_names, local_names)
+        right = _get_literal(node.comparators[0], literal_names, local_names)
+        if left is None or right is None or _has_unknown(left) or _has_unknown(right):
+            return None
+        if isinstance(node.ops[0], ast.NotEq):
+            return left != right
+        if isinstance(node.ops[0], ast.Eq):
+            return left == right
+        if isinstance(right, (str, dict, list, tuple, set, frozenset)):
+            if isinstance(node.ops[0], ast.In):
+                return left in right
+            if isinstance(node.ops[0], ast.NotIn):
+                return left not in right
     if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
         values = [_get_literal(item, literal_names, local_names) for item in node.elts]
+        if isinstance(node, ast.Tuple):
+            return tuple(_UNKNOWN if v is None else v for v in values)
         if any(value is None for value in values):
             return None
         if isinstance(node, ast.List):
@@ -911,6 +953,11 @@ def _get_literal(
         return dict(zip(keys, values))
     if isinstance(node, ast.Call) and not node.keywords:
         fn = _get_name(node.func)
+        if isinstance(node.func, ast.Name) and fn == "zip" and len(node.args) == 2:
+            values = [_get_literal(arg, literal_names, local_names) for arg in node.args]
+            if all(isinstance(v, (list, tuple)) for v in values):
+                return list(zip(*values))
+            return None
         if isinstance(node.func, ast.Name) and fn == "len" and len(node.args) == 1:
             value = _get_literal(node.args[0], literal_names, local_names)
             return len(value) if isinstance(value, (str, bytes, dict, list, tuple, set, frozenset)) else None
@@ -944,17 +991,21 @@ def _get_literal(
                     return None
         if (
             isinstance(node.func, ast.Attribute)
-            and node.func.attr in {"keys", "values"}
+            and node.func.attr in {"keys", "values", "items"}
             and not node.args
         ):
             owner = _get_literal(node.func.value, literal_names, local_names)
             if isinstance(owner, dict):
-                return owner.keys() if node.func.attr == "keys" else owner.values()
+                return list(getattr(owner, node.func.attr)())
     if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
         if len(node.generators) != 1:
             return None
         generator = node.generators[0]
-        if generator.is_async or not isinstance(generator.target, ast.Name):
+        target = generator.target
+        names = ([target.id] if isinstance(target, ast.Name) else
+                 [n.id for n in target.elts] if isinstance(target, (ast.Tuple, ast.List))
+                 and all(isinstance(n, ast.Name) for n in target.elts) else None)
+        if generator.is_async or not names:
             return None
         source = _get_literal(generator.iter, literal_names, local_names)
         if not isinstance(source, (list, tuple, set, frozenset)):
@@ -962,7 +1013,13 @@ def _get_literal(
         values = []
         pairs = []
         for item in source:
-            scope = {**(local_names or {}), generator.target.id: item}
+            if isinstance(target, ast.Name):
+                bindings = {names[0]: item}
+            elif isinstance(item, (tuple, list)) and len(item) == len(names):
+                bindings = dict(zip(names, item))
+            else:
+                return None
+            scope = {**(local_names or {}), **bindings}
             include = True
             for condition in generator.ifs:
                 result = _get_literal(condition, literal_names, scope)
@@ -1002,6 +1059,17 @@ def _resource_literals(node: ast.AST, zf: zipfile.ZipFile, package: str) -> ast.
     """
     class Resources(ast.NodeTransformer):
         def visit_Call(self, call):
+            # json.loads accepts UTF-8 bytes directly, so not every package
+            # spells this resource read with a trailing .decode("utf-8").
+            if (ast.unparse(call.func) == "pkgutil.get_data"
+                    and len(call.args) == 2 and not call.keywords
+                    and isinstance(call.args[0], ast.Name) and call.args[0].id == "__package__"
+                    and isinstance(call.args[1], ast.Constant) and isinstance(call.args[1].value, str)):
+                path = call.args[1].value
+                if not path.startswith("/") and "\\" not in path and all(p not in ("", ".", "..") for p in path.split("/")):
+                    text = _read_member(zf, f"{package}/{path}")
+                    if text is not None:
+                        return ast.copy_location(ast.Constant(text), call)
             if (isinstance(call.func, ast.Attribute) and call.func.attr == "decode"
                     and len(call.args) == 1 and isinstance(call.args[0], ast.Constant)
                     and call.args[0].value == "utf-8" and not call.keywords):
@@ -1053,6 +1121,12 @@ def _collect_module_literals(zf: zipfile.ZipFile, stem: str) -> dict[str, object
             if fields:
                 record_fields[node.name] = fields
         for node in tree.body:
+            if isinstance(node, ast.ImportFrom) and node.level and node.module:
+                for imported in node.names:
+                    if imported.asname:
+                        assignments.append((module, imported.asname,
+                            ast.Attribute(value=ast.Name(id=node.module.split('.')[-1]),
+                                          attr=imported.name, ctx=ast.Load())))
             if isinstance(node, ast.Assign) and len(node.targets) == 1:
                 name = _get_name(node.targets[0])
                 if name:

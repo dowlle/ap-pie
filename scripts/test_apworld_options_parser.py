@@ -151,6 +151,48 @@ class FixtureOptions(PerGameCommonOptions):
 
 
 class APWorldOptionsParser(unittest.TestCase):
+    def test_derived_list_defaults_and_choices_without_executing_world(self) -> None:
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive:
+            archive.writestr("fixture/__init__.py", 'class FixtureWorld:\n    game = "Fixture Game"\n')
+            archive.writestr("fixture/data/arenas.json", '{"arenas": [{"id": 3, "name": "Extra"}]}')
+            archive.writestr("fixture/data.py", '''import json, pkgutil
+EXTRAS = {row['id']: row for row in json.loads(pkgutil.get_data(__package__, 'data/arenas.json'))['arenas']}
+ARENAS = dict(zip((1, 2), ('First', 'Second'))) | {key: row['name'] for key, row in EXTRAS.items()}
+NAMES = tuple(ARENAS.values())
+ORIGINALS = tuple(name for key, name in ARENAS.items() if key not in EXTRAS)
+ROSTER = {'Alpha': 0, 'Beta': 1, 'Oxide': 2}
+POOL = tuple((name, forbidden_call(name), cid) for name, cid in ROSTER.items())
+POOL_NAMES = tuple(row[0] for row in POOL)
+DEFAULT_ROSTER = tuple(n for n in POOL_NAMES if n != 'Oxide')
+''')
+            archive.writestr("fixture/Options.py", '''from dataclasses import dataclass
+from Options import OptionSet, PerGameCommonOptions
+from .data import NAMES, ORIGINALS, POOL_NAMES, DEFAULT_ROSTER as RACERS, POOL
+class Arenas(OptionSet):
+    valid_keys = sorted(NAMES)
+    default = frozenset(ORIGINALS)
+class Racers(OptionSet):
+    valid_keys = sorted(POOL_NAMES)
+    default = frozenset(RACERS)
+class Incomplete(OptionSet):
+    default = POOL
+@dataclass
+class FixtureOptions(PerGameCommonOptions):
+    arenas: Arenas
+    racers: Racers
+    incomplete: Incomplete
+''')
+        schema = parse_apworld_options_bytes(output.getvalue(), stem_hint="fixture")
+        options = {o['name']: o for o in schema['options']}
+        self.assertEqual(options['arenas']['default'], ['First', 'Second'])
+        self.assertEqual(options['arenas']['choices'], ['Extra', 'First', 'Second'])
+        self.assertEqual(options['racers']['default'], ['Alpha', 'Beta'])
+        self.assertEqual(options['racers']['choices'], ['Alpha', 'Beta', 'Oxide'])
+        self.assertTrue(options['incomplete']['default_unresolved'])
+        self.assertIsNone(options['incomplete']['default'])
+        json.dumps(schema)  # No internal unresolved-record marker escapes.
+
     def test_unresolved_collection_default_defers_to_generator(self) -> None:
         output = io.BytesIO()
         with zipfile.ZipFile(output, "w") as archive:
