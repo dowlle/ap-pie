@@ -1,15 +1,67 @@
-**[Download 0.3.0 alpha 1](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha1)** · **[Setup guide](/ctr/setup)**
+**[Download 0.3.0 alpha 2](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha2)** · **[Setup guide](/ctr/setup)**
 
-> **This is alpha 1 of 0.3.0, a test build.** v0.2.4 is still the stable version.
+> **This is alpha 2 of 0.3.0, a test build.** v0.2.4 is still the stable version.
 > The alpha doesn't update itself. The in-game updater only offers stable releases, so grab new alphas by hand.
 > Use a new folder, and keep your 0.2.4 install as it is.
-> This page grows with each alpha and turns into the 0.3.0 release notes.
+> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 1? Start with [New in alpha 2](#new-in-alpha-2).
 
 0.3.0 is the biggest update so far. Every seed now comes from one generator and the YAML is one flat list of options. Custom tracks are part of the game: import them, race them in Arcade, or put up to 132 in a seed. There's also Play Solo, a Wumpa Shop, boss randomization, a bunch of new checks and traps, and an in-game updater for the next release.
 
+## New in alpha 2
+
+Alpha 2 fixes a lot of what you found in alpha 1 and adds a few new things.
+
+- **Use the alpha 2 client and the alpha 2 APWorld together.** Download both from the [alpha 2 release](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha2). Use a new folder or replace your alpha 1 folder; your 0.2.4 install and rooms stay as they are.
+- **An alpha 1 room still connects** to the alpha 2 client, and an alpha 1 YAML still works. There are four new options.
+
+### Fixed since alpha 1
+
+- Opening the tracker while the hub save camera moved could start a race with the save menu still on screen. Pause and the tracker now wait until the camera has stopped.
+- Wumpa you get outside a race, bought in the shop or sent by other players, is added right away, single fruit included, instead of waiting for the next race.
+- Wumpa Wipeout removes all the fruit of the race, also above 10.
+- A seed with Spoiler Items on and coloured boxes off starts again.
+- Arcade, Time Trial, Versus and Battle play like the original game again: normal boosts, and no AP items, traps or checks.
+- Loading another save profile no longer keeps a racer that's locked in the room.
+- AP boxes on custom tracks no longer sink into the ground.
+- Cups show the custom track's own name instead of "Roo's Tubes".
+- Boss garages show the full rival name and a "<Boss>'s Challenge" heading.
+- A boss cup now races the rival its garage names, and its banner reads "<Boss>'s Cup".
+- Bosses on custom tracks pick a lane ahead of themselves, so the boss no longer stalls when it runs out of time.
+- Shop item names stop before the price.
+- Hit Character checks count a boss race as soon as you can enter it.
+- Only one Cortex Vortex per seed: a downloaded copy is replaced by the one that comes with the game.
+- Custom track downloads retry when Project Saphi rate limits them, and errors show the real reason.
+- Play Solo names the track it can't publish and replaces a stale copy, instead of "could not publish the Play Solo descriptor".
+- The window title shows the plain version.
+- No more looping podium noise in the hub after a Trophy Race win.
+- A 0.2.x YAML is refused with one readable message.
+
+### New
+
+- **Custom Tracks screen:** one screen with Library, This Seed and Import tabs. The importer keeps track names, lets you rename them, and can import all valid tracks at once.
+- **Custom track music:** custom tracks play their own music, however you installed them. Imported tracks without their own music play the music of the track they replace.
+- **Box Author Mode** is in the regular client, under Options, Authoring: place AP boxes on a track and export them yourself.
+- **Play Solo options:** every YAML option is on the options screen, in groups. Lists like Crystal Arenas and the boss pools are checklists, and the screen tells you when a value won't generate. There's no password by default; you can set one.
+- **Play Solo with big libraries:** track checks run in the background, so a large track library no longer freezes the menu.
+- **Leaving a race pays:** Exit to map, Restart and a DeathLink loss bank the fruit you picked up, minus hits. Starting fruit never banks.
+- **Wumpa Shop pacing:** expensive shelves come into logic later, by the Keys you've received: 100, 300, 600 and 900 Wumpa at 0 to 3 Keys, more at 4. The new option `wumpa_shop_logic_scale` (25 to 400%) scales those amounts.
+- **Wumpa bundles are on by default:** some Wumpa filler becomes Small or Big Wumpa Bundles.
+- **Hint filters:** `pad_hints_progression_only` and `shop_hints_progression_only` limit pad and shop hints to progression items, and `pad_hints_wait_for_spoiler` makes pad hints wait for Warp Pad Preview. All three are off by default.
+- **Pad colours:** the pad beam, hub map and tracker use the same colours. An open pad has a green beam and a pad whose second stage is open a blue-violet one. A finished pad you can still race again for Wumpa keeps the light blue beam with its X.
+- **Custom track boost rules:** Ancient Lake, Drive Thru Danger, Bowser Castle 1 and Neon Paradise no longer need USF to finish, and Lights Out needs the first boost.
+- **Clearer YAML descriptions** for almost every option, and three options have new display names: Guaranteed Warp Pads (`required_entries`), Pads With Two Requirements (`two_stage_density`) and Papu's Pyramid Mask Helper (`tizi_helper`).
+
+### Known issues in alpha 2
+
+- The Custom Tracks screen still has rough edges: the Library can show only some of your tracks, the Project Saphi catalogue may not show, This Seed can say no seed is loaded while you're connected, and the Import help text is cut off. Fixes come in alpha 3.
+- The race-start banner of a cup can show another cup's name, for example "Red Gem Cup" for the Purple Gem Cup. The standings show the right name.
+- Some menus are still hard to read where text runs over the logo.
+- A seed can still fail to generate with some unusual YAMLs. Generate again, and send me the YAML.
+- Short freezes can happen in some races. If you get one, tell me the track.
+
 ## What's new
 
-- One generator for every seed, and one flat YAML with 91 options.
+- One generator for every seed, and one flat YAML with 95 options.
 - A YAML that sets nothing gets the original game's shape: 18 tracks, 5 Gem Cups, 4 Crystal Challenges and the five boss races, shuffled.
 - Custom tracks: import from a patch, Custom Arcade and Time Trial pages, a Track Library, and up to 132 tracks in a seed.
 - Cortex Vortex is a full track, with its own music.
@@ -37,7 +89,7 @@
 
 Every seed now comes from one generator. If your YAML doesn't set any content, you get the original game's shape: the 18 race tracks, 5 Gem Cups, 4 Crystal Challenges and the five boss races, on the original 27 warp pads and five garages, shuffled. The first five cups are the original Gem Cups with their Gems. Cup races are drawn, four different tracks per cup. Slide Coliseum and Turbo Track offer all three races now.
 
-The YAML is one flat list of 91 options in twelve groups: Tracks, Cups and Arenas, Bosses, Goal, Pads and Requirements, Checks, Wumpa Shop, Items and Traps, Characters and Stats, Boost, DeathLink and Display. Each thing is set in one place, and the Builder explains every option. Some highlights:
+The YAML is one flat list of 95 options in twelve groups: Tracks, Cups and Arenas, Bosses, Goal, Pads and Requirements, Checks, Wumpa Shop, Items and Traps, Characters and Stats, Boost, DeathLink and Display. Each thing is set in one place, and the Builder explains every option. Some highlights:
 
 - `pad_placement`: `vanilla`, `shuffle_within_kind` (tracks on track pads, cups on cup pads, arenas on arena pads) or `shuffle`. Vanilla requirements work with all three.
 - `retail_tracks`, `cup_count`, `cup_tracks` and `crystal_challenge_count` decide what's in the seed.
@@ -148,7 +200,7 @@ All of these are off by default unless it says otherwise.
 - **Universal Tracker:** it no longer drops items found on custom track checks.
 - **Item boxes:** every custom track whose package states weapon crates gets AP item boxes now, one per crate, at most 15. Before, only registered tracks got them. If a track's boxes don't match between the seed and the client, that track's boxes switch off instead of sending the wrong checks.
 - **Wumpa Shop prices:** a slot's price no longer depends on what's in it, so the cheap slots don't give away progression.
-- **Wumpa fruit:** Adventure races count all your fruit past 10 and bank it when you finish. Quitting or restarting loses it. A first pad race you've won stays open for farming Wumpa while the later races are still locked.
+- **Wumpa fruit:** Adventure races count all your fruit past 10 and bank it when you finish. Exit to map, Restart and a DeathLink loss bank the fruit you picked up, minus hits. A first pad race you've won stays open for farming Wumpa while the later races are still locked.
 - **Failed seeds:** most of the seeds that used to fail to generate now generate.
 
 ## Known issues
@@ -156,8 +208,10 @@ All of these are off by default unless it says otherwise.
 - **Rooms from 0.2.x** don't load on 0.3.0. Play them on v0.2.4.
 - **Rare failed seed:** with some unusual YAMLs (lots of cups and arenas, Itemsanity, many traps) a seed can still fail to generate. Generating again fixes it. If it happens, send me the YAML.
 - **Old YAMLs:** Archipelago prints one warning line per removed option name. The seed still generates.
-- **Menus:** some menus are hard to read, especially Options and Custom Content, where text runs over the logo.
-- **Import Track Files:** the list shows "..." instead of track names, and names come from the patch file name.
+- **Menus:** some menus are hard to read, especially Options and Custom Tracks, where text runs over the logo.
+- **Custom Tracks screen:** the Library can show only some of your tracks, the Project Saphi catalogue may not show, This Seed can say no seed is loaded while you're connected, and the Import help text is cut off.
+- **Cup banner:** the race-start banner of a cup can show another cup's name. The standings show the right name.
+- **Short freezes** can happen in some races. If you get one, tell me the track.
 - **Wumpa Shop prices** are a first guess and will get tuned once there's more play data.
 - **Random bosses:** the boss's voice lines may be silent when a different racer takes the garage, and the scene after the race shows the garage's original boss. The echo in a boss race follows the boss, not the drawn track.
 - **Custom tracks:** the importer takes race tracks only, no arenas and no LZMA patches. In two-player Adventure a custom track race runs as one player.
