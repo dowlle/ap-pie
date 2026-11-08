@@ -552,6 +552,11 @@ def create_app() -> Flask:
     app.register_blueprint(server_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(apworlds_bp)
+    import os as _os
+    if _os.environ.get("AP_INDEX_WARM", "1") != "0":
+        # Load the game list now, off the request path, so no upload waits on a cold parse.
+        from api.apworlds import warm_index
+        warm_index(app)
     app.register_blueprint(apworld_requests_bp)
     app.register_blueprint(market_bp)
     app.register_blueprint(rooms_bp)

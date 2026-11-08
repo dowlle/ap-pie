@@ -6,6 +6,7 @@ import logging
 import re
 import subprocess
 import threading
+import time
 from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
@@ -63,7 +64,8 @@ def _requires_generation(f):
 _index_cache: list | None = None
 _index_worlds_cache: list | None = None  # raw APWorldInfo objects, parallel to _index_cache
 _index_lookup_cache: dict | None = None  # game_name -> APWorldInfo
-_index_lock = threading.Lock()
+_index_lock = threading.Lock()  # guards the swap only, never a parse
+_index_build_lock = threading.Lock()  # one parse at a time
 _index_refresh_lock = threading.Lock()
 _review_stamp = None
 _fuzz_stamp = None
@@ -182,10 +184,11 @@ def _pin_stable_defaults(worlds: list[APWorldInfo]) -> None:
             )
 
 
-def _load_index_into_cache():
-    """Populate all three index caches in one parse pass. Caller holds the
-    lock. Cache is invalidated by `refresh_index` and on first read."""
-    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp
+def _build_index_snapshot() -> tuple:
+    """Parse the whole index into fresh objects and return them, touching no
+    module state. This is the slow part (seconds, more on a cold disk), so it
+    must never run with `_index_lock` held or inside a request that does not
+    have to wait for it."""
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
@@ -194,10 +197,9 @@ def _load_index_into_cache():
         fuzz_stamp, fuzz_records = _fuzz_snapshot()
         for world in worlds:
             attach_fuzz_evidence(world, head, fuzz_records)
-        _index_worlds_cache = worlds
         updated = _index_updated_map(index_dir)
         stamp, reviews = _review_snapshot()
-        _index_cache = []
+        cache = []
         for w in worlds:
             d = _scrub_index_dict(w.to_dict())
             d["updated_at"] = updated.get(w.name)
@@ -207,25 +209,64 @@ def _load_index_into_cache():
                 review = version.get("security_review")
                 if review:
                     review["record_url"] = f"/api/apworlds/security-reviews/{review['id']}"
-            _index_cache.append(d)
-        _review_stamp = stamp
-        _fuzz_stamp = fuzz_stamp
-        _index_lookup_cache = build_game_lookup(worlds)
-    else:
-        _index_worlds_cache = []
-        _index_cache = []
-        _index_lookup_cache = {}
+            cache.append(d)
+        return cache, worlds, build_game_lookup(worlds), stamp, fuzz_stamp
+    return [], [], {}, None, None
+
+
+def _install_index_snapshot(snapshot: tuple) -> None:
+    """Swap all caches in together. Short, so readers never wait for a parse."""
+    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp
+    with _index_lock:
+        _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp = snapshot
+
+
+def _load_index_into_cache():
+    """Rebuild and install the snapshot. One build at a time; the old snapshot
+    keeps serving every reader until the new one is ready."""
+    with _index_build_lock:
+        _install_index_snapshot(_build_index_snapshot())
+
+
+def _ensure_index_loaded() -> None:
+    """Block only while there is no snapshot at all (cold start)."""
+    if _index_lookup_cache is not None and _index_worlds_cache is not None and _index_cache is not None:
+        return
+    with _index_build_lock:
+        if _index_lookup_cache is None or _index_worlds_cache is None or _index_cache is None:
+            _install_index_snapshot(_build_index_snapshot())
+
+
+def index_loaded() -> bool:
+    return _index_lookup_cache is not None and _index_worlds_cache is not None and _index_cache is not None
+
+
+def warm_index(app) -> threading.Thread:
+    """Load the game list in the background at start-up, so the first upload
+    after a restart does not pay for the parse."""
+    def _run() -> None:
+        started = time.monotonic()
+        try:
+            with app.app_context():
+                _ensure_index_loaded()
+            app.logger.info("apworld index warm in %.1fs (%d worlds)", time.monotonic() - started,
+                            len(_index_worlds_cache or []))
+        except Exception as e:  # a failed warm-up only means the first reader loads it instead
+            app.logger.warning("apworld index warm-up failed: %s", e)
+
+    thread = threading.Thread(target=_run, name="apworld-index-warm", daemon=True)
+    thread.start()
+    return thread
 
 
 def _get_index() -> list:
-    global _index_cache
-    with _index_lock:
-        seed, overlay = _review_paths()
-        stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
-        fuzz_stamp, _ = _fuzz_snapshot()
-        if _index_cache is None or stamp != _review_stamp or fuzz_stamp != _fuzz_stamp:
-            _load_index_into_cache()
-        return _index_cache
+    _ensure_index_loaded()
+    seed, overlay = _review_paths()
+    stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
+    fuzz_stamp, _ = _fuzz_snapshot()
+    if stamp != _review_stamp or fuzz_stamp != _fuzz_stamp:
+        _load_index_into_cache()  # evidence changed on disk; other readers keep the old snapshot meanwhile
+    return _index_cache or []
 
 
 @bp.get("/api/apworlds/security-reviews/<digest>")
@@ -243,21 +284,15 @@ def security_review_record(digest):
 
 def _get_index_worlds() -> list[APWorldInfo]:
     """Get the raw APWorldInfo objects (not dicts) for URL resolution."""
-    global _index_worlds_cache
-    with _index_lock:
-        if _index_worlds_cache is None:
-            _load_index_into_cache()
-        return _index_worlds_cache or []
+    _ensure_index_loaded()
+    return _index_worlds_cache or []
 
 
 def _get_game_lookup() -> dict[str, APWorldInfo]:
     """Get the `game_name -> APWorldInfo` map (FEAT-21 picker uses this to
     resolve YAML.game strings into index entries)."""
-    global _index_lookup_cache
-    with _index_lock:
-        if _index_lookup_cache is None:
-            _load_index_into_cache()
-        return _index_lookup_cache or {}
+    _ensure_index_loaded()
+    return _index_lookup_cache or {}
 
 
 def _compare_versions(a: str, b: str) -> int:
@@ -336,6 +371,18 @@ def split_yaml_games(game_string: str) -> list[str]:
     return [g.strip() for g in game_string.split(" / ") if g.strip()]
 
 
+def _pin_when_loaded(app, room_id: str, game_string: str, yaml_content: str | None) -> None:
+    def _run() -> None:
+        try:
+            with app.app_context():
+                _ensure_index_loaded()
+                auto_pin_for_room_game(room_id, game_string, yaml_content=yaml_content)
+        except Exception as e:
+            app.logger.warning("deferred auto-pin for room %s failed: %s", room_id, e)
+
+    threading.Thread(target=_run, name="apworld-deferred-pin", daemon=True).start()
+
+
 def auto_pin_for_room_game(
     room_id: str,
     game_string: str,
@@ -380,6 +427,12 @@ def auto_pin_for_room_game(
             required = extract_required_apworld_versions(yaml_content)
         except Exception:
             required = {}
+
+    if not index_loaded():
+        # Cold start: the upload must not wait for the game list. Pin once it is
+        # loaded, in the background; the pin is only a convenience for the host.
+        _pin_when_loaded(current_app._get_current_object(), room_id, game_string, yaml_content)
+        return
 
     room = get_room(room_id) or {}
     auto_upgrade = bool(room.get("auto_upgrade_apworld_pins", True))
@@ -1129,8 +1182,6 @@ def refresh_index():
     The /apworlds page itself stays visible to all approved hosts; only the
     Refresh button hides for non-admins (gated client-side via
     FeaturesContext / AuthContext - see APWorlds.tsx)."""
-    global _index_cache, _index_worlds_cache, _index_lookup_cache
-
     if not _has_refresh_token():
         # Run the real decorator rather than re-implementing its checks, so
         # session refusals keep returning exactly what they returned before
@@ -1147,20 +1198,18 @@ def refresh_index():
     index_dir = _get_index_dir()
     repo_url = current_app.config.get("AP_INDEX_REPO", "https://github.com/dowlle/Archipelago-index.git")
     try:
-        # Readers use this same lock. They continue serving the old in-memory
-        # snapshot until the candidate clone has passed strict parsing and is
-        # atomically promoted, then all three caches are replaced together.
-        with _index_lock:
+        # Readers keep serving the old in-memory snapshot (they take no lock
+        # while it is loaded) until the candidate clone has passed strict
+        # parsing and is atomically promoted; then all three caches are
+        # replaced together by one short swap.
+        with _index_build_lock:
             before = index_head_sha(index_dir)
             fetch_index(
                 index_dir,
                 repo_url,
                 validate=lambda candidate: parse_index_dir(candidate, strict=True),
             )
-            _index_cache = None
-            _index_worlds_cache = None
-            _index_lookup_cache = None
-            _load_index_into_cache()
+            _install_index_snapshot(_build_index_snapshot())
             worlds = _index_cache or []
             after = index_head_sha(index_dir)
     except Exception as e:
