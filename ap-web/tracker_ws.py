@@ -105,6 +105,11 @@ class TrackerState:
     own_missing_locations: set[int] = field(default_factory=set)
     # slot -> int (ClientStatus from _read_client_status_<team>_<slot>)
     client_status: dict[int, int] = field(default_factory=dict)
+    # slots that received a `Release` / `Collect` PrintJSON since we connected.
+    # The AP server keeps no queryable release state (ClientStatus has no
+    # released value), so this is only what this connection has witnessed.
+    released_slots: set[int] = field(default_factory=set)
+    collected_slots: set[int] = field(default_factory=set)
     # slot -> int (cumulative locations count, derived from RoomInfo or
     # observed via slot_info). For slots other than ours we don't know
     # the exact total without explicit data - left empty in V0; V1 will
@@ -554,6 +559,19 @@ class TrackerConnection:
         IDs via the DataPackage cache.
         """
         type_ = msg.get("type") or "Unknown"
+
+        # Release / Collect: the server broadcasts these when a slot's remaining
+        # items are released to other worlds, or a slot collects its own. Both
+        # carry the slot id and neither is stored by the server.
+        if type_ in ("Release", "Collect"):
+            try:
+                target_slot = int(msg.get("slot"))
+            except (TypeError, ValueError):
+                target_slot = 0
+            if target_slot > 0:
+                with self.state.lock:
+                    (self.state.released_slots if type_ == "Release"
+                     else self.state.collected_slots).add(target_slot)
 
         # V1.3: per-slot location attribution via ItemSend.item.player.
         # Only ItemSend carries item/location attribution; other PrintJSON
@@ -1098,6 +1116,8 @@ def grid_overrides(room_id: str) -> Optional[dict[int, dict]]:
                 "client_status": status,
                 "status_label": label,
                 "goal_completed": goal,
+                "released": slot_id in state.released_slots,
+                "collected": slot_id in state.collected_slots,
                 # `ws_observed_checks` is a partial counter - for non-own
                 # slots it's only what we've seen via PrintJSON since
                 # connect, NOT the absolute total. Caller decides whether
