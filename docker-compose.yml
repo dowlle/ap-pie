@@ -70,6 +70,7 @@ services:
       # with `python3 -c 'import secrets; print(secrets.token_hex(32))'`;
       # values under 32 chars are refused at request time.
       - AP_INDEX_REFRESH_TOKEN=${AP_INDEX_REFRESH_TOKEN:-}
+      - AP_DISCORD_BOT_TOKEN=${AP_DISCORD_BOT_TOKEN:-}
       - AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE=${AP_ANALYTICS_EVENTS_GLOBAL_PER_MINUTE:-600}
       - AP_ANALYTICS_ATTEMPT_RETENTION_DAYS=${AP_ANALYTICS_ATTEMPT_RETENTION_DAYS:-30}
       - AP_ANALYTICS_SYNTHETIC_TOKEN=${AP_ANALYTICS_SYNTHETIC_TOKEN:-}

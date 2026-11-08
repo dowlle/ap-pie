@@ -170,6 +170,77 @@ def parse_tracker_url(url: str) -> dict | None:
     }
 
 
+# Room page links: https://<host>/room/<22-char id>. archipelago.gg and
+# multiworld.gg (a fork of the same WebHost) use the same shape. A room id is
+# not the tracker id, so a room link has to be resolved through the host's
+# `/api/room_status/<id>` JSON before the tracker can be read.
+_ROOM_RE = re.compile(
+    r"^https?://(?P<host>[^/?#]+)/room/(?P<room_id>[A-Za-z0-9_-]{16,32})/?(?:[?#].*)?$",
+)
+_ROOM_STATUS_MAX_BYTES = 256 * 1024
+
+
+def _is_room_host(host: str) -> bool:
+    h = (host or "").lower().rstrip(".")
+    if h.startswith("www."):
+        h = h[4:]
+    return h in config.ROOM_HOSTS
+
+
+def parse_room_url(url: str) -> dict | None:
+    """Parse a room page link from a known room host, else None."""
+    if not isinstance(url, str):
+        return None
+    m = _ROOM_RE.match(url.strip())
+    if not m:
+        return None
+    host = m.group("host")
+    if ":" in host or "@" in host or not _is_room_host(host):
+        return None
+    if not is_safe_tracker_url(f"https://{host}/"):
+        return None
+    return {"host": host.lower(), "room_id": m.group("room_id")}
+
+
+def resolve_room_url(url: str) -> dict:
+    """Resolve a room page link to its tracker URL and server port.
+
+    Returns `{"tracker_url", "host", "port", "room_id"}` (port is None when the
+    room is paused or not started yet) or `{"error": ...}`. The connect address
+    is the link's own host, the same host the room page prints. The port is the
+    room's current `last_port`; it changes whenever a paused room resumes, so a
+    caller that wants a live connection re-resolves after waking the room.
+    """
+    parsed = parse_room_url(url)
+    if not parsed:
+        return {"error": "Not a room link from a supported room host"}
+    status_url = f"https://{parsed['host']}/api/room_status/{parsed['room_id']}"
+    try:
+        resp = requests.get(status_url, timeout=10)
+        if resp.status_code == 404:
+            return {"error": "Room not found on the room host"}
+        resp.raise_for_status()
+        if len(resp.content) > _ROOM_STATUS_MAX_BYTES:
+            return {"error": "Room status response is too large"}
+        data = resp.json()
+    except (requests.RequestException, ValueError) as e:
+        return {"error": f"Failed to read the room: {e}"}
+    if not isinstance(data, dict):
+        return {"error": "Unexpected room status response"}
+    tracker_id = data.get("tracker")
+    if not isinstance(tracker_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,32}", tracker_id):
+        return {"error": "This room has no tracker"}
+    port = data.get("last_port")
+    if not isinstance(port, int) or isinstance(port, bool) or not (1 <= port <= 65535):
+        port = None
+    return {
+        "tracker_url": f"https://{parsed['host']}/tracker/{tracker_id}",
+        "host": parsed["host"],
+        "port": port,
+        "room_id": parsed["room_id"],
+    }
+
+
 def fetch_tracker_data(tracker_url: str, force: bool = False) -> dict:
     """Fetch tracker data from an archipelago.gg tracker URL.
 
@@ -287,7 +358,9 @@ def _parse_tracker_html(html: str) -> list[dict]:
             continue
         name = clean[1]
         game = clean[2]
-        status_text = clean[3].lower()
+        # multiworld.gg adds "Goal Completed (via override)"; drop the suffix so
+        # it maps to the same status as the plain label.
+        status_text = clean[3].lower().split(" (")[0].strip()
         checks_text = clean[4]
         # checks cell looks like "0/48"; sometimes with surrounding whitespace.
         m = re.match(r"(\d+)\s*/\s*(\d+)", checks_text)

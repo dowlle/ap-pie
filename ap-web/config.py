@@ -146,6 +146,23 @@ SESSION_COOKIE_NAME = os.environ.get("SESSION_COOKIE_NAME", "")
 INDEX_REFRESH_TOKEN = os.environ.get("AP_INDEX_REFRESH_TOKEN", "")
 INDEX_REFRESH_TOKEN_MIN_LEN = 32
 
+# Discord bot service token. The Archipelago Pie Discord bot presents it, with
+# the acting member's Discord id, on a short allow-list of room routes (see
+# auth.BOT_ROUTES). It acts as the existing AP-Pie user with that discord_id,
+# never creates one, and is never accepted on any other route. Unset (the
+# default) disables the bot path entirely. A value shorter than the minimum is
+# refused at request time so a placeholder cannot become a live credential.
+DISCORD_BOT_TOKEN = os.environ.get("AP_DISCORD_BOT_TOKEN", "")
+DISCORD_BOT_TOKEN_MIN_LEN = 32
+
+# Room hosts whose room and tracker pages AP-Pie will resolve from a room link.
+# multiworld.gg is a fork of the archipelago.gg WebHost with the same routes.
+ROOM_HOSTS = tuple(
+    h.strip().lower()
+    for h in os.environ.get("AP_ROOM_HOSTS", "archipelago.gg,multiworld.gg").split(",")
+    if h.strip()
+)
+
 # Tracker
 TRACKER_CACHE_TTL = int(os.environ.get("AP_TRACKER_CACHE_TTL", "30"))
 # FEAT-14 follow-up 2026-05-02: per-slot detail (items / locations / hints)

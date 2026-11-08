@@ -72,6 +72,7 @@ jobs:
       - run: python scripts/check_analytics_scorecard.py
       - run: python scripts/test_security_controls.py
       - run: python scripts/test_open_room_creation.py
+      - run: python scripts/test_discord_bot_token.py
       - run: python scripts/test_account_lifecycle.py
       - run: python scripts/test_apworld_options_parser.py
       - run: python scripts/test_builder_game_identity.py

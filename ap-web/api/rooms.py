@@ -6,7 +6,9 @@ from pathlib import Path
 from flask import Blueprint, current_app, g, jsonify, request, send_file
 
 import config
+from auth import via_discord
 from db import (
+    count_yamls_by_submitter,
     _db_url,
     add_activity,
     add_yaml,
@@ -70,6 +72,14 @@ def _validate_room_string_lengths(data: dict):
                 "error": f"{field} is too long (max {limit} characters, got {len(v)})",
             }), 400
     return None
+
+
+_VALID_ROOM_STATUSES = frozenset({"open", "closed", "generating", "generated", "playing"})
+
+
+def _tag(message: str) -> str:
+    """Mark an activity line that came in through the Discord bot token."""
+    return f"{message} (via Discord)" if via_discord() else message
 
 
 def _open_room_creation_error(user: dict, counts: dict[str, int]):
@@ -163,8 +173,12 @@ def _enforce_room_ownership():
     room = maybe_auto_close_room(room_id)
     if not room:
         return jsonify({"error": "Room not found"}), 404
-    if not _can_access_room(room, _current_user()):
-        return jsonify({"error": "Not your room"}), 403
+    # Bot "member" routes (a YAML upload on behalf of a registered member) are
+    # open to any registered member, like the public submit path; every other
+    # route, bot or browser, still needs the host (or an admin session).
+    if not (via_discord() and getattr(g, "bot_rule", None) == "member"):
+        if not _can_access_room(room, _current_user()):
+            return jsonify({"error": "Not your room"}), 403
     g.room = room
     return None
 
@@ -206,11 +220,15 @@ def rooms_create():
     # Open access is intentionally signed-in and quota-backed. Once the flag
     # is enabled, every non-admin host uses the same limits; approval is not a
     # quota bypass. With the flag off, the legacy approval flow is unchanged.
+    #
+    # Discord bot token: the member is already confirmed by the bot, so the
+    # approval check is skipped, but the same quotas and the
+    # room_creation_blocked flag always apply, whatever the open-access flag.
     if user and not user.get("is_admin"):
         open_access = config.FEATURES.get("open_room_creation", False)
-        if not user.get("is_approved") and not open_access:
+        if not user.get("is_approved") and not open_access and not via_discord():
             return jsonify({"error": "Room creation is not open for this account"}), 403
-        if open_access:
+        if open_access or via_discord():
             counts = get_room_creation_counts(user["id"])
             limit_error = _open_room_creation_error(user, counts)
             if limit_error:
@@ -265,6 +283,11 @@ def rooms_create():
     analytics.record_event(
         "room_created", user_id=host_user_id, room_id=room["id"], req=request
     )
+    if via_discord():
+        add_activity(
+            room["id"], "room_created", _tag(f"Room created by {room['host_name']}"),
+            actor_user_id=host_user_id,
+        )
     return jsonify(room), 201
 
 
@@ -306,6 +329,10 @@ def rooms_update(room_id: str):
     err = _validate_room_string_lengths(data)
     if err:
         return err
+    if "status" in data and data["status"] not in _VALID_ROOM_STATUSES:
+        return jsonify({
+            "error": "status must be one of: " + ", ".join(sorted(_VALID_ROOM_STATUSES)),
+        }), 400
     # Don't let a non-admin reassign room ownership via PUT.
     if not _is_admin(_current_user()):
         data.pop("host_user_id", None)
@@ -373,6 +400,12 @@ def rooms_update(room_id: str):
     # FEAT-31: which settings hosts actually change, by field NAME only -
     # never the values, which include room descriptions and tracker URLs.
     changed = sorted(k for k in data.keys() if room.get(k) != updated.get(k))
+    if changed and via_discord():
+        add_activity(
+            room_id, "room_settings_changed",
+            _tag("Room settings changed: " + ", ".join(changed)),
+            actor_user_id=(_current_user() or {}).get("id"),
+        )
     if changed:
         _user = _current_user()
         analytics.record_event(
@@ -442,7 +475,10 @@ def yaml_upload(room_id: str):
     if not file.filename:
         return jsonify({"error": "No filename"}), 400
 
-    content = file.read().decode("utf-8-sig")
+    try:
+        content = file.read().decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return jsonify({"error": "The file is not valid UTF-8 text"}), 400
 
     # Extract player info
     info = extract_player_info(content)
@@ -454,6 +490,18 @@ def yaml_upload(room_id: str):
     existing = get_yamls(room_id)
     if room["max_players"] > 0 and len(existing) >= room["max_players"]:
         return jsonify({"error": f"Room is full ({room['max_players']} players max)"}), 400
+
+    # A bot upload is a member adding their own YAML, not the host bulk-loading
+    # the room, so the room's per-player cap applies as it does on public submit.
+    if via_discord():
+        per_user_cap = room.get("max_yamls_per_user") or 0
+        if per_user_cap > 0 and count_yamls_by_submitter(
+            room_id, _current_user()["id"],
+        ) >= per_user_cap:
+            return jsonify({
+                "error": f"You've reached the per-player limit ({per_user_cap}) for this room.",
+                "max_yamls_per_user": per_user_cap,
+            }), 400
 
     # Validate
     existing_names = [y["player_name"] for y in existing]
@@ -471,7 +519,7 @@ def yaml_upload(room_id: str):
     # row would already have a "submitter". Force NULL so claim_yaml can
     # later atomically attach the real player.
     user = _current_user()
-    claim_mode = bool(room.get("claim_mode"))
+    claim_mode = bool(room.get("claim_mode")) and not via_discord()
     submitter_user_id = None if claim_mode else (user["id"] if user else None)
     uploader = (user or {}).get("discord_username") or room["host_name"]
 
@@ -509,7 +557,7 @@ def yaml_upload(room_id: str):
         else:
             add_activity(
                 room_id, "yaml_uploaded",
-                f"{uploader} uploaded {game} YAML for player {player_name}",
+                _tag(f"{uploader} uploaded {game} YAML for player {player_name}"),
                 actor_user_id=(user or {}).get("id"),
                 subject_yaml_id=yaml_record["id"],
             )
@@ -519,7 +567,7 @@ def yaml_upload(room_id: str):
         yaml_record["validation_error"] = error
         add_activity(
             room_id, "yaml_invalid",
-            f"{uploader} uploaded invalid {game} YAML for player {player_name}: {error}",
+            _tag(f"{uploader} uploaded invalid {game} YAML for player {player_name}: {error}"),
             actor_user_id=(user or {}).get("id"),
             subject_yaml_id=yaml_record["id"],
         )
@@ -970,7 +1018,7 @@ def room_close(room_id: str):
 
     updated = update_room(room_id, status="closed")
     add_activity(
-        room_id, "room_closed", f"Room closed by {room['host_name']}",
+        room_id, "room_closed", _tag(f"Room closed by {room['host_name']}"),
         actor_user_id=(_current_user() or {}).get("id"),
     )
     return jsonify(updated)
@@ -1228,6 +1276,11 @@ def _external_tracker_to_room_shape(room: dict, tracker_url: str) -> dict:
             "client_status": client_status,
             "status_label": label,
             "goal_completed": goal,
+            # Release and Collect are not stored by the room host; they exist
+            # only as live events, so they are False unless the websocket
+            # tracker is connected (see `release_tracking`).
+            "released": bool(ov and ov.get("released")),
+            "collected": bool(ov and ov.get("collected")),
         })
     players_out.sort(key=lambda x: x["completion_pct"], reverse=True)
     overall = round(total_done / total_total * 100, 1) if total_total > 0 else 0.0
@@ -1251,6 +1304,7 @@ def _external_tracker_to_room_shape(room: dict, tracker_url: str) -> dict:
         "goals_completed": goals_done,
         "goals_total": len(players_out),
         "all_goals_completed": goals_done == len(players_out) and len(players_out) > 0,
+        "release_tracking": used_ws,
         "last_activity": None,
     }
 
@@ -1511,6 +1565,31 @@ _item_tracker_lock = threading.Lock()
 _ITEM_TRACKER_CACHE_MAX = 100
 
 
+def _resolve_generated_room_link(raw: str):
+    """Accept a room-host link: a tracker URL or a room page link.
+
+    Returns `(tracker_url, parsed, server, error)`. `server` is a dict with
+    `host`/`port` only when a room page link was resolved (a tracker URL does
+    not say where the game server is). `error` is a ready `(response, status)`.
+    """
+    from tracker import parse_room_url, parse_tracker_url, resolve_room_url
+    server = None
+    if parse_room_url(raw):
+        resolved = resolve_room_url(raw)
+        if "error" in resolved:
+            return None, None, None, (jsonify({"error": resolved["error"]}), 400)
+        tracker_url = resolved["tracker_url"]
+        server = {"host": resolved["host"], "port": resolved["port"]}
+    else:
+        tracker_url = raw
+    parsed = parse_tracker_url(tracker_url)
+    if not parsed:
+        return None, None, None, (jsonify({
+            "error": "Use a tracker or room link from archipelago.gg or multiworld.gg",
+        }), 400)
+    return tracker_url, parsed, server, None
+
+
 @bp.route("/api/rooms/<room_id>/generated-room/preview", methods=["POST"])
 @requires_db
 def generated_room_preview(room_id: str):
@@ -1519,13 +1598,13 @@ def generated_room_preview(room_id: str):
     if not room:
         return jsonify({"error": "Room not found"}), 404
     data = request.get_json() or {}
-    tracker_url = str(data.get("tracker_url") or room.get("tracker_url") or "").strip()
-    if not tracker_url:
+    raw_link = str(data.get("tracker_url") or room.get("tracker_url") or "").strip()
+    if not raw_link:
         return jsonify({"error": "A tracker URL is required"}), 400
-    from tracker import fetch_tracker_data, parse_tracker_url
-    parsed = parse_tracker_url(tracker_url)
-    if not parsed:
-        return jsonify({"error": "Use an archipelago.gg tracker URL"}), 400
+    tracker_url, parsed, server, link_error = _resolve_generated_room_link(raw_link)
+    if link_error:
+        return link_error
+    from tracker import fetch_tracker_data
     tracker_data = fetch_tracker_data(tracker_url, force=True)
     if "error" in tracker_data:
         return jsonify({"error": tracker_data["error"]}), 400
@@ -1534,6 +1613,8 @@ def generated_room_preview(room_id: str):
     roster = build_roster_preview(tracker_data.get("players", []), yamls)
     return jsonify({
         "tracker_url": tracker_url,
+        "external_host": server["host"] if server else None,
+        "external_port": server["port"] if server else None,
         "tracker_room_id": tracker_data.get("room_id") or parsed.get("room_id"),
         "roster": roster,
         "yamls": [
@@ -1556,13 +1637,13 @@ def generated_room_confirm(room_id: str):
         return jsonify({"error": "Room not found"}), 404
     user = _current_user() or {}
     data = request.get_json() or {}
-    tracker_url = str(data.get("tracker_url") or "").strip()
-    if not tracker_url:
+    raw_link = str(data.get("tracker_url") or "").strip()
+    if not raw_link:
         return jsonify({"error": "A tracker URL is required"}), 400
-    from tracker import fetch_tracker_data, parse_tracker_url
-    parsed = parse_tracker_url(tracker_url)
-    if not parsed:
-        return jsonify({"error": "Use an archipelago.gg tracker URL"}), 400
+    tracker_url, parsed, server, link_error = _resolve_generated_room_link(raw_link)
+    if link_error:
+        return link_error
+    from tracker import fetch_tracker_data
     tracker_data = fetch_tracker_data(tracker_url, force=True)
     if "error" in tracker_data:
         return jsonify({"error": tracker_data["error"]}), 400
@@ -1580,13 +1661,25 @@ def generated_room_confirm(room_id: str):
         room_id, tracker_url, tracker_data.get("room_id") or parsed.get("room_id"),
         int(user["id"]) if user.get("id") is not None else None, slots,
     )
-    updated = update_room(room_id, tracker_url=tracker_url, status="playing")
+    # A room page link also tells us where the game server is, which is what
+    # lets the live tracker connect. A paused room has no port yet: keep any
+    # stored value and let the caller re-send the link once the room is awake.
+    update_fields = {"tracker_url": tracker_url, "status": "playing"}
+    if server:
+        update_fields["external_host"] = server["host"]
+        if server["port"]:
+            update_fields["external_port"] = server["port"]
+    updated = update_room(room_id, **update_fields)
     add_activity(
         room_id, "generated_room_attached",
-        f"{user.get('discord_username') or 'Host'} attached the generated room with {len(persisted)} slots",
+        _tag(f"{user.get('discord_username') or 'Host'} attached the generated room with {len(persisted)} slots"),
     )
     _maybe_reschedule_tracker_ws(updated)
-    return jsonify({"room": updated, "slots": persisted})
+    return jsonify({
+        "room": updated,
+        "slots": persisted,
+        "server": ({"host": server["host"], "port": server["port"]} if server else None),
+    })
 
 
 @bp.route("/api/rooms/<room_id>/slots/<int:team>/<int:slot>/owner", methods=["PUT"])
