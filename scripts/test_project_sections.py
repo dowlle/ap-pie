@@ -115,13 +115,13 @@ class ProjectSectionsTest(unittest.TestCase):
 
     def test_alpha_notes_are_separate_from_stable_release(self) -> None:
         alpha_path = "/ctr/releases/0-3-0"
-        prerelease = "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha2"
+        prerelease = "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha3"
         overview = self.get("/ctr/releases").get_data(as_text=True)
         # 0.2.4 stays the main version: the stable list comes first, the alpha is one line after it.
         main = overview[overview.index('<h1>'):]
         self.assertLess(main.index('href="/ctr/releases/0-2-4"'), main.index('href="' + alpha_path + '"'))
         self.assertNotIn("<h2>Test build</h2>", overview)
-        self.assertIn("0.3.0 alpha 2", overview)
+        self.assertIn("0.3.0 alpha 3", overview)
         self.assertIn("test build", overview)
         self.assertIn('href="' + prerelease + '"', overview)
         self.assertIn("The current stable release is 0.2.4", overview)
@@ -138,7 +138,7 @@ class ProjectSectionsTest(unittest.TestCase):
         response = self.get(alpha_path)
         self.assertEqual(response.status_code, 200)
         notes = response.get_data(as_text=True)
-        self.assertIn("This is alpha 2 of 0.3.0, a test build", notes)
+        self.assertIn("This is alpha 3 of 0.3.0, a test build", notes)
         self.assertIn("v0.2.4 is still the stable version", notes)
         self.assertIn('href="' + prerelease + '"', notes)
         self.assertNotIn('href="/yaml-builder/ctr?version=0.3.0"', notes)
@@ -147,7 +147,8 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertNotIn("[Rewrite", notes)
         self.assertNotIn("Moving from a 0.2.4 YAML", notes)
         self.assertNotIn("What I tested", notes)
-        self.assertIn('id="new-in-alpha-2"', notes)
+        self.assertIn('id="new-in-alpha-3"', notes)
+        self.assertIn("trap_display", notes)
         self.assertIn("wumpa_shop_logic_scale", notes)
         self.assertNotIn("\u2014", notes)
         self.assertIn(f"{config.PUBLIC_BASE_URL}{alpha_path}", self.get("/sitemap.xml").get_data(as_text=True))
