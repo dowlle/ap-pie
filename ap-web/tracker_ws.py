@@ -21,7 +21,7 @@ Tracker Architecture.md`):
 - Slot name for connection: prefer the host's own slot (match
   `room_yamls.submitter_user_id == room.host_user_id`); fall back to
   scraping one slot name from the tracker page.
-- Idle disconnect: any connection with no incoming packets for
+- Idle disconnect: any connection with no incoming packets or API reads for
   AP_TRACKER_IDLE_MINUTES (default 60) gets cancelled. Reconnect lazily
   on the next API read for that room.
 - Connection cap: AP_TRACKER_WS_MAX (default 200). Cap-exceeded rooms
@@ -42,7 +42,7 @@ import threading
 import time
 import urllib.request
 import uuid
-from collections import deque
+from collections import OrderedDict, deque
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -751,6 +751,10 @@ class TrackerManager:
         self._thread: Optional[threading.Thread] = None
         self._connections: dict[str, TrackerConnection] = {}
         self._tasks: dict[str, asyncio.Task] = {}
+        # Idle eviction releases the socket, not the room's validated connection
+        # settings. Keep a bounded set so a later API read can resume it.
+        self._dormant: OrderedDict[str, tuple] = OrderedDict()
+        self._last_read: dict[str, float] = {}
         self._lock = threading.RLock()
         self._started = threading.Event()
         self._max = max(1, getattr(config, "TRACKER_WS_MAX", 200))
@@ -796,18 +800,17 @@ class TrackerManager:
     async def _idle_sweep(self) -> None:
         while True:
             await asyncio.sleep(60)
-            cutoff = time.time() - self._idle_minutes * 60
-            to_close: list[str] = []
-            with self._lock:
-                for rid, conn in self._connections.items():
-                    last = conn.state.last_packet_at
-                    if last and last < cutoff:
-                        to_close.append(rid)
-            for rid in to_close:
-                logger.info(
-                    f"FEAT-17 [{rid}] idle > {self._idle_minutes}min, closing"
-                )
-                self._cancel(rid)
+            self._expire_idle()
+
+    def _expire_idle(self) -> None:
+        """Runs on the manager loop; readers count as demand for live data."""
+        cutoff = time.time() - self._idle_minutes * 60
+        with self._lock:
+            for rid, conn in list(self._connections.items()):
+                last = max(conn.state.last_packet_at or 0, self._last_read.get(rid, 0))
+                if last and last < cutoff:
+                    logger.info(f"FEAT-17 [{rid}] idle > {self._idle_minutes}min, closing")
+                    self._cancel(rid, idle=True)
 
     def schedule(
         self,
@@ -839,19 +842,24 @@ class TrackerManager:
         self, room_id: str, tracker_url: str, host: str, port: int, slot_name: str,
     ) -> None:
         """Runs on the asyncio loop."""
-        if room_id in self._connections:
-            return
-        conn = TrackerConnection(room_id, tracker_url, host, port, slot_name)
-        task = asyncio.create_task(conn.run(), name=f"tracker-{room_id}")
         with self._lock:
+            if room_id in self._connections or len(self._connections) >= self._max:
+                return
+            conn = TrackerConnection(room_id, tracker_url, host, port, slot_name)
+            task = asyncio.create_task(conn.run(), name=f"tracker-{room_id}")
             self._connections[room_id] = conn
             self._tasks[room_id] = task
-        task.add_done_callback(lambda t, rid=room_id: self._on_done(rid))
+            self._dormant.pop(room_id, None)
+            self._last_read[room_id] = time.time()
+        task.add_done_callback(lambda t, rid=room_id: self._on_done(rid, t))
 
-    def _on_done(self, room_id: str) -> None:
+    def _on_done(self, room_id: str, task: asyncio.Task) -> None:
         with self._lock:
-            self._connections.pop(room_id, None)
-            self._tasks.pop(room_id, None)
+            # An old cancelled task must never remove a replacement connection.
+            if self._tasks.get(room_id) is task:
+                self._connections.pop(room_id, None)
+                self._tasks.pop(room_id, None)
+                self._last_read.pop(room_id, None)
 
     def cancel(self, room_id: str) -> None:
         """Thread-safe: cancel a connection."""
@@ -890,6 +898,7 @@ class TrackerManager:
         slot_name: str,
     ) -> None:
         with self._lock:
+            self._dormant.pop(room_id, None)
             old_task = self._tasks.get(room_id)
             old_conn = self._connections.get(room_id)
         if old_conn is not None:
@@ -907,10 +916,19 @@ class TrackerManager:
             self._tasks.pop(room_id, None)
         self._do_schedule(room_id, tracker_url, host, port, slot_name)
 
-    def _cancel(self, room_id: str) -> None:
+    def _cancel(self, room_id: str, *, idle: bool = False) -> None:
         with self._lock:
             conn = self._connections.get(room_id)
             task = self._tasks.get(room_id)
+            if idle and conn:
+                state = conn.state
+                self._dormant[room_id] = (state.tracker_url, state.host, state.port, state.slot_name)
+                self._dormant.move_to_end(room_id)
+                while len(self._dormant) > self._max:
+                    self._dormant.popitem(last=False)
+            else:
+                # Clearing a tracker or deleting a room must not be undone by a read.
+                self._dormant.pop(room_id, None)
         if conn:
             conn.stop()
         if task and not task.done():
@@ -919,7 +937,21 @@ class TrackerManager:
     def get_state(self, room_id: str) -> Optional[TrackerState]:
         with self._lock:
             conn = self._connections.get(room_id)
+            if conn:
+                self._last_read[room_id] = time.time()
+            dormant = self._dormant.get(room_id)
+            if conn is None and dormant and self._loop is not None:
+                # Re-read settings on the loop so an earlier queued cancel
+                # cannot be undone by a racing HTTP reader's stale arguments.
+                self._loop.call_soon_threadsafe(self._resume_dormant, room_id)
         return conn.state if conn else None
+
+    def _resume_dormant(self, room_id: str) -> None:
+        """Runs on the manager loop; shares scheduling's cap/duplicate guard."""
+        with self._lock:
+            params = self._dormant.get(room_id)
+            if params is not None:
+                self._do_schedule(room_id, *params)
 
     def list_states(self) -> dict[str, dict[str, Any]]:
         with self._lock:
