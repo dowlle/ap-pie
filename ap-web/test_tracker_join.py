@@ -22,7 +22,8 @@ class TrackerJoinTests(unittest.TestCase):
 
     def test_websocket_uses_original_slot_info(self):
         state = SimpleNamespace(state="connected", lock=RLock(), slot_info={1: {"name": "Original (slot)"}},
-                                client_status={}, checked_locations={})
+                                client_status={}, checked_locations={},
+                                released_slots=set(), collected_slots=set())
         with patch("tracker_ws.manager.get_state", return_value=state):
             self.assertEqual(grid_overrides("room")[1]["connect_name"], "Original (slot)")
 
