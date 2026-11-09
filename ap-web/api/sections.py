@@ -38,7 +38,7 @@ SECTIONS: dict[str, dict] = {
                 "label": "Releases",
                 "path": "/ctr/releases",
                 "children": [
-                    {"label": "0.3.0 alpha 2 notes", "path": "/ctr/releases/0-3-0"},
+                    {"label": "0.3.0 alpha 3 notes", "path": "/ctr/releases/0-3-0"},
                     {"label": "0.2.4 release notes", "path": "/ctr/releases/0-2-4"},
                 ],
             },
