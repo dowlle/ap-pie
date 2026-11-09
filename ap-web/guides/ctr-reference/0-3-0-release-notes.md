@@ -292,7 +292,7 @@ It should say the signature is verified. Then compare the SHA-256 of your client
 
 ## Thanks
 
-Thanks to MarioSpore for the box number, pad rules, item and location groups, `weapon_hit`, trap and Turbo Grant ideas, venusyprime for the arena and Spoiler Items ideas, BEXUS99 for the filler and Clocked Out ideas and the vanilla Keys report, and DragRedSim for the stat bar report. Thanks to thecodingbob for the Controls page from CTR Native Expanded, Lockheart for Cortex Vortex and its music, LRG2Pancho and every track maker on Project Saphi, and everyone on Discord who tested, reported the SlotLock crash and sent ideas.
+Thanks to MarioSpore for the box number, pad rules, item and location groups, `weapon_hit`, trap and Turbo Grant ideas, Dex for the arena and Spoiler Items ideas, BEXUS99 for the filler and Clocked Out ideas and the vanilla Keys report, and DragRedSim for the stat bar report. Thanks to thecodingbob for the Controls page from CTR Native Expanded, Lockheart for Cortex Vortex and its music, LRG2Pancho and every track maker on Project Saphi, and everyone on Discord who tested, reported the SlotLock crash and sent ideas.
 
 ## Found a problem?
 
