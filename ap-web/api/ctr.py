@@ -125,17 +125,17 @@ _REFERENCE_BY_SLUG = {page["slug"]: page for page in REFERENCE_PAGES}
 RELEASE_PAGES: list[dict] = [
     {
         "slug": "0-3-0",
-        "title": "What changed in 0.3.0 alpha 2?",
-        "page_title": "CTR Archipelago 0.3.0 alpha 2 test build notes",
-        "short_title": "0.3.0 alpha 2 notes",
+        "title": "What changed in 0.3.0 alpha 3?",
+        "page_title": "CTR Archipelago 0.3.0 alpha 3 test build notes",
+        "short_title": "0.3.0 alpha 3 notes",
         "blurb": "Test build notes for one generator, custom tracks, Play Solo, the Wumpa Shop and more.",
-        "description": "CTR Archipelago 0.3.0 alpha 2 test build notes. 0.2.4 remains the current stable release.",
+        "description": "CTR Archipelago 0.3.0 alpha 3 test build notes. 0.2.4 remains the current stable release.",
         "file": "0-3-0-release-notes.md",
         "published": "2026-11-04",
-        "updated": "2026-11-06",
-        "verified_against": "0.3.0-alpha2",
-        "status_label": "Alpha 2 test build notes",
-        "github_release": "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha2",
+        "updated": "2026-11-09",
+        "verified_against": "0.3.0-alpha3",
+        "status_label": "Alpha 3 test build notes",
+        "github_release": "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha3",
     },
     {
         "slug": "0-2-4",
@@ -221,10 +221,10 @@ RELEASE_REDIRECTS = {"0-2-0-release-notes": "/ctr/releases/0-2-0"}
 # published; drop it and bump STABLE when the release goes out.
 _GITHUB_RELEASES = "https://github.com/dowlle/ctr-native-ap/releases"
 TEST_BUILD: dict = {
-    "version": "0.3.0 alpha 2",
-    "date": "2026-11-06",
+    "version": "0.3.0 alpha 3",
+    "date": "2026-11-09",
     "notes": "/ctr/releases/0-3-0",
-    "download": f"{_GITHUB_RELEASES}/tag/v0.3.0-alpha2",
+    "download": f"{_GITHUB_RELEASES}/tag/v0.3.0-alpha3",
     "summary": "One generator and a flat YAML, custom tracks, Play Solo, Wumpa Shop, boss randomization, new checks and traps, in-game updater.",
 }
 RELEASE_HISTORY: list[dict] = [
@@ -611,7 +611,7 @@ def ctr_releases_index() -> str:
     )
     title = "CTR Archipelago releases | Archipelago Pie"
     description = (
-        "CTR Archipelago 0.3.0 alpha 2 test build notes and every stable release, "
+        "CTR Archipelago 0.3.0 alpha 3 test build notes and every stable release, "
         f"through the current stable {STABLE['version']}."
     )
     canonical_url = _canonical("/ctr/releases")

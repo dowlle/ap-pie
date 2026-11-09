@@ -1,11 +1,73 @@
-**[Download 0.3.0 alpha 2](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha2)** · **[Setup guide](/ctr/setup)**
+**[Download 0.3.0 alpha 3](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha3)** · **[Setup guide](/ctr/setup)**
 
-> **This is alpha 2 of 0.3.0, a test build.** v0.2.4 is still the stable version.
+> **This is alpha 3 of 0.3.0, a test build.** v0.2.4 is still the stable version.
 > The alpha doesn't update itself. The in-game updater only offers stable releases, so grab new alphas by hand.
 > Use a new folder, and keep your 0.2.4 install as it is.
-> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 1? Start with [New in alpha 2](#new-in-alpha-2).
+> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 2? Start with [New in alpha 3](#new-in-alpha-3).
 
 0.3.0 is the biggest update so far. Every seed now comes from one generator and the YAML is one flat list of options. Custom tracks are part of the game: import them, race them in Arcade, or put up to 132 in a seed. There's also Play Solo, a Wumpa Shop, boss randomization, a bunch of new checks and traps, and an in-game updater for the next release.
+
+## New in alpha 3
+
+- Use the alpha3 client with the alpha3 APWorld. Alpha2 rooms still connect to the alpha3 client.
+- Your alpha2 YAML still works and keeps its values. The seven new traps are on at their default weights. `ctr_first` is now called `trophy_ctr_combined`, but the old name still works.
+- A YAML's `requires` version can't be newer than the Archipelago you generate with. So a YAML made on 0.6.8 won't load in Play Solo (which runs 0.6.7) until you change that number.
+
+### Fixed since alpha 2
+
+- Big custom track libraries (100 tracks or more) froze the Custom Tracks screens, Play Solo and the start of custom track races for seconds at a time. Fixed, and connecting to a room with lots of custom tracks is way faster too. The game used to check every installed track to find one; now it only looks at the ones that can match.
+- Every cup now shows its own name at the start. A Purple Gem Cup could say "Red Gem Cup" before.
+- Pads could stay locked on "Key x2" after the Keys arrived, for example when a Key came in while you were in the hub. Only reloading the hub fixed it. Fixed now.
+- An Aku Aku hint in a hub door corridor could smear the mask, and moving on to the next hub during or after a hint could crash the game. Both fixed.
+- Bosses (and any AI racer) on N. Gin Labs could gain a lap on the low lane of the barrel ramp. That one's a bug from the original game. Fixed.
+- Boss cups respect One-Lap Cup Races.
+- Seeds with all 27 pads as cups (Crystal Challenges at 0) generate again. With no Trophy Race or CTR Challenge around, Itemsanity and Wumpa Income come from the cup races.
+- With `purple_cup_boss_gauntlet` on, Purple is now the first Gem Cup a seed takes, then Red onward, so you don't need all five Gem Cups anymore.
+- When Project Saphi is busy, downloads wait (up to two minutes, with a countdown and "Project Saphi is busy, waiting") instead of failing.
+- Import a track twice under different names and it still shows up only once in Play Solo.
+- Importing an alpha1 patch again replaces the old copy that still has its "slot" name. If you renamed that copy or a Play Solo room uses it, it stays, and the import review tells you which.
+- This Seed always shows the seed you're connected to, also when it needs no custom tracks. The Library explains where the Project Saphi catalogue comes from and says when it's loading or failed. The Import help fits on screen now.
+- Boss races on a custom track showed the retail track's AP boxes. Not anymore.
+- Ancient Lake and North Pole both have a weapon crate at the map origin that you can't reach. New seeds don't put AP boxes on it anymore.
+
+### New
+
+- Seven new traps:
+    - Always Jumping: you keep hopping.
+    - No Drifting: no hop or power slide.
+    - Rival Surge: AI racers get 50% faster (only in races with AI).
+    - Mud Season: every surface is dirt. A held Ignore Dirt blocks it.
+    - Limp Mode: half top speed.
+    - Stuck Steering: one direction stops working for 7 seconds.
+    - Wumpa Leak: you lose half your fruit, once.
+
+    The lasting ones follow your Trap Duration, except Stuck Steering, which is always 7 seconds.
+
+- Disguised traps: the new `trap_display` option makes trap locations look like progression (`as_progression`) or a mix of progression and filler (`mixed`) on item boxes, the pad glow and in the Wumpa Shop. Hints, the feed and other games still call them traps.
+- Trap notices take one line in the feed now, which changes in place (ARMED, INCOMING, then the trap name) instead of three separate lines.
+- Hub fast travel: pick TRAVEL in the hub pause menu, choose one of the five hubs and you land right in front of its save screen. Hubs you don't have the Keys for stay grey.
+- When an item opens something, the feed tells you what: `Crash Cove OPEN`, `Papu's Pyramid STAGE 2 OPEN`, `Glacier Park DOOR OPEN`, `The Lost Ruins SHOP STOCK OPEN`, `Ripper Roo GARAGE OPEN`.
+- Pads only glow green or blue-violet while at least one open check behind them is in logic. If only out-of-logic checks are left, you get an orange dot on the map and in the tracker and a plain light blue beam. That goes for item boxes, Wumpa, letters and podium rungs too.
+- Slide Coliseum and Turbo Track can now be drawn as cup races, in every `cup_tracks` setting that draws races.
+- Testers came up with nine more cup names, so the pool is up to 36. Because it's bigger, the same YAML and seed can draw different cup names than on alpha2.
+- Missing a custom track? This Seed and the install check tell you where to get it: "Download from Project Saphi", or which xdelta patch to import, with its slot and its page on ctrcustomtracks.com where it's known. If a track is in two patches, both are named. Tracks that aren't in the built-in list keep the old message. If the live Saphi catalogue doesn't list a track but the built-in list does, "Install missing" on This Seed can still download it (shown as "Project Saphi (built-in list)"). The room's own file checks still decide what gets installed.
+- The first box spots placed by testers in Box Author Mode are in, for DK Pass 1.0.0 and Ancient Lake 1.1.0. With `box_locations` on, the 15 AP boxes on those tracks sit on these spots instead of on the weapon crates. Other versions of those tracks, and rooms made before this release, keep the boxes on the crates. Ancient Lake spot 2 is up in the air, so for now it counts as needing a Boost when Progressive Boost is on.
+- Every AP menu uses the same buttons now: Cross or Circle to confirm, Triangle or Start to go back, Square for the screen's extra action, L1 and R1 to turn pages. In Import, Select renames a track. In text entry, Start cancels and confirm saves. On Trap Weights, press Square twice to reset a row. Button hints show PlayStation symbols on PlayStation pads and A/B/X/Y on Xbox pads and the Steam Deck. You can turn that off in Options, Gameplay, Device-aware Button Labels.
+- Play Solo opens imported and saved YAMLs in the full options screen with their own values, and generating doesn't touch the file. There's a new Trap Weights page with a row per trap, and Start Hints and Start Location Hints are checklists now.
+- Importer: track names for 30th Anniversary Adventure, Lockbox Adventure and St. Patrick's Day Racing (from tester lists), and three Nightmare Fueled names now use the testers' spelling. You get a text cursor when you rename a track (Left and Right move it). Coco Team Racing gives you three tracks; one is Time Trial only because it has no AI paths. The CTR Glacier Lagoon and DustKeepers patches now give you their track for Time Trial. Tracks that can't be imported show up as not supported, with the reason, instead of just disappearing.
+- New defaults: Pad Hints Wait For Spoiler and Pad Hints Progression Only are on (they only do something with Pad Approach Hints on). `crystal_arenas` now lists all seven arenas, so the three arcade arenas can show up too; list the four original ones if you want the old pool. If `required_entries` can't match an entry, the error tells you which one.
+- Recorded AI laps, still experimental and off by default (Options, Authoring, Use Recorded AI Laps): put `.navlap` files in your `ap-navpaths` folder and up to three racers drive laps from different people, picked at random each race. The rest drive the track's own lines. No laps come with the release.
+
+### Known issues in alpha 3
+
+- North Pole can have broken trees when it's the third race of a cup.
+- The screen froze once during a custom track race, right when a release sent a ton of items. The game kept running (pause and exit still worked) and restarting the client fixed it. I'm looking into it.
+- The Project Saphi catalogue might still not show up for some people. The Library now says when loading failed; if it does, send me your `ctr-ap.log`.
+- Space Labs 1.2.4 and Matsuri 1.1.0 from Project Saphi can't be installed yet. Other Space Labs versions work.
+- With Trap Display on, a disguised trap can still show its trap name. Fix is coming in alpha4.
+- Cortex Vortex plays Oxide Station's music and says Oxide Station on the standings screen.
+- Parking Lot can have a black patch in the sky.
+- In the hub, the item feed can overlap the pad title and character picker.
 
 ## New in alpha 2
 
@@ -38,7 +100,6 @@ Alpha 2 fixes a lot of what you found in alpha 1 and adds a few new things.
 
 ### New
 
-- **Custom Tracks screen:** one screen with Library, This Seed and Import tabs. The importer keeps track names, lets you rename them, and can import all valid tracks at once.
 - **Custom track music:** custom tracks play their own music, however you installed them. Imported tracks without their own music play the music of the track they replace.
 - **Box Author Mode** is in the regular client, under Options, Authoring: place AP boxes on a track and export them yourself.
 - **Play Solo options:** every YAML option is on the options screen, in groups. Lists like Crystal Arenas and the boss pools are checklists, and the screen tells you when a value won't generate. There's no password by default; you can set one.
@@ -51,17 +112,9 @@ Alpha 2 fixes a lot of what you found in alpha 1 and adds a few new things.
 - **Custom track boost rules:** Ancient Lake, Drive Thru Danger, Bowser Castle 1 and Neon Paradise no longer need USF to finish, and Lights Out needs the first boost.
 - **Clearer YAML descriptions** for almost every option, and three options have new display names: Guaranteed Warp Pads (`required_entries`), Pads With Two Requirements (`two_stage_density`) and Papu's Pyramid Mask Helper (`tizi_helper`).
 
-### Known issues in alpha 2
-
-- The Custom Tracks screen still has rough edges: the Library can show only some of your tracks, the Project Saphi catalogue may not show, This Seed can say no seed is loaded while you're connected, and the Import help text is cut off. Fixes come in alpha 3.
-- The race-start banner of a cup can show another cup's name, for example "Red Gem Cup" for the Purple Gem Cup. The standings show the right name.
-- Some menus are still hard to read where text runs over the logo.
-- A seed can still fail to generate with some unusual YAMLs. Generate again, and send me the YAML.
-- Short freezes can happen in some races. If you get one, tell me the track.
-
 ## What's new
 
-- One generator for every seed, and one flat YAML with 95 options.
+- One generator for every seed, and one flat YAML with 96 options.
 - A YAML that sets nothing gets the original game's shape: 18 tracks, 5 Gem Cups, 4 Crystal Challenges and the five boss races, shuffled.
 - Custom tracks: import from a patch, Custom Arcade and Time Trial pages, a Track Library, and up to 132 tracks in a seed.
 - Cortex Vortex is a full track, with its own music.
@@ -89,7 +142,7 @@ Alpha 2 fixes a lot of what you found in alpha 1 and adds a few new things.
 
 Every seed now comes from one generator. If your YAML doesn't set any content, you get the original game's shape: the 18 race tracks, 5 Gem Cups, 4 Crystal Challenges and the five boss races, on the original 27 warp pads and five garages, shuffled. The first five cups are the original Gem Cups with their Gems. Cup races are drawn, four different tracks per cup. Slide Coliseum and Turbo Track offer all three races now.
 
-The YAML is one flat list of 95 options in twelve groups: Tracks, Cups and Arenas, Bosses, Goal, Pads and Requirements, Checks, Wumpa Shop, Items and Traps, Characters and Stats, Boost, DeathLink and Display. Each thing is set in one place, and the Builder explains every option. Some highlights:
+The YAML is one flat list of 96 options in twelve groups: Tracks, Cups and Arenas, Bosses, Goal, Pads and Requirements, Checks, Wumpa Shop, Items and Traps, Characters and Stats, Boost, DeathLink and Display. Each thing is set in one place, and the Builder explains every option. Some highlights:
 
 - `pad_placement`: `vanilla`, `shuffle_within_kind` (tracks on track pads, cups on cup pads, arenas on arena pads) or `shuffle`. Vanilla requirements work with all three.
 - `retail_tracks`, `cup_count`, `cup_tracks` and `crystal_challenge_count` decide what's in the seed.
@@ -209,9 +262,15 @@ All of these are off by default unless it says otherwise.
 - **Rare failed seed:** with some unusual YAMLs (lots of cups and arenas, Itemsanity, many traps) a seed can still fail to generate. Generating again fixes it. If it happens, send me the YAML.
 - **Old YAMLs:** Archipelago prints one warning line per removed option name. The seed still generates.
 - **Menus:** some menus are hard to read, especially Options and Custom Tracks, where text runs over the logo.
-- **Custom Tracks screen:** the Library can show only some of your tracks, the Project Saphi catalogue may not show, This Seed can say no seed is loaded while you're connected, and the Import help text is cut off.
-- **Cup banner:** the race-start banner of a cup can show another cup's name. The standings show the right name.
 - **Short freezes** can happen in some races. If you get one, tell me the track.
+- North Pole can have broken trees when it's the third race of a cup.
+- The screen froze once during a custom track race, right when a release sent a ton of items. The game kept running (pause and exit still worked) and restarting the client fixed it. I'm looking into it.
+- The Project Saphi catalogue might still not show up for some people. The Library now says when loading failed; if it does, send me your `ctr-ap.log`.
+- Space Labs 1.2.4 and Matsuri 1.1.0 from Project Saphi can't be installed yet. Other Space Labs versions work.
+- With Trap Display on, a disguised trap can still show its trap name. Fix is coming in alpha4.
+- Cortex Vortex plays Oxide Station's music and says Oxide Station on the standings screen.
+- Parking Lot can have a black patch in the sky.
+- In the hub, the item feed can overlap the pad title and character picker.
 - **Wumpa Shop prices** are a first guess and will get tuned once there's more play data.
 - **Random bosses:** the boss's voice lines may be silent when a different racer takes the garage, and the scene after the race shows the garage's original boss. The echo in a boss race follows the boss, not the drawn track.
 - **Custom tracks:** the importer takes race tracks only, no arenas and no LZMA patches. In two-player Adventure a custom track race runs as one player.
