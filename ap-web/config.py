@@ -40,6 +40,16 @@ FEATURES: dict[str, bool] = {
     ) if os.environ.get("FEATURE_TIMBERBORN_SECTION") else (
         os.environ.get("AP_DEPLOYMENT_LABEL", "") == "beta"
     ),
+    # CTR custom-track name registry (submission form, review queue, read API).
+    # Beta only until Stef promotes it: on when AP_DEPLOYMENT_LABEL is "beta",
+    # off everywhere else including production. FEATURE_CTR_REGISTRY overrides
+    # that; an empty value (docker-compose passes one when unset) keeps the
+    # default.
+    "ctr_registry": _bool_env(
+        "FEATURE_CTR_REGISTRY", os.environ.get("AP_DEPLOYMENT_LABEL", "") == "beta"
+    ) if os.environ.get("FEATURE_CTR_REGISTRY") else (
+        os.environ.get("AP_DEPLOYMENT_LABEL", "") == "beta"
+    ),
 }
 
 # Open-room abuse ceilings. When FEATURE_OPEN_ROOM_CREATION is enabled, every

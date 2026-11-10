@@ -21,6 +21,8 @@ const LegacyRoomRedirect = lazy(() => import("./pages/RoomWorkspace").then((modu
 const TrackerPage = lazy(() => import("./pages/Tracker"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminApworldRequests = lazy(() => import("./pages/AdminApworldRequests"));
+const AdminCtrTracks = lazy(() => import("./pages/AdminCtrTracks"));
+const CtrTracks = lazy(() => import("./pages/CtrTracks"));
 const Play = lazy(() => import("./pages/Play"));
 const MyArea = lazy(() => import("./pages/MyArea"));
 const YamlBuilderPage = lazy(() => import("./pages/YamlBuilderPage"));
@@ -153,6 +155,8 @@ function AppRoutes() {
       <Route path="/market/:trackerId" element={<AdminShell><MarketTracker /></AdminShell>} />
       <Route path="/admin" element={<AdminShell><RequireAdmin><Admin /></RequireAdmin></AdminShell>} />
       <Route path="/admin/apworld-requests" element={<AdminShell><RequireAdmin><AdminApworldRequests /></RequireAdmin></AdminShell>} />
+      <Route path="/admin/ctr-tracks" element={<AdminShell><RequireAdmin><AdminCtrTracks /></RequireAdmin></AdminShell>} />
+      <Route path="/custom-tracks" element={<AdminShell><CtrTracks /></AdminShell>} />
       <Route path="/" element={<AdminShell><HomeView /></AdminShell>} />
       <Route path="/games" element={<AdminShell><RequireAdmin><GameList /></RequireAdmin></AdminShell>} />
       <Route path="/rooms" element={<AdminShell><RequireRoomAccess><Rooms /></RequireRoomAccess></AdminShell>} />

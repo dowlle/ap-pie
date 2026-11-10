@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt /tmp/ap-lib/ && rm -rf /tmp/a
 # Copy backend code
 COPY ap-web/*.py ap-web/api/ ./
 COPY ap-web/api/ ./api/
+COPY ap-web/ctr_registry/ ./ctr_registry/
 
 # FEAT-39: server-rendered guide pages need their Jinja templates and the
 # repo-controlled guide markdown at runtime. Without these the blueprint
