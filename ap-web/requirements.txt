@@ -11,4 +11,4 @@ websockets==13.1
 # FEAT-39: renders the repo-controlled guide markdown to HTML server-side.
 # Pure-Python, no native deps, well-established (Python-Markdown). Pinned
 # exact for supply-chain hygiene; bump only after re-testing the guide pages.
-markdown==3.10.2
+markdown==3.10.3
