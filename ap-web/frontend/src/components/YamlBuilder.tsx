@@ -13,6 +13,7 @@ import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import { normalizeOptionHelp } from "../lib/optionHelpText";
 import MarkdownText from "./MarkdownText";
+import { counterAt, fieldValue, findNestedCounterSpec, withFieldValue } from "../lib/nestedCounters";
 import {
   createBuilderAttemptId,
   trackBuilderAbandoned,
@@ -997,7 +998,7 @@ export default function YamlBuilder({
             )}
 
             {schema && schema.options.length > 0 && (
-              <OptionsForm schema={schema} values={values} setValues={setValues} />
+              <OptionsForm schema={schema} values={values} setValues={setValues} apworld={entry?.apworld_name} />
             )}
 
             {schema && schema.options.length === 0 && (
@@ -1372,7 +1373,9 @@ function OptionsForm({
   schema,
   values,
   setValues,
+  apworld,
 }: {
+  apworld?: string;
   schema: NonNullable<BuilderSchemaEntry["schema"]>;
   values: Record<string, unknown>;
   setValues: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
@@ -1432,6 +1435,7 @@ function OptionsForm({
                       option={opt}
                       value={values[opt.name]}
                       onChange={(v) => setValues((prev) => ({ ...prev, [opt.name]: v }))}
+                      apworld={apworld}
                     />
                   </div>
                 </div>
@@ -1591,10 +1595,12 @@ function OptionControl({
   option,
   value,
   onChange,
+  apworld,
 }: {
   option: TemplateOption;
   value: unknown;
   onChange: (val: unknown) => void;
+  apworld?: string;
 }) {
   if (option.default_unresolved) {
     const inherited = value === undefined || value === null;
@@ -1606,7 +1612,7 @@ function OptionControl({
           Use game default
         </label>
         {!inherited && <OptionControl option={{...option, default_unresolved: false}}
-          value={value} onChange={onChange} />}
+          value={value} onChange={onChange} apworld={apworld} />}
       </div>
     );
   }
@@ -1868,6 +1874,39 @@ function OptionControl({
               </label>
             ))}
           </div>
+        );
+      }
+      const nested = findNestedCounterSpec(apworld, option.name);
+      if (nested && typeof value !== "string" && counterAt(nested, dictVal)) {
+        return (
+          <>
+            <div className="yaml-builder-counter" data-editor-kind="nested-counter">
+              <p className="settings-aux-note"><strong>{nested.title}.</strong> {nested.hint}</p>
+              {nested.fields.map((f) => (
+                <label key={f.key} className="yaml-builder-counter-row">
+                  <span className="yaml-builder-weight-key"><strong>{f.label}</strong></span>
+                  <input
+                    type="number"
+                    min={nested.min}
+                    max={nested.max}
+                    step={1}
+                    value={fieldValue(nested, dictVal, f)}
+                    onChange={(e) => {
+                      if (e.target.value === "") return;
+                      const next = withFieldValue(nested, dictVal, f, Number(e.target.value));
+                      if (next) onChange(next);
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            <StructuredYamlInput
+              label={option.display_name || option.name}
+              value={dictVal}
+              expected="mapping"
+              onChange={onChange}
+            />
+          </>
         );
       }
       return (
