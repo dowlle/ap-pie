@@ -86,7 +86,7 @@ export function fieldIsCustom(spec: NestedCounterSpec, value: unknown, field: Ne
 }
 
 /** New option value with one field set. All fields of the counter are written
- * so a partial `relics` mapping never leaves the others to a guess; siblings
+ * so a partial `relics` mapping never leaves the others to a guess (a typed value the inputs cannot show is kept as typed); siblings
  * of the counter and unrelated entries are kept. Returns null when the path
  * is blocked by a non-mapping. */
 export function withFieldValue(
@@ -100,7 +100,9 @@ export function withFieldValue(
   const clamped = Math.min(spec.max, Math.max(spec.min, Math.trunc(Number.isFinite(next) ? next : field.default)));
   const counter: Mapping = { ...current };
   for (const f of spec.fields) {
-    counter[f.key] = f.key === field.key ? clamped : fieldValue(spec, value, f);
+    if (f.key === field.key) counter[f.key] = clamped;
+    else if (current[f.key] === undefined) counter[f.key] = f.default;
+    // else: keep whatever the user typed, even if the number input cannot show it
   }
   const build = (node: unknown, depth: number): Mapping => {
     if (depth === spec.path.length) return counter;

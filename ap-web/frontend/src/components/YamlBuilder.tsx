@@ -13,7 +13,7 @@ import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import { normalizeOptionHelp } from "../lib/optionHelpText";
 import MarkdownText from "./MarkdownText";
-import { counterAt, fieldValue, findNestedCounterSpec, withFieldValue } from "../lib/nestedCounters";
+import { counterAt, fieldIsCustom, fieldValue, findNestedCounterSpec, withFieldValue } from "../lib/nestedCounters";
 import {
   createBuilderAttemptId,
   trackBuilderAbandoned,
@@ -1877,45 +1877,37 @@ function OptionControl({
         );
       }
       const nested = findNestedCounterSpec(apworld, option.name);
-      if (nested && typeof value !== "string" && counterAt(nested, dictVal)) {
-        return (
-          <>
+      const showFields = !!nested && typeof value !== "string" && !!counterAt(nested, dictVal);
+      // One stable tree for both cases so the textarea is never remounted
+      // (and loses focus) while the typed YAML flips between shapes.
+      return (
+        <>
+          {showFields && nested && (
             <div className="yaml-builder-counter" data-editor-kind="nested-counter">
               <p className="settings-aux-note"><strong>{nested.title}.</strong> {nested.hint}</p>
               {nested.fields.map((f) => (
-                <label key={f.key} className="yaml-builder-counter-row">
-                  <span className="yaml-builder-weight-key"><strong>{f.label}</strong></span>
-                  <input
-                    type="number"
-                    min={nested.min}
-                    max={nested.max}
-                    step={1}
-                    value={fieldValue(nested, dictVal, f)}
-                    onChange={(e) => {
-                      if (e.target.value === "") return;
-                      const next = withFieldValue(nested, dictVal, f, Number(e.target.value));
-                      if (next) onChange(next);
-                    }}
-                  />
-                </label>
+                <NestedCounterInput
+                  key={f.key}
+                  label={f.label}
+                  min={nested.min}
+                  max={nested.max}
+                  value={fieldValue(nested, dictVal, f)}
+                  custom={fieldIsCustom(nested, dictVal, f)}
+                  onCommit={(n) => {
+                    const next = withFieldValue(nested, dictVal, f, n);
+                    if (next) onChange(next);
+                  }}
+                />
               ))}
             </div>
-            <StructuredYamlInput
-              label={option.display_name || option.name}
-              value={dictVal}
-              expected="mapping"
-              onChange={onChange}
-            />
-          </>
-        );
-      }
-      return (
-        <StructuredYamlInput
-          label={option.display_name || option.name}
-          value={dictVal}
-          expected="mapping"
-          onChange={onChange}
-        />
+          )}
+          <StructuredYamlInput
+            label={option.display_name || option.name}
+            value={dictVal}
+            expected="mapping"
+            onChange={onChange}
+          />
+        </>
       );
     }
 
@@ -1928,6 +1920,35 @@ function OptionControl({
         />
       );
   }
+}
+
+/** Number input that may be emptied while retyping; commits every valid number. */
+function NestedCounterInput({
+  label, min, max, value, custom, onCommit,
+}: {
+  label: string; min: number; max: number; value: number; custom: boolean;
+  onCommit: (n: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <label className="yaml-builder-counter-row">
+      <span className="yaml-builder-weight-key"><strong>{label}</strong></span>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        step={1}
+        value={draft ?? String(value)}
+        aria-invalid={custom ? true : undefined}
+        title={custom ? "The YAML holds a value this field cannot show. It stays until you change this field." : undefined}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          if (e.target.value !== "") onCommit(Number(e.target.value));
+        }}
+        onBlur={() => setDraft(null)}
+      />
+    </label>
+  );
 }
 
 function parseFreeformList(text: string): string[] {

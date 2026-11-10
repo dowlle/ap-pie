@@ -64,3 +64,10 @@ test('an unshowable typed value is flagged and keeps its text until edited', () 
   assert.equal(fieldIsCustom(spec, v, gold), false);
   assert.equal(fieldValue(spec, v, platinum), 0);
 });
+
+test('editing one field keeps another typed value the inputs cannot show', () => {
+  const v = { base: { relics: { gold: 25, platinum: 'random' } } };
+  assert.deepEqual(withFieldValue(spec, v, sapphire, 4), {
+    base: { relics: { gold: 25, platinum: 'random', sapphire: 4 } },
+  });
+});

@@ -63,3 +63,23 @@ test("other games keep the plain item_pool box", async ({ page }) => {
   await expect(page.getByRole("textbox", { name: "Item Pool" })).toBeVisible();
   await expect(page.getByRole("spinbutton", { name: "Platinum Relics" })).toHaveCount(0);
 });
+
+test("typing in the box keeps focus while the shape is briefly not a relic mapping", async ({ page }) => {
+  await openCtr(page);
+  const box = page.getByRole("textbox", { name: "Item Pool" });
+  await box.fill("");
+  await box.pressSequentially("base:\n  r", { delay: 20 });
+  await expect(box).toBeFocused();
+  await box.pressSequentially("elics:\n    platinum: 4", { delay: 20 });
+  await expect(page.getByRole("spinbutton", { name: "Platinum Relics" })).toHaveValue("4");
+});
+
+test("a relic field can be emptied and retyped", async ({ page }) => {
+  await openCtr(page);
+  const gold = page.getByRole("spinbutton", { name: "Gold Relics" });
+  await gold.fill("");
+  await expect(gold).toHaveValue("");
+  await gold.pressSequentially("7");
+  const yaml = await downloadYaml(page);
+  expect(yaml["Crash Team Racing"].item_pool).toMatchObject({ base: { relics: { gold: 7 } } });
+});
