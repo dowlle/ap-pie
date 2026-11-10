@@ -13,6 +13,7 @@ import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import { normalizeOptionHelp } from "../lib/optionHelpText";
 import MarkdownText from "./MarkdownText";
+import { counterAt, fieldIsCustom, fieldValue, findNestedCounterSpec, withFieldValue } from "../lib/nestedCounters";
 import {
   createBuilderAttemptId,
   trackBuilderAbandoned,
@@ -997,7 +998,7 @@ export default function YamlBuilder({
             )}
 
             {schema && schema.options.length > 0 && (
-              <OptionsForm schema={schema} values={values} setValues={setValues} />
+              <OptionsForm schema={schema} values={values} setValues={setValues} apworld={entry?.apworld_name} />
             )}
 
             {schema && schema.options.length === 0 && (
@@ -1372,7 +1373,9 @@ function OptionsForm({
   schema,
   values,
   setValues,
+  apworld,
 }: {
+  apworld?: string;
   schema: NonNullable<BuilderSchemaEntry["schema"]>;
   values: Record<string, unknown>;
   setValues: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
@@ -1432,6 +1435,7 @@ function OptionsForm({
                       option={opt}
                       value={values[opt.name]}
                       onChange={(v) => setValues((prev) => ({ ...prev, [opt.name]: v }))}
+                      apworld={apworld}
                     />
                   </div>
                 </div>
@@ -1591,10 +1595,12 @@ function OptionControl({
   option,
   value,
   onChange,
+  apworld,
 }: {
   option: TemplateOption;
   value: unknown;
   onChange: (val: unknown) => void;
+  apworld?: string;
 }) {
   if (option.default_unresolved) {
     const inherited = value === undefined || value === null;
@@ -1606,7 +1612,7 @@ function OptionControl({
           Use game default
         </label>
         {!inherited && <OptionControl option={{...option, default_unresolved: false}}
-          value={value} onChange={onChange} />}
+          value={value} onChange={onChange} apworld={apworld} />}
       </div>
     );
   }
@@ -1870,13 +1876,38 @@ function OptionControl({
           </div>
         );
       }
+      const nested = findNestedCounterSpec(apworld, option.name);
+      const showFields = !!nested && typeof value !== "string" && !!counterAt(nested, dictVal);
+      // One stable tree for both cases so the textarea is never remounted
+      // (and loses focus) while the typed YAML flips between shapes.
       return (
-        <StructuredYamlInput
-          label={option.display_name || option.name}
-          value={dictVal}
-          expected="mapping"
-          onChange={onChange}
-        />
+        <>
+          {showFields && nested && (
+            <div className="yaml-builder-counter" data-editor-kind="nested-counter">
+              <p className="settings-aux-note"><strong>{nested.title}.</strong> {nested.hint}</p>
+              {nested.fields.map((f) => (
+                <NestedCounterInput
+                  key={f.key}
+                  label={f.label}
+                  min={nested.min}
+                  max={nested.max}
+                  value={fieldValue(nested, dictVal, f)}
+                  custom={fieldIsCustom(nested, dictVal, f)}
+                  onCommit={(n) => {
+                    const next = withFieldValue(nested, dictVal, f, n);
+                    if (next) onChange(next);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <StructuredYamlInput
+            label={option.display_name || option.name}
+            value={dictVal}
+            expected="mapping"
+            onChange={onChange}
+          />
+        </>
       );
     }
 
@@ -1889,6 +1920,35 @@ function OptionControl({
         />
       );
   }
+}
+
+/** Number input that may be emptied while retyping; commits every valid number. */
+function NestedCounterInput({
+  label, min, max, value, custom, onCommit,
+}: {
+  label: string; min: number; max: number; value: number; custom: boolean;
+  onCommit: (n: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <label className="yaml-builder-counter-row">
+      <span className="yaml-builder-weight-key"><strong>{label}</strong></span>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        step={1}
+        value={draft ?? String(value)}
+        aria-invalid={custom ? true : undefined}
+        title={custom ? "The YAML holds a value this field cannot show. It stays until you change this field." : undefined}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          if (e.target.value !== "") onCommit(Number(e.target.value));
+        }}
+        onBlur={() => setDraft(null)}
+      />
+    </label>
+  );
 }
 
 function parseFreeformList(text: string): string[] {
