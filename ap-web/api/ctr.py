@@ -19,6 +19,7 @@ import json
 import re
 from pathlib import Path
 
+import markdown
 from flask import Blueprint, abort, redirect, render_template, request, session
 
 import analytics
@@ -568,7 +569,18 @@ def ctr_reference_index() -> str:
     )
 
 
-def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str) -> str:
+# Shown at the top of the CTR release overview and of every release notes
+# page. Lives here once so a new release page gets it without a content edit.
+DISCORD_URL = "https://discord.com/invite/HxXy4mKQ5E"
+DISCORD_TEXT = (
+    f"Come hang out on [Appie's Games Discord]({DISCORD_URL}): test builds, "
+    "bug reports, YAML sharing and the roadmap all live there."
+)
+DISCORD_SECTION_MD = f"## Discord\n\n{DISCORD_TEXT}\n\n"
+
+
+def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str,
+                  prepend_markdown: str = "") -> str:
     return project_pages.article_page(
         section_key="ctr",
         content_dir=_REFERENCE_DIR,
@@ -579,6 +591,7 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str)
         analytics_page=analytics_page,
         default_image="/img/ctr/og-ctr-title.jpg",
         pager_back={"path": "/ctr/reference", "label": "How it works"},
+        prepend_markdown=prepend_markdown,
     )
 
 
@@ -611,6 +624,7 @@ def ctr_releases_index() -> str:
         "project/releases-index.html",
         **nav,
         releases_heading="CTR Archipelago releases",
+        releases_top_html=markdown.markdown(DISCORD_SECTION_MD, extensions=["toc"], output_format="html"),
         download_path="/ctr/download",
         releases=RELEASE_HISTORY,
         test_build=TEST_BUILD,
@@ -635,7 +649,8 @@ def ctr_release_page(slug: str):
     page = _RELEASE_BY_SLUG.get(slug)
     if page is None:
         abort(404)
-    return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}")
+    return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}",
+                         prepend_markdown=DISCORD_SECTION_MD)
 
 
 @bp.route("/ctr/reference/ap-boxes", strict_slashes=False)
