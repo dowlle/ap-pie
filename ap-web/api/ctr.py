@@ -19,6 +19,7 @@ import json
 import re
 from pathlib import Path
 
+import markdown
 from flask import Blueprint, abort, redirect, render_template, request, session
 
 import analytics
@@ -575,8 +576,18 @@ def ctr_reference_index() -> str:
     )
 
 
+# Shown at the top of the CTR release overview and of every release notes
+# page. Lives here once so a new release page gets it without a content edit.
+DISCORD_URL = "https://discord.com/invite/HxXy4mKQ5E"
+DISCORD_TEXT = (
+    f"Come hang out on [Appie's Games Discord]({DISCORD_URL}): test builds, "
+    "bug reports, YAML sharing and the roadmap all live there."
+)
+DISCORD_SECTION_MD = f"## Discord\n\n{DISCORD_TEXT}\n\n"
+
+
 def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str,
-                  github_release: str | None = None) -> str:
+                  github_release: str | None = None, prepend_markdown: str = "") -> str:
     return project_pages.article_page(
         section_key="ctr",
         content_dir=_REFERENCE_DIR,
@@ -588,6 +599,7 @@ def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str,
         default_image="/img/ctr/og-ctr-title.jpg",
         pager_back={"path": "/ctr/reference", "label": "How it works"},
         github_release=github_release,
+        prepend_markdown=prepend_markdown,
     )
 
 
@@ -620,6 +632,7 @@ def ctr_releases_index() -> str:
         "project/releases-index.html",
         **nav,
         releases_heading="CTR Archipelago releases",
+        releases_top_html=markdown.markdown(DISCORD_SECTION_MD, extensions=["toc"], output_format="html"),
         download_path="/ctr/download",
         releases=RELEASE_HISTORY,
         test_build=TEST_BUILD,
@@ -645,7 +658,8 @@ def ctr_release_page(slug: str):
     if page is None:
         abort(404)
     github_release = page.get("github_release") or project_pages.github_release_url(_GITHUB_RELEASES, page["verified_against"], RELEASE_HISTORY)
-    return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}", github_release)
+    return _article_page(page, f"/ctr/releases/{slug}", "Archipelago Pie", f"releases/{slug}", github_release,
+                         prepend_markdown=DISCORD_SECTION_MD)
 
 
 @bp.route("/ctr/reference/ap-boxes", strict_slashes=False)
