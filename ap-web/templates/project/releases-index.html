@@ -16,6 +16,7 @@
 {% endblock %}
 {% block main %}
   <h1>{{ releases_heading }}</h1>
+  {% if releases_top_html %}<div class="guide-body">{{ releases_top_html|safe }}</div>{% endif %}
   <p class="guide-lede">{% if releases_lede_html %}{{ releases_lede_html|safe }}{% else %}Every stable release, newest first. The current stable release is {{ stable.version }}; get it from the <a href="{{ download_path }}">download page</a>.{% endif %}</p>
   <ul class="release-list">
     {% for release in releases %}

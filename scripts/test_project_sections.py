@@ -113,6 +113,18 @@ class ProjectSectionsTest(unittest.TestCase):
         self.assertEqual(self.get("/ctr/releases/0-2-4").status_code, 200)
         self.assertIn('href="https://github.com/dowlle/ctr-native-ap/releases/tag/v0.1.0"', overview)
 
+    def test_ctr_release_pages_open_with_the_discord_section(self) -> None:
+        invite = 'href="https://discord.com/invite/HxXy4mKQ5E"'
+        for path in ("/ctr/releases", *(f"/ctr/releases/{slug}" for slug in ("0-3-0", "0-2-4", "0-2-3", "0-2-2", "0-2-1", "0-2-0"))):
+            with self.subTest(path=path):
+                html = self.get(path).get_data(as_text=True)
+                self.assertIn(invite, html)
+                self.assertIn("test builds, bug reports, YAML sharing and the roadmap all live there.", html)
+                self.assertLess(html.index(">Discord</h2>"), html.index("<h2", html.index(">Discord</h2>") + 1) if path != "/ctr/releases" else len(html))
+                self.assertEqual(html.count(invite), 1)
+        reference = self.get("/ctr/reference/progression").get_data(as_text=True)
+        self.assertNotIn("HxXy4mKQ5E", reference)
+
     def test_alpha_notes_are_separate_from_stable_release(self) -> None:
         alpha_path = "/ctr/releases/0-3-0"
         prerelease = "https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha3"
