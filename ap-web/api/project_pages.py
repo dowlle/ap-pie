@@ -33,12 +33,12 @@ def github_release_url(releases_url: str, version: str, history: list[dict]) -> 
     return f"{releases_url}/tag/v{version}"
 
 
-def render_markdown(md_path: Path) -> tuple[str, list[dict]]:
+def render_markdown(md_path: Path, prepend: str = "") -> tuple[str, list[dict]]:
     """Markdown to HTML plus the h2 sections for the on-page rail.
 
     Core Markdown plus `toc` only, as in api/guides.py: no raw-HTML
     passthrough extension and no smart punctuation."""
-    text = md_path.read_text(encoding="utf-8")
+    text = prepend + md_path.read_text(encoding="utf-8")
     renderer = markdown.Markdown(extensions=["toc"], output_format="html")
     html = renderer.convert(text)
     on_page = [
@@ -61,12 +61,15 @@ def article_page(
     default_image: str,
     pager_back: dict,
     github_release: str | None = None,
+    prepend_markdown: str = "",
 ) -> str:
-    """Render one reference or release-notes page of a project section."""
+    """Render one reference or release-notes page of a project section.
+
+    `prepend_markdown` is placed above the page's own markdown."""
     md_path = content_dir / page["file"]
     if not md_path.is_file():
         abort(404)
-    body_html, on_page = render_markdown(md_path)
+    body_html, on_page = render_markdown(md_path, prepend_markdown)
     analytics.record_event(
         event,
         user_id=session.get("user_id"),
