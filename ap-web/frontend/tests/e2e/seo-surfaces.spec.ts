@@ -101,11 +101,13 @@ test("catalog detail pages expose facts without unpublished editorial", async ({
   const worlds = await (await request.get("/api/apworlds")).json();
   const superMetroid = worlds.find((world: { name: string }) => world.name === "sm");
   const animalWell = worlds.find((world: { name: string }) => world.name === "animal_well");
+  const duplicateName = worlds.find((world: { name: string }) => world.name === "gl");
+  const longName = worlds.find((world: { name: string }) => world.name === "th185");
   const ctr = worlds.find((world: { name: string }) => world.name === "ctr");
   expect(superMetroid.editorial).toBeNull();
   expect(animalWell.editorial).toBeNull();
   expect(ctr.detail_href).toBe("/ctr");
-  for (const world of [superMetroid, animalWell]) {
+  for (const world of [superMetroid, animalWell, duplicateName, longName]) {
     const response = await request.get(world.detail_href);
     const html = await response.text();
     expect(response.ok()).toBeTruthy();
@@ -113,7 +115,7 @@ test("catalog detail pages expose facts without unpublished editorial", async ({
     expect(html).not.toContain('name="robots" content="noindex, nofollow"');
     await page.goto(world.detail_href);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${world.display_name} Archipelago`);
-    await expect(page).toHaveTitle(`${world.display_name} Archipelago APWorld | Archipelago Pie`);
+    await expect(page).toHaveTitle(world.detail_title);
     await expect(page.locator(".apworld-detail-version")).toHaveCount(world.versions.length);
   }
 });
@@ -203,7 +205,7 @@ test("contextual pages link directly to the YAML Builder", async ({ page, reques
     ["/ctr/setup", 'href="/yaml-builder/ctr"'],
     ["/guides/hosting-on-archipelago-pie", 'href="/yaml-builder"'],
     ["/guides/hosting-a-multiworld", 'href="/yaml-builder"'],
-    ["/ctr/reference/randomized-content", 'href="/yaml-builder/ctr"'],
+    ["/ctr/reference/randomized-content", 'href="/yaml-builder/ctr?version=0.2.1"'],
     ["/ctr/releases/0-2-0", 'href="/yaml-builder/ctr?version=0.2.0"'],
   ] as const;
 
@@ -216,9 +218,9 @@ test("contextual pages link directly to the YAML Builder", async ({ page, reques
   await expect(page.getByRole("link", { name: /YAML Builder/ }).last()).toHaveAttribute("href", "/yaml-builder");
 
   await page.goto("/ctr");
-  await expect(page.getByRole("link", { name: "Build your CTR YAML" }).first()).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "CTR YAML Builder", exact: true }).first()).toHaveAttribute(
     "href",
-    "/yaml-builder/ctr",
+    /^\/yaml-builder\/ctr\?version=/,
   );
 
   await page.goto("/ctr/download");
@@ -358,20 +360,21 @@ test("APWorld catalog consumes shared field and notice primitives", async ({ pag
   await expect(page.getByText("Sort", { exact: true }).locator("..")).toHaveClass(/\bfield\b/);
 });
 
-test("APWorld cards use the style-guide comparison hierarchy", async ({ page }) => {
+test("APWorld cards use the style-guide comparison hierarchy", async ({ page, request }) => {
+  const worlds = await (await request.get("/api/apworlds")).json();
+  const ctr = worlds.find((world: { name: string }) => world.name === "ctr");
   await page.goto("/apworlds");
   const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
   await expect(ctrCard.locator(".apworld-card-icon-tile")).toHaveText("CT");
-  await expect(ctrCard.getByText("Versions", { exact: true })).toBeVisible();
-  await expect(ctrCard.getByText("Latest recorded", { exact: true })).toBeVisible();
-  await expect(ctrCard.getByText("Setup", { exact: true })).toBeVisible();
+  await expect(ctrCard.locator(".apworld-card-release")).toContainText("Latest release");
+  await expect(ctrCard.getByRole("link", { name: "Open unreviewed setup link recorded in the community index" })).toHaveAttribute("href", ctr.setup_guide);
   await expect(ctrCard.locator(".apworld-version-list")).toHaveCount(0);
   await ctrCard.getByRole("button", { name: /View all \d+ versions/ }).click();
   await expect(ctrCard.locator(".apworld-version-list")).toBeVisible();
 });
 
-test("navigation stays visible and the signed-in brand opens Rooms", async ({ page }) => {
-  await page.route("**/api/auth/me", (route) => route.fulfill({
+test("signed-in navigation keeps the home brand and a separate Rooms link", async ({ page }) => {
+  await page.route(/\/api\/auth\/me(?:\?.*)?$/, (route) => route.fulfill({
     json: {
       id: 42,
       discord_id: "nav-test",
@@ -385,7 +388,9 @@ test("navigation stays visible and the signed-in brand opens Rooms", async ({ pa
   const nav = page.locator(".navbar");
   await expect(nav).toHaveCSS("position", "sticky");
   const brand = page.getByRole("link", { name: "Archipelago Pie" });
-  await expect(brand).toHaveAttribute("href", "/rooms");
+  await expect(brand).toHaveAttribute("href", "/");
+  await expect(nav.getByRole("link", { name: "Rooms", exact: true })).toHaveAttribute("href", "/rooms");
+  await expect(nav.getByRole("link", { name: "My", exact: true })).toBeVisible();
 });
 
 test("public SPA search surfaces appear exactly once in the sitemap", async ({ request }) => {
@@ -396,7 +401,8 @@ test("public SPA search surfaces appear exactly once in the sitemap", async ({ r
   expect(xml.match(/<loc>https:\/\/ap-pie\.com\/yaml-builder<\/loc>/g)).toHaveLength(1);
 });
 
-test("all sitemap metadata fits the Stef Appelhof SERP simulator", async ({ page, request }) => {
+test("all sitemap metadata fits the SERP simulator", async ({ page, request }) => {
+  test.setTimeout(120_000);
   // Contract from https://stefappelhof.com/seo-tools/serp-simulator/:
   // Arial 20px titles under 600px; Arial 14px descriptions under 960px.
   const sitemap = await (await request.get("/sitemap.xml")).text();

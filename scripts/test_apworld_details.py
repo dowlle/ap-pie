@@ -160,6 +160,25 @@ class APWorldDetailsTests(unittest.TestCase):
                 if visible:
                     self.assertEqual(joined["editorial"]["copy"]["answer"], published.copy.answer)
 
+    def test_duplicate_display_names_have_distinct_detail_metadata(self):
+        self.worlds = [fixture_world("first", "Same Game"), fixture_world("second", "Same Game")]
+        worlds = self.client.get("/api/apworlds").get_json()
+        self.assertEqual(len({world["detail_title"] for world in worlds}), 2)
+        self.assertEqual(len({world["detail_description"] for world in worlds}), 2)
+        for world in worlds:
+            html = self.client.get(world["detail_href"]).get_data(as_text=True)
+            self.assertIn(f'<title>{world["detail_title"]}</title>', html)
+            self.assertIn(world["name"], world["detail_title"])
+
+    def test_long_names_keep_full_heading_and_compact_metadata(self):
+        name = "A community integration with a very long descriptive game name"
+        self.worlds = [fixture_world("long_name", name)]
+        world = self.client.get("/api/apworlds").get_json()[0]
+        html = self.client.get(world["detail_href"]).get_data(as_text=True)
+        self.assertLessEqual(len(world["detail_title"]), 65)
+        self.assertIn(f"<h1>{name} Archipelago</h1>", html)
+        self.assertIn(f'<title>{world["detail_title"]}</title>', html)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

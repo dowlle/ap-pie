@@ -944,9 +944,9 @@ def apworld_detail(slug):
     if world["detail_href"] != f"/apworlds/{slug}":
         return redirect(world["detail_href"], code=301)
     name = world["display_name"]
-    description = f"{name} for Archipelago: versions, downloads, setup links, and recorded security review and generation evidence."
+    description = world["detail_description"]
     return _public_spa_response(f"apworlds/{slug}", {
-        "title": f"{name} Archipelago APWorld | Archipelago Pie",
+        "title": world["detail_title"],
         "description": description,
         "canonical": f"{config.PUBLIC_BASE_URL.rstrip('/')}/apworlds/{slug}",
         "heading": f"{name} Archipelago",

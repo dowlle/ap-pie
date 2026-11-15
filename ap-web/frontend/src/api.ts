@@ -238,6 +238,8 @@ export interface APWorldVersion {
 }
 
 export interface APWorldInfo {
+  detail_title?: string;
+  detail_description?: string;
   detail_slug: string;
   detail_href: string;
   detail_route_kind: "spa" | "server";

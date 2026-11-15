@@ -33,8 +33,8 @@ function WorldDetails({ world }: { world: APWorldInfo }) {
   const copy = world.editorial?.copy;
   useEffect(() => {
     applyPublicHead({
-      title: `${world.display_name} Archipelago APWorld | Archipelago Pie`,
-      description: `${world.display_name} for Archipelago: versions, downloads, setup links, and recorded security review and generation evidence.`,
+      title: world.detail_title ?? `${world.display_name} Archipelago APWorld | Archipelago Pie`,
+      description: world.detail_description ?? `${world.display_name} for Archipelago: versions, downloads, setup links, and recorded security review and generation evidence.`,
       canonical: `https://ap-pie.com/apworlds/${world.detail_slug}`,
     });
   }, [world]);
