@@ -118,6 +118,11 @@ class EvidenceTests(unittest.TestCase):
                 held = record(status="held")
                 overlay.write_text(json.dumps({"schema": 1, "records": [held]}))
                 with app.app_context():
+                    # Catalog refreshes now keep the old snapshot available.
+                    # Wait for the shared rebuild before asserting fresh data.
+                    thread = api._refresh_index_in_background(app)
+                    if thread is not None:
+                        thread.join(10)
                     self.assertEqual(api._get_index()[0]["versions"][0]["security_review"]["status"], "held")
                 response = client.get("/api/apworlds/security-reviews/" + reviews.record_id(record()))
                 self.assertEqual(response.status_code, 200)
@@ -126,6 +131,9 @@ class EvidenceTests(unittest.TestCase):
                 self.assertEqual(client.get("/api/apworlds/security-reviews/" + "0" * 64).status_code, 404)
                 overlay.write_text('{"schema": 1, "records": [{"report": "private"}]}')
                 with app.app_context():
+                    thread = api._refresh_index_in_background(app)
+                    if thread is not None:
+                        thread.join(10)
                     self.assertEqual(api._get_index()[0]["versions"][0]["security_review"]["status"], "held")
 
     def test_publisher_refuses_prod_and_validates_before_replace(self):
