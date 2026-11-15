@@ -188,7 +188,8 @@ export default function Landing() {
         <section className="lp-intro lp-about" aria-labelledby="what-ap-pie-does">
           <h2 id="what-ap-pie-does">What Archipelago Pie does</h2>
           <p className="lp-capability">
-            Archipelago Pie collects player YAMLs in a collection room, and gives you the reviewed APWorld catalog and a YAML Builder for making them.{" "}
+            Archipelago Pie collects player YAMLs in a collection room, and gives you an APWorld catalog and a YAML Builder for making them.{" "}
+            The catalog shows security reviews and generation test results where available.{" "}
             It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine.
           </p>
           <p>

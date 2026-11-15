@@ -10,6 +10,8 @@ from __future__ import annotations
 import os
 import sys
 import unittest
+from pathlib import Path
+from unittest import mock
 
 import psycopg2
 import psycopg2.extras
@@ -23,6 +25,79 @@ import db
 from api.presets import _count_use, _option_values_too_large as preset_values_too_large
 from api.user_yamls import _option_values_too_large as yaml_values_too_large
 from request_ip import client_ip
+
+
+class TemplateRefreshAuthorization(unittest.TestCase):
+    """Public template reads must never grant cache invalidation rights."""
+
+    def setUp(self) -> None:
+        import api.templates as templates
+        from auth import apply_auth_to_app
+
+        self.templates = templates
+        for name, value in (
+            ("_cache", {"cached.yaml": {"game": "Cached"}}),
+            ("_list_cache", [{"game": "Cached", "filename": "cached.yaml"}]),
+            ("_apworld_cache", {"Cached": {"game": "Cached"}}),
+        ):
+            patcher = mock.patch.object(templates, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+        self.app = Flask(__name__)
+        self.app.secret_key = "test-only"
+        self.app.register_blueprint(templates.bp)
+        apply_auth_to_app(self.app)
+        self.client = self.app.test_client()
+
+    def _assert_caches_preserved(self) -> None:
+        self.assertEqual(self.templates._cache, {"cached.yaml": {"game": "Cached"}})
+        self.assertEqual(self.templates._list_cache, [{"game": "Cached", "filename": "cached.yaml"}])
+        self.assertEqual(self.templates._apworld_cache, {"Cached": {"game": "Cached"}})
+
+    def test_anonymous_refresh_is_refused_with_or_without_oauth(self) -> None:
+        for configured in (True, False):
+            with self.subTest(oauth_configured=configured), mock.patch(
+                "auth._auth_configured", return_value=configured,
+            ):
+                self.assertEqual(self.client.post("/api/templates/refresh").status_code, 401)
+                self._assert_caches_preserved()
+
+    def test_refresh_requires_an_active_admin(self) -> None:
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 7
+        users = (
+            None,
+            {"id": 7, "is_admin": False, "is_approved": True},
+            {"id": 7, "is_admin": True, "deletion_due_at": "pending"},
+        )
+        # Exercise the route's own gate, even when middleware is disabled.
+        with mock.patch("auth._auth_configured", return_value=False):
+            for user in users:
+                with self.subTest(user=user), mock.patch("db.get_user", return_value=user):
+                    self.assertEqual(self.client.post("/api/templates/refresh").status_code, 403)
+                    self._assert_caches_preserved()
+
+    def test_admin_refresh_clears_all_template_caches(self) -> None:
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 7
+        with mock.patch("auth._auth_configured", return_value=True), mock.patch(
+            "db.get_user", return_value={"id": 7, "is_admin": True},
+        ):
+            response = self.client.post("/api/templates/refresh")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"status": "ok"})
+        self.assertEqual(self.templates._cache, {})
+        self.assertIsNone(self.templates._list_cache)
+        self.assertEqual(self.templates._apworld_cache, {})
+
+    def test_template_reads_remain_public(self) -> None:
+        with mock.patch("auth._auth_configured", return_value=True), mock.patch.object(
+            self.templates, "_get_templates_dir", return_value=Path("/nonexistent-templates"),
+        ):
+            self.assertEqual(self.client.get("/api/templates").status_code, 200)
+            self.assertEqual(self.client.get("/api/templates/Cached").status_code, 200)
+        self._assert_caches_preserved()
 
 
 class SecurityControls(unittest.TestCase):

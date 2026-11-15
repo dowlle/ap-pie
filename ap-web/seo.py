@@ -22,7 +22,7 @@ def website_id(base_url: str) -> str:
 #: One sentence pair naming what Archipelago Pie does and does not do. Kept
 #: here so the structured data, llms.txt and the on-page copy cannot drift.
 CAPABILITY_STATEMENT = (
-    "Archipelago Pie collects player YAMLs in a collection room, and gives you the reviewed APWorld catalog and a YAML Builder for making them. It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine."
+    "Archipelago Pie collects player YAMLs in a collection room, and gives you an APWorld catalog and a YAML Builder for making them. The catalog shows security reviews and generation test results where available. It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine."
 )
 
 

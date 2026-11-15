@@ -585,7 +585,8 @@ def _guide(slug: str) -> str:
                             "No. Archipelago Pie does not run Archipelago game servers and has "
                             "no multiworld upload page, so there is no ap-pie.com server address "
                             "to connect to. It collects player YAMLs in a collection room and "
-                            "publishes the reviewed APWorld catalog and the YAML Builder. "
+                            "publishes an APWorld catalog and the YAML Builder. "
+                            "The catalog shows security reviews and generation test results where available. "
                             "Generate the multiworld locally with the Archipelago Launcher, then "
                             "host the server on archipelago.gg or on your own machine."
                         ),
