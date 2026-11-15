@@ -100,18 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     getAuthMe()
       .then((u) => {
+        if (u && "auth_enabled" in u) {
+          setAuthEnabled(u.auth_enabled);
+          setRawUser(null);
+          return;
+        }
         setRawUser(u);
         wasApprovedRef.current = !!(u?.is_approved || u?.is_admin);
       })
-      .catch((err) => {
+      .catch(() => {
         setRawUser(null);
-        // If the auth endpoint returns 401, auth may just not be configured.
-        // Probe an otherwise-protected route: if it succeeds, auth is off.
-        if (err.message?.includes("401")) {
-          fetch("/api/games?limit=1").then((r) => {
-            if (r.ok) setAuthEnabled(false);
-          }).catch(() => {});
-        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -128,6 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const fresh = await getAuthMe();
         if (cancelled) return;
+        if (fresh && "auth_enabled" in fresh) {
+          setRawUser(null);
+          setAuthEnabled(fresh.auth_enabled);
+          return;
+        }
         setRawUser(fresh);
         const approvedNow = !!(fresh.is_approved || fresh.is_admin);
         if (approvedNow && !wasApprovedRef.current) {

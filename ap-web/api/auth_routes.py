@@ -13,6 +13,7 @@ from auth import (
     discord_login_url,
     exchange_code,
     generate_oauth_state,
+    _auth_configured,
     get_discord_user,
     requires_auth,
 )
@@ -205,7 +206,9 @@ def callback():
 
 @bp.route("/api/auth/me")
 def me():
-    """Return the current authenticated user, or 401.
+    """Return the authenticated user, or 401 unless optional=1 is requested.
+
+    The optional anonymous probe returns user=null and auth_enabled with 200.
 
     Augments the stored user row with a derived `is_owner` flag so the
     frontend can gate the owner-only "view as" toggle (DEVEX-02). Owner
@@ -214,16 +217,25 @@ def me():
     could change without re-bootstrapping the row. is_admin is still the
     canonical authorization flag everywhere else.
     """
+    def anonymous():
+        # The optional session probe is public information. Protected API
+        # routes and the strict /me response retain their existing gates.
+        if request.args.get("optional") == "1":
+            return jsonify(user=None, auth_enabled=_auth_configured())
+        return jsonify({"error": "Not authenticated"}), 401
+
     user_id = session.get("user_id")
     if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
+        return anonymous()
 
     user = get_user(user_id)
     if not user:
         session.clear()
-        return jsonify({"error": "Not authenticated"}), 401
+        return anonymous()
     if user.get("deletion_due_at"):
         session.clear()
+        if request.args.get("optional") == "1":
+            return anonymous()
         return jsonify({
             "error": "Account deletion is pending",
             "code": "account_pending_deletion",

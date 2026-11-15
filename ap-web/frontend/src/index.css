@@ -4494,6 +4494,8 @@ details.collapsible-section > .accordion-body {
 }
 .lp-title em { font-style: normal; color: var(--accent); }
 .lp-sub { color: var(--text-muted); font-size: 1.12rem; max-width: 34rem; margin: 0 auto 2rem; position: relative; }
+.lp-hero .lp-hero-capability { max-width: 38rem; margin: 0 auto 1.5rem; position: relative; }
+.apworld-pagination { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1rem 0; }
 .lp-cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; position: relative; }
 .lp-btn { padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; }
 .lp-btn-ghost { background: transparent; color: var(--accent-light); border: 1px solid var(--border-strong); }
