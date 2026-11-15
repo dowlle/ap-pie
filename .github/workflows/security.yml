@@ -27,6 +27,7 @@ jobs:
       - run: npm ci
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run test:unit
+      - run: npm run lint
 
   python-audit:
     runs-on: ubuntu-latest
@@ -58,6 +59,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgresql://archipelago:security-test-only@localhost:5432/archipelago
+      TEST_DATABASE_URL: postgresql://archipelago:security-test-only@localhost:5432/archipelago
       SECRET_KEY: security-test-key-long
       AP_CORS_ORIGINS: http://localhost
     steps:
@@ -90,3 +92,5 @@ jobs:
       - run: python scripts/test_security_evidence.py
       - run: python scripts/test_fuzz_evidence.py
       - run: python scripts/test_builtin_builder.py
+      - run: python scripts/test_apworld_editorial.py
+      - run: python -m unittest discover -s ap-web -p 'test_*.py' -v

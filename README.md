@@ -44,6 +44,8 @@ docker compose up --build -d
 # Open http://localhost:5001
 ```
 
+Generation, server launch/stop and APWorld installation are disabled by default in both direct Python runs and Docker Compose. Installing the Archipelago binary does not enable them. To use those features in a development or dedicated generation environment, explicitly set `FEATURE_GENERATION=true` in that environment before starting the application. Leave it false for production YAML collection. Both deploy scripts use the remote checkout's Compose configuration and environment; they do not enable generation.
+
 ## Deployment (production)
 
 See [`deploy.sh`](deploy.sh) for the deploy story. In short: SSH-key access to your VPS, docker + docker compose installed, `git pull && docker compose up --build -d`. Caddy in front handles TLS via Let's Encrypt:
