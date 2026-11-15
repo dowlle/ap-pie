@@ -119,13 +119,15 @@ test("catalog detail pages expose facts without unpublished editorial", async ({
 });
 
 test("server-owned APWorld routes perform a document navigation", async ({ page }) => {
-  await page.goto("/apworlds");
+  await page.goto("/apworlds?search=Crash%20Team%20Racing");
   const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
+  const documentRequest = page.waitForRequest(request => request.resourceType() === "document" && new URL(request.url()).pathname === "/ctr");
   await ctrCard.getByRole("link", { name: "Crash Team Racing", exact: true }).click();
+  await documentRequest;
   await expect(page).toHaveURL(/\/ctr$/);
   await expect(page.getByRole("heading", { level: 1, name: "Crash Team Racing Archipelago" })).toBeVisible();
   await page.goBack();
-  await expect(page).toHaveURL(/\/apworlds$/);
+  await expect(page).toHaveURL(/\/apworlds\?search=Crash%20Team%20Racing$/);
   await expect(page.getByRole("heading", { level: 1, name: "APWorld downloads" })).toBeVisible();
 });
 
@@ -146,7 +148,7 @@ test("Poképelago discovery links are followed and crawler-visible", async ({ pa
   const machineIndex = await (await request.get("/llms.txt")).text();
   expect(machineIndex).toContain("[Play Poképelago](https://pokepelago.ap-pie.com/)");
 
-  await page.goto("/apworlds");
+  await page.goto("/apworlds?search=pokepelago");
   const card = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Pokepelago" }) });
   await expect(card.getByRole("link", { name: "Play Poképelago" })).toHaveAttribute(
     "href",
@@ -346,9 +348,9 @@ test("APWorld catalog explains its outputs and exposes task-led views", async ({
   }
   await page.getByRole("button", { name: /^With recorded setup links/ }).click();
   await expect(page.locator(".apworld-card").first()).toBeVisible();
-  await expect(page.locator(".apworld-card")).toHaveCount(
-    Number((await page.getByRole("button", { name: /^With recorded setup links/ }).locator("span").textContent()) || 0),
-  );
+  const total = Number((await page.getByRole("button", { name: /^With recorded setup links/ }).locator("span").textContent()) || 0);
+  await expect(page.locator(".apworld-card")).toHaveCount(Math.min(24, total));
+  await expect(page.locator(".apworlds-count")).toHaveText(`${total} APWorlds found · Showing 1 to ${Math.min(24, total)}`);
 });
 
 test("APWorld catalog consumes shared field and notice primitives", async ({ page }) => {
@@ -359,7 +361,7 @@ test("APWorld catalog consumes shared field and notice primitives", async ({ pag
 });
 
 test("APWorld cards use the style-guide comparison hierarchy", async ({ page }) => {
-  await page.goto("/apworlds");
+  await page.goto("/apworlds?search=Crash%20Team%20Racing");
   const ctrCard = page.locator(".apworld-card", { has: page.getByRole("heading", { name: "Crash Team Racing" }) });
   await expect(ctrCard.locator(".apworld-card-icon-tile")).toHaveText("CT");
   await expect(ctrCard.getByText("Versions", { exact: true })).toBeVisible();

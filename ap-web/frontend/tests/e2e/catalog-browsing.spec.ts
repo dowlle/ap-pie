@@ -106,3 +106,48 @@ test("homepage explains collection and hosting in the first screen", async ({ pa
   const bounds = await explanation.boundingBox();
   expect(bounds!.y + bounds!.height).toBeLessThan(844);
 });
+
+for (const width of [1440, 390]) {
+  test(`failed-version downloads stay gated from a later catalog page at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await mockCatalog(page);
+    const failed = {
+      ...worlds[1], name: "zz_failed", display_name: "ZZ Failed World",
+      detail_slug: "zz-failed", detail_href: "/apworlds/zz-failed",
+      downloadable_versions: [{ version: "2.0" }, { version: "1.0" }],
+      versions: ["2.0", "1.0"].map(version => ({
+        ...worlds[1].versions[0], version,
+        security_review: { status: "fail", reviewed_at: "2026-11-01", method: "source-review", summary: "Failed archive fixture", sha256: "a".repeat(64), report_sha256: "b".repeat(64), report_public: false, record_url: "/api/apworlds/security-reviews/test" },
+      })),
+    };
+    await page.route("**/api/apworlds", route => route.fulfill({ json: [...worlds, failed] }));
+    await page.route("**/apworlds/zz-failed", async route => {
+      const response = await route.fetch({ url: new URL("/apworlds", route.request().url()).href });
+      await route.fulfill({ response });
+    });
+    await page.goto("/apworlds?page=3");
+    await page.reload();
+    const card = page.locator(".apworld-card").filter({ hasText: "ZZ Failed World" });
+    const latest = card.getByRole("link", { name: "Download ZZ Failed World v2.0" });
+    await expect(latest).toHaveAttribute("href", "/apworlds/zz-failed#version-2.0");
+    await expect(latest).not.toHaveAttribute("download");
+    await latest.click();
+    await expect(page).toHaveURL(/\/apworlds\/zz-failed#version-2.0$/);
+    await expect(page.getByRole("link", { name: /^Download APWorld/ })).toHaveCount(0);
+    await page.locator('[id="version-2.0"]').getByRole("checkbox").check();
+    await expect(page.getByRole("link", { name: "Download APWorld 2.0" })).toHaveAttribute("href", "/api/apworlds/zz_failed/2.0/download");
+    await expect(page.getByRole("link", { name: "Download APWorld 1.0" })).toHaveCount(0);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/apworlds\?page=3$/);
+    await card.getByRole("button", { name: /View all 2 versions/ }).click();
+    const older = card.getByRole("link", { name: "Download ZZ Failed World v1.0" });
+    await expect(older).toHaveAttribute("href", "/apworlds/zz-failed#version-1.0");
+    await expect(older).not.toHaveAttribute("download");
+    await older.click();
+    const version = page.locator('[id="version-1.0"]');
+    await expect(page.getByRole("link", { name: /^Download APWorld/ })).toHaveCount(0);
+    await version.getByRole("checkbox").check();
+    await expect(version.getByRole("link", { name: "Download APWorld 1.0" })).toHaveAttribute("href", "/api/apworlds/zz_failed/1.0/download");
+    await expect(page.getByRole("link", { name: "Download APWorld 2.0" })).toHaveCount(0);
+  });
+}
