@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { getGeneratedSlots, getRoomTracker, getPublicRoomTracker, type GeneratedSlot, type RoomTrackerData, type PlayerInfo } from "../api";
+import { getGeneratedSlots, getRoomTracker, getPublicRoomTracker, type GeneratedSlot, type RoomTrackerData, type PlayerInfo, type RoomActivity } from "../api";
 import {
   filterAndSortPlayers,
   nextTrackerSort,
@@ -12,6 +12,7 @@ import SlotDetailModal from "./SlotDetailModal";
 import ActivityFeed from "./ActivityFeed";
 import { useAuth } from "../context/AuthContext";
 import { gameJoinUrl } from "../lib/gameJoin";
+import { bkDuration, matchesCoordination } from "../lib/slotCoordination";
 
 function statusIcon(label: string) {
   // Status labels match the archipelago.gg tracker page vocabulary now:
@@ -86,9 +87,9 @@ function PlayerCard({
       </div>
       {coordination && (coordination.bk_since || coordination.go_mode_since || coordination.slot_note) && (
         <div className="tracker-card-coordination" aria-label="Player coordination state">
-          {coordination.bk_since && <span className="badge badge-progress">BK</span>}
+          {coordination.bk_since && <span className="badge badge-progress" title={`Blocked since ${new Date(coordination.bk_since).toLocaleString()}`}>BK {bkDuration(coordination.bk_since)}</span>}
           {coordination.go_mode_since && <span className="badge badge-done">Go mode</span>}
-          {coordination.slot_note && <span className="badge">Note</span>}
+          {coordination.slot_note && <span className="badge" title={coordination.slot_note}>Note</span>}
         </div>
       )}
     </>
@@ -159,6 +160,7 @@ export default function LiveTracker({
 }) {
   const [data, setData] = useState<RoomTrackerData | null>(null);
   const [generatedSlots, setGeneratedSlots] = useState<GeneratedSlot[]>([]);
+  const [coordinationActivity, setCoordinationActivity] = useState<RoomActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<number | null>(null);
   // UX-09: search + sort state. Default sort is null (preserves backend
@@ -166,6 +168,8 @@ export default function LiveTracker({
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<TrackerSort | null>(null);
   const [onlyMine, setOnlyMine] = useState(false);
+  const [onlyBK, setOnlyBK] = useState(false);
+  const [onlyGoMode, setOnlyGoMode] = useState(false);
   const toggleSort = (key: TrackerSortKey) => setSort((cur) => nextTrackerSort(cur, key));
   // FEAT-14: which slot's detail modal is open, if any.
   const [openPlayer, setOpenPlayer] = useState<PlayerInfo | null>(null);
@@ -191,8 +195,11 @@ export default function LiveTracker({
       })
       .catch(() => setLoading(false));
     getGeneratedSlots(roomId)
-      .then((result) => setGeneratedSlots(result.slots))
-      .catch(() => setGeneratedSlots([]));
+      .then((result) => {
+        setGeneratedSlots(result.slots);
+        setCoordinationActivity(result.activity ?? []);
+      })
+      .catch(() => { setGeneratedSlots([]); setCoordinationActivity([]); });
   }, [roomId, publicMode]);
 
   useEffect(() => {
@@ -222,9 +229,12 @@ export default function LiveTracker({
   // "My slots" filter runs on top of search+sort so the chip stays composable
   // with the existing filter chrome.
   const baseFiltered = filterAndSortPlayers(data.players, search, sort);
-  const displayedPlayers = onlyMine && mineSet
+  const mineFiltered = onlyMine && mineSet
     ? baseFiltered.filter((p) => mineSet.has(p.name))
     : baseFiltered;
+  const displayedPlayers = mineFiltered.filter((p) => matchesCoordination(
+    generatedSlots.find((s) => s.team === 0 && s.slot === p.slot), onlyBK, onlyGoMode,
+  ));
   // FEAT-08: external trackers (archipelago.gg) only expose slot/name/game,
   // not per-slot checks or items. Surface a small note so the empty bars
   // aren't mistaken for "the game hasn't started yet".
@@ -308,6 +318,10 @@ export default function LiveTracker({
               My slots ({effectiveMineNames.length})
             </button>
           )}
+          <button type="button" className={`tracker-sort-chip${onlyBK ? " is-active" : ""}`}
+            aria-pressed={onlyBK} onClick={() => setOnlyBK((v) => !v)}>BK</button>
+          <button type="button" className={`tracker-sort-chip${onlyGoMode ? " is-active" : ""}`}
+            aria-pressed={onlyGoMode} onClick={() => setOnlyGoMode((v) => !v)}>Go mode</button>
           <div className="tracker-sort-row" role="group" aria-label="Sort players by">
             <span className="tracker-sort-label muted">Sort:</span>
             {(
@@ -330,7 +344,7 @@ export default function LiveTracker({
               </button>
             ))}
           </div>
-          {(search.trim() || sort) && (
+          {(search.trim() || sort || onlyMine || onlyBK || onlyGoMode) && (
             <span className="muted yaml-count tracker-count">
               {displayedPlayers.length} of {data.players.length}
             </span>
@@ -360,6 +374,7 @@ export default function LiveTracker({
           player={openPlayer}
           publicMode={publicMode}
           viewerUserId={user?.id ?? null}
+          coordinationSnapshot={generatedSlots.find((s) => s.team === 0 && s.slot === openPlayer.slot)}
           onCoordinationChanged={fetchTracker}
           onClose={() => setOpenPlayer(null)}
         />
@@ -393,6 +408,19 @@ export default function LiveTracker({
       {/* FEAT-17 V1.5: in-game activity feed. Renders only when the
           WebSocket tracker is connected for this room (component
           self-hides on no_connection). */}
+      {coordinationActivity.length > 0 && (
+        <details className="collapsible-section detail-section">
+          <summary>Coordination activity</summary>
+          <div className="activity-feed">
+            {coordinationActivity.map((event) => (
+              <div className="activity-item" key={event.id}>
+                <span className="activity-message">{event.message}</span>
+                <span className="activity-time">{new Date(event.created_at).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
       <ActivityFeed roomId={roomId} publicMode={publicMode} />
     </div>
   );

@@ -905,6 +905,9 @@ export interface GeneratedSlot {
   go_mode_since: string | null;
   slot_note: string;
   state_updated_at: string | null;
+  can_edit?: boolean;
+  updated_by_username?: string | null;
+  ping_policy?: "disabled";
 }
 
 export interface GeneratedRosterRow {
@@ -955,7 +958,7 @@ export async function confirmGeneratedRoom(
   return body;
 }
 
-export async function getGeneratedSlots(roomId: string): Promise<{ associated: boolean; slots: GeneratedSlot[] }> {
+export async function getGeneratedSlots(roomId: string): Promise<{ associated: boolean; slots: GeneratedSlot[]; activity?: RoomActivity[] }> {
   return fetchJson(`${BASE}/public/rooms/${roomId}/slots`);
 }
 

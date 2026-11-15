@@ -1439,6 +1439,9 @@ def _coordination_slot_overlay(room_id: str, team: int, slot: int) -> dict | Non
         "go_mode_since": row.get("go_mode_since"),
         "slot_note": row.get("slot_note") or "",
         "state_updated_at": row.get("state_updated_at"),
+        "ping_policy": row.get("ping_policy") or "disabled",
+        "updated_by_username": row.get("updated_by_username"),
+        "can_edit": True,  # This overlay is served through the host/admin gate.
     }
 
 

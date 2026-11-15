@@ -46,8 +46,8 @@ test('typed values show in the fields', () => {
 });
 
 test('values are clamped to 0..18', () => {
-  const hi = withFieldValue(spec, {}, platinum, 99)! as any;
-  const lo = withFieldValue(spec, {}, platinum, -4)! as any;
+  const hi = withFieldValue(spec, {}, platinum, 99)! as { base: { relics: { platinum: number } } };
+  const lo = withFieldValue(spec, {}, platinum, -4)! as { base: { relics: { platinum: number } } };
   assert.equal(hi.base.relics.platinum, 18);
   assert.equal(lo.base.relics.platinum, 0);
 });
