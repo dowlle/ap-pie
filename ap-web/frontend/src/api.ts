@@ -238,6 +238,9 @@ export interface APWorldVersion {
 }
 
 export interface APWorldInfo {
+  detail_slug: string;
+  detail_href: string;
+  detail_route_kind: "spa" | "server";
   name: string;
   display_name: string;
   game_name: string;  // matches YAML.game (FEAT-21 lookup key)
@@ -269,6 +272,11 @@ export interface APWorldInfo {
     route_override?: string;
     route_kind?: "spa" | "server";
     beta_preview_only?: boolean;
+    copy?: {
+      answer: string;
+      facts: { label: string; value: string }[];
+      sections: { title: string; paragraphs: string[] }[];
+    };
   } | null;
   review_state: "absent" | "draft" | "reviewed" | "stale" | "retired";
 }

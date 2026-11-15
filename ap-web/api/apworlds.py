@@ -35,7 +35,8 @@ from ap_lib.apworld_index import (
 import config
 import security_reviews
 from builtin_builder import builtin_record, build_versions
-from apworld_editorial import join_index_record, load_reviewed_apworlds
+from apworld_editorial import load_reviewed_apworlds
+from apworld_catalog import public_catalog
 from fuzz_evidence import attach_fuzz_evidence, load_provenance
 
 logger = logging.getLogger(__name__)
@@ -917,7 +918,7 @@ def list_apworlds():
     # explained, but they are not player-facing catalog choices. Never
     # advertise artifacts or builder actions that the maintainer explicitly
     # disabled.
-    worlds = [world for world in _get_index() if not world["disabled"]]
+    worlds = get_public_catalog()
     if search:
         worlds = [
             w for w in worlds
@@ -926,17 +927,32 @@ def list_apworlds():
     if supported_only:
         worlds = [w for w in worlds if w["supported"]]
 
-    overlays = load_reviewed_apworlds()
-    include_beta_previews = config.DEPLOYMENT_LABEL == "beta"
-    joined_worlds = []
-    for world in worlds:
-        joined = join_index_record(world, overlays, include_beta_previews=include_beta_previews)
-        entry = dict(world)
-        entry["editorial"] = joined["editorial"]
-        entry["review_state"] = joined["review_state"]
-        joined_worlds.append(entry)
+    return jsonify(worlds)
 
-    return jsonify(joined_worlds)
+
+def get_public_catalog():
+    return public_catalog(_get_index(), load_reviewed_apworlds())
+
+
+@bp.get("/apworlds/<slug>")
+def apworld_detail(slug):
+    from app import _public_spa_response
+
+    world = next((world for world in get_public_catalog() if world["detail_slug"] == slug), None)
+    if world is None:
+        return "Not found\n", 404
+    if world["detail_href"] != f"/apworlds/{slug}":
+        return redirect(world["detail_href"], code=301)
+    name = world["display_name"]
+    description = f"{name} for Archipelago: versions, downloads, setup links, and recorded security review and generation evidence."
+    return _public_spa_response(f"apworlds/{slug}", {
+        "title": f"{name} Archipelago APWorld | Archipelago Pie",
+        "description": description,
+        "canonical": f"{config.PUBLIC_BASE_URL.rstrip('/')}/apworlds/{slug}",
+        "heading": f"{name} Archipelago",
+        "intro": description,
+        "schema_type": "WebPage",
+    })
 
 
 @bp.route("/api/apworlds/installed")

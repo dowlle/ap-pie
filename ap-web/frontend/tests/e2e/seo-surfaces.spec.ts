@@ -97,36 +97,25 @@ test("style guide documents the approved complex module patterns", async ({ page
   }
   await expect(review.getByText("Approved", { exact: true })).toHaveCount(5);
 });
-
-test("reviewed APWorld beta fixtures are noindex and evidence-aware", async ({ page, request }) => {
-  const indexResponse = await request.get("/api/apworlds");
-  const worlds = await indexResponse.json();
+test("catalog detail pages expose facts without unpublished editorial", async ({ page, request }) => {
+  const worlds = await (await request.get("/api/apworlds")).json();
   const superMetroid = worlds.find((world: { name: string }) => world.name === "sm");
   const animalWell = worlds.find((world: { name: string }) => world.name === "animal_well");
   const ctr = worlds.find((world: { name: string }) => world.name === "ctr");
-  expect(superMetroid.editorial).toMatchObject({ slug: "super-metroid", beta_preview_only: true });
-  expect(animalWell.review_state).toBe("draft");
+  expect(superMetroid.editorial).toBeNull();
   expect(animalWell.editorial).toBeNull();
-  expect(ctr.editorial).toMatchObject({ route_override: "/ctr", route_kind: "server" });
-
-  for (const fixture of [
-    { path: "/apworlds/super-metroid", heading: "Super Metroid Archipelago" },
-    { path: "/apworlds/animal-well", heading: "ANIMAL WELL Archipelago" },
-  ]) {
-    const response = await request.get(fixture.path);
+  expect(ctr.detail_href).toBe("/ctr");
+  for (const world of [superMetroid, animalWell]) {
+    const response = await request.get(world.detail_href);
     const html = await response.text();
     expect(response.ok()).toBeTruthy();
-    expect(html).toContain('name="robots" content="noindex, nofollow"');
-    expect(html).toContain(`<h1>${fixture.heading}</h1>`);
-    await page.goto(fixture.path);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(fixture.heading);
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+    expect(html).toContain(`href="https://ap-pie.com${world.detail_href}"`);
+    expect(html).not.toContain('name="robots" content="noindex, nofollow"');
+    await page.goto(world.detail_href);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${world.display_name} Archipelago`);
+    await expect(page).toHaveTitle(`${world.display_name} Archipelago APWorld | Archipelago Pie`);
+    await expect(page.locator(".apworld-detail-version")).toHaveCount(world.versions.length);
   }
-
-  await page.goto("/apworlds/animal-well");
-  await expect(page.getByText("Fuzz warning")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Download APWorld 0.5.4/i })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Build ANIMAL WELL YAML/i })).toBeVisible();
 });
 
 test("server-owned APWorld routes perform a document navigation", async ({ page }) => {

@@ -3,16 +3,16 @@ import Tooltip from "./Tooltip";
 import type { APWorldVersion } from "../api";
 import FuzzerModal from "./FuzzerModal";
 
-function EvidenceButton({ label, tone, explanation, expanded, onClick }: {
-  label: string; tone: string; explanation: string; expanded: boolean; onClick: () => void;
+function EvidenceButton({ label, tone, explanation, expanded, onClick, href }: {
+  label: string; tone: string; explanation: string; expanded: boolean; onClick: () => void; href?: string;
 }) {
   return <Tooltip label={label} tone={tone} explanation={explanation} hint="Activate the badge for details">
-    <button type="button" className={`apworld-evidence-badge is-${tone}`} aria-expanded={expanded} onClick={onClick}><span aria-hidden="true" />{label}</button>
+    {href ? <a className={`apworld-evidence-badge is-${tone}`} href={href}><span aria-hidden="true" />{label}</a> : <button type="button" className={`apworld-evidence-badge is-${tone}`} aria-expanded={expanded} onClick={onClick}><span aria-hidden="true" />{label}</button>}
   </Tooltip>;
 }
 
-export default function APWorldEvidence({ version, builtin = false, reviewOpen, onReviewChange }: {
-  version?: APWorldVersion; builtin?: boolean; reviewOpen?: boolean; onReviewChange?: (open: boolean) => void;
+export default function APWorldEvidence({ version, builtin = false, reviewOpen, onReviewChange, detailHref }: {
+  version?: APWorldVersion; builtin?: boolean; reviewOpen?: boolean; onReviewChange?: (open: boolean) => void; detailHref?: string;
 }) {
   const [detail, setDetail] = useState<"review" | "generation" | null>(null);
   const reviewVisible = reviewOpen ?? detail === "review";
@@ -36,11 +36,11 @@ export default function APWorldEvidence({ version, builtin = false, reviewOpen, 
     : "No generation test result is recorded for this release yet.";
   return <>
     <div className="apworld-evidence-pair">
-      <EvidenceButton label={reviewLabel} tone={reviewTone} explanation={reviewExplanation} expanded={reviewVisible} onClick={() => changeReview(!reviewVisible)} />
-      <EvidenceButton label={result ? warnings ? "Generation warnings" : "Generation passed" : "Tests pending"} tone={result ? warnings ? "warning" : "passed" : "pending"} explanation={generationExplanation} expanded={detail === "generation"} onClick={() => { onReviewChange?.(false); setDetail(detail === "generation" ? null : "generation"); }} />
+      <EvidenceButton href={detailHref} label={reviewLabel} tone={reviewTone} explanation={reviewExplanation} expanded={reviewVisible} onClick={() => changeReview(!reviewVisible)} />
+      <EvidenceButton href={detailHref} label={result ? warnings ? "Generation warnings" : "Generation passed" : "Tests pending"} tone={result ? warnings ? "warning" : "passed" : "pending"} explanation={generationExplanation} expanded={detail === "generation"} onClick={() => { onReviewChange?.(false); setDetail(detail === "generation" ? null : "generation"); }} />
     </div>
     {testedAt && !Number.isNaN(testedAt.getTime()) && <p className="apworld-evidence-date">Tested {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(testedAt)}</p>}
-    {reviewVisible && <div className="apworld-evidence-detail" role="region" aria-label="Security review explanation"><strong>Security review{version ? ` · v${version.version}` : ""}</strong><p>{reviewExplanation}</p>
+    {reviewVisible && <div className="apworld-evidence-detail" role="region" aria-label="Security review explanation"><p><a href="/guides/what-is-the-fuzzer">How to read the evidence badges</a></p><strong>Security review{version ? ` · v${version.version}` : ""}</strong><p>{reviewExplanation}</p>
       {review && <>
         {review.rationale && <p className="apworld-evidence-date">{review.summary}</p>}
         <p>{review.method === "maintainer-decision" ? "Decision recorded" : "Source reviewed"} <time dateTime={review.reviewed_at}>{new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(review.reviewed_at))}</time> · {review.method === "maintainer-decision" ? "Human decision" : review.method === "source-review-with-qa" ? "Source review with independent QA" : "Automated source review"}</p>
@@ -48,6 +48,6 @@ export default function APWorldEvidence({ version, builtin = false, reviewOpen, 
         <p><a href={review.record_url}>Public review record</a>. The full source report is private; this record contains its outcome, date and report fingerprint.</p>
       </>}
       <button type="button" className="btn btn-quiet btn-sm" onClick={() => changeReview(false)}>Close explanation</button></div>}
-    {detail === "generation" && (result ? <FuzzerModal result={result} version={version?.version} onClose={() => setDetail(null)} /> : <div className="apworld-evidence-detail" role="region" aria-label="Generation explanation"><p>{generationExplanation}</p><button type="button" className="btn btn-quiet btn-sm" onClick={() => setDetail(null)}>Close explanation</button></div>)}
+    {detail === "generation" && (result ? <FuzzerModal result={result} version={version?.version} onClose={() => setDetail(null)} /> : <div className="apworld-evidence-detail" role="region" aria-label="Generation explanation"><p>{generationExplanation}</p><p><a href="/guides/what-is-the-fuzzer">Read the fuzzer guide</a></p><button type="button" className="btn btn-quiet btn-sm" onClick={() => setDetail(null)}>Close explanation</button></div>)}
   </>;
 }

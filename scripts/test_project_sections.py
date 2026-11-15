@@ -42,6 +42,7 @@ class ProjectSectionsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.patches = [
+            mock.patch("api.apworlds.get_public_catalog", return_value=[]),
             mock.patch.object(analytics, "record_event", lambda *a, **k: None),
             mock.patch.object(analytics, "record_guide_entry", lambda *a, **k: None),
             mock.patch.object(analytics, "entry_path", lambda *a, **k: None),
