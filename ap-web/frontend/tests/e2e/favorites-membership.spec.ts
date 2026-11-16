@@ -70,7 +70,7 @@ test("join an empty room, then send a builder YAML to it", async ({ page }) => {
   const state = await mockApp(page);
   await page.goto("/r/shared");
   await page.getByRole("button", { name: "Join room", exact: true }).click();
-  await expect(page.getByText("Joined. You can select this room in the YAML builder.")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Joined. Add your YAML below, now or later; the YAML Builder also lists this room.");
   expect(state.submitted).toBe("");
   await page.goto("/yaml-builder/fixture?version=1.0.0");
   await page.getByRole("button", { name: "Start with the game defaults" }).click();

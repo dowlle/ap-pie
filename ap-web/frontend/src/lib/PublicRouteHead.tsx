@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { applyPublicHead, setMeta } from "./publicHead";
 
 const PROD_ORIGIN = "https://ap-pie.com";
 
@@ -30,29 +31,8 @@ const PUBLIC_ROUTE_HEAD: Record<string, {
     canonical: `${PROD_ORIGIN}/style-guide`,
     robots: "noindex, nofollow",
   },
-  "/apworlds/super-metroid": {
-    title: "Super Metroid Archipelago Setup | AP-Pie Beta",
-    description: "Review the built-in Super Metroid integration, official setup source, requirements, YAML role, and Archipelago 0.6.7 scope.",
-    canonical: `${PROD_ORIGIN}/apworlds/super-metroid`,
-    robots: "noindex, nofollow",
-  },
-  "/apworlds/animal-well": {
-    title: "ANIMAL WELL Archipelago Review | AP-Pie Beta",
-    description: "Review the ANIMAL WELL APWorld evidence, unresolved fuzz verdict, version scope, setup source, and missing compatibility facts.",
-    canonical: `${PROD_ORIGIN}/apworlds/animal-well`,
-    robots: "noindex, nofollow",
-  },
-};
 
-function setMeta(selector: string, attribute: "name" | "property", key: string, content: string) {
-  let meta = document.head.querySelector<HTMLMetaElement>(selector);
-  if (!meta) {
-    meta = document.createElement("meta");
-    meta.setAttribute(attribute, key);
-    document.head.appendChild(meta);
-  }
-  meta.content = content;
-}
+};
 
 /** Keep search/social head data correct after React Router navigation. */
 export default function PublicRouteHead() {
@@ -73,20 +53,7 @@ export default function PublicRouteHead() {
     const route = PUBLIC_ROUTE_HEAD[pathname];
     if (!route) return;
 
-    document.title = route.title;
-    setMeta('meta[name="description"]', "name", "description", route.description);
-    setMeta('meta[property="og:title"]', "property", "og:title", route.title);
-    setMeta('meta[property="og:description"]', "property", "og:description", route.description);
-    setMeta('meta[property="og:url"]', "property", "og:url", route.canonical);
-
-    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement("link");
-      canonical.rel = "canonical";
-      document.head.appendChild(canonical);
-    }
-    canonical.href = route.canonical;
-
+    applyPublicHead(route);
     const existingRobots = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (route.robots) {
       setMeta('meta[name="robots"]', "name", "robots", route.robots);

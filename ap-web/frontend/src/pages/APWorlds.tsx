@@ -12,7 +12,6 @@ import {
 } from "../api";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
-import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
 import APWorldEvidence from "../components/APWorldEvidence";
 import Tooltip from "../components/Tooltip";
@@ -316,8 +315,8 @@ function VersionRow({
         {(v.source === "url" || v.source === "local") && (
           <a
             className="btn btn-sm apworld-download-btn"
-            href={downloadHref}
-            download
+            href={v.security_review?.status === "fail" ? `${world.detail_href}#version-${encodeURIComponent(v.version)}` : downloadHref}
+            download={v.security_review?.status === "fail" ? undefined : true}
             title={`Download ${world.display_name} v${v.version}`}
             aria-label={`Download ${world.display_name} v${v.version}`}
           >
@@ -531,7 +530,7 @@ function WorldCard({
           </div>
         </header>
 
-        <APWorldEvidence version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
+        <APWorldEvidence detailHref={detailHref} version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
 
           <div className="apworld-card-primary-actions">
             {reviewNeedsAttention && <button type="button" className="btn btn-primary btn-sm" aria-expanded={reviewOpen} onClick={() => setReviewOpen(true)}>Read review</button>}
@@ -551,8 +550,8 @@ function WorldCard({
             {latestDownloadable && (
               <a
                 className={`btn ${reviewNeedsAttention ? "" : "btn-primary "}btn-sm apworld-action`}
-                href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
-                download
+                href={latestDownloadable.security_review?.status === "fail" ? `${world.detail_href}#version-${encodeURIComponent(latestDownloadable.version)}` : `/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
+                download={latestDownloadable.security_review?.status === "fail" ? undefined : true}
                 data-tooltip={`Download APWorld v${latestDownloadable.version}`}
                 aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
               >
@@ -625,7 +624,6 @@ export default function APWorlds() {
   // hosts can browse the index and pin per-room versions, but the
   // global "pull from upstream" action stays with admins).
   const { user } = useAuth();
-  const deploymentLabel = useDeploymentLabel();
   const isAdmin = !!user?.is_admin;
   const [available, setAvailable] = useState<APWorldInfo[]>([]);
   const [installed, setInstalled] = useState<InstalledAPWorld[]>([]);
@@ -988,17 +986,9 @@ export default function APWorlds() {
                 onRemove={handleRemove}
                 onBuild={handleBuild}
                 buildingVersion={null}
-                detailHref={
-                  w.editorial?.route_override
-                    ? w.editorial.route_override
-                    : deploymentLabel === "beta" && w.editorial?.beta_preview_only
-                    ? `/apworlds/${w.editorial.slug}`
-                    : deploymentLabel === "beta" && w.name === "animal_well"
-                    ? "/apworlds/animal-well"
-                    : undefined
-                }
+                detailHref={w.detail_href}
                 detailLabel="View details"
-                detailRouteKind={w.editorial?.route_kind ?? "spa"}
+                detailRouteKind={w.detail_route_kind}
               />
             ))}
           </div>

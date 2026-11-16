@@ -84,6 +84,11 @@ jobs:
       - run: python scripts/test_yaml_journeys.py
       - run: python scripts/test_index_warm.py
       - run: python scripts/test_project_sections.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: cd ap-web/frontend && npm ci && npm run build
+      - run: python scripts/test_apworld_details.py
       # OPS-21 refresh endpoint: auth fails closed, and a failed git sync
       # can't report success. Needs no database, but rides along here so
       # there is one place that runs the backend checks.
