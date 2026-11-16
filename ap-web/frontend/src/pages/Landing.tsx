@@ -14,8 +14,8 @@ import { useFeature } from "../context/FeaturesContext";
  * Admins still get GameList at the root; App.tsx routes them onward.
  *
  * FEAT-55 (2026-09-25): games directly under the hero with pictures, one row
- * of tasks, and the capability statement moved out of the hero into its own
- * block. Joining a room happens on the room page itself (Join room button),
+ * of tasks. The hero explains collection, local generation and hosting.
+ * Joining a room happens on the room page itself (Join room button),
  * so the homepage no longer asks for a pasted room link.
  */
 export default function Landing() {
@@ -47,6 +47,10 @@ export default function Landing() {
         <h1 className="lp-title">Your games, connected by <em>one randomizer.</em></h1>
         <p className="lp-sub">
           Learn Archipelago, make your player YAML, and organize multiworlds with your friends.
+        </p>
+        <p className="lp-capability lp-hero-capability">
+          AP-Pie collects player YAMLs. You generate locally with Archipelago Launcher,
+          then host on archipelago.gg or your own machine.
         </p>
         <div className="lp-cta">
           {canUseRooms ? (
@@ -188,7 +192,8 @@ export default function Landing() {
         <section className="lp-intro lp-about" aria-labelledby="what-ap-pie-does">
           <h2 id="what-ap-pie-does">What Archipelago Pie does</h2>
           <p className="lp-capability">
-            Archipelago Pie collects player YAMLs in a collection room, and gives you the reviewed APWorld catalog and a YAML Builder for making them.{" "}
+            Archipelago Pie collects player YAMLs in a collection room, and gives you an APWorld catalog and a YAML Builder for making them.{" "}
+            The catalog shows security reviews and generation test results where available.{" "}
             It does not generate the multiworld and does not run game servers: you generate locally with the Archipelago Launcher, then host the server on archipelago.gg or your own machine.
           </p>
           <p>

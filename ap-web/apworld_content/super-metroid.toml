@@ -41,3 +41,32 @@ fact = "Archipelago 0.6.7 includes the Super Metroid integration, so this releas
 source_refs = ["super-metroid-release-067", "super-metroid-world-source-067", "super-metroid-official-setup-067"]
 applies_to_versions = ["0.6.7"]
 verified_at = "2026-08-24"
+
+[copy]
+answer = "Super Metroid is included with Archipelago 0.6.7, so this setup does not begin with a separate APWorld download. Prepare a legal base ROM and follow the official setup path for the client and generated patch."
+
+[[copy.facts]]
+label = "Reviewed scope"
+value = "Archipelago 0.6.7"
+
+[[copy.facts]]
+label = "APWorld download"
+value = "Not required"
+
+[[copy.facts]]
+label = "Generated patch"
+value = ".apsm"
+
+[[copy.sections]]
+title = "Before your multiworld is generated"
+paragraphs = [
+    "The reviewed official guide expects an Archipelago installation, SNI, a legally obtained Super Metroid ROM and a suitable way to run the game. Detailed emulator and hardware choices remain with the official guide because that compatibility information can change between releases.",
+    "Your player YAML describes the options for your world. It is sent to the host before generation; it does not install an APWorld or contain the playable game.",
+]
+
+[[copy.sections]]
+title = "After generation"
+paragraphs = [
+    "The host returns a patch for your slot using the .apsm extension. Opening that patch starts the Super Metroid client workflow that creates the ROM used for the session.",
+    "The reviewed source does not contain a completed Macintosh setup section. AP-Pie therefore does not turn that documentation gap into a broader platform-support claim.",
+]

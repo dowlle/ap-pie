@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getAPWorlds,
   getInstalledAPWorlds,
@@ -12,7 +12,6 @@ import {
 } from "../api";
 import { useFeature } from "../context/FeaturesContext";
 import { useAuth } from "../context/AuthContext";
-import { useDeploymentLabel } from "../context/DeploymentContext";
 import FuzzResultPill from "../components/FuzzResultPill";
 import APWorldEvidence from "../components/APWorldEvidence";
 import Tooltip from "../components/Tooltip";
@@ -220,6 +219,10 @@ function shortSha(sha: string | null): string {
   return sha.slice(0, 7);
 }
 
+function versionLabel(version: string): string {
+  return /^v/i.test(version) ? version : `v${version}`;
+}
+
 /**
  * Documented meanings for tags that ship in the dowlle/Archipelago-index
  * TOMLs. Unknown tags render with no tooltip (the raw label is good
@@ -285,7 +288,7 @@ function VersionRow({
               : undefined
           }
         >
-          v{v.version}
+          {versionLabel(v.version)}
         </span>
         <span className="apworld-version-source" title={`Source: ${sourceLabel}`}>{sourceLabel}</span>
         {v.sha256 && (
@@ -316,10 +319,10 @@ function VersionRow({
         {(v.source === "url" || v.source === "local") && (
           <a
             className="btn btn-sm apworld-download-btn"
-            href={downloadHref}
-            download
-            title={`Download ${world.display_name} v${v.version}`}
-            aria-label={`Download ${world.display_name} v${v.version}`}
+            href={v.security_review?.status === "fail" ? `${world.detail_href}#version-${encodeURIComponent(v.version)}` : downloadHref}
+            download={v.security_review?.status === "fail" ? undefined : true}
+            title={`Download ${world.display_name} ${versionLabel(v.version)}`}
+            aria-label={`Download ${world.display_name} ${versionLabel(v.version)}`}
           >
             <DownloadIcon />
           </a>
@@ -527,11 +530,11 @@ function WorldCard({
           <div className="apworld-card-title">
             <h3>{detailHref ? (detailRouteKind === "server" ? <a href={detailHref}>{world.display_name}</a> : <Link to={detailHref}>{world.display_name}</Link>) : world.display_name}</h3>
             <span className="apworld-card-source">{world.is_builtin ? "Built in · Archipelago" : "Community"}</span>
-            <span className="apworld-card-release">{latestVersion ? `v${latestVersion.version} · Latest release` : latestBuilderVersion ? `Archipelago ${latestBuilderVersion}` : "No release recorded"}{world.stability ? ` · maintainer: ${world.stability}` : ""}</span>
+            <span className="apworld-card-release">{latestVersion ? `${versionLabel(latestVersion.version)} · Latest release` : latestBuilderVersion ? `Archipelago ${latestBuilderVersion}` : "No release recorded"}{world.stability ? ` · maintainer: ${world.stability}` : ""}</span>
           </div>
         </header>
 
-        <APWorldEvidence version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
+        <APWorldEvidence detailHref={detailHref} version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
 
           <div className="apworld-card-primary-actions">
             {reviewNeedsAttention && <button type="button" className="btn btn-primary btn-sm" aria-expanded={reviewOpen} onClick={() => setReviewOpen(true)}>Read review</button>}
@@ -551,10 +554,10 @@ function WorldCard({
             {latestDownloadable && (
               <a
                 className={`btn ${reviewNeedsAttention ? "" : "btn-primary "}btn-sm apworld-action`}
-                href={`/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
-                download
-                data-tooltip={`Download APWorld v${latestDownloadable.version}`}
-                aria-label={`Download ${world.display_name} v${latestDownloadable.version}`}
+                href={latestDownloadable.security_review?.status === "fail" ? `${world.detail_href}#version-${encodeURIComponent(latestDownloadable.version)}` : `/api/apworlds/${world.name}/${encodeURIComponent(latestDownloadable.version)}/download`}
+                download={latestDownloadable.security_review?.status === "fail" ? undefined : true}
+                data-tooltip={`Download APWorld ${versionLabel(latestDownloadable.version)}`}
+                aria-label={`Download ${world.display_name} ${versionLabel(latestDownloadable.version)}`}
               >
                 Download <span aria-hidden="true">↗</span>
               </a>
@@ -607,7 +610,7 @@ function WorldCard({
 
         {generationOn && installed && (
           <div className="apworld-card-foot">
-            <span className="muted">Currently installed: v{installed.version ?? "?"}</span>
+            <span className="muted">Currently installed: {versionLabel(installed.version ?? "?")}</span>
             <button className="btn btn-sm btn-danger" onClick={() => onRemove(world.name)}>Remove install</button>
           </div>
         )}
@@ -625,47 +628,54 @@ export default function APWorlds() {
   // hosts can browse the index and pin per-room versions, but the
   // global "pull from upstream" action stays with admins).
   const { user } = useAuth();
-  const deploymentLabel = useDeploymentLabel();
   const isAdmin = !!user?.is_admin;
   const [available, setAvailable] = useState<APWorldInfo[]>([]);
   const [installed, setInstalled] = useState<InstalledAPWorld[]>([]);
-  // UX-16 hand-off: GameCell links from RoomDetail/RoomPublic land at
-  // /apworlds?search=<game>. Prefill the search box from the URL on
-  // mount so the card list filters down to the matching world.
-  const [search, setSearch] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return new URLSearchParams(window.location.search).get("search") ?? "";
-  });
+  const [params, setParams] = useSearchParams();
+  const search = params.get("search") ?? "";
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   // installing key = `${name}@${version}` so multiple cards can show their
   // own per-version spinner without clobbering each other.
   const [installing, setInstalling] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   // FEAT-38: the index "Create YAML" flow. `builder` holds the fetched
   // schema entry while the builder modal is open; `building` is the
   // name@version whose schema fetch is in flight (per-row spinner);
   // `pendingYaml` carries the built YAML into the create-room flow.
   const navigate = useNavigate();
-  // UX-20: client-side sort + filter over the card grid. The index is ~600
-  // entries and the whole list is already in memory, so this never needs the
-  // server. Search stays server-side (?search=) as before.
-  const [sortBy, setSortBy] = useState<"name" | "name-desc" | "stability" | "updated">("name");
-  const [stabilityFilter, setStabilityFilter] = useState("");
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [catalogView, setCatalogView] = useState<
-    "all" | "downloadable" | "builtin" | "guides" | "trackers"
-  >("all");
+  // Fetch the catalog once. Searching the same names as the API locally
+  // avoids stale responses and keeps every filter available across pages.
+  const sortBy = ["name", "name-desc", "stability", "updated"].find((value) => value === params.get("sort")) ?? "name";
+  const stabilityFilter = params.get("stability") ?? "";
+  const favoritesOnly = params.get("favorites") === "1";
+  const catalogView = ["all", "downloadable", "builtin", "guides", "trackers"].find((value) => value === params.get("view")) ?? "all";
+  const requestedPage = Number(params.get("page") ?? 1);
+  const pageSize = 24;
+  const updateFilters = (values: Record<string, string>, replace = false) => {
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("page");
+      for (const [key, value] of Object.entries(values)) {
+        if (value) next.set(key, value);
+        else next.delete(key);
+      }
+      return next;
+    }, { replace });
+  };
+  const searched = useMemo(() => {
+    const query = search.toLowerCase();
+    return available.filter((world) => world.display_name.toLowerCase().includes(query) || world.name.toLowerCase().includes(query));
+  }, [available, search]);
 
   const catalogCounts = useMemo(() => ({
-    all: available.length,
-    downloadable: available.filter((w) => w.downloadable_versions.length > 0).length,
-    builtin: available.filter((w) => w.is_builtin).length,
-    guides: available.filter((w) => Boolean(w.setup_guide)).length,
-    trackers: available.filter((w) => Boolean(w.tracker)).length,
-    favorites: available.filter((w) => favorites.games.includes(w.name)).length,
-  }), [available, favorites.games]);
+    all: searched.length,
+    downloadable: searched.filter((w) => w.downloadable_versions.length > 0).length,
+    builtin: searched.filter((w) => w.is_builtin).length,
+    guides: searched.filter((w) => Boolean(w.setup_guide)).length,
+    trackers: searched.filter((w) => Boolean(w.tracker)).length,
+    favorites: searched.filter((w) => favorites.games.includes(w.name)).length,
+  }), [searched, favorites.games]);
 
   const handleBuild = (name: string, version: string) => {
     trackBuilderCta("activation", "apworlds");
@@ -693,7 +703,7 @@ export default function APWorlds() {
   }, [available]);
 
   const visible = useMemo(() => {
-    let list = available;
+    let list = searched;
     if (user && favoritesOnly) {
       list = list.filter((w) => favorites.games.includes(w.name));
     }
@@ -746,11 +756,40 @@ export default function APWorlds() {
       });
     }
     return sorted;
-  }, [available, sortBy, stabilityFilter, catalogView, user, favoritesOnly, favorites.games]);
+  }, [searched, sortBy, stabilityFilter, catalogView, user, favoritesOnly, favorites.games]);
+
+  const pages = Math.max(1, Math.ceil(visible.length / pageSize));
+  const page = Number.isSafeInteger(requestedPage) ? Math.max(1, Math.min(pages, requestedPage)) : 1;
+  const pageWorlds = visible.slice((page - 1) * pageSize, page * pageSize);
+  useEffect(() => {
+    if (loading || favorites.loading || !params.has("page") || requestedPage === page) return;
+    const next = new URLSearchParams(params);
+    if (page === 1) next.delete("page");
+    else next.set("page", String(page));
+    setParams(next, { replace: true });
+  }, [loading, favorites.loading, params, requestedPage, page, setParams]);
+  useEffect(() => {
+    if (window.location.hash === "#apworld-catalog-heading") {
+      document.getElementById("apworld-catalog-heading")?.scrollIntoView();
+    }
+  }, [page]);
+  const pageHref = (target: number) => {
+    const next = new URLSearchParams(params);
+    if (target === 1) next.delete("page");
+    else next.set("page", String(target));
+    return `?${next.toString()}#apworld-catalog-heading`;
+  };
+  const pagination = (position: string) => pages > 1 && (
+    <nav className="apworld-pagination" aria-label={`Catalog pages (${position})`}>
+      {page > 1 ? <Link className="btn btn-sm" rel="prev" to={pageHref(page - 1)}>Previous</Link> : <span />}
+      <span>Page {page} of {pages}</span>
+      {page < pages ? <Link className="btn btn-sm" rel="next" to={pageHref(page + 1)}>Next</Link> : <span />}
+    </nav>
+  );
 
   const fetchData = () => {
     setLoading(true);
-    const calls: Promise<unknown>[] = [getAPWorlds(search)];
+    const calls: Promise<unknown>[] = [getAPWorlds()];
     if (generationOn) calls.push(getInstalledAPWorlds());
     Promise.all(calls)
       .then((results) => {
@@ -762,11 +801,9 @@ export default function APWorlds() {
   };
 
   useEffect(() => {
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(fetchData, 200);
-    return () => clearTimeout(debounceRef.current);
+    fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, generationOn]);
+  }, [generationOn]);
 
   // Compatibility for links created before the builder became its own
   // route. Resolve a missing version from the index, then replace the URL
@@ -888,13 +925,13 @@ export default function APWorlds() {
             type="search"
             placeholder="Game or APWorld name…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => updateFilters({ search: e.target.value }, true)}
             className="apworld-search"
           />
         </label>
         <label className="apworld-control field field-compact">
           <span>Sort</span>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
+          <select aria-label="Sort" value={sortBy} onChange={(e) => updateFilters({ sort: e.target.value === "name" ? "" : e.target.value })}>
             <option value="name">Name (A to Z)</option>
             <option value="name-desc">Name (Z to A)</option>
             <option value="updated">Recently updated</option>
@@ -905,8 +942,9 @@ export default function APWorlds() {
           <label className="apworld-control field field-compact">
             <span>Index stability</span>
             <select
+              aria-label="Index stability"
               value={stabilityFilter}
-              onChange={(e) => setStabilityFilter(e.target.value)}
+              onChange={(e) => updateFilters({ stability: e.target.value })}
             >
               <option value="">Any</option>
               {stabilityValues.map((v) => (
@@ -931,24 +969,26 @@ export default function APWorlds() {
             type="button"
             className={catalogView === value ? "is-active" : ""}
             aria-pressed={catalogView === value}
-            onClick={() => setCatalogView(value)}
+            onClick={() => updateFilters({ view: value === "all" ? "" : value })}
           >
             {label}<span>{catalogCounts[value]}</span>
           </button>
         ))}
         {user && <button type="button" className={favoritesOnly ? "is-active" : ""}
           aria-pressed={favoritesOnly} disabled={favorites.loading}
-          onClick={() => setFavoritesOnly(!favoritesOnly)}>
+          onClick={() => updateFilters({ favorites: favoritesOnly ? "" : "1" })}>
           My favorites<span>{favorites.loading ? "…" : catalogCounts.favorites}</span>
         </button>}
       </div>
       </div>
 
       {favorites.error && <p role="alert" className="error">{favorites.error}</p>}
+      {!loading && <p className="muted apworlds-count" role="status">
+        {visible.length} {visible.length === 1 ? "APWorld" : "APWorlds"} found
+        {visible.length > 0 && ` · Showing ${(page - 1) * pageSize + 1} to ${Math.min(page * pageSize, visible.length)}`}
+      </p>}
       {loading || (user && favoritesOnly && favorites.loading) ? (
         <p className="loading">Loading...</p>
-      ) : available.length === 0 ? (
-        <p className="muted">No APWorlds found. Try refreshing the index.</p>
       ) : visible.length === 0 ? (
         <p className="muted">
           {user && favoritesOnly && favorites.games.length === 0 && !favorites.error
@@ -957,20 +997,17 @@ export default function APWorlds() {
           <button
             type="button"
             className="yaml-builder-desc-toggle"
-            onClick={() => { setSearch(""); setStabilityFilter(""); setCatalogView("all"); setFavoritesOnly(false); }}
+            onClick={() => updateFilters({ search: "", stability: "", view: "", favorites: "" })}
           >
             Clear filters
           </button>
+          {" "}<a href="/report-issue#request-an-apworld">Not listed? Request it</a>
         </p>
       ) : (
         <>
-          <p className="muted apworlds-count">
-            {visible.length === available.length
-              ? `${available.length} APWorlds`
-              : `${visible.length} of ${available.length} APWorlds`}
-          </p>
+          {pagination("top")}
           <div className="apworlds-grid">
-            {visible.map((w) => (
+            {pageWorlds.map((w) => (
               <WorldCard
                 key={w.name}
                 world={w}
@@ -988,20 +1025,13 @@ export default function APWorlds() {
                 onRemove={handleRemove}
                 onBuild={handleBuild}
                 buildingVersion={null}
-                detailHref={
-                  w.editorial?.route_override
-                    ? w.editorial.route_override
-                    : deploymentLabel === "beta" && w.editorial?.beta_preview_only
-                    ? `/apworlds/${w.editorial.slug}`
-                    : deploymentLabel === "beta" && w.name === "animal_well"
-                    ? "/apworlds/animal-well"
-                    : undefined
-                }
+                detailHref={w.detail_href}
                 detailLabel="View details"
-                detailRouteKind={w.editorial?.route_kind ?? "spa"}
+                detailRouteKind={w.detail_route_kind}
               />
             ))}
           </div>
+          {pagination("bottom")}
         </>
       )}
       </section>

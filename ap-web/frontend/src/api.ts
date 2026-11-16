@@ -238,6 +238,11 @@ export interface APWorldVersion {
 }
 
 export interface APWorldInfo {
+  detail_title?: string;
+  detail_description?: string;
+  detail_slug: string;
+  detail_href: string;
+  detail_route_kind: "spa" | "server";
   name: string;
   display_name: string;
   game_name: string;  // matches YAML.game (FEAT-21 lookup key)
@@ -269,6 +274,11 @@ export interface APWorldInfo {
     route_override?: string;
     route_kind?: "spa" | "server";
     beta_preview_only?: boolean;
+    copy?: {
+      answer: string;
+      facts: { label: string; value: string }[];
+      sections: { title: string; paragraphs: string[] }[];
+    };
   } | null;
   review_state: "absent" | "draft" | "reviewed" | "stale" | "retired";
 }
@@ -435,8 +445,8 @@ export interface AuthUser {
   created_at: string;
 }
 
-export async function getAuthMe(): Promise<AuthUser> {
-  return fetchJson(`${BASE}/auth/me`);
+export async function getAuthMe(): Promise<AuthUser | { user: null; auth_enabled: boolean }> {
+  return fetchJson(`${BASE}/auth/me?optional=1`);
 }
 
 // Market (legacy seed-based)

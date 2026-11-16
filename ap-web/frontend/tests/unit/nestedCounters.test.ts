@@ -46,10 +46,10 @@ test('typed values show in the fields', () => {
 });
 
 test('values are clamped to 0..18', () => {
-  const hi = withFieldValue(spec, {}, platinum, 99)! as { base: { relics: { platinum: number } } };
-  const lo = withFieldValue(spec, {}, platinum, -4)! as { base: { relics: { platinum: number } } };
-  assert.equal(hi.base.relics.platinum, 18);
-  assert.equal(lo.base.relics.platinum, 0);
+  const hi = withFieldValue(spec, {}, platinum, 99)!;
+  const lo = withFieldValue(spec, {}, platinum, -4)!;
+  assert.deepEqual(hi, { base: { relics: { sapphire: 18, gold: 18, platinum: 18 } } });
+  assert.deepEqual(lo, { base: { relics: { sapphire: 18, gold: 18, platinum: 0 } } });
 });
 
 test('a non-mapping on the path hides the fields instead of overwriting', () => {

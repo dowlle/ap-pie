@@ -4494,6 +4494,8 @@ details.collapsible-section > .accordion-body {
 }
 .lp-title em { font-style: normal; color: var(--accent); }
 .lp-sub { color: var(--text-muted); font-size: 1.12rem; max-width: 34rem; margin: 0 auto 2rem; position: relative; }
+.lp-hero .lp-hero-capability { max-width: 38rem; margin: 0 auto 1.5rem; position: relative; }
+.apworld-pagination { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1rem 0; }
 .lp-cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; position: relative; }
 .lp-btn { padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; }
 .lp-btn-ghost { background: transparent; color: var(--accent-light); border: 1px solid var(--border-strong); }
@@ -5900,6 +5902,9 @@ details.yaml-builder-group > summary .muted {
 .apworld-detail-provenance h2 { margin-bottom: var(--space-4); font-size: 1rem; }
 .apworld-detail-provenance dl { display: grid; gap: var(--space-3); }
 .apworld-detail-provenance dd { color: var(--text-h); font-size: 0.78rem; }
+.apworld-detail-version { margin: var(--space-6) 0; padding: var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-card); min-width: 0; }
+.apworld-review-digest code { overflow-wrap: anywhere; font-size: 0.8rem; }
+.apworld-detail-ack { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-3); }
 .apworld-detail-provenance > a { display: inline-block; margin-top: var(--space-4); font-size: 0.78rem; font-weight: 650; }
 .apworld-detail-provenance > p { margin: var(--space-4) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.72rem; line-height: 1.5; }
 

@@ -35,7 +35,8 @@ from ap_lib.apworld_index import (
 import config
 import security_reviews
 from builtin_builder import builtin_record, build_versions
-from apworld_editorial import join_index_record, load_reviewed_apworlds
+from apworld_editorial import load_reviewed_apworlds
+from apworld_catalog import public_catalog
 from fuzz_evidence import attach_fuzz_evidence, load_provenance
 
 logger = logging.getLogger(__name__)
@@ -259,13 +260,45 @@ def warm_index(app) -> threading.Thread:
     return thread
 
 
-def _get_index() -> list:
-    _ensure_index_loaded()
+def _index_is_stale() -> bool:
     seed, overlay = _review_paths()
     stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
     fuzz_stamp, _ = _fuzz_snapshot()
-    if stamp != _review_stamp or fuzz_stamp != _fuzz_stamp:
-        _load_index_into_cache()  # evidence changed on disk; other readers keep the old snapshot meanwhile
+    return stamp != _review_stamp or fuzz_stamp != _fuzz_stamp
+
+
+def _refresh_index_in_background(app) -> threading.Thread | None:
+    """Keep serving the loaded snapshot while one worker rebuilds it.
+
+    Reserve the build lock before starting the thread so simultaneous stale
+    requests cannot queue redundant rebuilds or spawn unbounded workers.
+    """
+    if not _index_build_lock.acquire(blocking=False):
+        return None
+
+    def _run() -> None:
+        try:
+            with app.app_context():
+                if _index_is_stale():
+                    _install_index_snapshot(_build_index_snapshot())
+        except Exception:
+            app.logger.warning("apworld index refresh failed; retaining loaded snapshot")
+        finally:
+            _index_build_lock.release()
+
+    thread = threading.Thread(target=_run, name="apworld-index-refresh", daemon=True)
+    try:
+        thread.start()
+    except Exception:
+        _index_build_lock.release()
+        raise
+    return thread
+
+
+def _get_index() -> list:
+    _ensure_index_loaded()
+    if _index_is_stale():
+        _refresh_index_in_background(current_app._get_current_object())
     return _index_cache or []
 
 
@@ -917,7 +950,7 @@ def list_apworlds():
     # explained, but they are not player-facing catalog choices. Never
     # advertise artifacts or builder actions that the maintainer explicitly
     # disabled.
-    worlds = [world for world in _get_index() if not world["disabled"]]
+    worlds = get_public_catalog()
     if search:
         worlds = [
             w for w in worlds
@@ -926,17 +959,32 @@ def list_apworlds():
     if supported_only:
         worlds = [w for w in worlds if w["supported"]]
 
-    overlays = load_reviewed_apworlds()
-    include_beta_previews = config.DEPLOYMENT_LABEL == "beta"
-    joined_worlds = []
-    for world in worlds:
-        joined = join_index_record(world, overlays, include_beta_previews=include_beta_previews)
-        entry = dict(world)
-        entry["editorial"] = joined["editorial"]
-        entry["review_state"] = joined["review_state"]
-        joined_worlds.append(entry)
+    return jsonify(worlds)
 
-    return jsonify(joined_worlds)
+
+def get_public_catalog():
+    return public_catalog(_get_index(), load_reviewed_apworlds())
+
+
+@bp.get("/apworlds/<slug>")
+def apworld_detail(slug):
+    from app import _public_spa_response
+
+    world = next((world for world in get_public_catalog() if world["detail_slug"] == slug), None)
+    if world is None:
+        return "Not found\n", 404
+    if world["detail_href"] != f"/apworlds/{slug}":
+        return redirect(world["detail_href"], code=301)
+    name = world["display_name"]
+    description = world["detail_description"]
+    return _public_spa_response(f"apworlds/{slug}", {
+        "title": world["detail_title"],
+        "description": description,
+        "canonical": f"{config.PUBLIC_BASE_URL.rstrip('/')}/apworlds/{slug}",
+        "heading": f"{name} Archipelago",
+        "intro": description,
+        "schema_type": "WebPage",
+    })
 
 
 @bp.route("/api/apworlds/installed")

@@ -32,15 +32,6 @@ SPA_DYNAMIC_PATHS = (
     re.compile(r"(?:market|play|r|rooms|yaml-builder|my)/[^/]+"),
     re.compile(r"games/[^/]+(?:/market)?"),
 )
-# Routes that exist on beta only. APWorldDetailPreview is still a preview:
-# production 404s every /apworlds/<slug>, including the two curated
-# PUBLIC_ROUTE_SEO entries, which carry beta_only together with a noindex
-# robots value. Without a generic pattern beta served only those two hardcoded
-# slugs, so the preview could not be opened against a real world. Beta accepts
-# any slug; production behaviour is unchanged.
-SPA_BETA_DYNAMIC_PATHS = (
-    re.compile(r"apworlds/[^/]+"),
-)
 
 PUBLIC_ROUTE_SEO = {
     "": {
@@ -95,52 +86,32 @@ PUBLIC_ROUTE_SEO = {
         "robots": "noindex, nofollow",
         "beta_only": True,
     },
-    "apworlds/super-metroid": {
-        "title": "Super Metroid Archipelago Setup | AP-Pie Beta",
-        "description": "Review the built-in Super Metroid integration, official setup source, requirements, YAML role, and Archipelago 0.6.7 scope.",
-        "canonical": "https://ap-pie.com/apworlds/super-metroid",
-        "heading": "Super Metroid Archipelago",
-        "intro": "A noindex beta preview of AP-Pie's reviewed APWorld detail-page model.",
-        "schema_type": "WebPage",
-        "robots": "noindex, nofollow",
-        "beta_only": True,
-    },
-    "apworlds/animal-well": {
-        "title": "ANIMAL WELL Archipelago Review | AP-Pie Beta",
-        "description": "Review the ANIMAL WELL APWorld evidence, unresolved fuzz verdict, version scope, setup source, and missing compatibility facts.",
-        "canonical": "https://ap-pie.com/apworlds/animal-well",
-        "heading": "ANIMAL WELL Archipelago",
-        "intro": "A noindex beta fixture demonstrating an APWorld that is not ready for publication or download promotion.",
-        "schema_type": "WebPage",
-        "robots": "noindex, nofollow",
-        "beta_only": True,
-    },
 }
 
 
-def _public_spa_response(path: str) -> Response:
+def _public_spa_response(path: str, route: dict | None = None) -> Response:
     """Serve meaningful route-specific HTML before React takes over."""
-    route = PUBLIC_ROUTE_SEO[path]
+    route = route if route is not None else PUBLIC_ROUTE_SEO[path]
     document = (DIST_DIR / "index.html").read_text(encoding="utf-8")
     title = html.escape(route["title"])
     description = html.escape(route["description"], quote=True)
     canonical = html.escape(route["canonical"], quote=True)
-    document = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", document, count=1)
+    document = re.sub(r"<title>.*?</title>", lambda _: f"<title>{title}</title>", document, count=1)
     document = re.sub(
         r'<meta name="description" content="[^"]*"\s*/>',
-        f'<meta name="description" content="{description}" />',
+        lambda _: f'<meta name="description" content="{description}" />',
         document,
         count=1,
     )
     document = re.sub(
         r'<meta property="og:title" content="[^"]*"\s*/>',
-        f'<meta property="og:title" content="{title}" />',
+        lambda _: f'<meta property="og:title" content="{title}" />',
         document,
         count=1,
     )
     document = re.sub(
         r'<meta property="og:description" content="[^"]*"\s*/>',
-        f'<meta property="og:description" content="{description}" />',
+        lambda _: f'<meta property="og:description" content="{description}" />',
         document,
         count=1,
     )
@@ -173,6 +144,13 @@ def _public_spa_response(path: str) -> Response:
         robots_meta = f'<meta name="robots" content="{robots}" />'
     route_meta = (
         f'<link rel="canonical" href="{canonical}" />\n'
+        f'    <meta property="og:image" content="{config.PUBLIC_BASE_URL.rstrip("/")}/img/guides/og-tools.png" />\n'
+        f'    <meta property="og:image:width" content="1200" />\n'
+        f'    <meta property="og:image:height" content="630" />\n'
+        f'    <meta name="twitter:card" content="summary_large_image" />\n'
+        f'    <meta name="twitter:title" content="{title}" />\n'
+        f'    <meta name="twitter:description" content="{description}" />\n'
+        f'    <meta name="twitter:image" content="{config.PUBLIC_BASE_URL.rstrip("/")}/img/guides/og-tools.png" />\n'
         f'    <meta property="og:url" content="{canonical}" />\n'
         f'    {robots_meta}\n'
         f'    <script type="application/ld+json">'
@@ -204,9 +182,7 @@ def _is_spa_route(path: str) -> bool:
         return True
     if any(pattern.fullmatch(normalized) for pattern in SPA_DYNAMIC_PATHS):
         return True
-    return config.DEPLOYMENT_LABEL == "beta" and any(
-        pattern.fullmatch(normalized) for pattern in SPA_BETA_DYNAMIC_PATHS
-    )
+    return False
 
 
 def _output_file_count() -> int:
@@ -602,6 +578,8 @@ def create_app() -> Flask:
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve_frontend(path: str):
+        if path == "favicon.ico":
+            return send_from_directory(DIST_DIR, "favicon.svg", mimetype="image/svg+xml")
         if path and (DIST_DIR / path).is_file():
             return send_from_directory(DIST_DIR, path)
         # A miss in the server-owned API namespace must remain an API-shaped

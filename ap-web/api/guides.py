@@ -450,6 +450,7 @@ def guides_index() -> str:
         ),
         canonical_url=canonical_url,
         og_type="website",
+        og_image=_canonical("/img/guides/og-guides.png"),
         structured_data=seo.graph(
             config.PUBLIC_BASE_URL,
             collection,
@@ -548,8 +549,8 @@ def _guide(slug: str) -> str:
         "isPartOf": {"@id": seo.website_id(config.PUBLIC_BASE_URL)},
         "inLanguage": "en",
     }
-    og_image = None
-    article_image = _canonical("/img/guides/og-guides.svg")
+    og_image = _canonical("/img/guides/og-guides.png")
+    article_image = og_image
     if guide.get("project") == "ctr":
         og_image = _canonical("/img/ctr/og-ctr-title.jpg")
         article_image = og_image
@@ -585,7 +586,8 @@ def _guide(slug: str) -> str:
                             "No. Archipelago Pie does not run Archipelago game servers and has "
                             "no multiworld upload page, so there is no ap-pie.com server address "
                             "to connect to. It collects player YAMLs in a collection room and "
-                            "publishes the reviewed APWorld catalog and the YAML Builder. "
+                            "publishes an APWorld catalog and the YAML Builder. "
+                            "The catalog shows security reviews and generation test results where available. "
                             "Generate the multiworld locally with the Archipelago Launcher, then "
                             "host the server on archipelago.gg or on your own machine."
                         ),
@@ -647,6 +649,7 @@ for _slug, _path in MOVED_GUIDES.items():
 
 @bp.route("/sitemap.xml")
 def sitemap() -> Response:
+    from api.apworlds import get_public_catalog
     from api.site_info import PAGES as SITE_PAGES, PAGES_UPDATED as SITE_UPDATED
     from api.ctr import CTR_PAGES, PAGES_UPDATED as CTR_UPDATED
     from api.timberborn import TIMBERBORN_PAGES, PAGES_UPDATED as TIMBERBORN_UPDATED
@@ -671,6 +674,11 @@ def sitemap() -> Response:
         {"loc": _canonical(LEGAL_PRIVACY_PATH), "lastmod": LEGAL_PRIVACY_UPDATED},
     ]
     entries.extend({"loc": _canonical(path), "lastmod": SITE_UPDATED} for path in SITE_PAGES)
+    entries.extend(
+        {"loc": _canonical(world["detail_href"]), "lastmod": None}
+        for world in get_public_catalog()
+        if world["detail_href"] == f'/apworlds/{world["detail_slug"]}'
+    )
     xml = render_template("guides/sitemap.xml", entries=entries)
     return Response(xml, mimetype="application/xml")
 
