@@ -1,0 +1,6 @@
+name = "Super Metroid"
+setup_guide = "https://archipelago.gg/tutorial/Super%20Metroid/multiworld_en"
+home = "https://archipelago.gg"
+supported = true
+stability = "stable"
+tracker = "https://github.com/Cyb3RGER/sm_ap_tracker/releases/latest"

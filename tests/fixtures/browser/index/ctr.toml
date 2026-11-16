@@ -1,0 +1,92 @@
+name = "Crash Team Racing"
+home = "https://github.com/dowlle/ctr-native-ap"
+default_url = "https://github.com/dowlle/ctr-native-ap/releases/download/v{{version}}/ctr.apworld"
+setup_guide = "https://github.com/dowlle/ctr-archipelago-apworld/blob/main/worlds/ctr/docs/setup_en.md"
+stability = "unstable"
+
+[versions]
+"0.2.4" = {}
+"0.2.3" = {}
+"0.2.2" = {}
+"0.2.1" = {}
+"0.2.0" = {}
+"0.1.0" = {}
+"0.1.1" = {}
+"0.1.2" = {}
+"0.1.3" = {}
+"0.1.4" = {}
+"0.1.5" = {}
+"0.2.0-alpha4" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.0-alpha4/ctr.apworld" }
+"0.2.0-alpha5" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.0-alpha5/ctr.apworld" }
+"0.2.0-alpha6" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.0-alpha6/ctr.apworld" }
+"0.2.0-alpha7" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.0-alpha7/ctr.apworld" }
+"0.2.1-alpha2" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.2.1-alpha2/ctr.apworld" }
+"0.3.0-alpha1" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.3.0-alpha1/ctr.apworld" }
+"0.3.0-alpha2" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.3.0-alpha2/ctr.apworld" }
+"0.3.0-alpha3" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.3.0-alpha3/ctr.apworld" }
+"0.3.0-alpha4" = { url = "https://github.com/dowlle/ctr-native-ap/releases/download/v0.3.0-alpha4/ctr.apworld" }
+
+[[fuzz_results]]
+version = "0.1.0"
+verdict = "clean"
+fuzzed_at = "2026-07-15"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+
+[[fuzz_results]]
+version = "0.1.1"
+verdict = "clean"
+fuzzed_at = "2026-07-21"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+
+[[fuzz_results]]
+version = "0.1.2"
+verdict = "clean"
+fuzzed_at = "2026-07-21"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+
+[[fuzz_results]]
+version = "0.1.3"
+verdict = "clean"
+fuzzed_at = "2026-07-21"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+
+[[fuzz_results]]
+version = "0.1.4"
+verdict = "clean"
+fuzzed_at = "2026-07-23"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+
+[[fuzz_results]]
+version = "0.1.5"
+verdict = "clean"
+fuzzed_at = "2026-08-16"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+
+[[fuzz_results]]
+version = "0.2.4"
+verdict = "clean"
+fuzzed_at = "2026-10-13"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+ap_version = "0.6.8"
+report_url = "https://github.com/dowlle/Archipelago-index/pull/1317"

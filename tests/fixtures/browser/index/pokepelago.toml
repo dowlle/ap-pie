@@ -1,0 +1,52 @@
+name = "Pokepelago"
+home = "https://discord.com/channels/731205301247803413/1474030797811093514"
+default_url = "https://github.com/dowlle/PokepelagoClient/releases/download/v{{version}}/pokepelago.apworld"
+setup_guide = "https://ap-pie.com/guides/pokepelago"
+
+[versions]
+"0.4.4" = {}
+"0.5.1" = {}
+"0.6.1" = {}
+"0.6.2" = {}
+"0.6.3" = {}
+"0.6.4" = {}
+"0.6.6" = {}
+
+[[fuzz_results]]
+version = "0.6.4"
+verdict = "clean"
+fuzzed_at = "2026-08-31"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+ap_version = "0.6.7"
+hook_suite_sha = "3821594"
+fuzz_py_sha = "acc0a12"
+
+[[fuzz_results]]
+version = "0.6.3"
+verdict = "flaky"
+fuzzed_at = "2026-07-08"
+seeds = 5000
+default_rate = 0.0004
+worst_hook = "default"
+worst_hook_rate = 0.0004
+
+[[fuzz_results]]
+version = "0.6.1"
+verdict = "clean"
+fuzzed_at = "2026-08-24"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0
+
+[[fuzz_results]]
+version = "0.6.6"
+verdict = "clean"
+fuzzed_at = "2026-09-15"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0

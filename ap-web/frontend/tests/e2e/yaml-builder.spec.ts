@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { load } from "js-yaml";
+import { openOptionCategory } from "./builder-helpers";
 
 const CUSTOM_TRACK = {
   lev_sha256: "96ad9f74f51a02eafcc207cd02c97052d674c950e0f24b6440a227494a705fe8",
@@ -106,7 +107,7 @@ test("syntax errors block every final action", async ({ page }) => {
   await page.getByRole("button", { name: "Review YAML" }).click();
 
   await expect(page.getByRole("button", { name: "Download .yaml" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Save to my YAMLs" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Sign in and save" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Save as preset" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Back to options" })).toBeEnabled();
 });
@@ -211,6 +212,7 @@ test("free-form list options preserve commas while typing", async ({ page }) => 
   }));
   await page.goto("/yaml-builder/freeform-fixture?version=1.0.0");
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  await openOptionCategory(page, "Lists");
 
   const aliases = page.getByRole("textbox", { name: "Aliases", exact: true });
   await aliases.fill("");
@@ -225,6 +227,7 @@ test("free-form list options preserve commas while typing", async ({ page }) => 
 test("machine-readable OptionSet keys render Pokepelago Regions as choices", async ({ page }) => {
   await page.goto("/yaml-builder/pokepelago?version=0.6.3");
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  await openOptionCategory(page, "Regions");
 
   await expect(page.getByRole("checkbox", { name: "Kanto", exact: true })).toBeChecked();
   const johto = page.getByRole("checkbox", { name: "Johto", exact: true });
@@ -270,6 +273,7 @@ test("structured composite options only commit valid YAML fragments", async ({ p
   }));
   await page.goto("/yaml-builder/composite-fixture?version=1.0.0");
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  await openOptionCategory(page, "Composite");
 
   const rules = page.getByRole("textbox", { name: "Rules", exact: true });
   const editor = page.locator(".yaml-builder-live-editor");
@@ -290,6 +294,7 @@ test("dict controls use explicit mapping and counter semantics", async ({ page }
   await mockDictKindsSchema(page);
   await page.goto("/yaml-builder/dict-kinds-fixture?version=0.2.0-alpha6");
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  await openOptionCategory(page, "Composite");
 
   const customTracks = page.locator(".yaml-builder-option").filter({ hasText: "Custom Tracks" });
   await expect(customTracks.getByRole("textbox", { name: "Custom Tracks" })).toBeVisible();
@@ -317,6 +322,7 @@ test("nested OptionDict YAML survives form editing, YAML loading, and rebuild", 
   const url = "/yaml-builder/dict-kinds-fixture?version=0.2.0-alpha6";
   await page.goto(url);
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  await openOptionCategory(page, "Composite");
 
   const customTracks = page.getByRole("textbox", { name: "Custom Tracks", exact: true });
   await customTracks.fill([

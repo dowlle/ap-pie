@@ -1,0 +1,331 @@
+{
+  "apworld_name": "ctr",
+  "version": "0.1.5",
+  "sha256": "cfa525c2296554f32e749164994790b3fb2d6a8f4d8309c377f51f1820b8d689",
+  "source_url": "https://github.com/dowlle/ctr-native-ap/releases/download/v0.1.5/ctr.apworld",
+  "schema": {
+    "_format_version": 10,
+    "ap_version": "",
+    "categories": [
+      "Goal",
+      "Items & Pool",
+      "Warp Pads",
+      "Extra Checks",
+      "Quality of Life",
+      "DeathLink",
+      "Relic Difficulty"
+    ],
+    "game": "Crash Team Racing",
+    "options": [
+      {
+        "category": "Goal",
+        "choices": [
+          "oxide",
+          "oxidefinal",
+          "allbosses",
+          "allgemcups"
+        ],
+        "default": "oxide",
+        "description": "Determines the player's end goal.\n\n- **oxide** (default): defeat N. Oxide's Challenge.\n- **oxidefinal**: collect relics, then defeat N. Oxide's Final Challenge.\n- **allbosses**: win all 4 boss races (Ripper Roo, Papu Papu, Komodo Joe, Pinstripe).\n- **allgemcups**: collect all 5 Gems. Requires `Include Gem Cup Warp Pads` on:\n  with `Shuffle Gems` off the Gems sit on their own Gem Cups, with it on they\n  hide anywhere in the multiworld.",
+        "display_name": "Goal",
+        "name": "goal",
+        "type": "choice"
+      },
+      {
+        "category": "Goal",
+        "choices": [
+          "sapphire_relics",
+          "gold_relics",
+          "platinum_relics",
+          "any_relic_type",
+          "total_relics"
+        ],
+        "default": "sapphire_relics",
+        "description": "Which relics turn Oxide's Challenge into Oxide's Final Challenge. The\ncount comes from `Oxide's Final Challenge Relic Count`.\n\n- **sapphire_relics** (default), **gold_relics**, **platinum_relics**: that\n  many relics of that tier.\n- **any_relic_type**: any single tier reaches the count.\n- **total_relics**: all relics added together reach the count.\n\nTiers are independent: a Platinum relic does not count toward a Gold\nrequirement. Requiring a tier whose progression option is `never` fails\ngeneration. The old `18_gold_and_platinum_relics` value was removed.",
+        "display_name": "Oxide's Final Challenge Unlock",
+        "name": "oxide_final_challenge_unlock",
+        "type": "choice"
+      },
+      {
+        "category": "Goal",
+        "default": 18,
+        "description": "How many relics `Oxide's Final Challenge Unlock` requires (1-18). For\ntotal_relics it is the summed total; for any_relic_type it is the threshold\nany single tier must reach.",
+        "display_name": "Oxide's Final Challenge Relic Count",
+        "max": 18,
+        "min": 1,
+        "name": "oxide_final_challenge_relic_count",
+        "named_values": {
+          "all": 18
+        },
+        "type": "range"
+      },
+      {
+        "category": "Items & Pool",
+        "default": true,
+        "description": "Shuffle the 5 Gems into the multiworld item pool.\n\n- **on** (default): the Gems can appear anywhere; their Gem Cup locations\n  become normal checks.\n- **off**: each Gem stays on its own Gem Cup reward (vanilla placement).\n\nWorks with every goal, including `All Gems`.",
+        "display_name": "Shuffle Gems",
+        "name": "shuffle_gems",
+        "type": "toggle"
+      },
+      {
+        "category": "Items & Pool",
+        "default": true,
+        "description": "Bring the 5 Gem Cups and their races into the seed: their checks become\nnormal locations and, in a randomized-unlock seed, their warp pads get a\nrandomized entry requirement.\n\n- Not the same as `Shuffle Gems`: that moves the Gem items around; this one\n  includes the cup races themselves. Must be on for the `All Gems` goal.\n- **off**: cups stay fully vanilla, and shuffled Gems are pinned back onto\n  their own cups.",
+        "display_name": "Include Gem Cup Warp Pads",
+        "name": "include_gem_cups",
+        "type": "toggle"
+      },
+      {
+        "category": "Items & Pool",
+        "default": true,
+        "description": "Shuffle the 4 boss Keys into the multiworld item pool.\n\n- **on** (default): the Keys can appear anywhere; the Boss Race locations\n  become normal checks.\n- **off**: each Key stays on its Boss Race reward (vanilla placement).",
+        "display_name": "Shuffle Keys",
+        "name": "shuffle_keys",
+        "type": "toggle"
+      },
+      {
+        "category": "Items & Pool",
+        "default": 10,
+        "description": "What percentage of this slot's filler items are replaced by traps (Icy\nRoad, Low Gravity, No Brakes, Forced Boost, First Person -- each equally\nlikely).\n\n  0             = no traps, filler stays Wumpa Fruit\n  10  (default) = a taste of sabotage\n  100           = every filler slot becomes a trap\n\nTraps never gate anything. A received trap arms silently and fires mid-race\non a later lap.",
+        "display_name": "Trap Fill Percentage",
+        "max": 100,
+        "min": 0,
+        "name": "trap_fill_percentage",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Warp Pads",
+        "default": true,
+        "description": "Bring the 4 Battle Arenas and their Crystal Challenges into the seed:\ntheir checks become normal locations and, in a randomized-unlock seed, their\nwarp pads get a randomized entry requirement.\n\n- **off**: the arenas are fully out of the seed and never logically\n  required -- vanilla gates, vanilla Purple CTR Token rewards, and no\n  randomized requirement ever demands Purple tokens. They stay playable.\n- Not the same as `crystals` in `Warp Pad Shuffle Categories`: this puts the\n  arenas in the seed at all; that category only shuffles destinations.",
+        "display_name": "Include Battle Arena Warp Pads",
+        "name": "include_battle_arenas",
+        "type": "toggle"
+      },
+      {
+        "category": "Warp Pads",
+        "choices": [
+          "crystals",
+          "cups",
+          "tracks"
+        ],
+        "default": [
+          "crystals",
+          "cups",
+          "tracks"
+        ],
+        "description": "Which content categories take part in warp-pad destination shuffle. A\ncategory left out always loads its own content.\n\n- **tracks**: the 16 trophy races plus Slide Coliseum and Turbo Track.\n- **cups**: the 5 Gem Cups (needs `Include Gem Cup Warp Pads` on).\n- **crystals**: the 4 Battle Arenas (needs `Include Battle Arena Warp Pads` on).\n\nDefault: all three. Empty set: no destination shuffle. Under vanilla unlock\nrequirements, tracks and crystals shuffle within themselves and cups stay\nfixed.",
+        "display_name": "Warp Pad Shuffle Categories",
+        "name": "warp_pad_shuffle_categories",
+        "type": "list"
+      },
+      {
+        "category": "Warp Pads",
+        "choices": [
+          "per_category",
+          "merged"
+        ],
+        "default": "merged",
+        "description": "How the categories in `Warp Pad Shuffle Categories` are pooled for\ndestination shuffle.\n\n- **merged** (default): one cross-category pool -- a track slot can load a\n  cup or crystal and vice versa. Needs a randomized unlock mode.\n- **per_category**: each category shuffles only within itself.\n\nHas no effect when fewer than two categories participate.\n\nGem Cups are the one exception to `merged`: a cup is never placed on a pad that\nopens before the Cups Room's own two-Key door, so a cup can never be one of the\npads you start with. An early cup also advertises the podium checks of the four\ntrophy tracks it runs as legs, which is a large opening handout on tracks whose\nown pads are still shut.",
+        "display_name": "Warp Pad Shuffle Grouping",
+        "name": "warp_pad_shuffle_grouping",
+        "type": "choice"
+      },
+      {
+        "category": "Warp Pads",
+        "choices": [
+          "one_pile",
+          "by_reward_type"
+        ],
+        "default": "one_pile",
+        "description": "How a warp pad shows the items still waiting on its checks.\n\nA pad advertises its destination's unclaimed rewards in three floating slots.\n\n- **one_pile** (default): every unclaimed item shares those slots and they\n  cycle through the whole pile together, so a pad with a race, a CTR\n  challenge, relics and podium rungs left mixes them all in one rotation.\n- **by_reward_type**: each reward type keeps its own slot and only rotates\n  within it, so you can tell at a glance whether the relic you see is the\n  relic check or the CTR check. With the podium rungs on, the race slot can\n  cycle through five or six items.\n\nPurely a display setting: it changes nothing about which checks exist, what\nthey hold, or how anything unlocks. Needs a client that supports it -- an\nolder one shows one pile whatever this says.",
+        "display_name": "Warp Pad Item Display",
+        "name": "warp_pad_item_display",
+        "type": "choice"
+      },
+      {
+        "category": "Warp Pads",
+        "choices": [
+          "vanilla",
+          "randomized",
+          "random_without_4_keys"
+        ],
+        "default": "randomized",
+        "description": "How warp pads unlock -- the heart of the randomizer.\n\n- **randomized** (default): every warp pad gets a randomized entry\n  requirement (trophies, tokens, relics, keys, gems...), always collectable\n  before that pad opens.\n- **vanilla**: pads open on their vanilla trophy counts, like the original\n  adventure.\n- **random_without_4_keys**: like randomized, but the 4 boss Keys are never\n  pad requirements.",
+        "display_name": "Warp Pad Unlock Requirements",
+        "name": "warppad_unlock_requirements",
+        "type": "choice"
+      },
+      {
+        "category": "Warp Pads",
+        "choices": [
+          "off",
+          "light",
+          "standard",
+          "deep",
+          "full"
+        ],
+        "default": "full",
+        "description": "How many trophy pads carry a real second-stage gate, meaning an extra\nrequirement on the pad's CTR Challenge and relic Time Trials on top of\nwinning the Trophy Race. Only affects the randomized warp pad modes.\n\n- **off**: no second gates.\n- **light**: a few per seed (up to 4).\n- **standard**: a moderate spread (up to 6).\n- **deep**: layered progression (up to 10).\n- **full** (default): every pad that can carry one gets one (up to 16).\n\nAlso accepts `random`. The densest settings can generate slower on\nmaxed-out configs.",
+        "display_name": "Two-Stage Gate Density",
+        "name": "two_stage_density",
+        "type": "choice"
+      },
+      {
+        "category": "Warp Pads",
+        "choices": [
+          "icebound_beta5",
+          "trophy_heavy_legacy",
+          "custom"
+        ],
+        "default": "icebound_beta5",
+        "description": "Weight preset for randomized warp-pad requirements (randomized modes\nonly).\n\n- **icebound_beta5** (default): Icebound's rebalanced weights -- still\n  trophy-leaning, with more token, relic and key variety.\n- **trophy_heavy_legacy**: the previous, more trophy-dominated weights.\n- **custom**: use the weights from `Requirement Weights`.",
+        "display_name": "Requirement Variety",
+        "name": "requirement_variety",
+        "type": "choice"
+      },
+      {
+        "category": "Warp Pads",
+        "default": {},
+        "description": "Roll your own requirement mix. Used only when `Requirement Variety` =\ncustom. Each entry is `item name: weight` -- higher weight means picked more\noften; 0 disables an item, except Trophy, which must stay above 0. Items you\nleave out keep their default weight.\n\nExample:\n\n    requirement_variety: custom\n    requirement_weights:\n      Trophy: 30\n      Key: 40\n      Sapphire Relic: 40\n\nValid keys: Trophy, Key, the five CTR Token colours, the three Relic tiers,\nand the five Gem colours.",
+        "dict_kind": "mapping",
+        "display_name": "Requirement Weights",
+        "mapping_value_kind": "number",
+        "name": "requirement_weights",
+        "type": "dict",
+        "valid_keys": [
+          "Trophy",
+          "Key",
+          "Red CTR Token",
+          "Green CTR Token",
+          "Blue CTR Token",
+          "Yellow CTR Token",
+          "Purple CTR Token",
+          "Sapphire Relic",
+          "Gold Relic",
+          "Platinum Relic",
+          "Red Gem",
+          "Green Gem",
+          "Blue Gem",
+          "Yellow Gem",
+          "Purple Gem"
+        ]
+      },
+      {
+        "category": "Extra Checks",
+        "default": true,
+        "description": "Add finishing-position checks to the 16 adventure trophy races -- the\nmaster switch for the podium-rung feature.\n\n- Finish rungs (`Podium Finish Rungs`): earned by where you cross the line.\n- Held rungs (`Held-Position Rungs`): earned by the best position you hold\n  during the race.\n\nA better result awards every rung at or below it. These checks make room\nfor more items in the pool; they never advance adventure progression.",
+        "display_name": "Podium Placement Checks",
+        "name": "podium_placement_checks",
+        "type": "toggle"
+      },
+      {
+        "category": "Extra Checks",
+        "default": true,
+        "description": "Include the finish-line rungs on each trophy race (needs `Podium\nPlacement Checks` on): \"Finish on Podium\" (top 3) and \"Finish (Any\nPosition)\". Toggle the any-position half with `Podium: Any-Position\nRung`.",
+        "display_name": "Podium Finish Rungs",
+        "name": "podium_finish_rungs",
+        "type": "toggle"
+      },
+      {
+        "category": "Extra Checks",
+        "default": true,
+        "description": "Also include the \"Finish (Any Position)\" rung on each trophy race, earned\nby simply crossing the finish line. Off keeps only \"Finish on Podium\". Needs\n`Podium Finish Rungs` on.",
+        "display_name": "Podium: Any-Position Rung",
+        "name": "podium_any_position_rung",
+        "type": "toggle"
+      },
+      {
+        "category": "Extra Checks",
+        "default": true,
+        "description": "Include the live-position \"held\" rungs on each trophy race (needs `Podium\nPlacement Checks` on): \"Held 1st\" and \"Held 3rd\", earned the moment you hold\nthat position on track. Add \"Held 5th\" with `Podium: Held 5th Rung`.",
+        "display_name": "Held-Position Rungs",
+        "name": "podium_held_rungs",
+        "type": "toggle"
+      },
+      {
+        "category": "Extra Checks",
+        "default": false,
+        "description": "Also add a \"Held 5th\" rung to each trophy race, earned by holding 5th\nplace or better at any point. Needs `Held-Position Rungs` on. Off by\ndefault; turn it on for 16 extra early checks.",
+        "display_name": "Podium: Held 5th Rung",
+        "name": "podium_held_fifth_rung",
+        "type": "toggle"
+      },
+      {
+        "category": "Quality of Life",
+        "default": true,
+        "description": "Make Cup races one lap each instead of the usual three. On by default.\n\nOnly cup races shorten (including the Gem Cups); single races, boss races,\nrelic time trials and CTR Token challenges keep their normal lap count.\nChanges nothing about logic or which locations exist -- everything is just\nfaster.",
+        "display_name": "One-Lap Cup Races",
+        "name": "one_lap_cups",
+        "type": "toggle"
+      },
+      {
+        "category": "DeathLink",
+        "choices": [
+          "off",
+          "mask_reset",
+          "any_hit"
+        ],
+        "default": "off",
+        "description": "Share your wipeouts with the other DeathLink players, and take theirs.\n\n- **off** (default): disabled.\n- **mask_reset**: send a death only when the mask carries you back, meaning\n  you fell off the track or were eaten. Low frequency.\n- **any_hit**: also send on every hit that lands on you (spin-out, blast,\n  squish, burn). Much higher frequency, so pair it with `DeathLink Amnesty`.\n\nReceiving a death always forces the full mask reset on you. Only\nadventure-mode races send.",
+        "display_name": "DeathLink",
+        "name": "death_link",
+        "type": "choice"
+      },
+      {
+        "category": "DeathLink",
+        "default": 1,
+        "description": "How many of your deaths must pile up before one is actually sent. 1\n(default) sends every death; N sends one per N. Meant for the `any_hit`\ntier. Incoming deaths are unaffected -- amnesty only throttles what you\nsend.",
+        "display_name": "DeathLink Amnesty",
+        "max": 30,
+        "min": 1,
+        "name": "deathlink_amnesty",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Relic Difficulty",
+        "default": 100,
+        "description": "How often progression may sit behind a Sapphire relic-race time (the\neasiest tier). Per-location % chance over the 18 Sapphire Time Trials; a\nlocation that misses the roll keeps its vanilla Sapphire Relic and never\ngates progression. 0 = never, 100 = full (default). Also accepts `random`.\n\nThe three tiers are a skill ladder (sapphire easy, platinum hard); setting\nan easier tier lower than a harder one gives inverted difficulty.",
+        "display_name": "Sapphire Relic Progression",
+        "max": 100,
+        "min": 0,
+        "name": "sapphire_relic_progression",
+        "named_values": {
+          "full": 100,
+          "never": 0
+        },
+        "type": "range"
+      },
+      {
+        "category": "Relic Difficulty",
+        "default": 100,
+        "description": "How often progression may sit behind a Gold relic-race time (the medium\ntier). Per-location % chance over the 18 Gold Time Trials; a location that\nmisses the roll keeps its vanilla Gold Relic. 0 = never, 100 = full\n(default). Also accepts `random`. See `Sapphire Relic Progression` for the\nskill-ladder note.",
+        "display_name": "Gold Relic Progression",
+        "max": 100,
+        "min": 0,
+        "name": "gold_relic_progression",
+        "named_values": {
+          "full": 100,
+          "never": 0
+        },
+        "type": "range"
+      },
+      {
+        "category": "Relic Difficulty",
+        "default": 0,
+        "description": "How often progression may sit behind a Platinum relic-race time (the\nhardest, expert-only tier). Per-location % chance over the 18 Platinum Time\nTrials; a location that misses the roll keeps its vanilla Platinum Relic.\n0 = never (default, so a needed item never sits behind a platinum-only\ntime), 100 = full. Also accepts `random`.",
+        "display_name": "Platinum Relic Progression",
+        "max": 100,
+        "min": 0,
+        "name": "platinum_relic_progression",
+        "named_values": {
+          "full": 100,
+          "never": 0
+        },
+        "type": "range"
+      }
+    ],
+    "world_version": ""
+  }
+}

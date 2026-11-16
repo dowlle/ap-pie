@@ -1,0 +1,31 @@
+name = "Gauntlet Legends"
+home = "https://discord.com/channels/731205301247803413/1195336830258778183"
+default_url = "https://github.com/jamesbrq/GauntletLegendsAP/releases/download/v{{version}}/gl.apworld"
+stability = "stable"
+
+[versions]
+"1.7.1" = {}
+"1.7.2" = {}
+"2.1.0" = {}
+"2.1.1" = {}
+"2.1.5" = {}
+"2.1.6" = {}
+"2.1.7" = {}
+
+[[fuzz_results]]
+version = "2.1.6"
+verdict = "flaky"
+fuzzed_at = "2026-05-26"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "check-determinism"
+worst_hook_rate = 0.674
+
+[[fuzz_results]]
+version = "2.1.7"
+verdict = "clean"
+fuzzed_at = "2026-11-13"
+seeds = 5000
+default_rate = 0.0
+worst_hook = "default"
+worst_hook_rate = 0.0

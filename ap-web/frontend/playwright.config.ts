@@ -4,9 +4,9 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
   workers: 1,
-  retries: 1,
+  retries: 0,
   timeout: 30_000,
-  outputDir: "/tmp/ap-pie-playwright-results",
+  outputDir: "test-results",
   reporter: [["list"]],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || "https://beta.ap-pie.com",

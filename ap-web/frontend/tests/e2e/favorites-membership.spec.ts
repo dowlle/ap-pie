@@ -131,13 +131,12 @@ test("favorites fit a narrow screen", async ({ page }) => {
 });
 
 test("real archived schema exports its exact game identity and options", async ({ page }) => {
-  test.skip(!process.env.BUILDER_REAL_SCHEMA, "Set BUILDER_REAL_SCHEMA to a locally audited schema JSON");
-  const schema = JSON.parse(await readFile(process.env.BUILDER_REAL_SCHEMA!, "utf8"));
+  const { schema, version } = JSON.parse(await readFile(new URL("../../../../tests/fixtures/browser/schemas/ctr-0.1.5.json", import.meta.url), "utf8"));
   await mockApp(page);
   await page.route("**/api/apworlds/fixture/builder-schema?*", (route) => route.fulfill({ json: {
-    apworld_name: "fixture", game: schema.game, display_name: schema.game, version: "1.4.4", schema,
+    apworld_name: "fixture", game: schema.game, display_name: schema.game, version, schema,
   } }));
-  await page.goto("/yaml-builder/fixture?version=1.4.4");
+  await page.goto(`/yaml-builder/fixture?version=${version}`);
   await page.getByRole("button", { name: "Start with the game defaults" }).click();
   await page.getByRole("button", { name: "Review YAML" }).click();
   const downloadPromise = page.waitForEvent("download");
