@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { load } from "js-yaml";
+import { openOptionCategory } from "./builder-helpers";
 
 for (const width of [1440, 820, 390]) {
   test(`long counter labels fit beside editable values at ${width}px`, async ({ page }) => {
@@ -24,6 +25,7 @@ for (const width of [1440, 820, 390]) {
     });
     await page.goto("/yaml-builder/refunct?version=1.2.2");
     await page.getByRole("button", { name: "Start with the game defaults" }).click();
+    await openOptionCategory(page, "Minigames");
     const rows = page.locator(".yaml-builder-counter-row");
     await expect(rows).toHaveCount(4);
     for (const row of await rows.all()) {
@@ -37,7 +39,7 @@ for (const width of [1440, 820, 390]) {
     await page.getByRole("spinbutton", { name: "Block Brawl Minigame" }).fill("7");
     await expect(page.getByRole("spinbutton", { name: "Block Brawl Minigame" })).toHaveValue("7");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.screenshot({ path: `/tmp/appie-counter-layout-${width}.png` });
+    await page.screenshot({ path: test.info().outputPath(`counter-layout-${width}.png`) });
     await page.getByRole("button", { name: "Review YAML" }).click();
     const pending = page.waitForEvent("download");
     await page.getByRole("button", { name: "Download .yaml" }).click();

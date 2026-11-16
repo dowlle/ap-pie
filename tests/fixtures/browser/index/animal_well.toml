@@ -1,0 +1,21 @@
+name = "ANIMAL WELL"
+home = "https://discord.com/channels/731205301247803413/1238463626344665119"
+default_url = "https://github.com/ScipioWright/Archipelago-SW/releases/download/{{version}}/animal_well.apworld"
+stability = "stable"
+setup_guide = "https://github.com/ScipioWright/Archipelago-SW/blob/animal-well/worlds/animal_well/docs/setup_en.md"
+
+[versions]
+"0.4.2" = {}
+"0.5.0" = {}
+"0.5.2" = {}
+"0.5.3" = {}
+"0.5.4" = {}
+
+[[fuzz_results]]
+version = "0.5.4"
+verdict = "broken"
+fuzzed_at = "2026-05-26"
+seeds = 5000
+default_rate = 0.0882
+worst_hook = "default"
+worst_hook_rate = 0.0882

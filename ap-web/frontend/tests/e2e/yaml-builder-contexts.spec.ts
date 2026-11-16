@@ -8,6 +8,17 @@ async function ctrSchema(page: Page) {
 
 async function mockRoomSchema(page: Page, roomId: string) {
   const schema = await ctrSchema(page);
+  await page.route(`**/api/public/rooms/${roomId}`, (route) => route.fulfill({
+    json: {
+      id: roomId, name: "Builder fixture room", description: "", status: "open",
+      host_name: "Fixture host", seed: null, external_host: null, external_port: null,
+      max_players: 10, max_yamls_per_user: 1, race_mode: false, spoiler_level: 0,
+      require_discord_login: false, submit_deadline: null, tracker_url: null,
+      claim_mode: false, allow_mixed_apworld_versions: false,
+      force_latest_apworld_versions: false, auto_upgrade_apworld_pins: false,
+      created_at: null, yamls: [], player_count: 0,
+    },
+  }));
   await page.route(`**/api/public/rooms/${roomId}/builder-schemas`, (route) =>
     route.fulfill({ json: [schema] }),
   );
@@ -83,6 +94,7 @@ test("anonymous public-room context submits the generated YAML", async ({ page }
   });
   await page.goto(`/yaml-builder/ctr?context=public-room&room=${roomId}`);
   await startDefaultsAndReview(page);
+  await expect(page.getByRole("complementary", { name: "Submission destination" })).toContainText("Builder fixture room");
   await page.getByRole("button", { name: "Submit to this room" }).click();
   await expect(page.getByText(/Submitted Player1/)).toBeVisible();
   expect(submitted).toContain("game: Crash Team Racing");
@@ -100,6 +112,7 @@ test("host-room context uses the host create endpoint", async ({ page }) => {
   });
   await page.goto(`/yaml-builder/ctr?context=host-room&room=${roomId}`);
   await startDefaultsAndReview(page);
+  await expect(page.getByRole("complementary", { name: "Submission destination" })).toContainText("Builder fixture room");
   await page.getByRole("button", { name: "Add to this room" }).click();
   await expect(page.getByText(/Created Player1/)).toBeVisible();
   expect(submitted?.player_name).toBe("Player1");

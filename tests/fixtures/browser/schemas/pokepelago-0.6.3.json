@@ -1,0 +1,375 @@
+{
+  "apworld_name": "pokepelago",
+  "version": "0.6.3",
+  "sha256": "0e5fe14c8fad741f8a99933f6d30d2f6d3d5a519fe099d1858692c92cf31825a",
+  "source_url": "https://github.com/dowlle/PokepelagoClient/releases/download/v0.6.3/pokepelago.apworld",
+  "schema": {
+    "_format_version": 10,
+    "ap_version": "",
+    "categories": [
+      "Game Options",
+      "Lock Gates",
+      "Regions",
+      "Items"
+    ],
+    "game": "Pokepelago",
+    "options": [
+      {
+        "category": "Game Options",
+        "default": true,
+        "description": "If enabled, each Pokemon has its own location check ('Guess {Pokemon}').\nAccess is gated by whichever lock options are active (Type Keys, Region Passes,\nRoute Keys, Line Unlocks, Gym Badges, etc.).\nDisabling removes all per-Pokemon locations, leaving only milestone-based checks.\nAutomatically enabled when Route Locks or Line Locks is on.",
+        "display_name": "Dexsanity",
+        "name": "dexsanity",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": true,
+        "description": "If enabled, guessing a Pokemon requires all Type Keys matching its elemental types\n(e.g. Bulbasaur needs both Grass Type Key and Poison Type Key).\n\nGeneration cost: adds one progression item per active type (up to 18).\nPokemon of a type can only be caught with that Type Key, so most Type Keys\nmust go in non-type-gated locations (starting slots + \"Guessed N\" milestones\n+ dexsanity \"Guess X\" locations). Disabling Dexsanity removes the per-Pokemon\nlocations and can squeeze Type Key placement on small regions -- see the\nHisui-only case in the backlog history and the Line Locks perf note below.",
+        "display_name": "Enable Type Locks",
+        "name": "type_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Regions",
+        "default": true,
+        "description": "If enabled, non-starting regions require a Region Pass item to access.\nDisabling this makes all selected regions freely accessible from the start.",
+        "display_name": "Region Locks",
+        "name": "region_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Regions",
+        "choices": [
+          "Alola",
+          "Galar",
+          "Hisui",
+          "Hoenn",
+          "Johto",
+          "Kalos",
+          "Kanto",
+          "Paldea",
+          "Sinnoh",
+          "Unova"
+        ],
+        "default": [
+          "Kanto"
+        ],
+        "description": "Which game regions to include. Each region adds its Pokemon to the pool.\n\nProvide a YAML list of region names, for example:\n    regions:\n      - Kanto\n      - Johto\n      - Hoenn\n(Inline form also works: regions: [Kanto, Johto, Hoenn].)\n\nAt least one region is always active (defaults to Kanto if the list is empty).\nThis manual list is honored by default. It is ONLY ignored if you set\n'random_region_count' to a non-zero value, which randomizes the regions instead.\nValid regions: Kanto, Johto, Hoenn, Sinnoh, Unova, Kalos, Alola, Galar, Hisui, Paldea.",
+        "display_name": "Regions",
+        "name": "regions",
+        "type": "list"
+      },
+      {
+        "category": "Regions",
+        "default": 0,
+        "description": "Override the manual Regions list with a random selection.\nSet to 0 (or disabled) to use the manual Regions list above (THIS IS THE DEFAULT,\nso your 'regions:' list is honored unless you change this).\nSet to 1-10 to ignore the manual list and randomly pick that many regions\n(or generations if grouping is on).\nSet to random to also randomize how many are picked.\nWhen 'Group Hisui & Galar' is enabled, this picks from 9 generation units\n(Gen 8 = Galar + Hisui together) instead of 10 individual regions.",
+        "display_name": "Random Region Count",
+        "max": 10,
+        "min": 0,
+        "name": "random_region_count",
+        "named_values": {
+          "disabled": 0,
+          "random": -1
+        },
+        "type": "range"
+      },
+      {
+        "category": "Regions",
+        "default": true,
+        "description": "When enabled, Galar and Hisui are treated as a single 'Gen 8' unit\nfor random region selection. Picking Gen 8 always includes both regions.\nWhen disabled, Galar and Hisui are independent picks.\nOnly affects random_region_count; the manual Regions list is unaffected.",
+        "display_name": "Group Hisui & Galar",
+        "name": "group_hisui_galar",
+        "type": "toggle"
+      },
+      {
+        "category": "Regions",
+        "choices": [
+          "any",
+          "kanto",
+          "johto",
+          "hoenn",
+          "sinnoh",
+          "unova",
+          "kalos",
+          "alola",
+          "galar",
+          "hisui",
+          "paldea"
+        ],
+        "default": "any",
+        "description": "Which game region your adventure starts in.\nDetermines which Pokemon starters are available and which Type Keys begin pre-collected.\n'any': a random active region is chosen each seed.\nSpecific region: must also be included in the Regions option.\nIf the chosen region is not active, falls back to a random active region.",
+        "display_name": "Starter Region",
+        "name": "starter_region",
+        "type": "choice"
+      },
+      {
+        "category": "Regions",
+        "choices": [
+          "any",
+          "first",
+          "second",
+          "third",
+          "random_starter",
+          "random_any"
+        ],
+        "default": "any",
+        "description": "Which starter Pokemon to begin with.\n'any': a random starter from the starting region's list.\n'first'/'second'/'third': by position in the starting region's list.\n'random_starter': picks randomly from ALL regional starters across active regions.\n'random_any': picks from ALL active base-form Pokemon (fully random).\nStarter Count controls how many starters are chosen (1-3) for random modes.",
+        "display_name": "Starter Pokemon",
+        "name": "starter_pokemon",
+        "type": "choice"
+      },
+      {
+        "category": "Regions",
+        "default": 1,
+        "description": "How many starter Pokemon to begin with (1-3).\nEach starter pre-collects its Type Keys, Route Key, Line Unlock, and\nRegion Pass (if the starter is in a non-starting region).\nMore starters = more open early game with wider type/route/line coverage.\nOnly used when Starter Pokemon is set to 'random_starter' or 'random_any'.",
+        "display_name": "Starter Count",
+        "max": 3,
+        "min": 1,
+        "name": "starter_count",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Regions",
+        "default": true,
+        "description": "When Starter Pokemon is 'random', prefer traditional starters\n(Bulbasaur, Charmander, Squirtle, Chikorita, etc.) over wild Pokemon.\nGives a 5x weight to Professor's Lab Pokemon in the random selection.",
+        "display_name": "Prefer Lab Starters",
+        "name": "prefer_lab_starters",
+        "type": "toggle"
+      },
+      {
+        "category": "Game Options",
+        "default": 4,
+        "description": "Number of free 'Oak's Lab' starting locations to include (0-8).\nThese are immediately accessible checks (Oak's Parcel Delivery, Pokedex Received, etc.)\nthat kickstart your adventure. Set to 0 to disable them entirely.",
+        "display_name": "Starting Location Count",
+        "max": 8,
+        "min": 0,
+        "name": "starting_location_count",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Lock Gates",
+        "default": false,
+        "description": "Require Route Key items to access Pokemon by game area.\nRoutes are grouped into meaningful areas (e.g. Melemele Island, Wild Area\nNorth, Hoenn Early Routes). Each area adds one Route Key to the item pool.\nA Pokemon is accessible if you have ANY area key for a route it appears on.\nForces Dexsanity ON (needed for enough locations to hold all Route Keys).\nNote: enabling this will auto-disable Line Locks if both are on.\n\nYAML key: route_locks_enabled (NOT route_locks). The dataclass attribute\nin PokepelagoOptions uses the _enabled suffix; AP silently ignores unknown\nkeys, so a YAML with `route_locks: true` will generate with this option\nset to its default (0) and the setting will appear to have no effect.",
+        "display_name": "Route Locks",
+        "name": "route_locks_enabled",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": false,
+        "description": "Require a Line Unlock item for each evolution family.\nEvery active evolution family adds one Line Unlock to the item pool.\nRequired for ALL members of the family (base forms and evolutions).\nEvolution-only Pokemon inherit route access from their base form.\nForces Dexsanity ON (needed for enough locations to hold all Line Unlocks).\nAuto-disabled when Route Locks is also enabled, or when the active\nregion pool is too small for the number of progression items it\nwould create (prevents fill algorithm failures).\n\n-- GENERATION PERFORMANCE -------------------------------------------------\nLine Locks is the single biggest cost on generation time, because it adds\none progression item per evolution family across every active region\n(~50-100 per region, 300+ across many regions). Stacking Line Locks with:\n\n  - 5+ active regions, AND\n  - Type Locks + Region Locks + Badge Level Gating, AND\n  - 3+ of {legendary, trade, baby, fossil, paradox, stone, ultra_beast} locks\n\n...pushes the progression-item count into the 700-900 range. `fill_restrictive`\ncomplexity scales with progression-items x locations, so these configs can\ntake 30-60s to generate on modest hardware (vs. <5s for typical configs).\nThe heuristic at `__init__.py:76-99` auto-disables Line Locks when the\nestimated progression-to-location ratio exceeds 55% -- this prevents\noutright FillErrors but not slow-but-completes generation. If you want\nall-locks-on with many regions, be prepared to wait on generation.",
+        "display_name": "Line Locks",
+        "name": "line_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": false,
+        "description": "Gate Pokemon behind Gym Badges based on their encounter level.\nHigher-level Pokemon require more badges (Lv1-10: 0 badges, Lv11-20: 1, etc.).\nWhen combined with Legendary Locks, uses the higher requirement of the two.\nRequires Gym Badges in the item pool (enabled automatically).",
+        "display_name": "Badge Level Gating",
+        "name": "badge_level_gating",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": true,
+        "description": "Gate legendary Pokemon behind Gym Badge items.\nCollect 6 Badges for sub-legendaries (trios, regis, tapus, etc.),\n7 Badges for box legendaries (version mascots), and\n8 Badges for mythics (event-only Pokemon like Mew, Celebi, Arceus).\nWhen Badge Level Gating is also on, uses the higher badge requirement.\n8 Gym Badge items are added to the item pool when enabled.",
+        "display_name": "Legendary Locks",
+        "name": "legendary_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": true,
+        "description": "Require a Link Cable item before guessing trade-evolved Pokemon\n(Alakazam, Machamp, Golem, Gengar, Scizor, Steelix, Conkeldurr, etc.).",
+        "display_name": "Trade Evolution Lock",
+        "name": "trade_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": false,
+        "description": "Require Daycare item(s) before guessing baby Pokemon\n(Pichu, Cleffa, Igglybuff, Togepi, Tyrogue, Smoochum, Elekid, Magby, etc.).",
+        "display_name": "Baby Pokemon Lock",
+        "name": "baby_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": 1,
+        "description": "Number of Daycare items required to unlock baby Pokemon.\nOnly used when Baby Pokemon Lock is enabled.\nSet higher for a more gradual unlock; all copies must be received.",
+        "display_name": "Daycare Items Required",
+        "max": 5,
+        "min": 1,
+        "name": "daycare_count",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Lock Gates",
+        "default": false,
+        "description": "Require a Fossil Restorer item before guessing fossil-revived Pokemon\n(Omanyte, Omastar, Kabuto, Kabutops, Aerodactyl, Lileep, Cranidos, etc.).",
+        "display_name": "Fossil Lock",
+        "name": "fossil_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": false,
+        "description": "Require an Ultra Wormhole item before guessing Ultra Beasts\n(Nihilego through Blacephalon, plus Necrozma which also originates from Ultra Space).",
+        "display_name": "Ultra Beast Lock",
+        "name": "ultra_beast_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": false,
+        "description": "Require a Time Rift item before guessing Paradox Pokemon\n(Great Tusk, Roaring Moon, Iron Valiant, etc., plus Koraidon and Miraidon).\nOnly relevant when Paldea is active.",
+        "display_name": "Paradox Lock",
+        "name": "paradox_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Lock Gates",
+        "default": true,
+        "description": "Require the matching evolutionary stone item before guessing stone-only evolutions.\nEach stone type that gates at least one active Pokemon adds one stone item to the pool.\nExamples: Fire Stone -> Arcanine/Ninetales/Flareon, Water Stone -> Starmie/Vaporeon/Cloyster.",
+        "display_name": "Stone Evolution Lock",
+        "name": "stone_locks",
+        "type": "toggle"
+      },
+      {
+        "category": "Items",
+        "default": true,
+        "description": "If enabled, Master Balls can catch any Pokemon regardless of lock gates.\nIf disabled, Master Balls can only be used on Pokemon you could normally guess.",
+        "display_name": "Master Ball Bypasses Gates",
+        "name": "master_ball_bypass_gates",
+        "type": "toggle"
+      },
+      {
+        "category": "Items",
+        "default": false,
+        "description": "Classify Pokedex and Pokegear as filler instead of useful items.\nThey behave identically in-game (reveal a Pokemon's type/identity); this only\nlowers their fill priority so they stop crowding the useful-item tier when you\nend up with a large surplus. Master Ball is unaffected.\nOff by default (Pokedex and Pokegear remain 'useful').",
+        "display_name": "Pokedex/Pokegear as Filler",
+        "name": "pokegear_pokedex_filler",
+        "type": "toggle"
+      },
+      {
+        "category": "Items",
+        "default": true,
+        "description": "Add Shiny Charm filler items to the item pool.\nReceiving a Shiny Charm makes a random Pokemon in your caught list display\nits shiny sprite. Purely cosmetic -- no gameplay effect.",
+        "display_name": "Include Shiny Charms",
+        "name": "include_shinies",
+        "type": "toggle"
+      },
+      {
+        "category": "Game Options",
+        "choices": [
+          "percentage",
+          "count"
+        ],
+        "default": "percentage",
+        "description": "How the goal is defined.\nPercentage: guess a percentage of the active Pokemon pool (see 'Goal Percentage').\nCount: guess a fixed number of Pokemon (see 'Goal Count').",
+        "display_name": "Goal Type",
+        "name": "goal_type",
+        "type": "choice"
+      },
+      {
+        "category": "Game Options",
+        "default": 80,
+        "description": "Percentage of the active Pokemon pool that must be guessed to complete the game.\nOnly used when 'Goal Type' is set to 'percentage'.\nFor example, 80 with 386 active Pokemon means guessing 309 to win.",
+        "display_name": "Goal Percentage",
+        "max": 100,
+        "min": 1,
+        "name": "goal_percentage",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Game Options",
+        "default": 151,
+        "description": "Fixed number of Pokemon that must be guessed to complete the game.\nOnly used when 'Goal Type' is set to 'count'.\nAutomatically capped to the total active Pokemon across selected regions.",
+        "display_name": "Goal Count",
+        "max": 1025,
+        "min": 1,
+        "name": "goal_count",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Items",
+        "default": false,
+        "description": "Default for the client's 'stop auto-submit after goal' toggle.\nWhen on, once your goal is reached the client stops auto-submitting remaining\nguesses. This only sets the client's initial preference -- players can still\noverride it locally. Off by default (auto-submit keeps running after goal).\nHas no effect on generation or logic.",
+        "display_name": "Stop Auto-submit After Goal",
+        "name": "stop_autosubmit_on_goal",
+        "type": "toggle"
+      },
+      {
+        "category": "Items",
+        "default": 5,
+        "description": "Percentage chance (0-100) that a filler item slot will be replaced by a trap item.\n0 means no traps; 100 means all filler items will be traps.",
+        "display_name": "Trap Chance",
+        "max": 100,
+        "min": 0,
+        "name": "trap_chance",
+        "named_values": null,
+        "type": "range"
+      },
+      {
+        "category": "Items",
+        "default": {
+          "big_shuffle": 5,
+          "derpy_mon": 25,
+          "release": 25,
+          "small_shuffle": 10
+        },
+        "description": "Controls the relative weight of each trap type when a trap slot is filled.\nHigher values mean that trap appears more often. Set a trap to 0 to disable it entirely.\nThe overall chance of a trap appearing is controlled by 'Trap Chance'.\nTraps: small_shuffle, big_shuffle, derpy_mon, release.",
+        "dict_kind": "counter",
+        "display_name": "Trap Weights",
+        "name": "trap_weights",
+        "type": "dict",
+        "valid_keys": [
+          "big_shuffle",
+          "derpy_mon",
+          "release",
+          "small_shuffle"
+        ]
+      },
+      {
+        "category": "Items",
+        "default": {
+          "key_items": 100,
+          "master_ball": 50,
+          "splash": 50
+        },
+        "description": "Controls the relative weight of each filler item category.\nHigher values mean that category appears more often. Set a category to 0 to disable it entirely.\nTraps are controlled separately by the 'Trap Chance' option.\nCategories: master_ball, key_items, splash.",
+        "dict_kind": "counter",
+        "display_name": "Filler Item Weights",
+        "name": "filler_weights",
+        "type": "dict",
+        "valid_keys": [
+          "key_items",
+          "master_ball",
+          "splash"
+        ]
+      },
+      {
+        "category": "Items",
+        "default": -1,
+        "description": "Percentage of this world's own filler items to force into this world's own\nlocations before the multiworld fill runs, keeping them out of other players'\ngames. Only filler is localized (Pokedex, Pokegear, Master Ball, Shiny Charm,\ntraps, and the splash filler); progression and useful gate items are never\nlocalized, so the seed stays completable and cross-game progression is\nunaffected. Higher values keep more of Pokepelago's large Dexsanity filler pool\nout of an async/multiworld.\n\nDexsanity can create up to ~1025 'Guess {Pokemon}' locations, which forces an\nequally large filler pool; without this, most of that filler floods other games.\n'off' (0) keeps the classic behavior. 'auto' (-1, the default) scales a forced\nminimum by how inflated the pool is: 0 when Dexsanity is off, otherwise 50% for\none region and +10% per additional region, capped at 90% so some filler still\ntravels to the rest of the multiworld.",
+        "display_name": "Local Filler Percent",
+        "max": 100,
+        "min": 0,
+        "name": "local_filler_percent",
+        "named_values": {
+          "auto": -1,
+          "off": 0
+        },
+        "type": "range"
+      }
+    ],
+    "world_version": ""
+  }
+}

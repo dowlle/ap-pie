@@ -9,6 +9,7 @@ ap_client_venv/
 # Node
 node_modules/
 ap-web/frontend/dist/
+ap-web/frontend/test-results/
 
 # State / runtime
 .state/
