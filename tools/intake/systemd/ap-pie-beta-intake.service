@@ -1,0 +1,23 @@
+[Unit]
+Description=AP-Pie beta automatic release intake
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/ap-pie-intake
+EnvironmentFile=%h/.config/ap-pie/intake.env
+ExecStart=/usr/bin/python3 tools/intake/cycle.py \
+    --db ${INTAKE_STATE}/state.db \
+    --cache ${INTAKE_STATE}/release-cache \
+    --archives ${INTAKE_STATE}/archives \
+    --out-dir ${INTAKE_STATE}/output \
+    --security ${INTAKE_STATE}/security-seed.json \
+    --generation ${INTAKE_STATE}/generation-seed.json \
+    --limit 3 --beta-ssh-target ${BETA_SSH_TARGET} \
+    --audit-db ${AUDIT_DB} \
+    --review-summary ${REVIEW_SUMMARY} \
+    --index-source ${INTAKE_STATE}/index-source \
+    --holds ${INTAKE_HOLDS}
+TimeoutStartSec=30min
+Nice=10
+UMask=0077

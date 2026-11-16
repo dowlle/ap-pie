@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getAPWorlds,
+  getAPWorldIntakeStatus,
+  type APWorldIntakeStatus,
   getInstalledAPWorlds,
   installAPWorld,
   removeAPWorld,
@@ -279,7 +281,7 @@ function VersionRow({
 
   return (
     <li className="apworld-version-row">
-      <span className="apworld-version-label">
+      <div className="apworld-version-label">
         <span
           className="apworld-version-num"
           title={
@@ -303,8 +305,12 @@ function VersionRow({
         {world.builder_versions?.some((b) => b.version === v.version && b.test_build) && (
           <span className="badge badge-test-build">test build</span>
         )}
+        <APWorldEvidence version={v} builtin={world.is_builtin} />
+        {(v.policy_hold || v.discovery?.held) && (
+          <span className="apworld-version-hold" title={v.policy_hold?.summary ?? v.discovery?.policy_summary ?? undefined}>Unresolved hold</span>
+        )}
         {isCurrent && <span className="badge badge-done apworld-version-current">installed</span>}
-      </span>
+      </div>
       <span className="apworld-version-actions">
         {(v.source === "url" || v.source === "local") && (
           <button
@@ -533,8 +539,13 @@ function WorldCard({
             <span className="apworld-card-release">{latestVersion ? `${versionLabel(latestVersion.version)} · Latest release` : latestBuilderVersion ? `Archipelago ${latestBuilderVersion}` : "No release recorded"}{world.stability ? ` · maintainer: ${world.stability}` : ""}</span>
           </div>
         </header>
-
         <APWorldEvidence detailHref={detailHref} version={latestVersion} builtin={world.is_builtin} reviewOpen={reviewOpen} onReviewChange={setReviewOpen} />
+        {(latestVersion?.policy_hold || latestVersion?.discovery?.held) && (
+          <p className="apworld-card-note" role="note">
+            <strong>Unresolved hold.</strong>{" "}
+            {latestVersion?.policy_hold?.summary ?? latestVersion?.discovery?.policy_summary ?? "This release needs an explicit security or policy decision."}
+          </p>
+        )}
 
           <div className="apworld-card-primary-actions">
             {reviewNeedsAttention && <button type="button" className="btn btn-primary btn-sm" aria-expanded={reviewOpen} onClick={() => setReviewOpen(true)}>Read review</button>}
@@ -630,6 +641,7 @@ export default function APWorlds() {
   const { user } = useAuth();
   const isAdmin = !!user?.is_admin;
   const [available, setAvailable] = useState<APWorldInfo[]>([]);
+  const [intake, setIntake] = useState<APWorldIntakeStatus | null>(null);
   const [installed, setInstalled] = useState<InstalledAPWorld[]>([]);
   const [params, setParams] = useSearchParams();
   const search = params.get("search") ?? "";
@@ -801,6 +813,20 @@ export default function APWorlds() {
   };
 
   useEffect(() => {
+    if (!isAdmin) { setIntake(null); return; }
+    let cancelled = false;
+    const update = () => {
+      if (document.hidden) return;
+      getAPWorldIntakeStatus().then((status) => {
+        if (!cancelled) setIntake(status);
+      }).catch(() => { /* Intake status must not block catalog browsing. */ });
+    };
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [isAdmin]);
+
+  useEffect(() => {
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationOn]);
@@ -877,13 +903,11 @@ export default function APWorlds() {
         <div>
           <h1>APWorld downloads</h1>
           <p className="apworlds-lede">
-            Find the game integration and exact version your Archipelago host expects. Built-in
-            games already ship with Archipelago and do not need a separate download.
+            Download the APWorld version your host uses. Built-in games are included with Archipelago.
           </p>
           <p className="apworlds-builder-link">
-            Need to configure your game options? <Link to="/yaml-builder">Open the YAML Builder →</Link>
+            <Link to="/yaml-builder">Configure your game in the YAML Builder →</Link>
           </p>
-          <p className="apworlds-evidence-context">Badges describe the displayed release. Security reviews match exact archive checksums; pending means matching evidence is missing. Builder availability is separate from review and generation evidence.</p>
         </div>
         <div className="apworlds-header-actions">
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's
@@ -898,10 +922,33 @@ export default function APWorlds() {
         </div>
       </div>
 
-      <aside className="apworlds-version-note notice notice-info">
-        <strong>Match the host's version.</strong>
-        <span>If you are unsure which APWorld version to use, ask the host before downloading.</span>
-      </aside>
+      {isAdmin && intake && (
+        <details className="muted" aria-label="Admin intake status">
+          <summary>Admin: intake status</summary>
+          <div>
+            <strong>Automatic intake</strong>
+            <p>{intake.available_releases.toLocaleString()} verified releases published.
+              {intake.queue.sources != null && <> {intake.queue.sources.toLocaleString()} sources registered for intake.</>}
+              {" "}Reviews and tests update independently after discovery.</p>
+            <p className="muted">
+              Evidence jobs: {(intake.queue.jobs?.completed ?? 0).toLocaleString()} completed,
+              {" "}{((intake.queue.jobs?.queued ?? 0) + (intake.queue.jobs?.running ?? 0)).toLocaleString()} waiting or running,
+              {" "}{(intake.queue.jobs?.retry ?? 0).toLocaleString()} awaiting retry.
+            </p>
+            {!!intake.unverified_observations?.length && (
+              <details>
+                <summary>{intake.unverified_observations.length} recorded releases need attention</summary>
+                <p>These observations have no newly verified download. Existing security holds remain in place.</p>
+                <ul>{intake.unverified_observations.map((item) => (
+                  <li key={item.id}>
+                    {available.find((world) => world.name === item.module)?.display_name ?? item.module} v{item.version}: {item.reason === "source_unreachable" ? "Source unreachable; awaiting retry." : item.reason === "checksum_mismatch" ? "Declared checksum mismatch; quarantined." : item.reason === "archive_verification_rejected" ? "Archive verification blocked." : "Verification pending."}
+                  </li>
+                ))}</ul>
+              </details>
+            )}
+          </div>
+        </details>
+      )}
 
       {error && <p className="error">{error}</p>}
 
@@ -1035,6 +1082,9 @@ export default function APWorlds() {
         </>
       )}
       </section>
+      <p className="muted">
+        Missing a game? <a href="https://github.com/dowlle/Archipelago-index/issues/new" target="_blank" rel="noopener noreferrer">Suggest a source</a>.
+      </p>
     </div>
   );
 }

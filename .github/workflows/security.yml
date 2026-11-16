@@ -89,6 +89,8 @@ jobs:
           node-version: 22
       - run: cd ap-web/frontend && npm ci && npm run build
       - run: python scripts/test_apworld_details.py
+      - run: python scripts/test_ctr_registry.py
+      - run: python -m unittest discover -s tools/intake -p 'test_*.py' -v
       # OPS-21 refresh endpoint: auth fails closed, and a failed git sync
       # can't report success. Needs no database, but rides along here so
       # there is one place that runs the backend checks.

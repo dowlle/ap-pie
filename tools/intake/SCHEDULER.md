@@ -1,0 +1,66 @@
+# Beta intake scheduler
+
+The service and timer in `systemd/` are deployment templates. The checkout
+is expected at `%h/ap-pie-intake`. Configure `INTAKE_STATE`, `BETA_SSH_TARGET`,
+`AUDIT_DB`, `REVIEW_SUMMARY` and `INTAKE_HOLDS` in an operator-owned environment
+file at `%h/.config/ap-pie/intake.env`. Preserve the existing scheduler's
+worker settings and limits when adapting the template. No deployment or
+activation is implied by these files. Back up the SQLite ledger with its backup API.
+
+User units are `ap-pie-beta-intake.service` and `ap-pie-beta-intake.timer`.
+The timer runs at minutes 05 and 35 of each hour, with missed-run persistence.
+Each cycle verifies at most three artifacts. The cycle lock
+prevents concurrent coordinator runs. Download, schema and guide workers have
+isolated mounts and cleared environments. Fresh fuzzing is not performed on
+the worker host; recorded Actions evidence is reused.
+
+Inspect with `systemctl --user status ap-pie-beta-intake.timer` and
+`journalctl --user-unit ap-pie-beta-intake.service`.
+Pause future publication with
+`systemctl --user disable --now ap-pie-beta-intake.timer`.
+This does not terminate an already-running service or remove published data.
+
+The first timer-triggered receipt was `c0fd6178eb1542c1952f356c0d63a3c7`:
+595 sources scanned without errors, three artifacts verified, discovery
+published before evidence, then schemas and existing guide checks processed.
+Beta served nine discovery versions and retained 172 guides afterward.
+
+The original activation-relative timer retriggered during daemon reloads.
+It was replaced on 2026-09-14 with the fixed wall-clock schedule above.
+Installed configuration also refreshes the canonical index and all live open
+PR heads before scanning, and reuses exact-checksum audit-cache/QA evidence.
+
+This operational pilot does not prove complete source coverage, uncached
+security review handling or full rollback. Those remain required for the goal.
+Production publication is unavailable through these fixed-container tools.
+
+Uncached reviews use the existing trusted extractor/prompt and an outer bwrap
+worker that cannot see application files, inherited environment, normal home
+or Docker socket. Only provider login, source and private outputs are mounted.
+Configure `--review-runner`, `--review-runtime`, `--review-auth`, and retain
+`--review-limit 1` for bounded recurring model spend. Cache-only imports leave
+missing results for that independent worker. Full reports stay private;
+public evidence contains only exact archive identity, disposition and report
+hash. Weak PASS coverage is downgraded. Existing holds are never cleared.
+
+After the successful 100-candidate bulk receipt
+`3d17c9f8e5d1477c98e2117f9db8cf9b`, recurring throughput is configured for
+100 candidates and four isolated download workers. Selection spreads work
+across modules and skips equivalent observations. The optional trusted
+generation emitter collects already completed Actions runs for relevant PRs;
+it never starts tests. Run `coverage.py --db STATE --prs QUEUED_PRS --out REPORT`
+to see all source, PR-origin, hold and independent evidence gaps.
+
+Index-stored artifacts are now queued using the canonical repository's full
+commit SHA and `apworlds/` path. They require the same isolated archive and
+checksum verification as release assets. Retired entries remain registered
+without creating new downloads. Scanner classifications distinguish built-in,
+retired and index-stored sources from missing mappings. The 2026-09-14 source
+dry run found 103 stored-file version observations across 77 sources; a real
+Twilight Princess 0.3.0 archive passed verification without package execution.
+
+Public discovery keeps the newest ten distinct versions per module; the ledger
+retains all history. Builder schemas are published for the newest version only.
+List-valued home URLs use the first URL, and GitLab inline query parameters
+are removed from public provenance. Keep the serving-side metadata budgets.
+Code rollback alone does not restore published feeds or archives.

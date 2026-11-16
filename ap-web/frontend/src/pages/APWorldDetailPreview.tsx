@@ -12,6 +12,10 @@ function VersionDetails({ world, version }: { world: APWorldInfo; version: APWor
   return <section className="apworld-detail-version" id={`version-${encodeURIComponent(version.version)}`}>
     <h2>Version {version.version}</h2>
     <APWorldEvidence version={version} builtin={world.is_builtin} />
+    {(version.policy_hold || version.discovery?.held) && <aside className="review-notice review-notice-warning" role="note">
+      <strong>Unresolved hold.</strong>{" "}
+      {version.policy_hold?.summary ?? version.discovery?.policy_summary ?? "This release needs an explicit security or policy decision."}
+    </aside>}
     <p className="apworld-review-digest">Archive SHA-256: {version.sha256 ? <code>{version.sha256}</code> : "Not recorded"}</p>
     {failed && <aside className="review-notice review-notice-warning">
       <strong>Security review failed</strong>
