@@ -19,7 +19,7 @@ async function startDefaultsAndReview(page: Page) {
 }
 
 async function mockSignedInUser(page: Page) {
-  await page.route("**/api/auth/me", (route) => route.fulfill({
+  await page.route(/\/api\/auth\/me(\?.*)?$/, (route) => route.fulfill({
     json: {
       id: 42,
       discord_id: "builder-test",
