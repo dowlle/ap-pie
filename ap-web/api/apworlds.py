@@ -275,11 +275,39 @@ def warm_index(app) -> threading.Thread:
     return thread
 
 
+def _refresh_index_in_background(app) -> threading.Thread | None:
+    """Keep serving the loaded snapshot while one worker rebuilds it.
+
+    Reserve the build lock before starting the thread so simultaneous stale
+    requests cannot queue redundant rebuilds or spawn unbounded workers.
+    """
+    if not _index_build_lock.acquire(blocking=False):
+        return None
+
+    def _run() -> None:
+        try:
+            with app.app_context():
+                if _index_is_stale():
+                    _install_index_snapshot(_build_index_snapshot())
+        except Exception:
+            app.logger.warning("apworld index refresh failed; retaining loaded snapshot")
+        finally:
+            _index_build_lock.release()
+
+    thread = threading.Thread(target=_run, name="apworld-index-refresh", daemon=True)
+    try:
+        thread.start()
+    except Exception:
+        _index_build_lock.release()
+        raise
+    return thread
+
+
 def _get_index() -> list:
-    """The listing wants fresh evidence: reload synchronously when it changed on disk."""
+    """Serve the loaded listing while changed evidence rebuilds in the background."""
     _ensure_index_loaded()
     if _index_is_stale():
-        _load_index_into_cache()  # other readers keep the old snapshot meanwhile
+        _refresh_index_in_background(current_app._get_current_object())
     return _index_cache or []
 
 
