@@ -98,4 +98,6 @@ jobs:
       - run: python scripts/test_fuzz_evidence.py
       - run: python scripts/test_builtin_builder.py
       - run: python scripts/test_apworld_editorial.py
+      - run: python scripts/test_catalog_background_refresh.py
+      - run: python scripts/test_catalog_session.py
       - run: python -m unittest discover -s ap-web -p 'test_*.py' -v
