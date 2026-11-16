@@ -259,13 +259,45 @@ def warm_index(app) -> threading.Thread:
     return thread
 
 
-def _get_index() -> list:
-    _ensure_index_loaded()
+def _index_is_stale() -> bool:
     seed, overlay = _review_paths()
     stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
     fuzz_stamp, _ = _fuzz_snapshot()
-    if stamp != _review_stamp or fuzz_stamp != _fuzz_stamp:
-        _load_index_into_cache()  # evidence changed on disk; other readers keep the old snapshot meanwhile
+    return stamp != _review_stamp or fuzz_stamp != _fuzz_stamp
+
+
+def _refresh_index_in_background(app) -> threading.Thread | None:
+    """Keep serving the loaded snapshot while one worker rebuilds it.
+
+    Reserve the build lock before starting the thread so simultaneous stale
+    requests cannot queue redundant rebuilds or spawn unbounded workers.
+    """
+    if not _index_build_lock.acquire(blocking=False):
+        return None
+
+    def _run() -> None:
+        try:
+            with app.app_context():
+                if _index_is_stale():
+                    _install_index_snapshot(_build_index_snapshot())
+        except Exception:
+            app.logger.warning("apworld index refresh failed; retaining loaded snapshot")
+        finally:
+            _index_build_lock.release()
+
+    thread = threading.Thread(target=_run, name="apworld-index-refresh", daemon=True)
+    try:
+        thread.start()
+    except Exception:
+        _index_build_lock.release()
+        raise
+    return thread
+
+
+def _get_index() -> list:
+    _ensure_index_loaded()
+    if _index_is_stale():
+        _refresh_index_in_background(current_app._get_current_object())
     return _index_cache or []
 
 
