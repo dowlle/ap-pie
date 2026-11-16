@@ -105,6 +105,40 @@ class RoomCoordinationDatabaseTests(unittest.TestCase):
         self.assertEqual(assigned["owner_user_id"], self.player_id)
         self.assertEqual(assigned["owner_source"], "host")
 
+    def test_bk_periods_coalescing_and_migration_idempotence(self):
+        room_id = self.room["id"]
+        db.associate_generated_room(room_id, "https://archipelago.gg/tracker/test-room", "test-room", self.host_id,
+                                   [{"team": 0, "slot": 1, "player_name": "Appletini", "game": "Super Metroid",
+                                     "yaml_id": self.yaml["id"], "yaml_owner_user_id": self.player_id}])
+        first = db.update_room_slot_state(room_id, 0, 1, self.player_id, bk_action="set", slot_note="x" * 280,
+                                          ping_policy="disabled")
+        self.assertEqual(first["updated_by_username"], "CoordPlayer")
+        self.assertEqual(first["ping_policy"], "disabled")
+        for _ in range(3):
+            confirmed = db.update_room_slot_state(room_id, 0, 1, self.host_id, bk_action="confirm")
+            db.record_bk_confirmation(room_id, 0, 1, self.host_id, "Host confirmed Still BK", bk_since=confirmed["bk_since"])
+            self.assertEqual(first["bk_since"], confirmed["bk_since"])
+        events = db.get_activity(room_id)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["actor_user_id"], self.host_id)
+        db.rollback_request_transaction()
+        db.init_db(self.db_url)
+        self.assertEqual(db.get_room_slot(room_id, 0, 1)["slot_note"], "x" * 280)
+        cleared = db.update_room_slot_state(room_id, 0, 1, self.player_id, bk_action="clear")
+        self.assertIsNone(cleared["bk_confirmed_at"])
+        # A confirmation racing a clear must never start a blocked period.
+        confirmed = db.update_room_slot_state(room_id, 0, 1, self.player_id, bk_action="confirm")
+        self.assertIsNone(confirmed["bk_since"])
+        self.assertIsNone(confirmed["bk_confirmed_at"])
+        again = db.update_room_slot_state(room_id, 0, 1, self.player_id, bk_action="set")
+        self.assertGreater(again["bk_since"], first["bk_since"])
+        # A delayed confirmation from an earlier period cannot affect the new one.
+        db.record_bk_confirmation(room_id, 0, 1, self.host_id, "Stale confirmation", bk_since=first["bk_since"])
+        self.assertEqual(len(db.get_activity(room_id)), 1)
+        db.record_bk_confirmation(room_id, 0, 1, self.host_id, "Host confirmed Still BK again", bk_since=again["bk_since"])
+        self.assertEqual(len(db.get_activity(room_id)), 2)
+        self.assertEqual(db.get_room_slot(room_id, 0, 1)["updated_by_user_id"], self.player_id)
+
 
 if __name__ == "__main__":
     unittest.main()

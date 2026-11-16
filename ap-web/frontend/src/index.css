@@ -5558,7 +5558,6 @@ details.yaml-builder-group > summary .muted {
   .yaml-modal[open],
   .slot-modal[open] { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); }
   .yaml-builder-option { grid-template-columns: 1fr; }
-  .slot-coordination-summary { grid-template-columns: 1fr; }
   .coordination-mapping-table select { min-width: 10rem; }
 }
 
@@ -5674,6 +5673,9 @@ details.yaml-builder-group > summary .muted {
 .slot-coordination-summary strong { display: block; }
 .slot-coordination-summary span { margin-bottom: var(--space-1); font-size: 0.72rem; }
 .slot-coordination-summary strong { color: var(--text-h); font-size: 0.84rem; }
+@media (max-width: 768px) {
+  .slot-coordination-summary { grid-template-columns: 1fr; }
+}
 .slot-coordination-controls { display: flex; flex-direction: column; gap: var(--space-3); }
 .slot-coordination-action-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .slot-note-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }

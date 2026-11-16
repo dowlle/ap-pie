@@ -110,6 +110,92 @@ class RoomCoordinationRouteTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_state_permission_matrix_and_attribution(self):
+        for role, user, expected in [
+            ("anonymous", None, 401),
+            ("owner", {"id": 7, "discord_username": "Owner"}, 200),
+            ("host", {"id": 1, "discord_username": "Host"}, 200),
+            ("admin", {"id": 8, "discord_username": "Admin", "is_admin": True}, 200),
+            ("other", {"id": 9, "discord_username": "Other"}, 403),
+        ]:
+            with self.subTest(role=role), \
+                 patch.object(public, "_current_session_user", return_value=user), \
+                 patch.object(public, "get_room", return_value={"host_user_id": 1}), \
+                 patch("db.get_room_slot", return_value={"owner_user_id": 7, "player_name": "Slot"}), \
+                 patch("db.update_room_slot_state", return_value={
+                     "team": 0, "slot": 1, "player_name": "Slot", "owner_user_id": 7,
+                     "updated_by_username": (user or {}).get("discord_username"),
+                 }) as update, patch.object(public, "add_activity") as activity:
+                response = self.client.patch("/api/public/rooms/room/slots/0/1/state",
+                                             json={"bk_action": "set", "go_mode": True, "slot_note": "Ready"})
+                self.assertEqual(response.status_code, expected)
+                if expected == 200:
+                    self.assertTrue(response.json["can_edit"])
+                    self.assertEqual(response.json["updated_by_username"], user["discord_username"])
+                    self.assertEqual(activity.call_args.kwargs["actor_user_id"], user["id"])
+                else:
+                    update.assert_not_called()
+
+    def test_invalid_updates_and_inactive_confirmation_do_not_write(self):
+        with patch.object(public, "_current_session_user", return_value={"id": 7}), \
+             patch.object(public, "get_room", return_value={"host_user_id": 1}), \
+             patch("db.get_room_slot", return_value={"owner_user_id": 7}), \
+             patch("db.update_room_slot_state") as update:
+            for body in [[], ["bk_action"], "text", {}, {"slot_note": None},
+                         {"bk_action": []}, {"go_mode": 1}, {"slot_note": 12},
+                         {"ping_policy": "enabled"}, {"unknown": True}]:
+                with self.subTest(body=body):
+                    self.assertEqual(self.client.patch("/api/public/rooms/room/slots/0/1/state", json=body).status_code, 400)
+            self.assertEqual(self.client.patch("/api/public/rooms/room/slots/0/1/state",
+                                              json={"bk_action": "confirm"}).status_code, 409)
+            update.assert_not_called()
+
+    def test_anonymous_slot_overlay_hides_actor_and_owner(self):
+        state = {"team": 0, "slot": 1, "player_name": "Slot", "owner_user_id": 7,
+                 "owner_username": "Owner", "updated_by_user_id": 1, "updated_by_username": "Host"}
+        payload = public._serialize_generated_slot(state, None, {"host_user_id": 1})
+        self.assertIsNone(payload["owner_username"])
+        self.assertIsNone(payload["updated_by_username"])
+        self.assertNotIn("updated_by_user_id", payload)
+        self.assertNotIn("owner_user_id", payload)
+        self.assertFalse(payload["can_edit"])
+
+    def test_confirmation_is_coalesced_and_noop_changes_do_not_add_activity(self):
+        state = {"team": 0, "slot": 1, "player_name": "Slot", "owner_user_id": 7,
+                 "bk_since": "2026-11-15T12:00:00Z", "go_mode_since": None, "slot_note": ""}
+        with patch.object(public, "_current_session_user", return_value={"id": 7}), \
+             patch.object(public, "get_room", return_value={"host_user_id": 1}), \
+             patch("db.get_room_slot", return_value=state), \
+             patch("db.update_room_slot_state", return_value=state), \
+             patch("db.record_bk_confirmation") as confirmation, \
+             patch.object(public, "add_activity") as activity:
+            response = self.client.patch("/api/public/rooms/room/slots/0/1/state", json={"bk_action": "confirm"})
+            self.assertEqual(response.status_code, 200)
+            confirmation.assert_called_once()
+            self.assertEqual(self.client.patch("/api/public/rooms/room/slots/0/1/state",
+                             json={"bk_action": "set", "go_mode": False, "slot_note": ""}).status_code, 200)
+            activity.assert_not_called()
+
+    def test_slot_list_identity_gate_and_coordination_activity(self):
+        state = {"team": 0, "slot": 1, "player_name": "Slot", "owner_user_id": 7,
+                 "owner_username": "Owner", "updated_by_username": "Host"}
+        events = [{"event_type": kind, "message": "Host changed something"}
+                  for kind in ["slot_coordination_updated", "slot_bk_confirmed:0:1", "settings"]]
+        with patch.object(public, "get_room", return_value={"host_user_id": 1}), \
+             patch("db.get_generated_room", return_value={"room_id": "room"}), \
+             patch("db.list_room_slots", return_value=[state]), \
+             patch("db.get_activity", return_value=events) as activity:
+            response = self.client.get("/api/public/rooms/room/slots")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json["activity"], [])
+            self.assertIsNone(response.json["slots"][0]["updated_by_username"])
+            activity.assert_not_called()
+            with patch.object(public, "_current_session_user", return_value={"id": 1}):
+                response = self.client.get("/api/public/rooms/room/slots")
+            self.assertEqual(len(response.json["activity"]), 2)
+            self.assertTrue(response.json["slots"][0]["can_edit"])
+            self.assertEqual(response.json["slots"][0]["updated_by_username"], "Host")
+
 
 if __name__ == "__main__":
     unittest.main()

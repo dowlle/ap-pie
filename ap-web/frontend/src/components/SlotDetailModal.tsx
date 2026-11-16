@@ -8,7 +8,9 @@ import {
   type SlotDetail,
   type SlotDetailResponse,
   type PlayerInfo,
+  type GeneratedSlot,
 } from "../api";
+import { bkDuration } from "../lib/slotCoordination";
 
 /**
  * FEAT-14: per-slot detail modal opened from a click on a tracker card.
@@ -44,6 +46,7 @@ export default function SlotDetailModal({
   player,
   publicMode,
   viewerUserId,
+  coordinationSnapshot,
   onCoordinationChanged,
   onClose,
 }: {
@@ -54,6 +57,7 @@ export default function SlotDetailModal({
   /** Logged-in viewer's user id, or null/undefined for anonymous. Used to
    *  flip the attribution label to "This is your slot". */
   viewerUserId?: number | null;
+  coordinationSnapshot?: GeneratedSlot;
   onCoordinationChanged?: () => void;
   onClose: () => void;
 }) {
@@ -67,7 +71,7 @@ export default function SlotDetailModal({
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [coordinationError, setCoordinationError] = useState("");
   const [coordinationSaving, setCoordinationSaving] = useState(false);
-  const [noteDraft, setNoteDraft] = useState("");
+  const [noteDraft, setNoteDraft] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +86,6 @@ export default function SlotDetailModal({
         if (!cancelled) {
           setResponse(r);
           setLastFetched(new Date());
-          if (!isError(r)) setNoteDraft(r.coordination?.slot_note ?? "");
         }
       })
       .catch((e) => {
@@ -158,8 +161,9 @@ export default function SlotDetailModal({
     viewerUserId !== null &&
     detail.submitter_user_id === viewerUserId
   );
-  const coordination = detail?.coordination;
-  const canEditCoordination = !!detail && (!!coordination?.is_mine || isYourSlot || !publicMode);
+  const coordination = coordinationSnapshot ?? detail?.coordination;
+  const displayedNote = noteDraft ?? coordination?.slot_note ?? "";
+  const canEditCoordination = !!viewerUserId && !!coordination?.can_edit;
 
   const mutateCoordination = async (
     update: { bk_action?: "set" | "confirm" | "clear"; go_mode?: boolean; slot_note?: string },
@@ -168,6 +172,7 @@ export default function SlotDetailModal({
     setCoordinationError("");
     try {
       await updateGeneratedSlotState(roomId, detail?.team ?? 0, player.slot, update);
+      if (update.slot_note !== undefined) setNoteDraft(null);
       setRefreshTick((tick) => tick + 1);
       onCoordinationChanged?.();
     } catch (e) {
@@ -289,13 +294,21 @@ export default function SlotDetailModal({
                   </div>
                   <div>
                     <span className="muted">BK</span>
-                    <strong>{coordination.bk_since ? `Since ${new Date(coordination.bk_since).toLocaleString()}` : "Clear"}</strong>
+                    <strong>{coordination.bk_since ? `${bkDuration(coordination.bk_since)} (since ${new Date(coordination.bk_since).toLocaleString()})` : "Clear"}</strong>
+                    {coordination.bk_confirmed_at && <span className="muted">Last confirmed {new Date(coordination.bk_confirmed_at).toLocaleString()}</span>}
                   </div>
                   <div>
                     <span className="muted">Go mode</span>
                     <strong>{coordination.go_mode_since ? "Active" : "Not set"}</strong>
                   </div>
                 </div>
+
+                {coordination.state_updated_at && (
+                  <p className="muted">Updated {new Date(coordination.state_updated_at).toLocaleString()}
+                    {coordination.updated_by_username ? ` by @${coordination.updated_by_username}` : ""}.
+                  </p>
+                )}
+                <p className="muted">Notifications are disabled.</p>
 
                 {viewerUserId && !coordination.claimed && (
                   <button type="button" className="btn btn-primary" disabled={coordinationSaving} onClick={() => mutateClaim("claim")}>
@@ -331,16 +344,16 @@ export default function SlotDetailModal({
                     <label className="field">
                       <span>Slot note</span>
                       <textarea
-                        value={noteDraft}
-                        onChange={(e) => setNoteDraft(e.target.value.slice(0, 280))}
+                        value={displayedNote}
+                        onChange={(e) => setNoteDraft(Array.from(e.target.value).slice(0, 280).join(""))}
                         rows={3}
                         placeholder="What are you waiting for, or when will you play next?"
                         disabled={coordinationSaving}
                       />
                     </label>
                     <div className="slot-note-footer">
-                      <span className="muted">{noteDraft.length}/280</span>
-                      <button type="button" className="btn btn-primary" disabled={coordinationSaving || noteDraft === coordination.slot_note} onClick={() => mutateCoordination({ slot_note: noteDraft })}>Save note</button>
+                      <span className="muted">{Array.from(displayedNote).length}/280</span>
+                      <button type="button" className="btn btn-primary" disabled={coordinationSaving || displayedNote === coordination.slot_note} onClick={() => mutateCoordination({ slot_note: displayedNote })}>Save note</button>
                     </div>
                   </div>
                 ) : (

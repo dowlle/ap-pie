@@ -299,7 +299,7 @@ def public_yaml_download(room_id: str, yaml_id: int):
     )
 
 
-def _serialize_generated_slot(slot_row: dict, user: dict | None) -> dict:
+def _serialize_generated_slot(slot_row: dict, user: dict | None, room: dict | None = None) -> dict:
     """Public-safe slot overlay. Discord identity is session-gated."""
     is_mine = bool(user and slot_row.get("owner_user_id") == user.get("id"))
     out = {
@@ -315,6 +315,10 @@ def _serialize_generated_slot(slot_row: dict, user: dict | None) -> dict:
         "go_mode_since": slot_row.get("go_mode_since"),
         "slot_note": slot_row.get("slot_note") or "",
         "state_updated_at": slot_row.get("state_updated_at"),
+        "ping_policy": slot_row.get("ping_policy") or "disabled",
+        "updated_by_username": slot_row.get("updated_by_username") if user else None,
+        "can_edit": bool(user and (is_mine or user.get("is_admin") or
+                         (room and room.get("host_user_id") == user.get("id")))),
     }
     return out
 
@@ -327,12 +331,16 @@ def public_generated_slots(room_id: str):
     room = get_room(room_id)
     if not room:
         return jsonify({"error": "Room not found"}), 404
-    from db import get_generated_room, list_room_slots
+    from db import get_generated_room, list_room_slots, get_activity
     association = get_generated_room(room_id)
     user = _current_session_user()
     return jsonify({
         "associated": association is not None,
-        "slots": [_serialize_generated_slot(row, user) for row in list_room_slots(room_id)],
+        "slots": [_serialize_generated_slot(row, user, room) for row in list_room_slots(room_id)],
+        # Activity messages include Discord names, so keep the identity gate.
+        "activity": [event for event in get_activity(room_id, limit=50)
+                     if event["event_type"] == "slot_coordination_updated"
+                     or event["event_type"].startswith("slot_bk_confirmed:")] if user else [],
     })
 
 
@@ -406,16 +414,25 @@ def public_generated_slot_state(room_id: str, team: int, slot: int):
     )
     if not may_edit:
         return jsonify({"error": "Only the slot owner or room host can update coordination state"}), 403
-    data = request.get_json() or {}
-    allowed = {"bk_action", "go_mode", "slot_note"}
+    data = request.get_json()
+    if not isinstance(data, dict) or not data:
+        return jsonify({"error": "Provide a coordination update object"}), 400
+    allowed = {"bk_action", "go_mode", "slot_note", "ping_policy"}
     if any(key not in allowed for key in data):
         return jsonify({"error": "Unknown coordination field"}), 400
     bk_action = data.get("bk_action")
+    if any(value is None for value in data.values()):
+        return jsonify({"error": "Coordination fields cannot be null"}), 400
     if bk_action is not None and bk_action not in ("set", "confirm", "clear"):
         return jsonify({"error": "bk_action must be set, confirm, or clear"}), 400
     go_mode = data.get("go_mode")
     if go_mode is not None and not isinstance(go_mode, bool):
         return jsonify({"error": "go_mode must be true or false"}), 400
+    ping_policy = data.get("ping_policy")
+    if ping_policy is not None and ping_policy != "disabled":
+        return jsonify({"error": "Notifications are disabled"}), 400
+    if bk_action == "confirm" and not current.get("bk_since"):
+        return jsonify({"error": "Set BK before confirming Still BK"}), 409
     note = data.get("slot_note")
     if note is not None:
         if not isinstance(note, str):
@@ -425,25 +442,27 @@ def public_generated_slot_state(room_id: str, team: int, slot: int):
             return jsonify({"error": "slot_note is too long (maximum 280 characters)"}), 400
     updated = update_room_slot_state(
         room_id, team, slot, int(user["id"]),
-        bk_action=bk_action, go_mode=go_mode, slot_note=note,
+        bk_action=bk_action, go_mode=go_mode, slot_note=note, ping_policy=ping_policy,
     )
     action_parts = []
-    # Still-BK confirmations update bk_confirmed_at but deliberately do not
-    # append a fresh room-activity row every time. This is the coalescing
-    # boundary for large asyncs: the current timestamp stays visible on the
-    # slot while the shared feed remains readable.
-    if bk_action and bk_action != "confirm":
+    if bk_action == "confirm" and updated.get("bk_since"):
+        from db import record_bk_confirmation
+        record_bk_confirmation(room_id, team, slot, int(user["id"]),
+                               f"{user.get('discord_username') or 'Player'} confirmed Still BK for {current['player_name']}",
+                               bk_since=updated["bk_since"])
+    if bk_action in ("set", "clear") and bool(current.get("bk_since")) != (bk_action == "set"):
         action_parts.append({"set": "marked BK", "confirm": "confirmed Still BK", "clear": "cleared BK"}[bk_action])
-    if go_mode is not None:
+    if go_mode is not None and bool(current.get("go_mode_since")) != go_mode:
         action_parts.append("entered go mode" if go_mode else "left go mode")
-    if note is not None:
+    if note is not None and note != (current.get("slot_note") or ""):
         action_parts.append("updated their slot note")
     if action_parts:
         add_activity(
             room_id, "slot_coordination_updated",
             f"{user.get('discord_username') or 'Player'} {'; '.join(action_parts)} for {current['player_name']}",
+            actor_user_id=int(user["id"]),
         )
-    return jsonify(_serialize_generated_slot(updated, user))
+    return jsonify(_serialize_generated_slot(updated, user, room))
 
 
 @bp.route("/api/public/rooms/<room_id>/tracker")
@@ -508,15 +527,7 @@ def public_room_tracker_slot(room_id: str, slot: int):
         from api.rooms import _attribute_slot_to_submitter, _coordination_slot_overlay
         coordination = _coordination_slot_overlay(room_id, team, slot)
         if coordination:
-            safe_coordination = {
-                key: value for key, value in coordination.items()
-                if key not in ("owner_user_id", "owner_source")
-            }
-            safe_coordination["is_mine"] = bool(
-                user and coordination.get("owner_user_id") == user.get("id")
-            )
-            if user is None:
-                safe_coordination["owner_username"] = None
+            safe_coordination = _serialize_generated_slot(coordination, user, room)
             data["coordination"] = safe_coordination
             data["submitter_user_id"] = coordination.get("owner_user_id") if user else None
             data["submitter_username"] = coordination.get("owner_username") if user else None

@@ -465,6 +465,10 @@ def init_db(db_url: str) -> None:
                 CONSTRAINT room_slot_note_length CHECK (length(slot_note) <= 280)
             )
         """)
+        # Stage 2: notifications remain disabled until delivery is implemented.
+        cur.execute("""ALTER TABLE room_slot_state ADD COLUMN IF NOT EXISTS
+                       ping_policy TEXT NOT NULL DEFAULT 'disabled'
+                       CHECK (ping_policy = 'disabled')""")
         # SEC-21: schema-level CHECK constraints on the `rooms` string columns.
         # Caps match the server-side validation in `api/rooms.py`
         # (_ROOM_STRING_LIMITS). The validation rejects with a clean 400; this
@@ -1413,11 +1417,14 @@ def list_room_slots(room_id: str) -> list[dict]:
         cur.execute(
             """SELECT s.*, u.discord_username AS owner_username,
                       st.bk_since, st.bk_confirmed_at, st.go_mode_since,
-                      COALESCE(st.slot_note, '') AS slot_note, st.updated_at AS state_updated_at
+                      COALESCE(st.slot_note, '') AS slot_note, st.updated_at AS state_updated_at,
+                      COALESCE(st.ping_policy, 'disabled') AS ping_policy,
+                      st.updated_by_user_id, actor.discord_username AS updated_by_username
                FROM room_slots s
                LEFT JOIN users u ON u.id = s.owner_user_id
                LEFT JOIN room_slot_state st
                  ON st.room_id = s.room_id AND st.team = s.team AND st.slot = s.slot
+               LEFT JOIN users actor ON actor.id = st.updated_by_user_id
                WHERE s.room_id = %s
                ORDER BY s.team, s.slot""",
             (room_id,),
@@ -1603,7 +1610,7 @@ def assign_room_slot_owner(
 def update_room_slot_state(
     room_id: str, team: int, slot: int, actor_user_id: int,
     *, bk_action: str | None = None, go_mode: bool | None = None,
-    slot_note: str | None = None,
+    slot_note: str | None = None, ping_policy: str | None = None,
 ) -> dict:
     """Apply a partial self-state update. BK actions are set/confirm/clear."""
     conn = _get_conn()
@@ -1619,7 +1626,7 @@ def update_room_slot_state(
         if bk_action == "set":
             updates += ["bk_since=COALESCE(bk_since, NOW())", "bk_confirmed_at=NOW()"]
         elif bk_action == "confirm":
-            updates += ["bk_since=COALESCE(bk_since, NOW())", "bk_confirmed_at=NOW()"]
+            updates += ["bk_confirmed_at=CASE WHEN bk_since IS NOT NULL THEN NOW() ELSE NULL END"]
         elif bk_action == "clear":
             updates += ["bk_since=NULL", "bk_confirmed_at=NULL"]
         if go_mode is not None:
@@ -1628,6 +1635,9 @@ def update_room_slot_state(
         if slot_note is not None:
             updates.append("slot_note=%s")
             values.append(slot_note)
+        if ping_policy is not None:
+            updates.append("ping_policy=%s")
+            values.append(ping_policy)
         values += [room_id, team, slot]
         cur.execute(
             f"""UPDATE room_slot_state SET {', '.join(updates)}
@@ -1636,6 +1646,31 @@ def update_room_slot_state(
         )
     conn.commit()
     return get_room_slot(room_id, team, slot) or {}
+
+
+def record_bk_confirmation(
+    room_id: str, team: int, slot: int, actor_user_id: int, message: str,
+    *, bk_since: str,
+) -> None:
+    """Keep one activity entry per blocked period, showing the latest confirmation."""
+    conn = _get_conn()
+    event_type = f"slot_bk_confirmed:{team}:{slot}"
+    with conn.cursor() as cur:
+        # Serialize confirmations for this stable slot, including concurrent requests.
+        cur.execute("SELECT 1 FROM room_slots WHERE room_id=%s AND team=%s AND slot=%s FOR UPDATE",
+                    (room_id, team, slot))
+        cur.execute("""SELECT bk_since FROM room_slot_state
+                       WHERE room_id=%s AND team=%s AND slot=%s AND bk_since=%s FOR UPDATE""",
+                    (room_id, team, slot, bk_since))
+        state = cur.fetchone()
+        if state and state[0] is not None:
+            cur.execute("""UPDATE room_activity SET message=%s, actor_user_id=%s, created_at=NOW()
+                           WHERE room_id=%s AND event_type=%s AND created_at >= %s RETURNING id""",
+                        (message, actor_user_id, room_id, event_type, state[0]))
+            if not cur.fetchone():
+                cur.execute("""INSERT INTO room_activity (room_id, event_type, message, actor_user_id)
+                               VALUES (%s, %s, %s, %s)""", (room_id, event_type, message, actor_user_id))
+    conn.commit()
 
 
 # ── FEAT-43 personal YAML library ────────────────────────────────
