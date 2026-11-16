@@ -578,6 +578,8 @@ def create_app() -> Flask:
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve_frontend(path: str):
+        if path == "favicon.ico":
+            return send_from_directory(DIST_DIR, "favicon.svg", mimetype="image/svg+xml")
         if path and (DIST_DIR / path).is_file():
             return send_from_directory(DIST_DIR, path)
         # A miss in the server-owned API namespace must remain an API-shaped

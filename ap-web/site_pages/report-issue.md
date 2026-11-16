@@ -19,6 +19,12 @@ If the game itself, its client or its randomizer is failing, start with the supp
 
 If an AP-Pie-generated YAML fails while the game's own template works, report it here as a Builder issue. If you are unsure where the problem starts, describe what you tried in the AP-Pie report.
 
+## Request an APWorld
+
+Not listed in the catalog? [Request an APWorld on GitHub](https://github.com/dowlle/ap-pie/issues/new?title=APWorld%20request&body=Game%20name%3A%20%0ARelease%20or%20source%20link%3A%20%0AVersion%3A%20). Include the game name, version and release or source link. You need a GitHub account, and requests are public. A request does not automatically add or approve a world.
+
+For a newer version of an indexed world used in your room, hosts can use the existing APWorld update request in room settings. Open your room, choose Settings, then APWorlds and APWorld update.
+
 ## Private account or security concerns
 
 Contact Appie (Dowlle) on Discord for private account or security concerns, rather than posting sensitive details publicly. See the [privacy page](/privacy) for account and data requests.

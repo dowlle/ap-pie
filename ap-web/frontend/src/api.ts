@@ -445,8 +445,8 @@ export interface AuthUser {
   created_at: string;
 }
 
-export async function getAuthMe(): Promise<AuthUser> {
-  return fetchJson(`${BASE}/auth/me`);
+export async function getAuthMe(): Promise<AuthUser | { user: null; auth_enabled: boolean }> {
+  return fetchJson(`${BASE}/auth/me?optional=1`);
 }
 
 // Market (legacy seed-based)
