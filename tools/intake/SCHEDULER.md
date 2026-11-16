@@ -64,3 +64,11 @@ retains all history. Builder schemas are published for the newest version only.
 List-valued home URLs use the first URL, and GitLab inline query parameters
 are removed from public provenance. Keep the serving-side metadata budgets.
 Code rollback alone does not restore published feeds or archives.
+Restricted-worker schemas must match the current parser format. On an upgrade,
+back up the ledger and requeue stale completed schema jobs for the newest
+published version of each module. Rebuild them from verified cached archives
+with the candidate's worker before publishing schemas. Old positive results
+and negative results without a current parser version remain pending in the
+web application; web requests never rederive discovered packages.
+The schema exporter omits those stale records so they cannot block publication
+of current results while the worker refresh is in progress.

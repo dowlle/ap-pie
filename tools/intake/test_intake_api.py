@@ -11,6 +11,7 @@ sys.path[:0]=[str(ROOT/'ap-web'),str(ROOT/'ap-lib')]
 from flask import Flask
 from api import apworlds
 import test_discovery
+from apworld_options_parser import BUILDER_SCHEMA_FORMAT_VERSION
 
 
 class IntakeAPITests(unittest.TestCase):
@@ -24,7 +25,7 @@ class IntakeAPITests(unittest.TestCase):
         self.path.write_text(json.dumps({'schema': 1, 'releases': [record]}))
         (self.root/'index'/'index').mkdir(parents=True)
         (self.root/'discovery-schemas.json').write_text(json.dumps({'schema': 1, 'records': {
-            record['id']: {'sha256': record['sha256'], 'schema': {'game': 'CTR', 'options': []}}
+            record['id']: {'sha256': record['sha256'], 'schema': {'game': 'CTR', 'options': [], '_format_version': BUILDER_SCHEMA_FORMAT_VERSION}}
         }}))
         world = APWorldInfo(name='ctr', display_name='CTR', game_name='CTR', versions=[
             APWorldVersion(version=STABLE['version'], url='https://example.com/stable.apworld')
@@ -77,7 +78,7 @@ class IntakeAPITests(unittest.TestCase):
             for name in names: setattr(apworlds,name,None)
             with self.client.application.app_context(), patch.object(apworlds,'parse_index_dir',return_value=[]):
                 self.assertEqual(apworlds._get_index()[0]['builder_versions'],[])
-                (self.root/'discovery-schemas.json').write_text(json.dumps({'schema':1,'records':{self.record['id']:{'sha256':'a'*64,'schema':{'game':'Game','options':[]}}}}))
+                (self.root/'discovery-schemas.json').write_text(json.dumps({'schema':1,'records':{self.record['id']:{'sha256':'a'*64,'schema':{'game':'Game','options':[], '_format_version':BUILDER_SCHEMA_FORMAT_VERSION}}}}))
                 apworlds._get_index()
                 # A stale read reserves the build lock before starting the worker.
                 # Acquiring it waits for the snapshot swap and worker cleanup.
@@ -93,7 +94,7 @@ class IntakeAPITests(unittest.TestCase):
         names=['_index_cache','_index_worlds_cache','_index_lookup_cache','_review_stamp','_fuzz_stamp','_discovery_stamp']
         previous={name:getattr(apworlds,name) for name in names}
         cache=self.root/'discovery-schemas.json'
-        schema={'game':'Game','options':[]}
+        schema={'game':'Game','options':[], '_format_version':BUILDER_SCHEMA_FORMAT_VERSION}
         try:
             for name in names: setattr(apworlds,name,None)
             with self.client.application.app_context(), patch.object(apworlds,'parse_index_dir',return_value=[]), patch.object(apworlds,'_fetch_apworld_bytes',side_effect=AssertionError('must not fetch')):

@@ -903,11 +903,13 @@ export default function APWorlds() {
         <div>
           <h1>APWorld downloads</h1>
           <p className="apworlds-lede">
-            Download the APWorld version your host uses. Built-in games are included with Archipelago.
+            Find the game integration and exact version your Archipelago host expects. Built-in
+            games already ship with Archipelago and do not need a separate download.
           </p>
           <p className="apworlds-builder-link">
-            <Link to="/yaml-builder">Configure your game in the YAML Builder →</Link>
+            Need to configure your game options? <Link to="/yaml-builder">Open the YAML Builder →</Link>
           </p>
+          <p className="apworlds-evidence-context">Badges describe the displayed release. Security reviews match exact archive checksums; pending means matching evidence is missing. Builder availability is separate from review and generation evidence.</p>
         </div>
         <div className="apworlds-header-actions">
           {/* FEAT-42: contextual, not in the NavBar - same call as FEAT-33's
@@ -921,6 +923,11 @@ export default function APWorlds() {
           )}
         </div>
       </div>
+
+      <aside className="apworlds-version-note notice notice-info">
+        <strong>Match the host's version.</strong>
+        <span>If you are unsure which APWorld version to use, ask the host before downloading.</span>
+      </aside>
 
       {isAdmin && intake && (
         <details className="muted" aria-label="Admin intake status">
@@ -1082,9 +1089,6 @@ export default function APWorlds() {
         </>
       )}
       </section>
-      <p className="muted">
-        Missing a game? <a href="https://github.com/dowlle/Archipelago-index/issues/new" target="_blank" rel="noopener noreferrer">Suggest a source</a>.
-      </p>
     </div>
   );
 }
