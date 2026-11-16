@@ -10,10 +10,9 @@ def _bool_env(name: str, default: bool) -> bool:
 
 
 # ── Feature flags ────────────────────────────────────────────────
-# Each flag gates a coherent surface (UI + endpoints). Defaults are ON for
-# backward compat - older deploys that don't set the env keep the full
-# feature set. New deploys can set FEATURE_<NAME>=false in their .env to
-# ship a scoped-down build (the YAML-collector MVP for ap-pie.com).
+# Each flag gates a coherent surface (UI + endpoints). Generation is opt-in:
+# deployments must explicitly set FEATURE_GENERATION=true to enable it.
+# Other defaults are documented alongside their flags below.
 #
 # To add a new flag:
 #   1. Append to this dict with a default
@@ -22,10 +21,10 @@ def _bool_env(name: str, default: bool) -> bool:
 #   4. Read via useFeature("name") in the frontend to hide UI surfaces
 FEATURES: dict[str, bool] = {
     # Local Archipelago server-side generation, AP server launch/stop, and
-    # APWorld install/management. Turn OFF to ship as a YAML collector only:
+    # APWorld install/management. Disabled by default for YAML collection:
     # hosts collect YAMLs, then download the bundle and run generation
     # themselves off-server.
-    "generation": _bool_env("FEATURE_GENERATION", True),
+    "generation": _bool_env("FEATURE_GENERATION", False),
     # Let any signed-in Discord user create and manage collection rooms.
     # Keep this opt-in so code can reach beta before the public switch and so
     # operators retain a one-variable rollback without reverting a release.
