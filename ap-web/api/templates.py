@@ -10,6 +10,7 @@ from flask import Blueprint, current_app, jsonify
 
 import config
 from apworld_options_parser import parse_apworld_options
+from auth import requires_admin
 from template_parser import list_templates, parse_template
 
 bp = Blueprint("templates", __name__)
@@ -113,6 +114,7 @@ def get_template(game: str):
 
 
 @bp.route("/api/templates/refresh", methods=["POST"])
+@requires_admin
 def refresh_templates():
     global _list_cache, _apworld_cache
     with _lock:
