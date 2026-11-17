@@ -1,11 +1,60 @@
-**[Download 0.3.0 alpha 4](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha4)** · **[Setup guide](/ctr/setup)**
+**[Download 0.3.0 alpha 5](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha5)** · **[Setup guide](/ctr/setup)**
 
-> **This is alpha 4 of 0.3.0, a test build.** v0.2.4 is still the stable version.
+> **This is alpha 5 of 0.3.0, a test build.** v0.2.4 is still the stable version.
 > The alpha doesn't update itself. The in-game updater only offers stable releases, so grab new alphas by hand.
 > Use a new folder, and keep your 0.2.4 install as it is.
-> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 3? Start with [Alpha 4](#alpha-4).
+> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 4? Start with [Alpha 5](#alpha-5).
 
 0.3.0 is the biggest update so far. Every seed now comes from one generator and the YAML is one flat list of options. Custom tracks are part of the game: import them, race them in Arcade, or put up to 132 in a seed. There's also Play Solo, a Wumpa Shop, boss randomization, a bunch of new checks and traps, and an in-game updater for the next release.
+
+## Alpha 5
+
+Alpha 5 started as a short follow-up to alpha 4 and grew a bit. It fixes the hub crash BEXUS found, lost checks after a dropped connection and some nasty rendering bugs. It also adds crate and fruit numbers, the first check pages in the in-game tracker and rendering fixes from [CTR Native Expanded](https://github.com/thecodingbob/ctr-native).
+
+### Before you update
+
+- Use the alpha 5 client with the alpha 5 APWorld. Your alpha 4 YAML still works, there are no new YAML options.
+
+### Fixed
+
+- Play Solo stopped with an error before the track list if one of your tracks had been downloaded for a seed and its folder name had a version number in it, like Baby T Park 1.0.2. Play Solo now reads those tracks correctly, and one track it can't use no longer stops the whole list; it skips that track and writes it to the log.
+- A pad that asked for 20 or more of something (relics, trophies or tokens) crashed the game in its hub. Pads show counts up to 99 now, and anything above 99 shows 99 but still opens at the full count. In alpha 4 you'd only run into this with your own `warp_pad_rules`; in alpha 5 random pads can go higher too if you make the item pool bigger (see New). Thanks BEXUS for the report.
+- If your connection dropped, the client can take up to about 35 seconds to notice. A check you got in that window could get lost: the server never got it, and a crate or fruit stayed done in your game, so you couldn't collect it again until you restarted. The client now keeps every check it sends and, when you reconnect to the same room, sends again whatever the server doesn't have yet. A check already lost on alpha 4 isn't recovered by this, but restarting the game reopens the crate so you can collect it again. Thanks SoraKH13 for the report.
+- Wumpasanity and Itemboxsanity checks didn't show the line saying what you sent and to whom, the way letters already did. They do now, one line per pickup. Your own items still show up as received, and the crate count line is unchanged. Thanks BEXUS for the report.
+- Pinstripe's garage star used to disappear from the Citadel map after you beat him. It turns red now, like the other three beaten garages. Unbeaten garages still flicker, and locked ones stay grey. Thanks SoraKH13 for the report.
+- When a shuffled boss was the same racer as you, the podium mixed the two up: both played the losing animation and then disappeared while the camera panned. Winner and loser stay separate now. Thanks sturg for the report and the video.
+- A piece of a stadium wall or stand could drop out at mid distance, and you'd see the sky or grass behind it. Fixed.
+- In 16:9 and wider, a flat grass wedge could cut into the road at the edge of the screen. Fixed.
+- Increase Draw Distance left thin cracks in towers and stadium roofs, and some rows of stands fell back to a flat low detail wall. It scales every detail distance together now. It's still off by default, so you only saw this if you turned it on.
+- In split screen, Increase Draw Distance takes effect straight away when you switch it on in the middle of a race, not only from the next one.
+- Really busy scenes could blow up into long spikes across the screen, with the sky, trees and houses stretched everywhere and sometimes the HUD gone. You'd mostly see it on dense custom tracks like North Pole with Increase Draw Distance on. Fixed. Custom tracks also get more room to draw with that option on, so bits of terrain don't drop out for a frame.
+- If you backed out of a warp pad, your kart drove on without its engine sound and exhaust. Both come back now. Thanks FruitLion8 for the report.
+- The red triangles over the warp pads are gone from the hub behind the name entry. The wooden key doors and boss garages used to miss a piece; they're whole and closed now, and every warp pad has its blue beam, rising wisps and spinning trophy.
+- Crystal Challenges with Itemsanity only draw from the weapons that help there: Turbo, Bomb, Missile, Shield and Mask. TNT, Nitro, Beaker, Clock and Warp Ball are left out. Boss races still use everything you've unlocked. Thanks Dex for the report.
+- Generating a seed prints one message per slot, listing what the generator adjusted in plain words. A YAML that needs no adjusting prints nothing. Before, you'd get a separate warning for each option.
+- If `boss_track_assignment: character_home_track` can't find a different racer for every boss garage, the error now explains why: a racer only fits a garage when their home track is allowed by `boss_track_pool` and `retail_tracks` and supports that garage's attack. It lists the racers that do fit and suggests allowing more tracks or racers, or `independent_track`. Thanks Bethany for the YAML that showed it.
+
+### New
+
+- Crate / Fruit Numbers, in OPTIONS > Archipelago, off by default. Turn it on and every weapon crate, Wumpa crate and piece of loose fruit that's a check shows its number when you're close enough, the same one as in its location name (Wumpa Crate 12 shows 12). It works in single player adventure races. Objects that aren't checks in your seed get no number, so the numbers can have gaps, and a number goes away once you've collected it. It's a client setting, so no YAML can turn it on. Update Check moved to the Gameplay page to make room. Thanks Dex for the idea.
+- The in-game tracker has check pages. Press Square on a map node to see Reach 10 Wumpa, weapon crates, Wumpa crates and loose fruit for that track: collected out of total, plus how many are in logic, out of logic or unknown. Cups get a page per leg (L1 and R1 to switch), and boss garages show the checks of the track their boss race is on, including its Reach 10 Wumpa check. Triangle or Start goes back to the map. This is a first step: podium places, lap checks, perfect relic races, cup rewards, AP boxes, crystals and shop slots don't have their own rows yet.
+- Random pad requirements grow with your item pool. With the default pool nothing changes and random pads still stop at 8. Put more Trophies, Tokens or Relics in `item_pool` `base` and the caps go up with it: with four times as many, pads can ask for up to 32. A smaller pool lowers them. Counts stop at 99 and Keys still stop at 4. Extra copies and starting items don't raise the caps.
+- When your client can't use a 0.3.0 room's APWorld version, the connection screen now says `CTR APWORLD VERSION MISMATCH` with a hint, for example which alpha client to use, or to ask the host for the matching client. Before you got a technical error. The exact reason is still in `ctr-ap.log`.
+- Checked Wumpasanity and Itemboxsanity crates and fruit go back to their normal colour instead of grey, like Mario Kart: Double Dash. Green in logic and red out of logic are the same. Thanks MarioSpore for the idea.
+- Several Laps Per Driver, in OPTIONS under Authoring, off by default. Recorded AI laps use one lap per person, so with laps from only one or two people some opponents fall back to the track's own line. Turn this on (with Use Recorded AI Laps) and their other laps fill those lanes. No lap races twice in one race, but one name can show above more than one opponent. Thanks Dex for the idea.
+- Two Coco Team Racing tracks have their names now: track 3 is Tizi Madness and track 6 is Adventure Path, both by FrostedWombat. If you imported them earlier they keep the old name until you import the patch again. The new name doesn't change which files a room uses.
+- Tizi Madness is a practice track for a hard shortcut, so your weapon slot refills with a Mask there, in every mode. Seeds only use it with hard shortcut knowledge, and with Itemsanity you need to find the Mask first, which the logic expects too.
+- There are a lot more camera shots in the hub behind the name entry. It picks a different hub from last time, and never the same shot twice in a row.
+- The credits roll is up to date: AlienGenie for the Always Jumping trap, Lockheart for Baby T Park, the track authors who agreed to downloads in the game and the tools we use.
+
+The wall piece, widescreen and draw distance fixes come from CTR Native Expanded, thanks to its authors.
+
+### Known issues
+
+- Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
+- The in-game tracker still doesn't list every check on its own (see the tracker line under New).
+- Some unusual YAMLs still fail to generate. Send me the YAML if it keeps happening.
+- There's no way yet to rename or remove an imported track from inside the game. Use the custom track manager, or delete its folder.
 
 ## Alpha 4
 
@@ -32,7 +81,7 @@ Most of alpha 4 is fixes for things you reported in alpha 3, thanks for all of t
 - Boss races used the echo of the garage's home track. Now you hear the track you're actually on.
 - Custom tracks show their own name in the race intro, the pause menu and cup headings instead of something like "Roo's Tubes".
 - Tizi Challenge can be finished.
-- The Coco Team Racing tracks you can import don't crash anymore. Track 6 has its crates and turbo pads back and gets a clean outline as its minimap.
+- The Coco Team Racing tracks you can import don't crash anymore. Track 6 has its crates and turbo pads back and gets a clean outline as its minimap. Since alpha 5, track 3 is called Tizi Madness and track 6 Adventure Path.
 - With Trap Display on, the Wumpa Shop doesn't give away a disguised trap's name anymore.
 - Missiles and bombs a boss gets from its kit actually lock onto you now.
 - Asking for more cups and Crystal Challenges than there are pads doesn't fail anymore. The 27 pads get shared out and the spoiler tells you what you got.
@@ -45,10 +94,10 @@ Most of alpha 4 is fixes for things you reported in alpha 3, thanks for all of t
 - Weapon crate checks: up to 50 weapon crates per track can be checks. You still get the weapon. Both are off by default.
 - Item Boxes per Track: pick 0 to 50 AP boxes per track. For now no track has spots for more than 15, so that's the real limit.
 - New box spots from a tester on Country Speedway and Gossamer's Castle.
-- Pads are green when there's something in logic, red when they're locked or only have out-of-logic stuff left, and grey when you're done, same as PopTracker. Crates and fruit that are checks use the same colours.
+- Pads are green when there's something in logic, red when they're locked or only have out-of-logic stuff left, and grey when you're done, same as PopTracker. Crates and fruit that are checks use the same colours. Since alpha 5, checked ones go back to their normal colour instead of grey.
 - The Wumpa counter stops at 10 like the original game. With the Wumpa Shop or a Wumpa goal on, the rest goes straight into your bank, shown right under the counter.
 - You can replay Crystal Challenges you already finished.
-- Weapons you unlocked with Itemsanity show up in boss races and Crystal Challenges too.
+- Weapons you unlocked with Itemsanity show up in boss races and Crystal Challenges too. Since alpha 5, Crystal Challenges only use Turbo, Bomb, Missile, Shield and Mask.
 - Change the AI difficulty between races: pause in a hub and pick AI DIFFICULTY.
 - Pads with a second stage show what it needs right under the name.
 - Boss Music in Options lets you hear the track's own music in boss races.
@@ -63,19 +112,6 @@ Most of alpha 4 is fixes for things you reported in alpha 3, thanks for all of t
 - Always Jumping keeps hopping while you drift.
 
 Thanks to Boxic, Lolothesamurai, PanchoPew and Lockheart for letting me offer their tracks in the game, and to FrostedWombat for the Coco Team Racing import.
-
-### Known issues
-
-- North Pole can have broken trees as the third race of a cup.
-- The screen froze once during a custom track race when a release sent a ton of items at once. I'm still looking into it.
-- Some menu text is hard to read where it runs over the logo.
-- Cortex Vortex can still play Oxide Station's music.
-- The Project Saphi catalogue might not show up for some people. If the Library says it failed, send me your `ctr-ap.log`.
-- Space Labs 1.2.4 and Matsuri 1.1.0 can't be installed yet.
-- Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
-- The in-game tracker doesn't show every check yet, like Ripper Roo's 10 Wumpa check on Roo's Tubes.
-- Some unusual YAMLs still fail to generate. Send me the YAML if it keeps happening.
-- Short freezes can still happen in races. Tell me which track.
 
 ## New in alpha 3
 
@@ -322,13 +358,13 @@ All of these are off by default unless it says otherwise.
 - **Old YAMLs:** Archipelago prints one warning line per removed option name. The seed still generates.
 - **Menus:** some menus are hard to read, especially Options and Custom Tracks, where text runs over the logo.
 - **Short freezes** can happen in some races. If you get one, tell me the track.
-- North Pole can have broken trees as the third race of a cup.
 - The screen froze once during a custom track race when a release sent a ton of items at once. I'm still looking into it.
 - Cortex Vortex can still play Oxide Station's music.
 - The Project Saphi catalogue might not show up for some people. If the Library says it failed, send me your `ctr-ap.log`.
 - Space Labs 1.2.4 and Matsuri 1.1.0 can't be installed yet.
 - Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
-- The in-game tracker doesn't show every check yet, like Ripper Roo's 10 Wumpa check on Roo's Tubes.
+- The in-game tracker still doesn't list every check on its own. Since alpha 5 it has check pages for Reach 10 Wumpa, weapon crates, Wumpa crates and loose fruit, but podium places, lap checks, perfect relic races, cup rewards, AP boxes, crystals and shop slots don't have their own rows yet.
+- There's no way yet to rename or remove an imported track from inside the game. Use the custom track manager, or delete its folder.
 - **Wumpa Shop prices** are a first guess and will get tuned once there's more play data.
 - **Random bosses:** the boss's voice lines may be silent when a different racer takes the garage, and the scene after the race shows the garage's original boss.
 - **Custom tracks:** the importer takes race tracks only, no arenas and no LZMA patches. In two-player Adventure a custom track race runs as one player.
