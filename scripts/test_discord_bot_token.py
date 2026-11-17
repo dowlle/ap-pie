@@ -313,6 +313,56 @@ class YamlUpload(BotTokenBase):
         self.assertEqual(resp.status_code, 400)
 
 
+class YamlDelete(BotTokenBase):
+    def delete(self, discord_id=OTHER_ID, yaml_id=5):
+        return self.client.delete(f"/api/rooms/room1/yamls/{yaml_id}",
+                                  headers=self.headers(**{"X-Discord-User-Id": discord_id}))
+
+    def row(self, submitter):
+        return {"id": 5, "room_id": "room1", "submitter_user_id": submitter,
+                "game": "Super Metroid", "player_name": "Appletini"}
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.removed = []
+        for p in (mock.patch.object(rooms_api, "remove_yaml", side_effect=lambda i: self.removed.append(i) or True),
+                  mock.patch.object(rooms_api, "get_yamls", side_effect=lambda rid: [self.row(self.submitter)]),
+                  mock.patch.object(rooms_api, "get_yaml", side_effect=lambda i: self.row(self.submitter))):
+            p.start()
+        self.submitter = 8
+
+    def test_member_deletes_own_yaml_with_via_discord_marker(self) -> None:
+        resp = self.delete()
+        self.assertEqual(resp.status_code, 200, resp.get_json())
+        self.assertEqual(self.removed, [5])
+        self.assertTrue(any(k == "yaml_deleted" and m.endswith("(via Discord)") for k, m in self.activity))
+
+    def test_member_cannot_delete_someone_elses_yaml(self) -> None:
+        self.submitter = 9
+        self.assertEqual(self.delete().status_code, 403)
+        self.assertEqual(self.removed, [])
+
+    def test_member_cannot_delete_after_lock(self) -> None:
+        self.room["status"] = "closed"
+        self.assertEqual(self.delete().status_code, 400)
+        self.assertEqual(self.removed, [])
+
+    def test_yaml_from_another_room_is_not_found(self) -> None:
+        with mock.patch.object(rooms_api, "get_yaml", return_value={**self.row(8), "room_id": "other"}):
+            self.assertEqual(self.delete().status_code, 404)
+        self.assertEqual(self.removed, [])
+
+    def test_host_deletes_any_yaml_even_after_lock(self) -> None:
+        self.submitter, self.room["status"] = 9, "closed"
+        self.assertEqual(self.delete(discord_id=DISCORD_ID).status_code, 200)
+        self.assertEqual(self.removed, [5])
+
+    def test_admin_through_the_bot_is_an_ordinary_member(self) -> None:
+        self.room["host_user_id"], self.submitter = 8, 9
+        self.assertEqual(self.delete(discord_id=DISCORD_ID).status_code, 403)
+        self.assertEqual(self.removed, [])
+
+
 class StatusValidation(BotTokenBase):
     def test_unknown_status_rejected_known_accepted(self) -> None:
         resp = self.client.put("/api/rooms/room1", headers=self.headers(), json={"status": "bogus"})

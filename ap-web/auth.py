@@ -52,7 +52,8 @@ _SIGNED_IN_PERSONAL_BLUEPRINTS = frozenset({
 # is the ownership rule: "any" = any registered member (the room is created in
 # their name), "owner" = the acting member must be the room's host, "member" =
 # any registered member may add a YAML to a room they can name (the YAML is
-# attributed to them, not to the host).
+# attributed to them, not to the host). A member may also delete a YAML they
+# submitted; the route itself checks that ownership.
 BOT_TOKEN_HEADER = "X-AP-Bot-Token"
 BOT_USER_HEADER = "X-Discord-User-Id"
 BOT_ROUTES = {
@@ -60,6 +61,7 @@ BOT_ROUTES = {
     ("rooms.rooms_update", "PUT"): "owner",
     ("rooms.room_close", "POST"): "owner",
     ("rooms.yaml_upload", "POST"): "member",
+    ("rooms.yaml_delete", "DELETE"): "member",
     ("rooms.generated_room_preview", "POST"): "owner",
     ("rooms.generated_room_confirm", "PUT"): "owner",
     ("rooms.room_tracker", "GET"): "owner",

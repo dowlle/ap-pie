@@ -22,6 +22,7 @@ from db import (
     get_room,
     get_room_creation_counts,
     get_room_apworlds,
+    get_yaml,
     get_yamls,
     get_yamls_with_submitters,
     list_rooms,
@@ -855,6 +856,22 @@ def yaml_delete(room_id: str, yaml_id: int):
     # corresponding upload activity entries.
     target = next((y for y in get_yamls(room_id) if y["id"] == yaml_id), None)
 
+    # Through the bot the "member" rule skips the host gate, so a member who is
+    # not the host may delete only a YAML they submitted, and only while the
+    # room is open (the same rules as the public lobby delete).
+    if via_discord():
+        user = _current_user()
+        if room.get("host_user_id") is None or room["host_user_id"] != user["id"]:
+            row = get_yaml(yaml_id)
+            if not row or row.get("room_id") != room_id:
+                return jsonify({"error": "YAML not found in this room"}), 404
+            if row.get("submitter_user_id") != user["id"]:
+                return jsonify({"error": "You can only delete your own YAML."}), 403
+            if room["status"] != "open":
+                return jsonify({
+                    "error": "The room is no longer taking YAMLs, so only the host can remove them now.",
+                }), 400
+
     if remove_yaml(yaml_id):
         if target:
             user = _current_user()
@@ -865,7 +882,7 @@ def yaml_delete(room_id: str, yaml_id: int):
             )
             add_activity(
                 room_id, "yaml_deleted",
-                f"{actor} deleted {target['game']} YAML for player {target['player_name']}",
+                _tag(f"{actor} deleted {target['game']} YAML for player {target['player_name']}"),
                 actor_user_id=(user or {}).get("id"),
             )
         return jsonify({"status": "deleted"})
