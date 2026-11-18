@@ -27,7 +27,7 @@ def build_versions(world):
 
     versions = [
         {'version': v.version, 'test_build': is_test_build(v.version)}
-        for v in world.versions if v.url or v.local
+        for v in world.versions if (v.url or v.local) and not getattr(v, 'discovered', False)
     ]
     record = builtin_record(world)
     if record:

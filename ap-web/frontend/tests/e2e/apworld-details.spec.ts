@@ -39,6 +39,25 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+for (const width of [1440, 390]) {
+  test(`intake policy holds remain visible on cards and details at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.route("**/api/apworlds", route => route.fulfill({ json: [{
+      ...fixture,
+      versions: [{ ...fixture.versions[0], security_review: null,
+        policy_hold: { summary: "Held independently of the exact archive review." },
+        discovery: { id: "a".repeat(64), held: true, policy_summary: "Hold retained.", jobs: { security: "queued" } },
+      }],
+    }] }));
+    await page.goto("/apworlds");
+    await expect(page.locator(".apworld-card")).toContainText("Unresolved hold.");
+    await page.getByRole("link", { name: "Example World", exact: true }).click();
+    await expect(page.locator(".apworld-detail-version")).toContainText("Unresolved hold.");
+    await expect(page.getByRole("note")).toContainText("Held independently of the exact archive review.");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  });
+}
+
 test("failed downloads require a separate acknowledgement for each version", async ({ page }) => {
   // Start at an existing server route, then use the client router for the fixture.
   await page.goto("/apworlds");

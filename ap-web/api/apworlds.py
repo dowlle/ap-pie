@@ -34,6 +34,8 @@ from ap_lib.apworld_index import (
 
 import config
 import security_reviews
+import discovery
+import discovery_schemas
 from builtin_builder import builtin_record, build_versions
 from apworld_editorial import load_reviewed_apworlds
 from apworld_catalog import public_catalog
@@ -70,6 +72,8 @@ _index_build_lock = threading.Lock()  # one parse at a time
 _index_refresh_lock = threading.Lock()
 _review_stamp = None
 _fuzz_stamp = None
+_discovery_stamp = None
+_schema_stamp = None
 
 
 def _fuzz_snapshot():
@@ -193,6 +197,10 @@ def _build_index_snapshot() -> tuple:
     index_dir = _get_index_dir()
     if (index_dir / "index").is_dir():
         worlds = parse_index_dir(index_dir)
+        discovery_path = index_dir.parent / 'discovery.json'
+        discovery_stamp = security_reviews.fingerprint(discovery_path)
+        schema_stamp = security_reviews.fingerprint(index_dir.parent / 'discovery-schemas.json')
+        worlds = discovery.merge(worlds, discovery.load_for_serving(discovery_path))
         _pin_stable_defaults(worlds)
         head = index_head_sha(index_dir)
         fuzz_stamp, fuzz_records = _fuzz_snapshot()
@@ -203,23 +211,37 @@ def _build_index_snapshot() -> tuple:
         cache = []
         for w in worlds:
             d = _scrub_index_dict(w.to_dict())
+            discovery.attach_public_metadata(w, d)
             d["updated_at"] = updated.get(w.name)
             d["builder_versions"] = build_versions(w) if not w.disabled else []
+            if not w.disabled:
+                for version in w.versions:
+                    if not getattr(version, 'discovered', False):
+                        continue
+                    try:
+                        result = discovery_schemas.lookup(index_dir.parent / 'discovery-schemas.json', version)
+                    except (ValueError, OSError, TypeError):
+                        result = None
+                    if result and result['schema'] is not None:
+                        d['builder_versions'].append({'version': version.version, 'test_build': is_test_build(version.version)})
+                order = {v.version: i for i, v in enumerate(w.versions)}
+                d['builder_versions'].sort(key=lambda row: order.get(row['version'], len(order)))
             security_reviews.join_reviews(d, reviews)
             for version in d["versions"]:
                 review = version.get("security_review")
                 if review:
                     review["record_url"] = f"/api/apworlds/security-reviews/{review['id']}"
             cache.append(d)
-        return cache, worlds, build_game_lookup(worlds), stamp, fuzz_stamp
-    return [], [], {}, None, None
+        return cache, worlds, build_game_lookup(worlds), stamp, fuzz_stamp, discovery_stamp, schema_stamp
+    return [], [], {}, None, None, None, None
 
 
 def _install_index_snapshot(snapshot: tuple) -> None:
     """Swap all caches in together. Short, so readers never wait for a parse."""
-    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp
+    global _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp, _discovery_stamp, _schema_stamp
     with _index_lock:
-        _index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp, _fuzz_stamp = snapshot
+        (_index_cache, _index_worlds_cache, _index_lookup_cache, _review_stamp,
+         _fuzz_stamp, _discovery_stamp, _schema_stamp) = snapshot
 
 
 def _load_index_into_cache():
@@ -264,7 +286,10 @@ def _index_is_stale() -> bool:
     seed, overlay = _review_paths()
     stamp = (security_reviews.fingerprint(seed), security_reviews.fingerprint(overlay))
     fuzz_stamp, _ = _fuzz_snapshot()
-    return stamp != _review_stamp or fuzz_stamp != _fuzz_stamp
+    root = _get_index_dir().parent
+    return (stamp != _review_stamp or fuzz_stamp != _fuzz_stamp
+            or security_reviews.fingerprint(root / 'discovery.json') != _discovery_stamp
+            or security_reviews.fingerprint(root / 'discovery-schemas.json') != _schema_stamp)
 
 
 def _refresh_index_in_background(app) -> threading.Thread | None:
@@ -302,6 +327,66 @@ def _get_index() -> list:
     return _index_cache or []
 
 
+@bp.get('/api/apworlds/intake/status')
+def intake_status():
+    snapshot = discovery.load_for_serving(_get_index_dir().parent / 'discovery.json')
+    return jsonify({'schema': 1, 'queue': snapshot.get('queue', {}),
+                    'available_releases': len(snapshot['releases']),
+                    'unverified_observations':snapshot.get('observations',[])})
+
+
+@bp.get('/api/apworlds/intake/releases/<digest>')
+def discovery_release_record(digest):
+    if not re.fullmatch(r'[a-f0-9]{64}', digest):
+        abort(404)
+    snapshot = discovery.load_for_serving(_get_index_dir().parent / 'discovery.json')
+    record = next((r for r in snapshot['releases'] if r['id'] == digest), None)
+    if record is None:
+        abort(404)
+    # Identity and artifact bytes are immutable. Policy and job states remain
+    # mutable, so this response must not use immutable year-long caching.
+    response = jsonify(record)
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
+@bp.get('/api/apworlds/intake/releases/<digest>/download')
+def discovery_archive_download(digest):
+    """Serve only cached bytes matching the published immutable identity."""
+    if not re.fullmatch('[a-f0-9]{64}', digest):
+        abort(404)
+    root = _get_index_dir().parent
+    data = discovery.load_for_serving(root / 'discovery.json')
+    record = next((r for r in data['releases'] if r['id'] == digest), None)
+    if record is None:
+        abort(404)
+    path = root / 'discovery-archives' / (record['sha256'] + '.apworld')
+    try:
+        archive = path.open('rb')
+    except OSError:
+        abort(503, description='Verified archive is not available yet')
+    try:
+        checksum = hashlib.sha256()
+        size = 0
+        while block := archive.read(65536):
+            size += len(block)
+            if size > 50 * 1024 * 1024:
+                abort(409, description='Cached archive failed verification')
+            checksum.update(block)
+        if checksum.hexdigest() != record['sha256']:
+            abort(409, description='Cached archive failed verification')
+        archive.seek(0)
+        response = send_file(archive, as_attachment=True, download_name=record['module'] + '.apworld',
+                             etag=record['sha256'], max_age=31536000)
+        response.content_length = size
+        response.headers['X-Content-SHA256'] = record['sha256']
+        response.call_on_close(archive.close)
+        return response
+    except BaseException:
+        archive.close()
+        raise
+
+
 @bp.get("/api/apworlds/security-reviews/<digest>")
 def security_review_record(digest):
     if not re.fullmatch(r"[0-9a-f]{64}", digest):
@@ -317,14 +402,14 @@ def security_review_record(digest):
 
 def _get_index_worlds() -> list[APWorldInfo]:
     """Get the raw APWorldInfo objects (not dicts) for URL resolution."""
-    _ensure_index_loaded()
+    _get_index()
     return _index_worlds_cache or []
 
 
 def _get_game_lookup() -> dict[str, APWorldInfo]:
     """Get the `game_name -> APWorldInfo` map (FEAT-21 picker uses this to
     resolve YAML.game strings into index entries)."""
-    _ensure_index_loaded()
+    _get_index()
     return _index_lookup_cache or {}
 
 
@@ -740,6 +825,19 @@ def builder_schemas_for_pins(
         if not ver:
             continue
 
+        if getattr(ver, 'discovered', False):
+            # Newly discovered packages are never downloaded or parsed inside
+            # a web request. A restricted schema worker will supply output.
+            try:
+                cached = discovery_schemas.lookup(_get_index_dir().parent / 'discovery-schemas.json', ver)
+            except (ValueError, OSError, TypeError):
+                cached = None
+            if cached is None:
+                entry['pending'] = True
+            else:
+                entry['schema'] = cached['schema']
+            continue
+
         # Cache first: by lock sha when the index pins one, else by
         # (name, version).
         cached = None
@@ -1098,6 +1196,8 @@ def apworld_download_proxy(name: str, version: str):
         req=request,
     )
 
+    if getattr(ver, 'discovery_id', None):
+        return redirect('/api/apworlds/intake/releases/' + ver.discovery_id + '/download', code=302)
     if ver.url:
         # SEC-38: the redirect target comes from the index TOML manifest.
         # Gate it through the same scheme + outbound-host check the fetch

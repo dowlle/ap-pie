@@ -67,6 +67,15 @@ def github_report_url(value):
 def attach_fuzz_evidence(world, head, provenance=()):
     for version in world.versions:
         result = version.fuzz_result
+        if result is None and getattr(version, 'discovered', False):
+            exact = [r for r in provenance if r['module'] == world.name and
+                     r['version'] == version.version and r['sha256'] == version.sha256]
+            if exact:
+                from ap_lib.apworld_index import FuzzResult
+                # Keep the strongest recorded warning when multiple runs exist.
+                chosen = max(exact, key=lambda r: ({'clean': 0, 'flaky': 1, 'broken': 2}[r['verdict']], r['fuzzed_at']))
+                result = FuzzResult(**{field: chosen[field] for field in _RESULT_FIELDS}, report_url=chosen['report_url'])
+                version.fuzz_result = result
         if result is None:
             continue
         result.report_url = github_report_url(result.report_url)
