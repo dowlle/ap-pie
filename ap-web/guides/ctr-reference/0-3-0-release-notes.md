@@ -1,11 +1,69 @@
-**[Download 0.3.0 alpha 5](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha5)** · **[Setup guide](/ctr/setup)**
+**[Download 0.3.0 alpha 6](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha6)** · **[Setup guide](/ctr/setup)**
 
-> **This is alpha 5 of 0.3.0, a test build.** v0.2.4 is still the stable version.
+> **This is alpha 6 of 0.3.0, a test build.** v0.2.4 is still the stable version.
 > The alpha doesn't update itself. The in-game updater only offers stable releases, so grab new alphas by hand.
 > Use a new folder, and keep your 0.2.4 install as it is.
-> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 4? Start with [Alpha 5](#alpha-5).
+> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 5? Start with [Alpha 5](#alpha-6).
 
 0.3.0 is the biggest update so far. Every seed now comes from one generator and the YAML is one flat list of options. Custom tracks are part of the game: import them, race them in Arcade, or put up to 132 in a seed. There's also Play Solo, a Wumpa Shop, boss randomization, a bunch of new checks and traps, and an in-game updater for the next release.
+
+## Alpha 6
+
+Alpha 6 fixes the Oxide Station softlock and a long list of custom track problems, and adds Kart Setup during a race, named race and cup rewards in the tracker, CNK letters on Inferno Island and author credits on custom tracks. It also reorders the hub pause menu, makes pads and the tracker count shared checks, and fixes Citadel City travel and cup win text. Thanks to Dex, MarioSpore, Em and Bethany for the reports behind it.
+
+### Before you update
+
+- Use the alpha 6 client with the alpha 6 APWorld. Your alpha 5 YAML usually still works. Rooms made with alpha 5 or another earlier 0.3.0 build usually connect, but that is best effort and depends on the room's saved picks and rules still passing the checks. If one is refused, the connection screen shows which versions are involved, and you keep the matching older client for that room. Rooms made with alpha 6 need the alpha 6 client: an alpha 5 client refuses those that use custom tracks or Item Box Locations, and some others too. Rooms from 0.2.x still need 0.2.4.
+- There is one new YAML option, Track Origin Letters (on by default). It only changes tracks that ship the origin game's letters, which is Inferno Island for now.
+- Quick saves (F5) made with alpha 5 and replay checkpoints won't load. Make a new one.
+
+### Fixed
+
+- Oxide Station: its pickup checks used to depend on the one-time Oxide 1 race, so a missed crate could leave a seed unbeatable. In new rooms each pickup has a repeatable route or, if Oxide 1 is its only route, is left out. A pickup collected during Oxide 1 still counts. Rooms you already have keep the rules they were made with. Thanks Dex for the report.
+- Custom track crates that can't be reached are out of the pool in new rooms: Matsuri's Item Box 1 sits on a crate at the origin high above the track, and Lockbox Adventure track 4 has the same kind of crate below the road. Existing rooms keep their seats.
+- Crate logic is corrected on several tracks. Sewer Speedway's bridge crates, Cortex Vortex's start and finish pickups, and Country Speedway, Toasty Terrace, Royal Raceway and Green Hill Raceway use rules pinned to the reviewed track revisions. Some of these are cautious (Boost 2) until someone has driven them.
+- Relic-only custom tracks start from their pad. A track with relic crates and a lap graph but no AI lines used to refuse to start. Relic Races load as a one-kart event now.
+- Missing music on custom tracks: Saphi tracks can have separate track and music versions, and seed downloads now use the current music like the track library does. Opening Custom Tracks downloads music that is missing from an installed track. A song that fails to start is tried again. A track with no music of its own plays the music of a random retail track, the same one every time in the same room, instead of always Roo's Tubes. Music decisions in seed races and boss venues are written to `ctr-ap.log`.
+- Quick savestates (F5 and F8) remember their track, mode and route, and custom tracks also their package revision. F8 refuses a save from a different race before it touches the game.
+- Pad Approach Hints now include weapon crates, Wumpa crates and loose Wumpa on track pads and every cup leg, and an open boss garage hints its encounter and venue checks. They follow your progression and Warp Pad Preview settings. The delayed "crates checked" count lines in the item feed are gone; item lines and the log lines stay. Thanks Dex and Em for the reports.
+- In new rooms, a track that is raced only in N. Oxide's Final Challenge, for example Cortex Vortex as the final with `cortex_vortex_track: off`, gets no lap, Reach 10 Wumpa or crate checks of its own in new rooms. A check with another route keeps its place. Thanks Bethany for the report.
+- `oxide_goal: none` with `boss_garages` off no longer stops generation. With no garages there is no Oxide race to keep, so it is read as `disabled`. Thanks MarioSpore for the report.
+- Boss beakers, TNT and Nitro break once the boss has driven half a lap past them on a shuffled venue or with a composed kit, and a thrown TNT frees its slot when it explodes. This is the N. Tropy on Turbo Track case where he drove through his own beakers. Retail home races keep their old behaviour. Thanks Em for the report.
+- Pad unlock lines wait until you have the Keys to reach them, and a door's line says how many ready pads are behind it. The all-letters message works again and waits until you can enter that track's CTR Challenge. Thanks MarioSpore and Bethany for the feedback.
+- Older rooms keep working after the track list is updated. A room keeps the generic slot and title it was made with even if the track later gets its own name, and In Universal Tracker, alpha 6 rooms restore fully and older rooms restore when their track picks and logic still match. A custom track that gets a new revision inherits the reviewed rules of the one before it, and crates added in the new revision stay out of the pool until they are reviewed.
+- Hints for custom tracks that aren't registered: in new rooms, both "Custom Track N" and the track's own name work, for items and for locations. Before, only the room's title was known to the server and a hint with the generic name ended in "Too many close matches". Rooms you already have keep the names they were generated with.
+- Shared checks: Itemsanity weapon uses and other checks that more than one race of a pad can earn now count on pads and in the tracker. Before, a pad with only those checks left stayed green and its CTR Challenge stayed on Start while the tracker's footer showed zero left, and the pad's tracker rows left the checks out. A pad with only shared checks left now takes its green or red from their logic state, the Checks page names the shared families and counts them, and when everything is done the pad turns grey and its races read Replay. Cups follow the same rule and count a shared check once across their legs.
+- The tracker card draws the 10W mark only when that track (or the room) has a Reach 10 Wumpa check, so cards without one no longer show a mark that can't tick.
+- Travel from the pause menu to Citadel City lands you on the upper landing beside the save screen, facing into the hub. It used to land on the ramp in front of the screen, and the kart rolled back down. The other four hubs are unchanged.
+- Gem Cup wins in AP seeds: the podium says CUP WON and, when the cup has a win check in the seed, shows its item, without the Trophy text or the Trophy voice line. Before, it could show the Trophy text from a lookup meant for tracks. Gem Cups played without a room keep the retail Gem. A lost cup still goes back to the hub without a podium.
+- Patched custom tracks get their registered names by road instead of generic titles. Your installed copies and existing rooms keep their file pins. Five left-over levels from Lockbox Adventure and 30th Anniversary Adventure are hidden from import, Arcade, Time Trial and Play Solo.
+- The client now identifies itself to Project Saphi as `CTR-AP/<version>` with the repository link, instead of a fixed old name. No player name or host name is sent.
+
+### New
+
+- Author credits for custom tracks: one credit line on a track's pad, on the race intro and on the results, and on each leg of a cup race (the cup pad itself has none). It names the track author, and the music author separately when the names differ (Cortex Vortex shows Lockheart). Credits come from the track registry for the exact track files, and from the track package or room data when the registry has none. If no author is known, the line names the track's source, such as the patch file name or Project Saphi. Retail tracks show no credit.
+- Kart Setup in the pause menu of Adventure races and cups (not Arcade, Time Trial, Versus, Battle or 2P). It uses the same stat and Boost rows, ranks and storage as the hub picker, and a change in a race shows up in the hub and the other way round. Time stays paused while the page is open. Character switching stays in the hub.
+- The in-game tracker CHECKS page opens with named Trophy, CTR and relic rewards, podium places, perfect runs and lap checks, then cup wins, sweeps and legs, each with its tick and In Logic, Out or Unknown state. N. Oxide's two races have their own win checks. Up and Down page through the rewards and the pickup counts.
+- CNK letters on the full-mode Inferno Island. With Track Origin Letters on, its letters are C, N and K in the seed, the tracker and the log. Lettersanity still uses three slots, and rooms without origin letters stay as they were.
+- Item Feed in OPTIONS > Archipelago has All, Important and Off. Important skips filler you send or receive and Wumpa Shop stock lines, and keeps everything else. Off hides the whole feed, DeathLink popups included. Your old On and Off settings carry over.
+- Random pad requirements can ask for up to the whole pool. The cap grows with the hub: a quarter of the family you picked in N. Sanity Beach, half in The Lost Ruins, three quarters in Glacier Park and the whole family in Citadel City and Gem Stone Valley, up to 99. Keys still stop at 4. Rooms from before keep their old caps.
+- Missing custom tracks are easier to find. The hub banner counts the tracks your seed is missing and points to Options > Custom Tracks > This Seed, a pad with a missing track stays grey and tells you where to install it, and Custom Tracks opens with Install missing selected when downloads are possible.
+- Hub pause menu order: Resume, Tracker, Travel, Select Character, Options, Quit. AI Difficulty and the Aku Aku or Uka Uka hint viewer (whichever mask you have) moved into Options (Gameplay page). Options in the hub opens the same page list as the main menu, with the retail Sound and controller page among them. Connection, Play Solo, Custom Tracks, Room links and Box Author Mode stay visible and say they belong to the main menu. Sound changes save when you leave by Back or Exit.
+- The goal shows one part per line on the pause Relics page and at the bottom of the hub tracker map, above the Wumpa Shop line: Oxide encounter, boss wins, Gem colours, Wumpa banked. A line scrolls only if one part is still too wide. Before, the pause page crammed them into one line that ran off the screen, and the tracker showed only the Wumpa goal.
+- Export YAML works for any verified installed custom track with a known public source, not only Baby T Park. The Library says why when it can't. Play Solo > Custom Tracks has Save YAML for a room. YAML entries use `track_key` to name the track. `content_id` still works, and an entry with both must agree.
+- AP boxes on Arabian Heights Day (27 spots) and Sunset Vista (24 spots, no boost needed).
+- Recorded AI laps: with Save AI Lap Recordings on, clean flying laps are saved from Time Trial on custom tracks and from seed pads, cup legs and custom boss venues, under the track's package identity. Only My Recordings, in OPTIONS under Authoring and with Use Recorded AI Laps on, races only the recorded laps that match your Driver Name (or your slot name if that is empty). Recorded AI laps can drive in Arcade on verified custom tracks that support Arcade; Time Trial only tracks can't be raced there yet.
+
+### Known issues
+
+- Custom tracks that aren't registered yet, like Nina's Nightmare and Acropolis, sit in a generic slot and get no crate or Wumpa fruit checks. Registering them comes after alpha 6.
+- Tizi Madness: with shortcut knowledge on hard the track can end up in a seed, but its road is closed off, so the checks on it can't be reached. Leave it out of your YAML for now.
+- Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
+- Time Trial only tracks can't be raced in Arcade with recorded AI laps yet.
+- The tracker's CHECKS page doesn't give AP boxes, letters, crystals or shop slots their own rows yet; they only show as counts.
+- Sunset Vista can run slowly on Steam Deck.
+- Baby T Park's CTR Challenge may still play Roo's Tubes instead of its own music. That report is still open.
+- Some unusual YAMLs still fail to generate. Send me the YAML if it keeps happening.
 
 ## Alpha 5
 
@@ -37,24 +95,17 @@ Alpha 5 started as a short follow-up to alpha 4 and grew a bit. It fixes the hub
 ### New
 
 - Crate / Fruit Numbers, in OPTIONS > Archipelago, off by default. Turn it on and every weapon crate, Wumpa crate and piece of loose fruit that's a check shows its number when you're close enough, the same one as in its location name (Wumpa Crate 12 shows 12). It works in single player adventure races. Objects that aren't checks in your seed get no number, so the numbers can have gaps, and a number goes away once you've collected it. It's a client setting, so no YAML can turn it on. Update Check moved to the Gameplay page to make room. Thanks Dex for the idea.
-- The in-game tracker has check pages. Press Square on a map node to see Reach 10 Wumpa, weapon crates, Wumpa crates and loose fruit for that track: collected out of total, plus how many are in logic, out of logic or unknown. Cups get a page per leg (L1 and R1 to switch), and boss garages show the checks of the track their boss race is on, including its Reach 10 Wumpa check. Triangle or Start goes back to the map. This is a first step: podium places, lap checks, perfect relic races, cup rewards, AP boxes, crystals and shop slots don't have their own rows yet.
+- The in-game tracker has check pages. Press Square on a map node to see Reach 10 Wumpa, weapon crates, Wumpa crates and loose fruit for that track: collected out of total, plus how many are in logic, out of logic or unknown. Cups get a page per leg (L1 and R1 to switch), and boss garages show the checks of the track their boss race is on, including its Reach 10 Wumpa check. Triangle or Start goes back to the map. This is a first step: podium places, lap checks, perfect relic races, cup rewards, AP boxes, crystals and shop slots don't have their own rows yet. Alpha 6 adds named race and cup rewards to these pages.
 - Random pad requirements grow with your item pool. With the default pool nothing changes and random pads still stop at 8. Put more Trophies, Tokens or Relics in `item_pool` `base` and the caps go up with it: with four times as many, pads can ask for up to 32. A smaller pool lowers them. Counts stop at 99 and Keys still stop at 4. Extra copies and starting items don't raise the caps.
 - When your client can't use a 0.3.0 room's APWorld version, the connection screen now says `CTR APWORLD VERSION MISMATCH` with a hint, for example which alpha client to use, or to ask the host for the matching client. Before you got a technical error. The exact reason is still in `ctr-ap.log`.
 - Checked Wumpasanity and Itemboxsanity crates and fruit go back to their normal colour instead of grey, like Mario Kart: Double Dash. Green in logic and red out of logic are the same. Thanks MarioSpore for the idea.
-- Several Laps Per Driver, in OPTIONS under Authoring, off by default. Recorded AI laps use one lap per person, so with laps from only one or two people some opponents fall back to the track's own line. Turn this on (with Use Recorded AI Laps) and their other laps fill those lanes. No lap races twice in one race, but one name can show above more than one opponent. Thanks Dex for the idea.
+- Several Laps Per Driver, in OPTIONS under Authoring, off by default. Recorded AI laps use one lap per person, so with laps from only one or two people some opponents fall back to the track's own line. Turn this on (with Use Recorded AI Laps) and their other laps fill those lanes. No lap races twice in one race, but one name can show above more than one opponent. Thanks Dex for the idea. Alpha 6 adds Only My Recordings and supports recorded laps on verified Arcade-capable custom tracks.
 - Two Coco Team Racing tracks have their names now: track 3 is Tizi Madness and track 6 is Adventure Path, both by FrostedWombat. If you imported them earlier they keep the old name until you import the patch again. The new name doesn't change which files a room uses.
 - Tizi Madness is a practice track for a hard shortcut, so your weapon slot refills with a Mask there, in every mode. Seeds only use it with hard shortcut knowledge, and with Itemsanity you need to find the Mask first, which the logic expects too.
 - There are a lot more camera shots in the hub behind the name entry. It picks a different hub from last time, and never the same shot twice in a row.
 - The credits roll is up to date: AlienGenie for the Always Jumping trap, Lockheart for Baby T Park, the track authors who agreed to downloads in the game and the tools we use.
 
 The wall piece, widescreen and draw distance fixes come from CTR Native Expanded, thanks to its authors.
-
-### Known issues
-
-- Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
-- The in-game tracker still doesn't list every check on its own (see the tracker line under New).
-- Some unusual YAMLs still fail to generate. Send me the YAML if it keeps happening.
-- There's no way yet to rename or remove an imported track from inside the game. Use the custom track manager, or delete its folder.
 
 ## Alpha 4
 
@@ -209,7 +260,7 @@ Alpha 2 fixes a lot of what you found in alpha 1 and adds a few new things.
 
 ## What's new
 
-- One generator for every seed, and one flat YAML with 98 options.
+- One generator for every seed, and one flat YAML with 99 options.
 - A YAML that sets nothing gets the original game's shape: 18 tracks, 5 Gem Cups, 4 Crystal Challenges and the five boss races, shuffled.
 - Custom tracks: import from a patch, Custom Arcade and Time Trial pages, a Track Library, and up to 132 tracks in a seed.
 - Cortex Vortex is a full track, with its own music.
@@ -237,7 +288,7 @@ Alpha 2 fixes a lot of what you found in alpha 1 and adds a few new things.
 
 Every seed now comes from one generator. If your YAML doesn't set any content, you get the original game's shape: the 18 race tracks, 5 Gem Cups, 4 Crystal Challenges and the five boss races, on the original 27 warp pads and five garages, shuffled. The first five cups are the original Gem Cups with their Gems. Cup races are drawn, four different tracks per cup. Slide Coliseum and Turbo Track offer all three races now.
 
-The YAML is one flat list of 98 options in twelve groups: Tracks, Cups and Arenas, Bosses, Goal, Pads and Requirements, Checks, Wumpa Shop, Items and Traps, Characters and Stats, Boost, DeathLink and Display. Each thing is set in one place, and the Builder explains every option. Some highlights:
+The YAML is one flat list of 99 options in twelve groups: Tracks, Cups and Arenas, Bosses, Goal, Pads and Requirements, Checks, Wumpa Shop, Items and Traps, Characters and Stats, Boost, DeathLink and Display. Each thing is set in one place, and the Builder explains every option. Some highlights:
 
 - `pad_placement`: `vanilla`, `shuffle_within_kind` (tracks on track pads, cups on cup pads, arenas on arena pads) or `shuffle`. Vanilla requirements work with all three.
 - `retail_tracks`, `cup_count`, `cup_tracks` and `crystal_challenge_count` decide what's in the seed.
@@ -363,7 +414,7 @@ All of these are off by default unless it says otherwise.
 - The Project Saphi catalogue might not show up for some people. If the Library says it failed, send me your `ctr-ap.log`.
 - Space Labs 1.2.4 and Matsuri 1.1.0 can't be installed yet.
 - Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
-- The in-game tracker still doesn't list every check on its own. Since alpha 5 it has check pages for Reach 10 Wumpa, weapon crates, Wumpa crates and loose fruit, but podium places, lap checks, perfect relic races, cup rewards, AP boxes, crystals and shop slots don't have their own rows yet.
+- The tracker's CHECKS page gives race and cup rewards their own rows. AP boxes, letters, crystals and shop slots still show as counts.
 - There's no way yet to rename or remove an imported track from inside the game. Use the custom track manager, or delete its folder.
 - **Wumpa Shop prices** are a first guess and will get tuned once there's more play data.
 - **Random bosses:** the boss's voice lines may be silent when a different racer takes the garage, and the scene after the race shows the garage's original boss.
