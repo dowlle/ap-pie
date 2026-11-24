@@ -1,11 +1,41 @@
-**[Download 0.3.0 alpha 6](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha6)** · **[Setup guide](/ctr/setup)**
+**[Download 0.3.0 alpha 7](https://github.com/dowlle/ctr-native-ap/releases/tag/v0.3.0-alpha7)** · **[Setup guide](/ctr/setup)**
 
-> **This is alpha 6 of 0.3.0, a test build.** v0.2.4 is still the stable version.
+> **This is alpha 7 of 0.3.0, a test build.** v0.2.4 is still the stable version.
 > The alpha doesn't update itself. The in-game updater only offers stable releases, so grab new alphas by hand.
 > Use a new folder, and keep your 0.2.4 install as it is.
-> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 5? Start with [Alpha 5](#alpha-6).
+> This page grows with each alpha and turns into the 0.3.0 release notes. Coming from alpha 6? Start with [Alpha 7](#alpha-7).
 
 0.3.0 is the biggest update so far. Every seed now comes from one generator and the YAML is one flat list of options. Custom tracks are part of the game: import them, race them in Arcade, or put up to 132 in a seed. There's also Play Solo, a Wumpa Shop, boss randomization, a bunch of new checks and traps, and an in-game updater for the next release.
+
+## Alpha 7
+
+Alpha 7 is a small release from `main`. It adds many more AP box spots to the retail race tracks, lets a custom track use a separate build for Relic Races, and leaves Tizi Madness out of every seed.
+
+### Before you update
+
+- Use the alpha 7 client with the alpha 7 APWorld. Your alpha 6 YAML still works. Rooms made with alpha 6 should still connect, because they keep the box spots they were made with. Rooms from before alpha 6 may be refused on the changed retail box files: keep the matching older client for those. Rooms made with alpha 7 need the alpha 7 client. Rooms from 0.2.x still need 0.2.4.
+- Quick saves (F5) made with alpha 6 may not load. Make a new one if one is refused.
+
+### New
+
+- Retail AP box spots: the 18 retail race tracks now have 787 spots, up from 241 built-in ones, up to 50 per track. The built-in spots keep their numbers, positions and rules, and the new spots are numbered from 16. Item Box Count up to 50 now has real choice on most retail tracks (Hot Air Skyway, Slide Coliseum, Tiny Arena and Turbo Track reach the full 50; most others are in the 40s). New spots need no boost. The one exception is Papu's Pyramid, where one box on the Tiziano wall needs a boost and hard shortcut knowledge. A few spots that may hang in the air are held back until they are checked by driving, so some tracks have fewer than 50 for now.
+- Merged mode builds: some custom tracks ship their modes as two builds, for example Toasty Terrace 1.3.0 with the crates, letters and Arcade, and 1.3.1 with the Relic Race lap graph. A track can now name a second build just for Relic Races. Relic Races use that build and every other mode uses the main one. The track keeps its name, crates and music from the main build. Toasty Terrace is the first track to use it. If the Relic build is missing, Current Seed downloads it as part of the same track.
+- Box Author Mode holds 2048 placements instead of 512, with separate tables for retail and custom tracks. This only matters for people placing boxes with the authoring tool.
+
+### Fixed
+
+- Tizi Madness is left out of every seed at every shortcut knowledge level, and Play Solo leaves it out of the new-seed picker and the YAML export. Part of Papu's Pyramid is closed off on this track, so the checks beyond the closure could not be reached. Renaming the track does not bring it back.
+
+### Known issues
+
+- Custom tracks that aren't registered yet, like Nina's Nightmare and Acropolis, sit in a generic slot and get no crate or Wumpa fruit checks.
+- Some retail box spots are held back until they are checked by driving, so a few tracks have fewer than 50.
+- Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
+- Time Trial only tracks can't be raced in Arcade with recorded AI laps yet.
+- The tracker's CHECKS page doesn't give AP boxes, letters, crystals or shop slots their own rows yet; they only show as counts.
+- Sunset Vista can run slowly on Steam Deck.
+- Baby T Park's CTR Challenge may still play Roo's Tubes instead of its own music. That report is still open.
+- Some unusual YAMLs still fail to generate. Send me the YAML if it keeps happening.
 
 ## Alpha 6
 
@@ -54,17 +84,6 @@ Alpha 6 fixes the Oxide Station softlock and a long list of custom track problem
 - AP boxes on Arabian Heights Day (27 spots) and Sunset Vista (24 spots, no boost needed).
 - Recorded AI laps: with Save AI Lap Recordings on, clean flying laps are saved from Time Trial on custom tracks and from seed pads, cup legs and custom boss venues, under the track's package identity. Only My Recordings, in OPTIONS under Authoring and with Use Recorded AI Laps on, races only the recorded laps that match your Driver Name (or your slot name if that is empty). Recorded AI laps can drive in Arcade on verified custom tracks that support Arcade; Time Trial only tracks can't be raced there yet.
 
-### Known issues
-
-- Custom tracks that aren't registered yet, like Nina's Nightmare and Acropolis, sit in a generic slot and get no crate or Wumpa fruit checks. Registering them comes after alpha 6.
-- Tizi Madness: with shortcut knowledge on hard the track can end up in a seed, but its road is closed off, so the checks on it can't be reached. Leave it out of your YAML for now.
-- Lots of Saphi tracks are Time Trial only, so they can't be used in a seed yet.
-- Time Trial only tracks can't be raced in Arcade with recorded AI laps yet.
-- The tracker's CHECKS page doesn't give AP boxes, letters, crystals or shop slots their own rows yet; they only show as counts.
-- Sunset Vista can run slowly on Steam Deck.
-- Baby T Park's CTR Challenge may still play Roo's Tubes instead of its own music. That report is still open.
-- Some unusual YAMLs still fail to generate. Send me the YAML if it keeps happening.
-
 ## Alpha 5
 
 Alpha 5 started as a short follow-up to alpha 4 and grew a bit. It fixes the hub crash BEXUS found, lost checks after a dropped connection and some nasty rendering bugs. It also adds crate and fruit numbers, the first check pages in the in-game tracker and rendering fixes from [CTR Native Expanded](https://github.com/thecodingbob/ctr-native).
@@ -101,7 +120,7 @@ Alpha 5 started as a short follow-up to alpha 4 and grew a bit. It fixes the hub
 - Checked Wumpasanity and Itemboxsanity crates and fruit go back to their normal colour instead of grey, like Mario Kart: Double Dash. Green in logic and red out of logic are the same. Thanks MarioSpore for the idea.
 - Several Laps Per Driver, in OPTIONS under Authoring, off by default. Recorded AI laps use one lap per person, so with laps from only one or two people some opponents fall back to the track's own line. Turn this on (with Use Recorded AI Laps) and their other laps fill those lanes. No lap races twice in one race, but one name can show above more than one opponent. Thanks Dex for the idea. Alpha 6 adds Only My Recordings and supports recorded laps on verified Arcade-capable custom tracks.
 - Two Coco Team Racing tracks have their names now: track 3 is Tizi Madness and track 6 is Adventure Path, both by FrostedWombat. If you imported them earlier they keep the old name until you import the patch again. The new name doesn't change which files a room uses.
-- Tizi Madness is a practice track for a hard shortcut, so your weapon slot refills with a Mask there, in every mode. Seeds only use it with hard shortcut knowledge, and with Itemsanity you need to find the Mask first, which the logic expects too.
+- Tizi Madness is a practice track for a hard shortcut, so your weapon slot refills with a Mask there, in every mode. Seeds only use it with hard shortcut knowledge, and with Itemsanity you need to find the Mask first, which the logic expects too. Since alpha 7, Tizi Madness is left out of every seed.
 - There are a lot more camera shots in the hub behind the name entry. It picks a different hub from last time, and never the same shot twice in a row.
 - The credits roll is up to date: AlienGenie for the Always Jumping trap, Lockheart for Baby T Park, the track authors who agreed to downloads in the game and the tools we use.
 
@@ -143,7 +162,7 @@ Most of alpha 4 is fixes for things you reported in alpha 3, thanks for all of t
 
 - Wumpasanity: Wumpa crates, loose fruit or both can be checks. You still get the fruit.
 - Weapon crate checks: up to 50 weapon crates per track can be checks. You still get the weapon. Both are off by default.
-- Item Boxes per Track: pick 0 to 50 AP boxes per track. For now no track has spots for more than 15, so that's the real limit.
+- Item Boxes per Track: pick 0 to 50 AP boxes per track. For now no track has spots for more than 15, so that's the real limit. Since alpha 7, the 18 retail race tracks have up to 50 spots each.
 - New box spots from a tester on Country Speedway and Gossamer's Castle.
 - Pads are green when there's something in logic, red when they're locked or only have out-of-logic stuff left, and grey when you're done, same as PopTracker. Crates and fruit that are checks use the same colours. Since alpha 5, checked ones go back to their normal colour instead of grey.
 - The Wumpa counter stops at 10 like the original game. With the Wumpa Shop or a Wumpa goal on, the rest goes straight into your bank, shown right under the counter.
