@@ -617,7 +617,7 @@ def _render_tracks(template, title=TRACKS_TITLE, description=TRACKS_DESCRIPTION,
         ),
         mode_labels=MODE_LABELS,
         source_labels=SOURCE_LABELS,
-        discord_url=DISCORD_URL,
+        discord_url=config.DISCORD_INVITE,
     )
 
 
