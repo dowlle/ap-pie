@@ -1801,6 +1801,15 @@ export async function getMyPresets(): Promise<Preset[]> {
   return data.presets;
 }
 
+export class OptionValuesTooLarge extends Error {}
+
+async function yamlSaveResponse<T>(res: Response, fallback: string): Promise<T> {
+  if (res.ok) return res.json();
+  const err = await res.json().catch(() => ({}));
+  if (err.code === "option_values_too_large") throw new OptionValuesTooLarge(err.error);
+  throw new Error(err.error || fallback);
+}
+
 export async function createPreset(input: {
   apworld_name: string;
   version: string;
@@ -1815,11 +1824,7 @@ export async function createPreset(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to save preset");
-  }
-  return res.json();
+  return yamlSaveResponse(res, "Failed to save preset");
 }
 
 export async function updatePreset(
@@ -1921,11 +1926,7 @@ export async function saveMyYaml(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to save YAML");
-  }
-  return res.json();
+  return yamlSaveResponse(res, "Failed to save YAML");
 }
 
 export async function updateMyYaml(
@@ -1937,11 +1938,7 @@ export async function updateMyYaml(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to update YAML");
-  }
-  return res.json();
+  return yamlSaveResponse(res, "Failed to update YAML");
 }
 
 export async function deleteMyYaml(id: number): Promise<void> {

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { dump, load } from "js-yaml";
 
 async function fixtures(page: Page, signedIn = true) {
   let signed = signedIn;
@@ -38,8 +39,9 @@ async function fixtures(page: Page, signedIn = true) {
     if (path.includes('/builder-schema')) {
       const schema = process.env.CTR_REVIEW_SCHEMA ? JSON.parse(readFileSync(process.env.CTR_REVIEW_SCHEMA, 'utf8')) : {
       apworld_name: 'ctr', version: '0.2.0-alpha7', game: 'Crash Team Racing', display_name: 'Crash Team Racing',
-      schema: { game: 'Crash Team Racing', ap_version: '', world_version: '', categories: ['Characters'], options: [
+      schema: { game: 'Crash Team Racing', ap_version: '', world_version: '', categories: ['Characters', 'Tracks'], options: [
         { name: 'racer_locked_pads', display_name: 'Racer-Locked Warp Pads', category: 'Characters', description: 'Maximum locked pads.', type: 'range', min: 0, max: 27, default: 0 },
+        { name: 'custom_tracks', display_name: 'Custom Tracks', category: 'Tracks', type: 'list', default: [] },
       ] },
       };
       return route.fulfill({ json: path.endsWith('/builder-schemas') ? [schema] : schema });
@@ -49,6 +51,65 @@ async function fixtures(page: Page, signedIn = true) {
   page.on('dialog', dialog => dialog.accept());
   return { writes, events, library };
 }
+
+test("180 CTR custom-track descriptors survive saving, reopening and downloading", async ({ page }) => {
+  await fixtures(page);
+  const tracks = Array.from({ length: 180 }, (_, index) => ({
+    id: `package/fixture-${index}/1.0.0`,
+    track_key: `fixture-${index}`,
+    uuid: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+    revision: "1.0.0",
+    display_name: `Fixture Track ${index}`,
+    author: "Test author",
+    laps: 3,
+    capabilities: { time_trial: true, arcade: true, relic: false, ctr_tokens: false, wumpa: false },
+    files: ["lev", "vrm"].map((role, fileIndex) => ({
+      role, sha256: (2 * index + fileIndex).toString(16).padStart(64, "0"),
+      bytes: 100_000, format: `ctr-${role}`, format_version: 1,
+    })),
+  }));
+
+  await page.goto("/yaml-builder/ctr");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  const editor = page.getByRole("textbox", { name: "Editable live YAML" });
+  const doc = load(await editor.inputValue()) as { "Crash Team Racing": { custom_tracks: unknown[] } };
+  doc["Crash Team Racing"].custom_tracks = tracks;
+  const yaml = dump(doc);
+  expect(Buffer.byteLength(yaml)).toBeGreaterThan(64 * 1024);
+  // Apply the buffer in a single input event like a paste. Playwright's
+  // fill uses the browser's insertText path for each line of this document.
+  await editor.evaluate((element: HTMLTextAreaElement, text) => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(element, text);
+    element.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertFromPaste" }));
+  }, yaml);
+  await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Synced");
+  await page.getByRole("button", { name: "Review YAML" }).click();
+  await page.getByRole("button", { name: "Save to my YAMLs" }).click();
+  await expect(page).toHaveURL(/from=72/);
+  await page.reload();
+  await page.getByRole("button", { name: "Review YAML" }).click();
+  const downloaded = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download .yaml" }).click();
+  const downloadedDoc = load(readFileSync(await (await downloaded).path(), "utf8")) as typeof doc;
+  expect(downloadedDoc["Crash Team Racing"].custom_tracks).toEqual(tracks);
+});
+
+test("Builder saves the downloadable YAML when option values exceed their storage cap", async ({ page }) => {
+  const { writes } = await fixtures(page);
+  await page.route("**/api/my/yamls", route => {
+    if (route.request().method() === "POST" && route.request().postDataJSON().kind === "simple") {
+      return route.fulfill({ status: 400, json: { code: "option_values_too_large", error: "Option values exceed the limit." } });
+    }
+    return route.fallback();
+  });
+  await page.goto("/yaml-builder/ctr");
+  await page.getByRole("button", { name: "Start with the game defaults" }).click();
+  await page.getByRole("button", { name: "Review YAML" }).click();
+  const yaml = await page.getByRole("textbox", { name: "Editable live YAML" }).inputValue();
+  await page.getByRole("button", { name: "Save to my YAMLs" }).click();
+  await expect(page).toHaveURL(/from=72/);
+  expect(writes[0].body).toMatchObject({ kind: "advanced", yaml_content: yaml });
+});
 
 for (const firstSave of [false, true]) test(`${firstSave ? 'first save' : 'save a copy'} keeps the saved identity through reload and draft recovery`, async ({ page }) => {
   const { writes, library } = await fixtures(page);

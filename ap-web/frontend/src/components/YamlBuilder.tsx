@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { BuilderSchemaEntry, Preset, TemplateOption, UserYaml } from "../api";
-import { createPreset, getPresets, recordPresetUse, saveMyYaml, updateMyYaml } from "../api";
+import { createPreset, getPresets, OptionValuesTooLarge, recordPresetUse, saveMyYaml, updateMyYaml } from "../api";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { signInWithBuilderDraft } from "../lib/builderDraft";
@@ -132,7 +132,7 @@ export default function YamlBuilder({
   // Non-null once the review step's YAML has been hand-edited.
   const [manualYaml, setManualYaml] = useState<string | null>(null);
   const [yamlSync, setYamlSync] = useState<"synced" | "typing" | "custom" | "error">("synced");
-  const [yamlErrorKind, setYamlErrorKind] = useState<"syntax" | "schema" | "size" | null>(null);
+  const [yamlErrorKind, setYamlErrorKind] = useState<"syntax" | "schema" | null>(null);
   const [yamlWarningAccepted, setYamlWarningAccepted] = useState(false);
   const [yamlSyncMessage, setYamlSyncMessage] = useState("Form and YAML match.");
   const [editing, setEditing] = useState(false);
@@ -398,7 +398,7 @@ export default function YamlBuilder({
     if (!active || !entry?.schema || !initialYaml) return;
     if (importedRef.current === initialYaml) return;
     importedRef.current = initialYaml;
-    const parsed = importYaml(initialYaml, entry.schema);
+    const parsed = yamlSizeError(initialYaml) ? null : importYaml(initialYaml, entry.schema);
     if (!parsed) {
       // Unparseable: hand it to the editor rather than refusing to open.
       setManualYaml(initialYaml);
@@ -530,19 +530,16 @@ export default function YamlBuilder({
     setBusy(true);
     setError("");
     try {
-      const payload = {
+      const metadata = {
         apworld_name: entry.apworld_name,
         version: entry.version,
         player_name: submittedIdentity.playerName,
         label: savedSource ? `${savedSource.label}${copy ? " (copy)" : ""}` : `${entry.display_name} - ${submittedIdentity.playerName}`,
-        kind: manualYaml !== null ? "advanced" as const : "simple" as const,
-        ...(manualYaml !== null
-          ? { yaml_content: manualYaml }
-          : { values: { ...coreValues, ...values } }),
       };
-      const saved = savedSource && !copy
-        ? await updateMyYaml(savedSource.id, payload)
-        : await saveMyYaml(payload);
+      const saved = await saveBuilderYaml(manualYaml, generatedYaml, { ...coreValues, ...values }, (content) => {
+        const payload = { ...metadata, ...content };
+        return savedSource && !copy ? updateMyYaml(savedSource.id, payload) : saveMyYaml(payload);
+      });
       onSaved?.(saved);
       emittedRef.current = true;
       if (draftKey) sessionStorage.removeItem(draftKey);
@@ -563,15 +560,12 @@ export default function YamlBuilder({
     setBusy(true);
     setError("");
     try {
-      const saved = await createPreset({
+      const saved = await saveBuilderYaml(manualYaml, generatedYaml, { ...coreValues, ...values }, (content) => createPreset({
         apworld_name: entry.apworld_name,
         version: entry.version,
         name,
-        kind: manualYaml !== null ? "advanced" : "simple",
-        ...(manualYaml !== null
-          ? { yaml_content: manualYaml }
-          : { values: { ...coreValues, ...values } }),
-      });
+        ...content,
+      }));
       setPresetSaved(
         `Saved "${saved.name}" to your presets. Publish it from My presets when you want others to see it.`,
       );
@@ -604,16 +598,18 @@ export default function YamlBuilder({
   // multiple slots in one file - has to be reachable somehow, and until
   // those get real controls this is that path.
   const yamlContent = manualYaml ?? generatedYaml;
+  const sizeError = useMemo(() => yamlSizeError(yamlContent), [yamlContent]);
+  const syncStatus = sizeError ? "error" : yamlSync;
+  const yamlPreview = useMemo(() => sizeError ? yamlContent : highlightYaml(yamlContent), [sizeError, yamlContent]);
 
   const handleYamlEdit = (text: string) => {
     yamlEditPendingRef.current = true;
     setManualYaml(text);
     setYamlWarningAccepted(false);
-    if (new TextEncoder().encode(text).byteLength > MAX_EDITABLE_YAML_BYTES) {
+    if (yamlSizeError(text)) {
       yamlEditPendingRef.current = false;
-      setYamlSync("error");
-      setYamlErrorKind("size");
-      setYamlSyncMessage("This YAML is larger than 64 KiB. Shorten it before saving, downloading or submitting.");
+      setYamlSync("synced");
+      setYamlErrorKind(null);
       return;
     }
     setYamlSync("typing");
@@ -659,8 +655,7 @@ export default function YamlBuilder({
   // custom rather than silently coerced.
   useEffect(() => {
     const syncSchema = entry?.schema;
-    if (manualYaml === null || !syncSchema) return;
-    if (new TextEncoder().encode(manualYaml).byteLength > MAX_EDITABLE_YAML_BYTES) return;
+    if (manualYaml === null || !syncSchema || sizeError) return;
     let worker: Worker | null = null;
     const timer = window.setTimeout(() => {
       worker = new Worker(new URL("../workers/yamlParseWorker.ts", import.meta.url), { type: "module" });
@@ -716,7 +711,7 @@ export default function YamlBuilder({
       window.clearTimeout(timer);
       worker?.terminate();
     };
-  }, [defaultValues, entry, manualYaml]);
+  }, [defaultValues, entry, manualYaml, sizeError]);
 
   // Form → YAML. The Document API changes known nodes in-place and keeps
   // unsupported sections, comments and ordering. If the visitor is midway
@@ -739,7 +734,7 @@ export default function YamlBuilder({
     }
     if (generatedYaml === lastGeneratedRef.current) return;
     lastGeneratedRef.current = generatedYaml;
-    if (manualYaml === null || !entry?.schema || yamlEditPendingRef.current) return;
+    if (manualYaml === null || !entry?.schema || sizeError || yamlEditPendingRef.current) return;
     const document = parseDocument(manualYaml);
     if (document.errors.length > 0) return;
     document.setIn(["name"], playerName.trim() || "Player1");
@@ -757,7 +752,7 @@ export default function YamlBuilder({
     setYamlSync("synced");
     setYamlErrorKind(null);
     setYamlSyncMessage("Form change applied without removing your custom YAML.");
-  }, [coreValues, entry, generatedYaml, manualYaml, playerName, values]);
+  }, [coreValues, entry, generatedYaml, manualYaml, playerName, sizeError, values]);
 
   /** Player name + game as they appear in the document being submitted.
    *  A hand-edit may have changed `name:`, and the room endpoints take the
@@ -793,7 +788,7 @@ export default function YamlBuilder({
   };
 
   const schema = entry?.schema ?? null;
-  const canFinalize = yamlSync !== "typing" && (
+  const canFinalize = !sizeError && yamlSync !== "typing" && (
     yamlSync !== "error" || (yamlErrorKind === "schema" && yamlWarningAccepted)
   );
 
@@ -1099,20 +1094,20 @@ export default function YamlBuilder({
                   aria-label="YAML content"
                 />
               ) : presentation === "modal" ? (
-                <pre className="yaml-builder-preview">{highlightYaml(yamlContent)}</pre>
+                <pre className="yaml-builder-preview">{yamlPreview}</pre>
               ) : (
                 <>
                   <p className="settings-aux-note yaml-builder-page-review-note">
                     The live document stays visible on the right while you save, download, or submit it.
                   </p>
                   <pre className="yaml-builder-preview yaml-builder-page-mobile-preview">
-                    {highlightYaml(yamlContent)}
+                    {yamlPreview}
                   </pre>
                 </>
               )}
               {manualYaml !== null && (
                 <p className="settings-aux-note yaml-builder-manual-note" role="status" aria-live="polite">
-                  {yamlSyncMessage}{" "}
+                  {!sizeError && `${yamlSyncMessage} `}
                   <button
                     type="button"
                     className="yaml-builder-desc-toggle"
@@ -1122,7 +1117,7 @@ export default function YamlBuilder({
                   </button>
                 </p>
               )}
-              {yamlErrorKind === "schema" && !yamlWarningAccepted && (
+              {!sizeError && yamlErrorKind === "schema" && !yamlWarningAccepted && (
                 <div className="yaml-builder-warning-gate" role="alert">
                   <strong>Review the invalid value before finishing.</strong>
                   <span>You can correct it in the form or explicitly keep the hand-written YAML.</span>
@@ -1131,7 +1126,9 @@ export default function YamlBuilder({
                   </button>
                 </div>
               )}
-              {(yamlErrorKind === "syntax" || yamlErrorKind === "size") && (
+              {sizeError ? (
+                <p className="settings-error" role="alert">{sizeError}</p>
+              ) : yamlErrorKind === "syntax" && (
                 <p className="settings-error" role="alert">
                   Fix the YAML before downloading, saving or submitting it.
                 </p>
@@ -1244,7 +1241,7 @@ export default function YamlBuilder({
               <span>Edit here or change the form</span>
             </div>
             <div className="yaml-builder-live-statuses">
-              <span className={`yaml-builder-sync-status is-${yamlSync}`} role="status" aria-live="polite">{yamlSync === "error" ? "Needs attention" : yamlSync === "custom" ? "Custom values" : yamlSync === "typing" ? "Typing…" : "Synced"}</span>
+              <span className={`yaml-builder-sync-status is-${syncStatus}`} role="status" aria-live="polite">{syncStatus === "error" ? "Needs attention" : syncStatus === "custom" ? "Custom values" : syncStatus === "typing" ? "Typing…" : "Synced"}</span>
               {entry && <span className="badge">v{entry.version}</span>}
             </div>
           </div>
@@ -1253,7 +1250,7 @@ export default function YamlBuilder({
             style={{ "--yaml-lines": Math.max(1, yamlContent.split("\n").length) } as CSSProperties}
           >
             <pre ref={liveHighlightRef} className="yaml-builder-live-highlight" aria-hidden="true">
-              {yamlContent ? highlightYaml(yamlContent) : "Choose a game to start building."}
+              {yamlContent ? yamlPreview : "Choose a game to start building."}
             </pre>
             <textarea
               className="yaml-builder-live-editor"
@@ -1268,8 +1265,8 @@ export default function YamlBuilder({
               aria-label="Editable live YAML"
             />
           </div>
-          <p className={`settings-aux-note yaml-builder-live-note is-${yamlSync}`}>
-            {yamlSyncMessage}
+          <p className={`settings-aux-note yaml-builder-live-note is-${syncStatus}`}>
+            {sizeError ?? yamlSyncMessage}
             {manualYaml !== null && (
               <>{" "}<button type="button" className="yaml-builder-desc-toggle" onClick={rebuildFromForm}>Rebuild from form</button></>
             )}
@@ -1475,7 +1472,32 @@ const PRESET_FILTER_THRESHOLD = 8;
 
 /** Option count past which the options form earns a filter box. */
 const OPTION_FILTER_THRESHOLD = 12;
-const MAX_EDITABLE_YAML_BYTES = 64 * 1024;
+// Same UTF-8 document limit as ap-web/yaml_limits.py.
+const MAX_BUILDER_YAML_BYTES = 1024 * 1024;
+
+function yamlSizeError(text: string): string | null {
+  const bytes = new TextEncoder().encode(text).byteLength;
+  return bytes > MAX_BUILDER_YAML_BYTES
+    ? `This YAML is ${bytes.toLocaleString("en-US")} bytes. The limit is ${MAX_BUILDER_YAML_BYTES.toLocaleString("en-US")} bytes.`
+    : null;
+}
+
+async function saveBuilderYaml<T>(
+  manualYaml: string | null,
+  generatedYaml: string,
+  values: Record<string, unknown>,
+  save: (content: { kind: "advanced"; yaml_content: string } | { kind: "simple"; values: Record<string, unknown> }) => Promise<T>,
+): Promise<T> {
+  if (manualYaml !== null) return save({ kind: "advanced", yaml_content: manualYaml });
+  try {
+    return await save({ kind: "simple", values });
+  } catch (error) {
+    if (!(error instanceof OptionValuesTooLarge)) throw error;
+    // JSONB can take more bytes than the downloadable YAML, for example
+    // when it expands numeric exponents. Keep the document verbatim.
+    return save({ kind: "advanced", yaml_content: generatedYaml });
+  }
+}
 
 function classifyYamlValue(option: TemplateOption, value: unknown): "form" | "custom" | "invalid" {
   if (value === undefined) return "form";
