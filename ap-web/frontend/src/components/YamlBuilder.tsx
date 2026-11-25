@@ -818,6 +818,7 @@ export default function YamlBuilder({
                 <>v{entry.version}</>
               )}
               {entry.test_build && <span className="badge badge-test-build">Test build</span>}
+              {entry.apworld_name === "ctr" && <> · <a href="/ctr/tracks">Custom tracks</a></>}
             </span>
           )}
         </div>
