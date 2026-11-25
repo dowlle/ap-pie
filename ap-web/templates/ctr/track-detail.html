@@ -1,0 +1,46 @@
+{% extends "ctr/tracks-base.html" %}
+{% from "ctr/tracks-base.html" import mode_badges with context %}
+{% block track_content %}
+  <a href="/ctr/tracks">All custom tracks</a>
+  {% if unavailable %}
+    <h1>CTR custom tracks</h1>
+    <p class="notice notice-warning">The track registry is temporarily unavailable. Try again later.</p>
+  {% else %}
+    <header class="track-heading">
+      <h1>{{ track.display_title }}</h1>
+      {% if track.saphi_url %}<p><a href="{{ track.saphi_url }}">Track page on Project Saphi</a></p>{% endif %}
+      {% if track.state == "source-unavailable" %}<p>The registry marks this track’s source as unavailable.</p>{% endif %}
+    </header>
+    {% if track.credits %}
+      <h2>Credits</h2>
+      <ul class="track-credits">
+        {% for credit in track.credits %}<li>{{ credit.name }} ({{ credit.role }})</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <h2>Versions</h2>
+    {% if not track.revisions %}<p>No versions recorded.</p>{% endif %}
+    <div class="track-versions">
+      {% for rev in track.revisions %}
+        <section class="track-card surface">
+          <h3>{{ rev.revision }}</h3>
+          {{ mode_badges(rev.modes) }}
+          {% if rev.sources %}
+            <ul class="track-sources" aria-label="Sources">
+              {% for source in rev.sources %}
+                {% if source.kind == "saphi" %}
+                  <li><a href="{{ source.url }}">Project Saphi</a></li>
+                {% else %}
+                  <li>{{ source.file_name }} · Slot {{ source.bigfile_index }}
+                    {% if source.url %}<br /><a href="{{ source.url }}">Patch release page</a>{% endif %}
+                  </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No source recorded for this version.</p>
+          {% endif %}
+        </section>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

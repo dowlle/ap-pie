@@ -23,6 +23,7 @@ SECTIONS: dict[str, dict] = {
             {"label": "Overview", "path": "/ctr"},
             {"label": "Download", "path": "/ctr/download"},
             {"label": "Setup guide", "path": "/ctr/setup"},
+            {"label": "Custom tracks", "path": "/ctr/tracks"},
             {
                 "label": "How it works",
                 "path": "/ctr/reference",

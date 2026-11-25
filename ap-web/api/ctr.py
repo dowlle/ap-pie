@@ -20,12 +20,13 @@ import re
 from pathlib import Path
 
 import markdown
-from flask import Blueprint, abort, redirect, render_template, request, session
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, session
 
 import analytics
 import config
 import seo
 from api import project_pages, sections
+from ctr_track_registry import MODE_LABELS, SOURCE_LABELS, registry_cache
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 _REFERENCE_DIR = Path(__file__).resolve().parent.parent / "guides" / "ctr-reference"
@@ -267,6 +268,10 @@ AP_BOX_MAP_CAPTION = (
 )
 AP_BOX_TOTAL = sum(len(track["boxes"]) for track in AP_BOX_TRACKS)
 
+TRACKS_PATH = "/ctr/tracks"
+TRACKS_TITLE = "CTR custom tracks"
+TRACKS_DESCRIPTION = "Find Crash Team Racing custom tracks by author, game mode, and source. See measured modes and where to find each version."
+
 # Consumed by api/guides.py for /sitemap.xml and /llms.txt so the CTR section
 # never goes stale in either surface separately.
 CTR_PAGES: list[dict] = [
@@ -280,6 +285,7 @@ CTR_PAGES: list[dict] = [
         "title": "Download CTR Archipelago",
         "blurb": "Current stable CTR Archipelago downloads for Windows and Linux.",
     },
+    {"path": TRACKS_PATH, "title": TRACKS_TITLE, "blurb": TRACKS_DESCRIPTION},
     {
         "path": "/ctr/reference",
         "title": "CTR Archipelago reference",
@@ -583,6 +589,89 @@ DISCORD_TEXT = (
     "bug reports, YAML sharing and the roadmap all live there."
 )
 DISCORD_SECTION_MD = f"## Discord\n\n{DISCORD_TEXT}\n\n"
+
+
+@bp.get("/api/ctr/tracks")
+def ctr_tracks_api():
+    catalog = registry_cache.get()
+    if catalog is None:
+        return jsonify(error="CTR track registry temporarily unavailable"), 503
+    return jsonify(catalog)
+
+
+def _render_tracks(template, title=TRACKS_TITLE, description=TRACKS_DESCRIPTION, path=TRACKS_PATH, **context):
+    canonical = _canonical(path)
+    nav = _section(path, title, [(title, path)] if path != TRACKS_PATH else None)
+    page_type = "CollectionPage" if path == TRACKS_PATH else "WebPage"
+    return render_template(
+        template, **nav, **context,
+        page_title=f"{title} | Archipelago Pie",
+        meta_description=description,
+        canonical_url=canonical,
+        og_type="website",
+        og_image=_canonical("/img/ctr/og-ctr-title.jpg"),
+        structured_data=seo.graph(
+            config.PUBLIC_BASE_URL,
+            seo.page(config.PUBLIC_BASE_URL, page_type, canonical, title, description),
+            nav["breadcrumb_node"],
+        ),
+        mode_labels=MODE_LABELS,
+        source_labels=SOURCE_LABELS,
+        discord_url=DISCORD_URL,
+    )
+
+
+@bp.get(TRACKS_PATH, strict_slashes=False)
+def ctr_tracks():
+    catalog = registry_cache.get()
+    query = request.args.get("q", "")[:120].strip()
+    mode = request.args.get("mode", "")
+    source = request.args.get("source", "")
+    mode = mode if mode in MODE_LABELS else ""
+    source = source if source in SOURCE_LABELS else ""
+    results = []
+    if catalog is not None:
+        for track in catalog["tracks"]:
+            names = [track["display_title"], *(credit["name"] for credit in track["credits"])]
+            if query and not any(query.casefold() in name.casefold() for name in names):
+                continue
+            revisions = track["revisions"]
+            matching = [
+                rev for rev in revisions
+                if (not mode or mode in rev["modes"])
+                and (not source or any(item["kind"] == source for item in rev["sources"]))
+            ]
+            if (mode or source) and not matching:
+                continue
+            results.append({
+                **track,
+                "newest": revisions[0]["revision"] if revisions else None,
+                "modes": [name for name in MODE_LABELS if any(name in rev["modes"] for rev in matching)],
+            })
+    unmatched = (
+        catalog["unmatched_patches"]
+        if catalog is not None and not query and not mode and source != "saphi" else []
+    )
+    return _render_tracks(
+        "ctr/tracks-list.html", tracks=results, query=query, mode=mode, source=source,
+        unavailable=catalog is None, unmatched=unmatched,
+        unmatched_count=sum(len(patch["slots"]) for patch in unmatched),
+    ), 503 if catalog is None else 200
+
+
+@bp.get(f"{TRACKS_PATH}/<track_key>", strict_slashes=False)
+def ctr_track(track_key):
+    catalog = registry_cache.get()
+    if catalog is None:
+        return _render_tracks("ctr/track-detail.html", unavailable=True), 503
+    track = next((item for item in catalog["tracks"] if item["track_key"] == track_key), None)
+    if track is None:
+        abort(404)
+    title = track["display_title"]
+    return _render_tracks(
+        "ctr/track-detail.html", title=title, path=f"{TRACKS_PATH}/{track_key}", track=track,
+        description=f"See measured game modes, sources, and credits for {title}, a Crash Team Racing custom track.",
+    )
 
 
 def _article_page(page: dict, path: str, title_suffix: str, analytics_page: str,

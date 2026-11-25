@@ -60,6 +60,7 @@ def main():
         })
         sys.path.insert(0, str(ROOT / "ap-web"))
         import app as application
+        from ctr_track_registry import RegistryCache, make_catalog
         from db import set_builder_schema
         from werkzeug.serving import make_server
 
@@ -69,8 +70,13 @@ def main():
             record = json.loads(path.read_text())
             set_builder_schema(record["sha256"], record["apworld_name"], record["version"], record["schema"])
 
+        registry = json.loads((FIXTURES / "ctr-track-registry.json").read_text())
+        catalog = make_catalog(registry["registry_commit"], registry["registry"], registry["sources"])
         # Any newly introduced cold-schema dependency must get a pinned fixture.
-        with patch("api.apworlds._fetch_apworld_bytes", side_effect=AssertionError("Unpinned browser schema")):
+        with (
+            patch("api.apworlds._fetch_apworld_bytes", side_effect=AssertionError("Unpinned browser schema")),
+            patch("api.ctr.registry_cache", RegistryCache(load=lambda: catalog)),
+        ):
             server = make_server("127.0.0.1", 0, app, threaded=True)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
