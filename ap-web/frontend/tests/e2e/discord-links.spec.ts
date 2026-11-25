@@ -19,7 +19,7 @@ for (const width of [390, 1440]) {
           const join = card.getByRole("link", { name: "Join Appie's Games Discord" });
           await expect(join).toHaveAttribute("href", discordInvite);
           await expect(join).toHaveAttribute("target", "_blank");
-          await expect(join).toBeInViewport();
+          await expect(join).toBeInViewport({ ratio: 1 });
         }
 
         const nav = page.getByRole("navigation", { name: "Main navigation" });
