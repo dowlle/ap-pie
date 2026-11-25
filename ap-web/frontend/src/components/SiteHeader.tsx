@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { discordInvite } from "../../site-links.json";
 import { refreshData } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeaturesContext";
@@ -69,6 +70,7 @@ export default function SiteHeader() {
         <a href="/guides">Guides</a>
         <NavLink to="/apworlds">APWorlds</NavLink>
         <NavLink to="/yaml-builder">YAML Builder</NavLink>
+        <a href={discordInvite} target="_blank" rel="noreferrer">Community</a>
         {showRoomsLink && <NavLink to="/rooms">Rooms</NavLink>}
         {user && <NavLink to="/my/yamls">My</NavLink>}
         {showAdminTools && generationOn && (

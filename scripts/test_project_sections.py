@@ -123,7 +123,8 @@ class ProjectSectionsTest(unittest.TestCase):
                 self.assertIn(invite, html)
                 self.assertIn("test builds, bug reports, YAML sharing and the roadmap all live there.", html)
                 self.assertLess(html.index(">Discord</h2>"), html.index("<h2", html.index(">Discord</h2>") + 1) if path != "/ctr/releases" else len(html))
-                self.assertEqual(html.count(invite), 2)
+                main = html.split("<main>", 1)[1].split("</main>", 1)[0]
+                self.assertEqual(main.count(invite), 1)
                 self.assertNotIn("Stuck or found a bug?", html)
 
     def test_discord_footer_and_contextual_links(self) -> None:
@@ -137,6 +138,24 @@ class ProjectSectionsTest(unittest.TestCase):
                 self.assertEqual(body.count(footer_link), 1)
                 self.assertEqual("Stuck or found a bug?" in body, path.startswith("/ctr"))
                 self.assertEqual("#ap-pie-website-feedback" in body, path == "/report-issue")
+
+    def test_community_link_in_server_rendered_header(self) -> None:
+        app = _app()
+        member = None
+
+        @app.context_processor
+        def nav_user():
+            return {"current_nav_user": member}
+
+        for member in (None, {"discord_username": "Fixture Member"}):
+            with self.subTest(signed_in=member is not None):
+                body = app.test_client().get("/guides").get_data(as_text=True)
+                header = body.split('<nav class="site-nav"', 1)[1].split("</nav>", 1)[0]
+                community = f'<a href="{config.DISCORD_INVITE}" target="_blank" rel="noreferrer">Community</a>'
+                auth_label = "Fixture Member" if member else "Sign in with Discord"
+                self.assertIn(community, header)
+                self.assertLess(header.index(">YAML Builder</a>"), header.index(community))
+                self.assertLess(header.index(community), header.index(f">{auth_label}</a>"))
 
     def test_alpha_notes_are_separate_from_stable_release(self) -> None:
         alpha_path = "/ctr/releases/0-3-0"

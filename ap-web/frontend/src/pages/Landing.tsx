@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { discordInvite } from "../../site-links.json";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeaturesContext";
 
@@ -89,6 +90,13 @@ export default function Landing() {
       </section>
 
       <div className="lp-wrap">
+        <section className="lp-intro lp-community" aria-label="Discord community">
+          <p>Ask questions, report issues, and find people to play with.</p>
+          <a className="btn lp-btn lp-btn-ghost" href={discordInvite} target="_blank" rel="noreferrer">
+            Join Appie's Games Discord
+          </a>
+        </section>
+
         <div className="lp-sect">Games made here</div>
         <div className="lp-games">
           <a className="lp-game" style={{ "--c": "#e8a857" } as React.CSSProperties} href="/ctr">
