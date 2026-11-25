@@ -1,0 +1,57 @@
+{% extends "guides/base.html" %}
+{% macro mode_badges(modes) %}
+  {% if modes %}
+  <ul class="track-modes" aria-label="Measured modes">
+    {% for mode in modes %}<li>{{ mode_labels[mode] }}</li>{% endfor %}
+  </ul>
+  {% else %}<p>Not measured yet</p>{% endif %}
+{% endmacro %}
+{% block head_extra %}
+  <style>
+    .track-heading { margin: 0.75rem 0 1.4rem; }
+    .track-heading h1 { margin: 0 0 0.5rem; overflow-wrap: anywhere; }
+    .track-heading p { max-width: 42rem; }
+    .track-filters {
+      display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.25fr) minmax(0, 1.15fr) auto;
+      align-items: end; gap: 0.85rem;
+    }
+    .track-filters label { display: grid; gap: 0.3rem; font-weight: 600; color: var(--text-h); }
+    .track-filters input, .track-filters select {
+      width: 100%; min-height: 2.75rem; padding: 0.45rem 0.7rem; border: 1px solid var(--border-strong);
+      border-radius: var(--radius-control); background: var(--bg); color: var(--text-h); font: inherit;
+    }
+    .track-filters button { min-height: 2.75rem; }
+    .track-results { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1.35rem 0 0.65rem; }
+    .track-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+    .track-grid, .track-modes, .track-sources, .track-credits { list-style: none; }
+    .track-card { display: grid; align-content: start; gap: 0.45rem; overflow-wrap: anywhere; }
+    .track-card h2, .track-card h3 { margin: 0; line-height: 1.25; }
+    .track-card h3 { color: var(--text-h); }
+    .track-card a:hover { text-decoration: underline; }
+    .track-modes { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .track-modes li {
+      border: 1px solid var(--border-strong); border-radius: 999px; padding: 0.14rem 0.57rem;
+      background: var(--bg-hover); color: var(--text-h); font-size: 0.83rem;
+    }
+    .track-versions { display: grid; gap: 0.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .track-credits { margin: 0.45rem 0 1.4rem; }
+    .track-sources { margin-top: 0.15rem; }
+    .track-sources li + li { margin-top: 0.35rem; }
+    .track-unmatched { margin-top: 1.25rem; overflow-wrap: anywhere; }
+    .track-unmatched summary { color: var(--text-h); font-weight: 600; cursor: pointer; }
+    .track-feedback { margin-top: 1.25rem; }
+    @media (max-width: 800px) {
+      .track-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .track-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .track-filters label:first-child, .track-filters button { grid-column: 1 / -1; }
+    }
+    @media (max-width: 520px) {
+      .track-grid, .track-versions { grid-template-columns: minmax(0, 1fr); }
+      .track-card, .track-filters { padding: 0.9rem; }
+    }
+  </style>
+{% endblock %}
+{% block main %}
+  {% block track_content %}{% endblock %}
+  <p class="track-feedback">Missing a track or spotted a mistake? <a href="{{ discord_url }}">Tell us on Discord</a>.</p>
+{% endblock %}

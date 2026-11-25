@@ -1,0 +1,66 @@
+{% extends "ctr/tracks-base.html" %}
+{% from "ctr/tracks-base.html" import mode_badges with context %}
+{% block track_content %}
+  <header class="track-heading">
+    <h1>CTR custom tracks</h1>
+    <p>Find tracks by author, game mode, or source. Badges show modes measured across versions. Open a track to see what each version supports.</p>
+  </header>
+  {% if unavailable %}
+    <p class="notice notice-warning">The track registry is temporarily unavailable. Try again later.</p>
+  {% else %}
+    <form class="track-filters surface" action="/ctr/tracks" method="get">
+      <label>Title or author
+        <input type="search" name="q" value="{{ query }}" placeholder="Search tracks" maxlength="120" />
+      </label>
+      <label>Game mode
+        <select name="mode">
+          <option value="">Any mode</option>
+          {% for key, label in mode_labels.items() %}
+            <option value="{{ key }}"{% if mode == key %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Source
+        <select name="source">
+          <option value="">Any source</option>
+          {% for key, label in source_labels.items() %}
+            <option value="{{ key }}"{% if source == key %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="btn btn-primary" type="submit">Apply filters</button>
+    </form>
+    <div class="track-results">
+      <p>{{ tracks|length }} {{ "track" if tracks|length == 1 else "tracks" }}</p>
+      {% if query or mode or source %}<a href="/ctr/tracks">Clear filters</a>{% endif %}
+    </div>
+    {% if tracks %}
+      <ul class="track-grid">
+        {% for track in tracks %}
+          <li class="track-card surface">
+            <h2><a href="{{ url_for('ctr.ctr_track', track_key=track.track_key) }}">{{ track.display_title }}</a></h2>
+            {% if track.credits %}<p>{{ track.credits|map(attribute="name")|unique|join(", ") }}</p>{% endif %}
+            {% if track.newest %}<p>Newest version {{ track.newest }}</p>{% endif %}
+            {{ mode_badges(track.modes) }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No tracks match these filters.</p>
+    {% endif %}
+    {% if unmatched %}
+      <details class="track-unmatched surface">
+        <summary>{{ unmatched_count }} patch {{ "slot" if unmatched_count == 1 else "slots" }} without a matching track version</summary>
+        <p>These slots have no measured modes in the registry.</p>
+        <ul class="track-sources">
+          {% for patch in unmatched %}
+          <li>
+            {% if patch.url %}<a href="{{ patch.url }}">{{ patch.file_name }}</a>{% else %}{{ patch.file_name }}{% endif %}
+            <br /><span>{{ "Slot" if patch.slots|length == 1 else "Slots" }} {{ patch.slots|join(", ") }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,76 @@
+{
+  "registry_commit": "1111111111111111111111111111111111111111",
+  "registry": {
+    "schema_version": 1,
+    "tracks": [
+      {
+        "track_key": "copper-cove",
+        "display_title": "Copper Cove",
+        "state": "named",
+        "credits": [{"name": "Tracksmith", "role": "track"}],
+        "provenance": {"saphi": {"track_id": 121}},
+        "revisions": [
+          {
+            "revision": "1.2.0",
+            "content_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash_state": "verified",
+            "modes": ["time_trial"],
+            "provenance": {"saphi_downloads": [{"kind": "lev", "download_id": 872}]}
+          },
+          {
+            "revision": "1.10.0",
+            "content_id": null,
+            "hash_state": "pending",
+            "modes": []
+          },
+          {
+            "revision": "CopperPack",
+            "content_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash_state": "verified",
+            "modes": ["arcade", "relic_race", "ctr_challenge", "wumpa"],
+            "files": {
+              "lev": {"sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+              "vrm": {"sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}
+            }
+          }
+        ]
+      },
+      {
+        "track_key": "quartz-quarry",
+        "display_title": "Quartz Quarry",
+        "state": "named",
+        "credits": [{"name": "Builder", "role": "track"}],
+        "revisions": [
+          {"revision": "1.0.0", "content_id": null, "hash_state": "pending", "modes": []}
+        ]
+      }
+    ]
+  },
+  "sources": {
+    "schema_version": 1,
+    "patches": [
+      {
+        "patch_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "file_name": "CopperPack.xdelta",
+        "source_url": "https://example.org/copper-pack/",
+        "slots": [
+          {
+            "bigfile_index": 7,
+            "lev_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "vrm_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          {
+            "bigfile_index": 8,
+            "lev_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "vrm_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          },
+          {
+            "bigfile_index": 9,
+            "lev_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "vrm_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          }
+        ]
+      }
+    ]
+  }
+}

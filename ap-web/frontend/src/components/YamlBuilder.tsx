@@ -789,6 +789,7 @@ export default function YamlBuilder({
           {entry && (
             <span className="settings-modal-meta">
               {entry.display_name} · v{entry.version}
+              {entry.apworld_name === "ctr" && <> · <a href="/ctr/tracks">Custom tracks</a></>}
             </span>
           )}
         </div>

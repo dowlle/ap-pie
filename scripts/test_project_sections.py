@@ -46,6 +46,7 @@ class ProjectSectionsTest(unittest.TestCase):
             mock.patch.object(analytics, "record_event", lambda *a, **k: None),
             mock.patch.object(analytics, "record_guide_entry", lambda *a, **k: None),
             mock.patch.object(analytics, "entry_path", lambda *a, **k: None),
+            mock.patch.object(ctr.registry_cache, "get", return_value={"tracks": [], "unmatched_patches": []}),
             # The Timberborn section is beta-only until its v0.1.0 release;
             # these checks cover it switched on. TimberbornSwitchedOffTest
             # covers the production state.
