@@ -7,7 +7,7 @@ import re
 import threading
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, request, send_from_directory, session
+from flask import Flask, Response, g, jsonify, render_template, request, send_from_directory, session
 from flask_cors import CORS
 from werkzeug.exceptions import RequestEntityTooLarge
 from yaml_limits import size_limit_message
@@ -171,6 +171,9 @@ def _public_spa_response(path: str, route: dict | None = None) -> Response:
         f'<p>{html.escape(route["intro"])}</p>'
         f'{fallback_list}'
         '</main>'
+        '<footer class="app-site-footer">'
+        f'<a href="{html.escape(config.DISCORD_INVITE, quote=True)}" rel="noreferrer">Discord</a>'
+        '</footer>'
     )
     document = document.replace("<!-- ROUTE_META -->", route_meta)
     document = document.replace("<!-- ROUTE_CONTENT -->", fallback)
@@ -223,6 +226,7 @@ def oversized_request_response(error: RequestEntityTooLarge):
 
 def create_app() -> Flask:
     app = Flask(__name__, static_folder=None)
+    app.jinja_env.globals["discord_invite"] = config.DISCORD_INVITE
     # Audit-2026-05-04 #1: fail closed on insecure defaults at startup.
     # SECRET_KEY: a missing/placeholder value would make session cookies
     # forgeable by anyone who can read the source.
@@ -586,6 +590,14 @@ def create_app() -> Flask:
     def refresh():
         records = _refresh_records()
         return jsonify({"status": "ok", "count": len(records)})
+
+    @app.errorhandler(404)
+    @app.errorhandler(500)
+    def site_error(error):
+        if request.path == "/api" or request.path.startswith("/api/"):
+            return error
+        title = "Page not found" if error.code == 404 else "Something went wrong"
+        return render_template("guides/error.html", page_title=title), error.code
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")

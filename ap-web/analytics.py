@@ -120,6 +120,7 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
             ),
         },
     },
+    "discord_invite_click": {"client": True, "anonymous": True, "props": {}},
     "builder_opened": {
         "client": True,
         "props": {"game": _STR, "version": _STR, "surface": _STR, "attempt_id": _ATTEMPT_ID},
@@ -270,7 +271,7 @@ KIND_SPECS: dict[str, dict[str, Any]] = {
 CLIENT_KINDS = frozenset(k for k, spec in KIND_SPECS.items() if spec["client"])
 
 # Kinds that must never carry an account id, even when the poster is signed
-# in to ap-pie.com (the Pokepelago kinds - see their section above).
+# in to ap-pie.com.
 ANONYMOUS_KINDS = frozenset(
     k for k, spec in KIND_SPECS.items() if spec.get("anonymous")
 )
@@ -675,6 +676,8 @@ def record_event(
             return
 
         ctx = _request_context(req)
+        if kind == "discord_invite_click":
+            user_id = room_id = visit_id = None
         if ctx["objection"]:
             # Art. 21 objection: keep the counter, drop everything that could
             # tie it to a person or a session.

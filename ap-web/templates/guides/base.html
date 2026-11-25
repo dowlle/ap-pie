@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ page_title }}</title>
     <meta name="description" content="{{ meta_description }}" />
-    <link rel="canonical" href="{{ canonical_url }}" />
+    {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}" />{% endif %}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <meta property="og:type" content="{{ og_type|default('article') }}" />
     <meta property="og:title" content="{{ og_title|default(page_title) }}" />
     <meta property="og:description" content="{{ og_description|default(meta_description) }}" />
-    <meta property="og:url" content="{{ canonical_url }}" />
+    {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}" />{% endif %}
     <meta property="og:site_name" content="Archipelago Pie" />
     {% if og_image %}
     <meta property="og:image" content="{{ og_image }}" />
@@ -542,6 +542,7 @@
         <a href="/guides">Guides</a>
         <a href="/apworlds">APWorlds</a>
         <a href="/yaml-builder">YAML Builder</a>
+        <a href="{{ discord_invite }}" target="_blank" rel="noreferrer">Community</a>
         {% if current_nav_user %}
         <a href="/my/yamls">My</a>
         <a class="btn-primary" href="/my/account">{{ current_nav_user.discord_username }}</a>
@@ -554,13 +555,17 @@
     <main>
       {% if section %}{% include "guides/_section-nav.html" %}{% endif %}
       {% block main %}{% endblock %}
+      {% if section and section.key == "ctr" and request.endpoint not in ("ctr.ctr_releases_index", "ctr.ctr_release_page", "ctr.ctr_landing") %}
+        {% include "ctr/_discord-help.html" %}
+      {% endif %}
     </main>
 
     <footer class="site-footer">
       <p>Archipelago Pie, a project home for Archipelago multiworlds. Open source on
         <a href="https://github.com/dowlle/ap-pie" rel="noopener noreferrer">GitHub</a>.</p>
-      <p><a href="/changelog">Changelog</a> · <a href="/report-issue">Report an issue</a> · <a href="/privacy">Privacy</a> · <a href="https://ko-fi.com/dowlle" rel="noopener noreferrer">Support Dowlle on Ko-fi</a></p>
+      <p><a href="/changelog">Changelog</a> · <a href="/report-issue">Report an issue</a> · <a href="{{ discord_invite }}" rel="noreferrer">Discord</a> · <a href="/privacy">Privacy</a> · <a href="https://ko-fi.com/dowlle" rel="noopener noreferrer">Support Dowlle on Ko-fi</a></p>
     </footer>
+    <script type="module" src="/discord-analytics.js"></script>
 
     <script>
       var menuButton = document.querySelector(".site-menu-button");

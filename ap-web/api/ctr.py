@@ -578,9 +578,8 @@ def ctr_reference_index() -> str:
 
 # Shown at the top of the CTR release overview and of every release notes
 # page. Lives here once so a new release page gets it without a content edit.
-DISCORD_URL = "https://discord.com/invite/HxXy4mKQ5E"
 DISCORD_TEXT = (
-    f"Come hang out on [Appie's Games Discord]({DISCORD_URL}): test builds, "
+    f"Come hang out on [Appie's Games Discord]({config.DISCORD_INVITE}): test builds, "
     "bug reports, YAML sharing and the roadmap all live there."
 )
 DISCORD_SECTION_MD = f"## Discord\n\n{DISCORD_TEXT}\n\n"

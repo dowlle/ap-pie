@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import MarkdownText from "../components/MarkdownText";
+import DiscordFeedback from "../components/DiscordFeedback";
 import {
   getRoom, uploadYaml, removeYaml, closeRoom, reopenRoom, generateRoom, launchRoom, getRoomPatches, getRoomSpoiler, testGenerateRoom,
   stopRoom, deleteRoom, updateRoom, updateRoomYaml, setYamlValidation,
@@ -61,7 +62,7 @@ function ValidationBadge({ status, error }: { status: ValidationStatus; error: s
     case "unsupported":
       return <span className="badge badge-warn" title="Game's apworld is not installed on this server">Unsupported</span>;
     case "failed":
-      return <span className="badge badge-error" title={error ?? ""}>Failed</span>;
+      return <><span className="badge badge-error" title={error ?? ""}>Failed</span><DiscordFeedback /></>;
     case "unknown":
     default:
       return <span className="badge badge-pending">Pending</span>;
@@ -413,7 +414,7 @@ export default function RoomDetail() {
     onFiles: uploadFiles,
   });
 
-  if (error) return <p className="error">{error}</p>;
+  if (error) return <div role="alert"><p className="error">{error}</p><DiscordFeedback /></div>;
   if (!room) return <p className="loading">Loading...</p>;
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

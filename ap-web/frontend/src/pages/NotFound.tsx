@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { usePageTitle } from "../lib/usePageTitle";
+import DiscordFeedback from "../components/DiscordFeedback";
 
 export default function NotFound() {
   const location = useLocation();
@@ -12,6 +13,7 @@ export default function NotFound() {
       <p>
         There is nothing at <code>{location.pathname}</code>. The link may be old, or the address may have a typo.
       </p>
+      <DiscordFeedback />
       <div className="not-found-actions">
         <Link className="btn btn-primary" to="/">Go home</Link>
         <Link className="btn" to="/yaml-builder">Build a YAML</Link>

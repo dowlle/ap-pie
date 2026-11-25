@@ -1,4 +1,7 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import siteLinks from "../../site-links.json" with { type: "json" };
+
+const { discordInvite } = siteLinks;
 
 const user = {
   id: 42,
@@ -51,7 +54,7 @@ async function json(route: Route, body: unknown, status = 200) {
   await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
 
-async function mockHostRoom(page: Page, status: "open" | "closed" = "closed") {
+async function mockHostRoom(page: Page, status: "open" | "closed" = "closed", isHost = true) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname === "/api/auth/me") return json(route, user);
@@ -61,7 +64,7 @@ async function mockHostRoom(page: Page, status: "open" | "closed" = "closed") {
       return json(route, {
         ...room,
         status,
-        viewer_capabilities: { can_manage_room: true, can_submit: false, can_coordinate: true },
+        viewer_capabilities: { can_manage_room: isHost, can_submit: !isHost, can_coordinate: isHost },
         player_count: 1,
       });
     }
@@ -135,6 +138,29 @@ test("canonical host room keeps private controls on the shareable route", async 
   await page.getByRole("button", { name: "Enable tracker" }).click();
   await expect(page.getByRole("tab", { name: "Tracker" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByText("Add this room's archipelago.gg tracker URL", { exact: false })).toBeVisible();
+});
+
+test("upload and validation failures link to the Discord feedback forum", async ({ page }) => {
+  await mockHostRoom(page, "open", false);
+  let rejectUpload = true;
+  await page.route("**/api/submit/feedback-room", (route) =>
+    rejectUpload
+      ? json(route, { error: "Upload could not be read" }, 400)
+      : json(route, { player_name: "Player", game: "Crash Team Racing", validation_status: "failed" }),
+  );
+  await page.goto("/r/feedback-room");
+  const form = page.locator("section").filter({ has: page.getByRole("heading", { name: "Submit your YAML" }) });
+  const feedback = form.getByRole("link", { name: "Appie's Games Discord" });
+  const file = { name: "player.yaml", mimeType: "text/yaml", buffer: Buffer.from("name: Player") };
+  await expect(feedback).toHaveCount(0);
+  await form.locator('input[type="file"]').setInputFiles(file);
+  await expect(form.getByText("Upload could not be read")).toBeVisible();
+  await expect(feedback).toHaveAttribute("href", discordInvite);
+
+  rejectUpload = false;
+  await form.locator('input[type="file"]').setInputFiles(file);
+  await expect(form.getByText("Submitted Player (Crash Team Racing) - failed", { exact: false })).toBeVisible();
+  await expect(feedback).toHaveAttribute("href", discordInvite);
 });
 
 test("one role-aware header omits Market and keeps public orientation links", async ({ page }) => {
