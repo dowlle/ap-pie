@@ -15,7 +15,6 @@ would be worse than not storing it at all.
 
 from __future__ import annotations
 
-import json
 import yaml
 from flask import Blueprint, g, jsonify, request
 
@@ -27,26 +26,16 @@ from db import (
     get_user_yaml,
     list_submissions_by_user,
     list_user_yamls,
+    option_values_size,
     update_user_yaml,
 )
 import option_check
+from yaml_limits import MAX_BUILDER_YAML_BYTES, option_values_error, size_limit_message
 
 bp = Blueprint("user_yamls", __name__)
 
 MAX_LABEL = 120
-MAX_YAML_BYTES = 64 * 1024
-MAX_OPTION_VALUES_BYTES = 64 * 1024
 MAX_LIBRARY_ENTRIES = 200
-
-
-def _option_values_too_large(values: dict) -> bool:
-    try:
-        # Match PostgreSQL jsonb's textual separators so the API and the
-        # storage-layer CHECK enforce the same byte boundary.
-        encoded = json.dumps(values, ensure_ascii=False)
-    except (TypeError, ValueError):
-        return True
-    return len(encoded.encode("utf-8")) > MAX_OPTION_VALUES_BYTES
 
 
 def _requires_db():
@@ -186,15 +175,17 @@ def create():
         values = body.get("values")
         if not isinstance(values, dict):
             return jsonify({"error": "A form-built YAML needs its option values"}), 400
-        if _option_values_too_large(values):
-            return jsonify({"error": "Those option values are too large to save"}), 400
+        size_error = option_values_error(option_values_size(values))
+        if size_error:
+            return jsonify(size_error), 400
         option_values = values
     else:
         text = body.get("yaml_content")
         if not isinstance(text, str) or not text.strip():
             return jsonify({"error": "A hand-edited YAML needs its content"}), 400
-        if len(text.encode("utf-8")) > MAX_YAML_BYTES:
-            return jsonify({"error": "That YAML is too large to save"}), 400
+        size = len(text.encode("utf-8"))
+        if size > MAX_BUILDER_YAML_BYTES:
+            return jsonify({"error": size_limit_message("This YAML", size, MAX_BUILDER_YAML_BYTES)}), 400
         try:
             yaml.safe_load(text)
         except yaml.YAMLError as e:
@@ -250,13 +241,17 @@ def edit(yaml_id: int):
     if "values" in body and kind == "simple":
         if not isinstance(body["values"], dict):
             return jsonify({"error": "values must be an object"}), 400
-        if _option_values_too_large(body["values"]):
-            return jsonify({"error": "Those option values are too large to save"}), 400
+        size_error = option_values_error(option_values_size(body["values"]))
+        if size_error:
+            return jsonify(size_error), 400
         updates["option_values"] = body["values"]
     if "yaml_content" in body and kind == "advanced":
         text = body["yaml_content"]
-        if not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > MAX_YAML_BYTES:
+        if not isinstance(text, str) or not text.strip():
             return jsonify({"error": "Invalid YAML content"}), 400
+        size = len(text.encode("utf-8"))
+        if size > MAX_BUILDER_YAML_BYTES:
+            return jsonify({"error": size_limit_message("This YAML", size, MAX_BUILDER_YAML_BYTES)}), 400
         try:
             yaml.safe_load(text)
         except yaml.YAMLError:

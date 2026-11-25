@@ -134,12 +134,22 @@ test("schema warnings require acknowledgement and rebuild normalizes", async ({ 
   await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Synced");
 });
 
-test("the editor enforces the 64 KiB output boundary", async ({ page }) => {
+test("the editor uses the same byte limit for reading and downloading YAML", async ({ page }) => {
   await openCtrBuilder(page);
   const editor = page.locator(".yaml-builder-live-editor");
-  await editor.fill(`${await editor.inputValue()}\n# ${"x".repeat(66_000)}`);
-  await expect(page.locator(".yaml-builder-live-note")).toContainText("larger than 64 KiB");
+  const limit = 1024 * 1024;
+  const initial = `${await editor.inputValue()}\n`;
+  const chunk = `# ${"é".repeat(500)}\n`;
+  const remaining = limit - 1 - Buffer.byteLength(initial);
+  const filled = initial + chunk.repeat(Math.floor(remaining / Buffer.byteLength(chunk)));
+  const under = `${filled}#${"x".repeat(limit - 2 - Buffer.byteLength(filled))}`;
+  expect(Buffer.byteLength(under)).toBe(limit - 1);
+  await editor.fill(under);
+  await expect(page.locator(".yaml-builder-sync-status")).toHaveText("Synced");
   await page.getByRole("button", { name: "Review YAML" }).click();
+  await expect(page.getByRole("button", { name: "Download .yaml" })).toBeEnabled();
+  await editor.fill(under + "é");
+  await expect(page.locator(".yaml-builder-live-note")).toContainText("This YAML is 1,048,577 bytes. The limit is 1,048,576 bytes.");
   await expect(page.getByRole("button", { name: "Download .yaml" })).toBeDisabled();
 });
 

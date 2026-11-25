@@ -34,7 +34,6 @@ always replaces whatever `name` the author wrote.
 
 from __future__ import annotations
 
-import json
 import threading
 import time
 from collections import defaultdict, deque
@@ -53,18 +52,18 @@ from db import (
     list_presets_by_author,
     list_presets_for_apworld,
     list_reported_presets,
+    option_values_size,
     record_preset_use,
     report_preset,
     update_preset,
     vote_preset,
 )
+from yaml_limits import MAX_BUILDER_YAML_BYTES, option_values_error, size_limit_message
 
 bp = Blueprint("presets", __name__)
 
 MAX_NAME = 80
 MAX_DESCRIPTION = 500
-MAX_YAML_BYTES = 64 * 1024
-MAX_OPTION_VALUES_BYTES = 64 * 1024
 # A generous ceiling that still stops one account filling the table.
 PRESETS_PER_USER_PER_HOUR = 20
 
@@ -72,14 +71,6 @@ _publish_buckets: dict[int, deque] = defaultdict(deque)
 _publish_lock = threading.Lock()
 _use_buckets: dict[tuple[str, int], float] = {}
 _use_lock = threading.Lock()
-
-
-def _option_values_too_large(values: dict) -> bool:
-    try:
-        encoded = json.dumps(values, ensure_ascii=False)
-    except (TypeError, ValueError):
-        return True
-    return len(encoded.encode("utf-8")) > MAX_OPTION_VALUES_BYTES
 
 
 def _count_use(ip: str, preset_id: int) -> bool:
@@ -313,15 +304,17 @@ def create():
             raw = {k: v for k, v in raw.items() if k in known}
             if not raw:
                 return jsonify({"error": "None of those options exist for this version"}), 400
-        if _option_values_too_large(raw):
-            return jsonify({"error": "Those option values are too large for a preset"}), 400
+        size_error = option_values_error(option_values_size(raw))
+        if size_error:
+            return jsonify(size_error), 400
         option_values = raw
     else:
         text = body.get("yaml_content")
         if not isinstance(text, str) or not text.strip():
             return jsonify({"error": "An advanced preset needs YAML content"}), 400
-        if len(text.encode("utf-8")) > MAX_YAML_BYTES:
-            return jsonify({"error": "That YAML is too large for a preset"}), 400
+        size = len(text.encode("utf-8"))
+        if size > MAX_BUILDER_YAML_BYTES:
+            return jsonify({"error": size_limit_message("This YAML", size, MAX_BUILDER_YAML_BYTES)}), 400
         try:
             doc = yaml.safe_load(text)
         except yaml.YAMLError as e:

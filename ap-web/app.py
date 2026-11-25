@@ -9,6 +9,8 @@ from pathlib import Path
 
 from flask import Flask, Response, g, jsonify, request, send_from_directory, session
 from flask_cors import CORS
+from werkzeug.exceptions import RequestEntityTooLarge
+from yaml_limits import size_limit_message
 
 import config
 import seo
@@ -211,6 +213,14 @@ def _refresh_records() -> list[GameRecord]:
         return list(_records)
 
 
+def oversized_request_response(error: RequestEntityTooLarge):
+    size = request.content_length
+    limit = request.max_content_length
+    if request.path.startswith("/api/") and size is not None and limit is not None and size > limit:
+        return jsonify({"error": size_limit_message("This request", size, limit)}), 413
+    return error
+
+
 def create_app() -> Flask:
     app = Flask(__name__, static_folder=None)
     # Audit-2026-05-04 #1: fail closed on insecure defaults at startup.
@@ -296,6 +306,8 @@ def create_app() -> Flask:
         return response
 
     app.config["MAX_CONTENT_LENGTH"] = config.MAX_UPLOAD_MB * 1024 * 1024
+
+    app.register_error_handler(RequestEntityTooLarge, oversized_request_response)
     app.config["AP_HOST"] = config.HOST
     app.config["AP_WORLDS_DIR"] = config.WORLDS_DIR
     app.config["AP_INDEX_DIR"] = str(STATE_DIR / "archipelago-index")
