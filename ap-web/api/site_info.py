@@ -43,7 +43,7 @@ def _page(path):
     canonical = f"{config.PUBLIC_BASE_URL}{path}"
     nav = sections.context("poke", path, title) if path == "/pokepelago" else {}
     return render_template(
-        "guides/site-page.html", h1=title, body_html=html,
+        "guides/site-page.html", h1=title, body_html=html, show_discord_feedback=path == "/report-issue",
         section=nav.get("section"), crumbs=nav.get("crumbs"),
         page_title=PAGE_TITLES.get(path, f"{title} | Archipelago Pie"), meta_description=description,
         canonical_url=canonical, og_type="website",

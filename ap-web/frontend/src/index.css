@@ -2197,6 +2197,12 @@ a.btn:hover { text-decoration: none; }
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 .settings-modal::backdrop { background: rgba(0, 0, 0, 0.55); }
+.yaml-builder-discord {
+  margin: 0;
+  padding: 0.5rem var(--space-4);
+  font-size: 0.875rem;
+}
+
 .settings-modal-header {
   display: flex;
   align-items: center;

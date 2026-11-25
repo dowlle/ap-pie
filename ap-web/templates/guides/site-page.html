@@ -3,6 +3,7 @@
 <article>
   {% if not section %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">/</span>{{ h1 }}</nav>{% endif %}
   <h1>{{ h1 }}</h1>
+  {% if show_discord_feedback %}{% include "guides/_discord-feedback.html" %}{% endif %}
   <div class="guide-body">{{ body_html|safe }}</div>
 </article>
 {% endblock %}
