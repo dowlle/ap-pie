@@ -11,7 +11,7 @@ test("public pages and both kinds of 404 show the Discord links", async ({ page 
   for (const path of ["/missing-page-for-test", "/ctr/reference/missing-page-for-test", "/report-issue"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(path === "/report-issue" ? 200 : 404);
-    await expect(page.getByRole("main").getByText("#ap-pie-feedback", { exact: true })).toBeVisible();
+    await expect(page.getByRole("main").getByText("#ap-pie-website-feedback", { exact: true })).toBeVisible();
     await expect(page.getByRole("main").getByRole("link", { name: "Appie's Games Discord" }))
       .toHaveAttribute("href", discordInvite);
   }

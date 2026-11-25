@@ -113,7 +113,7 @@ test("syntax errors block every final action", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Sign in and save" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Save as preset" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Back to options" })).toBeEnabled();
-  await expect(page.locator("p").filter({ hasText: "#ap-pie-feedback" }).getByRole("link"))
+  await expect(page.locator("p").filter({ hasText: "#ap-pie-website-feedback" }).getByRole("link"))
     .toHaveAttribute("href", discordInvite);
 });
 

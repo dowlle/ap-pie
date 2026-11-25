@@ -136,7 +136,7 @@ class ProjectSectionsTest(unittest.TestCase):
                 body = response.get_data(as_text=True)
                 self.assertEqual(body.count(footer_link), 1)
                 self.assertEqual("Stuck or found a bug?" in body, path.startswith("/ctr"))
-                self.assertEqual("#ap-pie-feedback" in body, path == "/report-issue")
+                self.assertEqual("#ap-pie-website-feedback" in body, path == "/report-issue")
 
     def test_alpha_notes_are_separate_from_stable_release(self) -> None:
         alpha_path = "/ctr/releases/0-3-0"
