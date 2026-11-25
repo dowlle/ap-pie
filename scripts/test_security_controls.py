@@ -20,9 +20,9 @@ sys.path.insert(0, repo_app if os.path.isdir(repo_app) else "/app")
 
 import config
 import db
-from api.presets import _count_use, _option_values_too_large as preset_values_too_large
-from api.user_yamls import _option_values_too_large as yaml_values_too_large
+from api.presets import _count_use
 from request_ip import client_ip
+from yaml_limits import MAX_OPTION_VALUES_BYTES, option_values_error
 
 
 class SecurityControls(unittest.TestCase):
@@ -31,11 +31,10 @@ class SecurityControls(unittest.TestCase):
         db.init_db(os.environ["DATABASE_URL"])
 
     def test_option_value_caps(self) -> None:
-        self.assertFalse(yaml_values_too_large({"choice": "x"}))
-        self.assertFalse(preset_values_too_large({"choice": "x"}))
-        oversized = {"choice": "x" * 65_536}
-        self.assertTrue(yaml_values_too_large(oversized))
-        self.assertTrue(preset_values_too_large(oversized))
+        self.assertIsNone(option_values_error(db.option_values_size({"choice": "x"})))
+        oversized = {"choice": "x" * MAX_OPTION_VALUES_BYTES}
+        error = option_values_error(db.option_values_size(oversized))
+        self.assertEqual(error["code"], "option_values_too_large")
 
     def test_client_ip_fails_closed(self) -> None:
         app = Flask(__name__)
@@ -92,7 +91,7 @@ class SecurityControls(unittest.TestCase):
                     """INSERT INTO user_yamls
                            (user_id, apworld_name, version, player_name, kind, option_values)
                        VALUES (%s, 'test', '1', 'slot', 'simple', %s)""",
-                    (user_id, psycopg2.extras.Json({"x": "y" * 65_536})),
+                    (user_id, psycopg2.extras.Json({"x": "y" * MAX_OPTION_VALUES_BYTES})),
                 )
         conn.rollback()
 

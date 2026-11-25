@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import psycopg2
 import psycopg2.extras
 import config
+from yaml_limits import MAX_BUILDER_YAML_BYTES, MAX_OPTION_VALUES_BYTES
 
 
 # SEC-22: scrub the password out of any string that may contain a Postgres
@@ -811,6 +812,30 @@ def init_db(db_url: str) -> None:
         # in ctr_registry/migrations.py.
         from ctr_registry import migrations as ctr_registry_migrations
         ctr_registry_migrations.apply_up(cur)
+        # FEAT-61: replace the original Builder storage checks atomically.
+        # Keep their names so earlier application versions can still start.
+        cur.execute(f"""
+            DO $$ BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conrelid = 'apworld_presets'::regclass
+                      AND conname = 'preset_yaml_length'
+                      AND pg_get_constraintdef(oid) LIKE '%octet_length%{MAX_BUILDER_YAML_BYTES}%'
+                ) THEN
+                    ALTER TABLE apworld_presets
+                        DROP CONSTRAINT preset_yaml_length,
+                        DROP CONSTRAINT preset_option_values_bytes,
+                        ADD CONSTRAINT preset_yaml_length
+                            CHECK (octet_length(yaml_content) <= {MAX_BUILDER_YAML_BYTES}),
+                        ADD CONSTRAINT preset_option_values_bytes
+                            CHECK (octet_length(option_values::text) <= {MAX_OPTION_VALUES_BYTES});
+                    ALTER TABLE user_yamls
+                        DROP CONSTRAINT user_yaml_option_values_bytes,
+                        ADD CONSTRAINT user_yaml_option_values_bytes
+                            CHECK (octet_length(option_values::text) <= {MAX_OPTION_VALUES_BYTES});
+                END IF;
+            END $$;
+        """)
     conn.autocommit = False
     conn.close()
     _db_url = db_url
@@ -833,6 +858,20 @@ def _get_conn():
 def _dictrow(cur) -> list[dict]:
     cols = [d[0] for d in cur.description] if cur.description else []
     return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def option_values_size(values: dict) -> int | None:
+    """Measure the UTF-8 JSONB representation used by the storage checks."""
+    with _get_conn().cursor() as cur:
+        cur.execute("SAVEPOINT option_values_size")
+        try:
+            cur.execute("SELECT octet_length(%s::jsonb::text)", (psycopg2.extras.Json(values),))
+            size = cur.fetchone()[0]
+        except psycopg2.DataError:
+            cur.execute("ROLLBACK TO SAVEPOINT option_values_size")
+            size = None
+        cur.execute("RELEASE SAVEPOINT option_values_size")
+        return size
 
 
 def _serialize(row: dict) -> dict:
