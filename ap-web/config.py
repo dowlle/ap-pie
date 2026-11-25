@@ -1,4 +1,11 @@
+import json
 import os
+from pathlib import Path
+
+
+DISCORD_INVITE = json.loads(
+    (Path(__file__).parent / "frontend" / "site-links.json").read_text(encoding="utf-8")
+)["discordInvite"]
 
 
 def _bool_env(name: str, default: bool) -> bool:

@@ -15,6 +15,7 @@ import {
   type PublicRoom,
 } from "../api";
 import CreateRoomModal from "../components/CreateRoomModal";
+import DiscordFeedback from "../components/DiscordFeedback";
 import YamlBuilder from "../components/YamlBuilder";
 import { useAuth } from "../context/AuthContext";
 import { createBuilderAttemptId, trackBuilderFailed } from "../lib/analytics";
@@ -266,6 +267,7 @@ export default function YamlBuilderPage() {
         <h1>We could not open this builder</h1>
         {room && <p>For {room.name} · {room.status} · APWorld v{selectedVersion}{room.submit_deadline && <> · Deadline {new Date(room.submit_deadline).toLocaleString()}</>}</p>}
         <p className="error">{error}</p>
+        <DiscordFeedback />
         <Link className="btn" to={returnPath}>Go back</Link>
         <button className="btn" onClick={() => location.reload()}>Try again</button>
         <a className="btn" href="/guides/setting-up-your-yaml">Get a template another way</a>
@@ -294,7 +296,7 @@ export default function YamlBuilderPage() {
         label: "Submit to this room",
         run: async (yamlContent: string) => {
           const result = await submitYamlContentToRoom(roomId, yamlContent);
-          return `Submitted ${yamlOutcome(result)}`;
+          return { message: `Submitted ${yamlOutcome(result)}`, validationFailed: result.validation_status === "failed" };
         },
       }
     : context === "host-room"
@@ -306,7 +308,7 @@ export default function YamlBuilderPage() {
               game,
               yaml_content: yamlContent,
             });
-            return `Created ${yamlOutcome(result)}`;
+            return { message: `Created ${yamlOutcome(result)}`, validationFailed: result.validation_status === "failed" };
           },
         }
       : undefined;
@@ -315,6 +317,7 @@ export default function YamlBuilderPage() {
     <>
       {failedCreatedRoom && <section className="settings-section" role="alert">
         <p>{attachmentError}</p>
+        <DiscordFeedback />
         <button className="btn" disabled={attachmentBusy} onClick={() => void handleRoomCreated(failedCreatedRoom)}>Retry adding YAML</button>
         <Link to={`/r/${failedCreatedRoom.id}`}>Open the created room</Link>
       </section>}
@@ -398,7 +401,7 @@ function RoomAttach({
   const [selected, setSelected] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [added, setAdded] = useState<{ roomId: string; message: string } | null>(null);
+  const [added, setAdded] = useState<{ roomId: string; message: string; validationFailed: boolean } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -418,6 +421,7 @@ function RoomAttach({
       setAdded({
         roomId: selected,
         message: `Added ${yamlOutcome(result)}`,
+        validationFailed: result.validation_status === "failed",
       });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Failed to add YAML to the room");
@@ -430,9 +434,12 @@ function RoomAttach({
     <section className="settings-section">
       <h3>Use this YAML</h3>
       {added ? (
-        <p className="settings-aux-note" style={{ margin: 0, color: "var(--green)" }}>
-          ✓ {added.message}. <Link to={`/r/${added.roomId}`}>Open the room</Link>
-        </p>
+        <div role="status">
+          <p className="settings-aux-note" style={{ margin: 0, color: "var(--green)" }}>
+            ✓ {added.message}. <Link to={`/r/${added.roomId}`}>Open the room</Link>
+          </p>
+          {added.validationFailed && <DiscordFeedback />}
+        </div>
       ) : (
         <>
           <div className="settings-controls">
@@ -455,7 +462,12 @@ function RoomAttach({
               ? "Or download the file and use it anywhere."
               : "New room creation is disabled for this account. You can still add the YAML to an existing room or download it."}
           </p>
-          {error && <p className="settings-error" style={{ margin: 0 }}>{error}</p>}
+          {error && (
+            <div role="alert">
+              <p className="settings-error" style={{ margin: 0 }}>{error}</p>
+              <DiscordFeedback />
+            </div>
+          )}
         </>
       )}
     </section>

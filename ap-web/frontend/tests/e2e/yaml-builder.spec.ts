@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { load } from "js-yaml";
+import siteLinks from "../../site-links.json" with { type: "json" };
+
+const { discordInvite } = siteLinks;
 
 const CUSTOM_TRACK = {
   lev_sha256: "96ad9f74f51a02eafcc207cd02c97052d674c950e0f24b6440a227494a705fe8",
@@ -109,6 +112,8 @@ test("syntax errors block every final action", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Save to my YAMLs" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Save as preset" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Back to options" })).toBeEnabled();
+  await expect(page.locator("p").filter({ hasText: "#ap-pie-website-feedback" }).getByRole("link"))
+    .toHaveAttribute("href", discordInvite);
 });
 
 test("schema warnings require acknowledgement and rebuild normalizes", async ({ page }) => {

@@ -13,6 +13,8 @@ import { importYaml } from "../lib/yamlImport";
 import { highlightYaml } from "../lib/yamlHighlight";
 import { normalizeOptionHelp } from "../lib/optionHelpText";
 import MarkdownText from "./MarkdownText";
+import DiscordFeedback from "./DiscordFeedback";
+import { discordInvite } from "../../site-links.json";
 import {
   createBuilderAttemptId,
   trackBuilderAbandoned,
@@ -66,8 +68,11 @@ export default function YamlBuilder({
   initialGame?: string;
   submit?: {
     label: string;
-    /** Perform the submission; resolve to a user-facing success message. */
-    run: (yamlContent: string, playerName: string, game: string) => Promise<string>;
+    /** Perform the submission and report its validation outcome. */
+    run: (yamlContent: string, playerName: string, game: string) => Promise<{
+      message: string;
+      validationFailed: boolean;
+    }>;
   };
   /** Rendered in the review step above the footer - the /apworlds flow
    *  injects its "Add to room / Create room" actions here. */
@@ -133,7 +138,7 @@ export default function YamlBuilder({
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [submission, setSubmission] = useState<{ message: string; validationFailed: boolean } | null>(null);
   // FEAT-42: presets for the selected game. Published ones plus the
   // viewer's own drafts; the endpoint decides which.
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -231,7 +236,7 @@ export default function YamlBuilder({
     setStep("preset");
     setBusy(false);
     setError("");
-    setSuccess("");
+    setSubmission(null);
     setManualYaml(null);
     setYamlSync("synced");
     setYamlErrorKind(null);
@@ -371,7 +376,7 @@ export default function YamlBuilder({
     setValues(defaults);
     setStep("preset");
     setError("");
-    setSuccess("");
+    setSubmission(null);
   }, [entry]);
 
   // FEAT-43: import an existing document when one is handed in. Runs after
@@ -468,7 +473,7 @@ export default function YamlBuilder({
    *  name substituted for the author's. */
   const applyPreset = (p: Preset) => {
     setError("");
-    setSuccess("");
+    setSubmission(null);
     if (p.kind === "advanced" && p.yaml_content) {
       let text = p.yaml_content;
       try {
@@ -752,10 +757,10 @@ export default function YamlBuilder({
     setBusy(true);
     setError("");
     try {
-      const msg = await submit.run(
+      const result = await submit.run(
         yamlContent, submittedIdentity.playerName, submittedIdentity.game,
       );
-      setSuccess(msg);
+      setSubmission(result);
       noteEmitted("submit");
     } catch (e) {
       trackBuilderFailed(
@@ -792,13 +797,19 @@ export default function YamlBuilder({
         </button>
       </header>
 
+      {entry?.apworld_name === "ctr" && (
+        <p className="settings-aux-note yaml-builder-discord">
+          Stuck or found a bug? Ask in <a href={discordInvite} rel="noreferrer">Appie's Games Discord</a>.
+        </p>
+      )}
+
       {presentation === "page" && (
         <nav className="yaml-builder-steps" aria-label="YAML builder steps">
           <button
             type="button"
             className={step === "preset" ? "is-active" : undefined}
             aria-current={step === "preset" ? "step" : undefined}
-            onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("preset"); }}
+            onClick={() => { setError(""); setSubmission(null); setEditing(false); setStep("preset"); }}
           >
             <span>1</span> Pick a preset
           </button>
@@ -808,7 +819,7 @@ export default function YamlBuilder({
             className={step === "options" ? "is-active" : undefined}
             aria-current={step === "options" ? "step" : undefined}
             disabled={!schema}
-            onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("options"); }}
+            onClick={() => { setError(""); setSubmission(null); setEditing(false); setStep("options"); }}
           >
             <span>2</span> Change your options
           </button>
@@ -1088,16 +1099,25 @@ export default function YamlBuilder({
                   Fix the YAML before downloading, saving or submitting it.
                 </p>
               )}
+              {yamlSync === "error" && <DiscordFeedback />}
             </section>
-            {reviewExtra && !success && canFinalize && reviewExtra(yamlContent, submittedIdentity.playerName, noteEmitted)}
+            {reviewExtra && !submission && canFinalize && reviewExtra(yamlContent, submittedIdentity.playerName, noteEmitted)}
           </>
         )}
 
-        {error && <p className="settings-error" style={{ margin: 0 }}>{error}</p>}
-        {success && (
-          <p className="settings-aux-note" role="status" style={{ margin: 0 }}>
-            {success} {roomId && <Link to={`/r/${roomId}`}>Open room</Link>}
-          </p>
+        {error && (
+          <div role="alert">
+            <p className="settings-error" style={{ margin: 0 }}>{error}</p>
+            <DiscordFeedback />
+          </div>
+        )}
+        {submission && (
+          <div role="status">
+            <p className="settings-aux-note" style={{ margin: 0 }}>
+              {submission.message} {roomId && <Link to={`/r/${roomId}`}>Open room</Link>}
+            </p>
+            {submission.validationFailed && <DiscordFeedback />}
+          </div>
         )}
       </div>
 
@@ -1133,7 +1153,7 @@ export default function YamlBuilder({
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => { setError(""); setSuccess(""); setEditing(false); setStep("options"); }}
+              onClick={() => { setError(""); setSubmission(null); setEditing(false); setStep("options"); }}
               disabled={busy}
               title={
                 manualYaml !== null
@@ -1164,7 +1184,7 @@ export default function YamlBuilder({
             >
               Download .yaml
             </button>
-            {submit && !success && (
+            {submit && !submission && (
               <button
                 type="button"
                 className="btn btn-sm btn-primary"
@@ -1174,7 +1194,7 @@ export default function YamlBuilder({
                 {busy ? "Submitting…" : submit.label}
               </button>
             )}
-            {success && (
+            {submission && (
               <button type="button" className="btn btn-sm btn-primary" onClick={requestClose}>
                 Done
               </button>

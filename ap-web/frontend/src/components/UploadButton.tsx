@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { uploadGame } from "../api";
+import DiscordFeedback from "./DiscordFeedback";
 
 interface Props {
   onUploaded: () => void;
@@ -55,7 +56,12 @@ export default function UploadButton({ onUploaded }: Props) {
       >
         {uploading ? "Uploading..." : "Upload Game (.zip)"}
       </button>
-      {error && <span className="upload-error">{error}</span>}
+      {error && (
+        <div role="alert">
+          <span className="upload-error">{error}</span>
+          <DiscordFeedback />
+        </div>
+      )}
     </div>
   );
 }

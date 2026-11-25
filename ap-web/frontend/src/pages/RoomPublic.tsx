@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import MarkdownText from "../components/MarkdownText";
+import DiscordFeedback from "../components/DiscordFeedback";
 import SavedYamlPicker from "../components/SavedYamlPicker";
 import {
   claimYaml,
@@ -86,6 +87,7 @@ interface SubmitState {
   busyLabel: string;
   error: string;
   success: string | null;
+  validationFailed?: boolean;
 }
 
 const IDLE_SUBMIT_STATE: SubmitState = { busy: false, busyLabel: "", error: "", success: null };
@@ -162,6 +164,7 @@ function SubmissionForm({
         busyLabel: "",
         error: "",
         success: describeSubmission(r),
+        validationFailed: r.validation_status === "failed",
       });
       setPasted("");
       setPasteOpen(false);
@@ -261,6 +264,7 @@ function SubmissionForm({
           ✓ {state.success}
         </p>
       )}
+      {(state.error || state.validationFailed) && <DiscordFeedback />}
     </section>
   );
 }
@@ -322,7 +326,7 @@ function RoomPublic() {
   const [claimError, setClaimError] = useState<{ id: number; msg: string } | null>(null);
   // Toast surfacing for the FEAT-18 update flow. Goes back to null on the
   // next refresh tick so the message doesn't linger across actions.
-  const [updateToast, setUpdateToast] = useState<string | null>(null);
+  const [updateToast, setUpdateToast] = useState<{ message: string; validationFailed: boolean } | null>(null);
   const [yamlSearch, setYamlSearch] = useState("");
   const [yamlSort, setYamlSort] = useState<YamlSort | null>(null);
   // FEAT-38: per-pinned-game builder schemas.
@@ -349,6 +353,7 @@ function RoomPublic() {
     const total = yamlFiles.length;
     const results: string[] = [];
     const warningDetails: string[] = [];
+    let validationFailed = false;
     try {
       for (let i = 0; i < yamlFiles.length; i++) {
         const file = yamlFiles[i];
@@ -359,6 +364,7 @@ function RoomPublic() {
           success: null,
         });
         const r = await submitYamlToRoom(id, file);
+        if (r.validation_status === "failed") validationFailed = true;
         // Multi-file upload: keep each line short, but never swallow a
         // finding the submitter should act on before the host generates.
         const warned = (r.option_warnings ?? []).length;
@@ -372,6 +378,7 @@ function RoomPublic() {
         busy: false,
         busyLabel: "",
         error: "",
+        validationFailed,
         success: `Submitted ${results.join(", ")}` +
           (warningDetails.length
             ? `. ${warningDetails.slice(0, 3).join(" ")}${
@@ -486,6 +493,7 @@ function RoomPublic() {
           The room <code>{id}</code> doesn't exist on this server. Double-check the link
           your host shared with you.
         </p>
+        <DiscordFeedback />
       </div>
     );
   }
@@ -526,7 +534,10 @@ function RoomPublic() {
                 : result.validation_status === "failed"
                   ? `failed: ${result.validation_error || "validation error"}`
                   : result.validation_status;
-              setUpdateToast(`YAML ${fragment} (${validity}).`);
+              setUpdateToast({
+                message: `YAML ${fragment} (${validity}).`,
+                validationFailed: result.validation_status === "failed",
+              });
               await refresh();
             }}
           />
@@ -573,7 +584,10 @@ function RoomPublic() {
 
       {updateToast && (
         <div className="public-toast" role="status">
-          {updateToast}
+          <div>
+            {updateToast.message}
+            {updateToast.validationFailed && <DiscordFeedback />}
+          </div>
           <button
             type="button"
             className="btn btn-sm public-toast-dismiss"

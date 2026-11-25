@@ -180,6 +180,19 @@ for header in ({"Sec-GPC": "1"}, {"DNT": "1"}):
     check(f"{name}: safe props kept", r["props"]["game"] == "Crash Team Racing")
     check(f"{name}: attempt id stripped", "attempt_id" not in r["props"])
 
+before = len(captured)
+with app.test_request_context("/api/events"):
+    analytics.record_event(
+        "discord_invite_click", user_id=42, room_id="private-room", visit_id="abc123",
+        props={"url": analytics.config.DISCORD_INVITE, "source": "/r/private-room"},
+    )
+drain(before + 1)
+r = captured[-1]
+check("Discord invite click is client-postable", "discord_invite_click" in analytics.CLIENT_KINDS)
+check("Discord invite click drops URLs and identifiers",
+      r["kind"] == "discord_invite_click" and r["props"] == {}
+      and all(r[key] is None for key in ("user_id", "room_id", "visit_id")))
+
 # ── 6: failure posture ───────────────────────────────────────────
 raise_on_write = True
 try:

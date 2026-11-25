@@ -14,6 +14,8 @@ Archipelago Pie is operated by Dowlle, an individual developer in the Netherland
 
 ### Analytics events
 
+Clicks on Discord invite links are counted as community activity. The event contains no invite URL, invite code, source page, account ID, room ID, or visit ID.
+
 The site keeps a server-side log of things that happen on it, so its own funnel can be improved: which guides get read, which games people open the YAML builder for, whether a setup was saved to the personal library, why a YAML submission was rejected, whether a login round-trip finished, whether a download link was used. A library save is measured separately from downloading or submitting a YAML. The save event contains the game, version and the same temporary Builder attempt value, never the saved content, label or library entry ID. Each entry holds:
 
 - what happened, as a short code such as `guide_view` or `submit_rejected`

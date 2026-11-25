@@ -44,6 +44,7 @@ RUN chmod +x /entrypoint.sh
 
 # Copy built frontend
 COPY --from=frontend /build/dist ./frontend/dist
+COPY ap-web/frontend/site-links.json ./frontend/site-links.json
 
 # Non-root user. We deliberately do NOT set `USER apweb` at the image level:
 # the entrypoint needs root briefly to chown mounted volumes, then drops to

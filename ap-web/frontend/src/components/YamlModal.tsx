@@ -8,6 +8,7 @@ import {
   type ValidationStatus,
 } from "../api";
 import { highlightYaml } from "../lib/yamlHighlight";
+import DiscordFeedback from "./DiscordFeedback";
 
 /**
  * Unified YAML modal: View / Edit / Diff in one dialog.
@@ -219,9 +220,10 @@ export default function YamlModal({
         </div>
       )}
 
-      {detail?.validation_error && tab === "view" && (
+      {detail && (detail.validation_error || detail.validation_status === "failed") && tab === "view" && (
         <div className="yaml-modal-error">
-          <strong>Validation error:</strong> {detail.validation_error}
+          <strong>Validation error:</strong> {detail.validation_error || "This YAML failed validation."}
+          <DiscordFeedback />
         </div>
       )}
 
